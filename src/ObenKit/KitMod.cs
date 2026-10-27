@@ -1,3 +1,4 @@
+using ObenKit.Events;
 using ObenLoader;
 
 namespace ObenKit;
@@ -10,6 +11,7 @@ public sealed class KitMod : ObenMod
     public override void OnLoad()
     {
         Instance = this;
+        GameEvents.Init(this);
         Log.Info("Ready.");
     }
 

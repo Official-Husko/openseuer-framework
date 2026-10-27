@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace ObenKit.Scenes;
+namespace ObenFramework.Scenes;
 
 /// <summary>
 /// Addressing GameObjects from text, used by tools and the dev bridge.
@@ -141,7 +141,7 @@ public static class SceneQuery
     private static IEnumerable<GameObject> DontDestroyRoots()
     {
         // The DontDestroyOnLoad scene can only be reached through an object that lives in it.
-        var probe = new GameObject("ObenKit.SceneProbe");
+        var probe = new GameObject("ObenFramework.SceneProbe");
         Object.DontDestroyOnLoad(probe);
         var roots = probe.scene.GetRootGameObjects();
         Object.DestroyImmediate(probe);

@@ -1,18 +1,18 @@
-using ObenKit.Game;
+using ObenFramework.Game;
 using ObenLoader;
 using ObenLoader.Runtime;
 using UnityEngine.SceneManagement;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>Turns Unity's scene loads into MainMenu, SceneLoaded and the start of the WorldReady wait.</summary>
 internal static class SceneHooks
 {
-    public static void Attach(ObenMod kit)
+    public static void Attach(ObenMod framework)
     {
-        ReadyWatcher.Create(kit);
+        ReadyWatcher.Create(framework);
         SceneManager.sceneLoaded += OnSceneLoaded;
-        kit.Track(Disposable.Create(() => SceneManager.sceneLoaded -= OnSceneLoaded));
+        framework.Track(Disposable.Create(() => SceneManager.sceneLoaded -= OnSceneLoaded));
 
         // Reloaded mid-game: the world finished loading long ago.
         WorldState.IsReady = WorldState.InWorld && PlayerLocator.instance != null;

@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
-    <ProjectReference Include="../../src/ObenKit/ObenKit.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
     <ProjectReference Include="../DevBridge/DevBridge.csproj" />
   </ItemGroup>
 </Project>

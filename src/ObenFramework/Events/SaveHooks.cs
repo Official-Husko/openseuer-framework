@@ -1,24 +1,24 @@
-using ObenKit.Game;
+using ObenFramework.Game;
 using ObenLoader;
 using ObenLoader.Runtime;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>
 /// Subscribes to SaveController's static events once and forwards them as <see cref="GameEvents"/>.
-/// The subscriptions are removed when the kit unloads, so a hot reload doesn't leave the old
+/// The subscriptions are removed when the framework unloads, so a hot reload doesn't leave the old
 /// copy's handlers on the game's events.
 /// </summary>
 internal static class SaveHooks
 {
-    public static void Attach(ObenMod kit)
+    public static void Attach(ObenMod framework)
     {
         SaveController.PlayerWillChangeLevel += OnLevelChanging;
         SaveController.SavingStarted += OnSaving;
         SaveController.SavingDone += OnSaved;
         SaveController.LoadingStarted += OnLoading;
         SaveController.LoadingDone += OnLoaded;
-        kit.Track(Disposable.Create(() =>
+        framework.Track(Disposable.Create(() =>
         {
             SaveController.PlayerWillChangeLevel -= OnLevelChanging;
             SaveController.SavingStarted -= OnSaving;

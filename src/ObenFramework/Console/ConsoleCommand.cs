@@ -1,6 +1,6 @@
 using System;
 
-namespace ObenKit.Console;
+namespace ObenFramework.Console;
 
 /// <summary>
 /// A command a mod added to the game's F1 console. The handler gets the words after the command

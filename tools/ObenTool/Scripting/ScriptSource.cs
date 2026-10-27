@@ -11,7 +11,8 @@ public static class ScriptSource
     {
         "System", "System.Collections", "System.Collections.Generic", "System.Linq", "System.Reflection",
         "UnityEngine", "UnityEngine.SceneManagement", "HarmonyLib",
-        "ObenLoader", "ObenKit", "ObenKit.Console", "ObenKit.Reflection", "ObenKit.Scenes", "ScriptRunner",
+        "ObenLoader", "ObenFramework", "ObenFramework.Console", "ObenFramework.Events", "ObenFramework.Game",
+        "ObenFramework.Reflection", "ObenFramework.Scenes", "ScriptRunner",
     };
 
     public static bool IsWholeFile(string code) =>

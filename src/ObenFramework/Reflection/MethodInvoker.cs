@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using ObenKit.Values;
+using ObenFramework.Values;
 using Newtonsoft.Json.Linq;
 
-namespace ObenKit.Reflection;
+namespace ObenFramework.Reflection;
 
 /// <summary>Calls a method by name with JSON arguments, picking the overload whose parameters fit.</summary>
 public static class MethodInvoker

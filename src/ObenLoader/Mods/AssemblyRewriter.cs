@@ -6,7 +6,7 @@ using Mono.Cecil.Cil;
 namespace ObenLoader.Mods;
 
 /// <summary>
-/// Gives each hot-reloaded copy of an assembly its own name ("ObenKit-r2", "-r3", ...) and
+/// Gives each hot-reloaded copy of an assembly its own name ("ObenFramework-r2", "-r3", ...) and
 /// points references at the newest copies. Mono binds a reference to the first loaded assembly
 /// with a matching name and never lets go, so without unique names a reloaded framework would
 /// keep feeding its dependents the old code.

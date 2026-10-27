@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ObenLoader/ObenLoader.csproj" />
-    <Project Path="src/ObenKit/ObenKit.csproj" />
+    <Project Path="src/ObenFramework/ObenFramework.csproj" />
   </Folder>
   <Folder Name="/mods/">
     <Project Path="mods/DevBridge/DevBridge.csproj" />

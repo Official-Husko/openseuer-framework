@@ -1,8 +1,8 @@
-using ObenKit.Game;
+using ObenFramework.Game;
 using ObenLoader;
 using UnityEngine;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>
 /// Decides when the world is ready: a gameplay scene, no save load in progress, the player exists,
@@ -19,9 +19,9 @@ internal sealed class ReadyWatcher : MonoBehaviour
     private float _readyAt;
     private int _framesLeft;
 
-    public static void Create(ObenMod kit)
+    public static void Create(ObenMod framework)
     {
-        _instance = kit.CreateObject("ReadyWatcher").AddComponent<ReadyWatcher>();
+        _instance = framework.CreateObject("ReadyWatcher").AddComponent<ReadyWatcher>();
         _instance.enabled = false;
     }
 

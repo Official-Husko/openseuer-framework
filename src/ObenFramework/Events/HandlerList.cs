@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ObenLoader.Logging;
 using ObenLoader.Runtime;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>
 /// Subscriber list shared by <see cref="GameEvent"/> and <see cref="GameEvent{T}"/>. Raising iterates a

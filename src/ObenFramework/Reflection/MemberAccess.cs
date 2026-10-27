@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace ObenKit.Reflection;
+namespace ObenFramework.Reflection;
 
 /// <summary>
 /// Get, set and call members by name, public or not, instance or static. Lookups are cached per

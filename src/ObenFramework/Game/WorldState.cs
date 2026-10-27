@@ -1,6 +1,6 @@
 using UnityEngine.SceneManagement;
 
-namespace ObenKit.Game;
+namespace ObenFramework.Game;
 
 /// <summary>Where the game is right now: main menu, loading, or in a playable world.</summary>
 public static class WorldState

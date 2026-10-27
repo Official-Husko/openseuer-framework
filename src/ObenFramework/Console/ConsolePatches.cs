@@ -1,7 +1,7 @@
 using System.Text;
 using HarmonyLib;
 
-namespace ObenKit.Console;
+namespace ObenFramework.Console;
 
 /// <summary>Hooks the game's console: mod commands run before the game's switch, and are listed in help.</summary>
 [HarmonyPatch(typeof(DeveloperConsole))]

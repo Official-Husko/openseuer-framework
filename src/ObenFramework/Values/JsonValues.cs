@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Reflection;
-using ObenKit.Reflection;
-using ObenKit.Scenes;
+using ObenFramework.Reflection;
+using ObenFramework.Scenes;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace ObenKit.Values;
+namespace ObenFramework.Values;
 
 /// <summary>
 /// Converts between game values and JSON for tools. Vectors and colours are arrays

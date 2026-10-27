@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>ObenKit</RootNamespace>
+    <RootNamespace>ObenFramework</RootNamespace>
     <Description>Framework for Obenseuer mods: game events, player, items, saves, UI and tooling helpers.</Description>
   </PropertyGroup>
 
@@ -8,6 +8,6 @@
     <ProjectReference Include="../ObenLoader/ObenLoader.csproj" />
   </ItemGroup>
 
-  <!-- Ships as a regular mod folder: <game>/Mods/ObenKit. -->
+  <!-- Ships as a regular mod folder: <game>/Mods/ObenFramework. -->
   <Import Project="$(RepoRoot)build/Mod.targets" />
 </Project>

@@ -40,7 +40,7 @@ Mods/
   "version": "0.1.0",
   "author": "you",
   "description": "One line about what it does.",
-  "dependencies": { "ObenKit": "0.1.0" },
+  "dependencies": { "ObenFramework": "0.1.0" },
   "hotReload": true
 }
 ```
@@ -63,7 +63,7 @@ Mods/
 A mod's code starts in one class that derives from `ObenMod`. Override only what you need; the loader never calls the rest, so unused callbacks cost nothing.
 
 ```csharp
-using ObenKit.Events;
+using ObenFramework.Events;
 using ObenLoader;
 
 public sealed class MyMod : ObenMod
@@ -125,7 +125,7 @@ Things to know:
      </PropertyGroup>
      <ItemGroup>
        <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
-       <ProjectReference Include="../../src/ObenKit/ObenKit.csproj" />
+       <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
      </ItemGroup>
    </Project>
    ```
@@ -135,7 +135,7 @@ Things to know:
 
 ## Game events
 
-`ObenKit.Events.GameEvents` covers the moments most mods care about. Every handler runs in its own try/catch, because the game itself calls its save events without one and a throwing handler there can leave a black screen.
+`ObenFramework.Events.GameEvents` covers the moments most mods care about. Every handler runs in its own try/catch, because the game itself calls its save events without one and a throwing handler there can leave a black screen.
 
 | Event | When |
 | --- | --- |
@@ -146,7 +146,7 @@ Things to know:
 | `Saving`, `Saved` (save folder) | Around a save. Keep mod files in the save folder, written in `Saved`. |
 | `Loading`, `Loaded` | Around a save load. Wait for `WorldReady` before touching the world. |
 
-`ObenKit.Game.WorldState` has `InWorld`, `InMainMenu`, `IsReady`, `IsLoadingSave`, `IsPaused` and `SceneName`.
+`ObenFramework.Game.WorldState` has `InWorld`, `InMainMenu`, `IsReady`, `IsLoadingSave`, `IsPaused` and `SceneName`.
 
 ## Console commands
 

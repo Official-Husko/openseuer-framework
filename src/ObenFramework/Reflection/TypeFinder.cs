@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ObenKit.Reflection;
+namespace ObenFramework.Reflection;
 
 /// <summary>
 /// Finds types by full or short name across every loaded assembly. Game types win over

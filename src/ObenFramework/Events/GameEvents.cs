@@ -1,10 +1,10 @@
 using System;
-using ObenKit.Game;
+using ObenFramework.Game;
 using ObenLoader;
 using ObenLoader.Logging;
 using ObenLoader.Runtime;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>
 /// Game-level moments mods usually care about, on the main thread. Every handler runs in its own
@@ -60,10 +60,10 @@ public static class GameEvents
         }
     }
 
-    internal static void Init(ObenMod kit)
+    internal static void Init(ObenMod framework)
     {
-        Log = kit.Log;
-        SaveHooks.Attach(kit);
-        SceneHooks.Attach(kit);
+        Log = framework.Log;
+        SaveHooks.Attach(framework);
+        SceneHooks.Attach(framework);
     }
 }

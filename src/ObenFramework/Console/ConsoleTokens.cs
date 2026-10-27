@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ObenKit.Console;
+namespace ObenFramework.Console;
 
 /// <summary>Splits a console line the way the game does: on spaces, with "quoted parts" kept whole.</summary>
 internal static class ConsoleTokens

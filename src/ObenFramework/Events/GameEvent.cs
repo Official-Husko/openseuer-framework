@@ -2,7 +2,7 @@ using System;
 using ObenLoader.Runtime;
 using ObenLoader.Logging;
 
-namespace ObenKit.Events;
+namespace ObenFramework.Events;
 
 /// <summary>An event without a payload. Subscribe with an owner so hot reloads clean up after you.</summary>
 public sealed class GameEvent

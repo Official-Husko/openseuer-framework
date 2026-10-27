@@ -4,7 +4,7 @@ using HarmonyLib;
 using ObenLoader;
 using ObenLoader.Runtime;
 
-namespace ObenKit.Console;
+namespace ObenFramework.Console;
 
 /// <summary>
 /// The game's own developer console (F1). Mods add commands here; they show up in "help" and are

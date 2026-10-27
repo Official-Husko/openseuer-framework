@@ -69,7 +69,7 @@ oben run scripts/examples/console-greeting.cs --watch
 oben run --reset console-greeting
 ```
 
-- A snippet is either one expression (its value is returned) or statements that run as the body of `Run(ScriptScope Scope)`. Common usings are added: `UnityEngine`, `HarmonyLib`, `ObenLoader`, `ObenKit` and its namespaces, `ScriptRunner`.
+- A snippet is either one expression (its value is returned) or statements that run as the body of `Run(ScriptScope Scope)`. Common usings are added: `UnityEngine`, `HarmonyLib`, `ObenLoader`, `ObenFramework` and its namespaces, `ScriptRunner`.
 - A whole file needs a static `Run()` or `Run(ScriptScope scope)` method somewhere.
 - Everything a script logs while it runs comes back with the result.
 - Each script runs in a named scope (`--name`, or the file name). `scope.Harmony` patches, `scope.Track(...)`, `scope.CreateObject(...)` and `scope.StartCoroutine(...)` are undone when a script with the same name runs again or when it's reset. That makes `--watch` a live-edit loop for Harmony patches.

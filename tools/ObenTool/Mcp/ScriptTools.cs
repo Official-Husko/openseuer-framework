@@ -12,7 +12,7 @@ public static class ScriptTools
         yield return new McpTool("script_run",
             "Compile C# against the game and run it inside it. Either a whole file with a static Run() or "
             + "Run(ScriptScope Scope) method, or just statements/an expression (the body of Run). Common usings "
-            + "(UnityEngine, HarmonyLib, ObenKit...) are added for snippets. Scope.Harmony patches and Scope.Track'ed "
+            + "(UnityEngine, HarmonyLib, ObenFramework...) are added for snippets. Scope.Harmony patches and Scope.Track'ed "
             + "things are undone when a script with the same name runs again or script_reset is called. Returns "
             + "the result as JSON plus any log lines written while it ran.",
             Schema.Object()

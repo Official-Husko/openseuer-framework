@@ -4,6 +4,6 @@
   "version": "0.1.0",
   "author": "pawbeans",
   "description": "Local control socket for testing tools: read state, change values, run console commands, take screenshots.",
-  "dependencies": { "ObenKit": "0.1.0" },
+  "dependencies": { "ObenFramework": "0.1.0" },
   "hotReload": true
 }

@@ -1,0 +1,9 @@
+{
+  "id": "ObenKit",
+  "name": "ObenKit",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "The framework other mods build on.",
+  "hotReload": true,
+  "essential": true
+}

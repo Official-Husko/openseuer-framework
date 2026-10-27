@@ -323,7 +323,7 @@ Beyond these there are about 100 other `Foo` areas with the same shape (`Doors`,
 
 ## 5. Recommendation per module
 
-Target mods (from `TODO.md`): **ObenFramework** (core APIs everything depends on), **ObenUIKit** (UI that looks like the game's own, mod menu), **ObenSave** (open compressed save format), the **co-op mod** (ObenCoop or ObenTogether, transport interface with direct IP first, Steam second), and a **cheat menu**.
+Target mods (from `TODO.md`): **ObenFramework** (core APIs everything depends on), **ObenUIKit** (UI that looks like the game's own, mod menu), **ObenSave** (open compressed save format), the **co-op mod** (ObenCoop, transport interface with direct IP first, Steam second), and a **cheat menu**.
 
 Verdicts: **as-is** = port nearly as-is (namespace, logging, owner id; split if over 300 lines). **rework** = port with the changes listed. **skip** = leave it, or replace with ours.
 

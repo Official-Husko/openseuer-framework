@@ -602,3 +602,22 @@ All methods are on the types in `Assembly-CSharp` (global namespace). `private` 
 5. Rich text is on for notification, hint and console text. Escape user-provided strings.
 6. Pause sets `Time.timeScale = 0`; `SavingUI.ShowSavingUI` also sets 0 and `GameIsPaused`. Use `unscaledDeltaTime` and `WaitForSecondsRealtime` in mod UI.
 7. Under Proton, window focus loss can drop key-up events. If a mod UI latches state on a held key, also clear it in `OnApplicationFocus(false)`.
+
+## What the UI looks like at runtime (checked in game 0.5.13)
+
+Looked at through the dev bridge, main menu and in a level.
+
+### Main menu
+
+- The main menu is diegetic: world-space canvases on a sign in the scene (`Other/Sign Menu/sign_003/...`: `Menu`, `Options/Menu options`, `Start`, `Brightness`). Screen-space overlays at the menu are only the loading screen, black/white fades, the version label, the dialogue canvas and the developer console.
+- The main buttons are `Menu/Main Menu/{New Game, Load Game, Options, ???, Credits, Quit}`, the 2x3 grid the navigation helper hard-codes. **`???` is a placeholder**: `Button.interactable` is false and its only persistent onClick plays the menu click sound. It already has the game's `TextButtonColorEffectTMP`, `HoverSoundEffect`, Erika Ormig SDF Menu text (35 pt, colour 0.64/0.48/0.48) and sits in the grid, so it's the natural slot for a MODS button: change the text, make it interactable, add a listener.
+- The sign's Options pages hold the same control families as the pause menu: `OptionsButton` (63), `Slider` (7), `TextButtonColorEffectTMP`, `HoverSoundEffect`/`PressSoundEffect`, `GridLayoutGroup`, `MainMenuOptionsNavigationHelper`. Some objects there carry a missing script, so `GetComponentsInChildren<Component>` returns nulls.
+- TMP fonts loaded at the menu: Erika Ormig SDF Menu, Erika Ormig SDF Plain, Chalkiez-Regular SDF, Naganoshi-aYA1g SDF, NotoSans-Bold SDF, Roboto-Regular SDF, LiberationSans SDF (+ Fallback), Open Sewer Icons SDF. The pause menu uses "Erika Ormig SDF" at 15 pt.
+
+### Pause menu
+
+- `GameLogic.pauseMenuPrefab` is instantiated per level as `Pause Menu(Clone)`; the prefab asset is only in memory while a level is loaded (gone again back at the main menu).
+- `PauseMenu.instance.Pause()` opens it; `currentMenu` is the page shown: `Pause Menu(Clone)/Hide/Pause Menu/Menu/{Main, Options, Display, ...}`. `Options()`, `Display()`, `Quality()`, `Audio()` switch pages; `Resume()` closes.
+- `Main` holds seven direct-child buttons (Resume Game, Load Game, Save Game, Options, Difficulty, Quit to Menu, Quit to Desktop). `PauseNavigationHandler` collects direct-child buttons, so a cloned button slotted in gets navigation for free.
+- Look: a black centre column with soft grey edges over the blurred scene; underlined typewriter text, red for the selected entry; version label at the bottom.
+- Options pages (Display): grey gradient header bars with the setting name, `< value >` selectors (`OptionsButton`) for choices and on/off, sliders with a red fill and white knob, a dark red bar behind the selected row, underlined "Apply" and "Back" text buttons. Components on that page: Image 76, Relay 54, TextMeshProUGUI 46, Animator 22, TextButtonColorEffectTMP 20, Button 18, OptionsButton 10, Slider 2.

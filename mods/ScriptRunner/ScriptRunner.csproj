@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ScriptRunner</RootNamespace>
+    <Description>Runs C# scripts compiled by the dev tools inside the running game.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenKit/ObenKit.csproj" />
+    <ProjectReference Include="../DevBridge/DevBridge.csproj" />
+  </ItemGroup>
+</Project>

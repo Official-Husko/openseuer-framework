@@ -30,10 +30,17 @@ internal static class AssemblyRewriter
     public static (byte[] Image, byte[] Symbols) Prepare(string path, bool rename)
     {
         string pdbPath = Path.ChangeExtension(path, ".pdb");
-        bool hasSymbols = File.Exists(pdbPath);
+        byte[] symbols = File.Exists(pdbPath) ? File.ReadAllBytes(pdbPath) : null;
+        return Prepare(File.ReadAllBytes(path), symbols, rename);
+    }
 
-        using var input = new MemoryStream(File.ReadAllBytes(path));
-        using var pdbInput = hasSymbols ? new MemoryStream(File.ReadAllBytes(pdbPath)) : null;
+    /// <summary>Same as <see cref="Prepare(string, bool)"/> for an image that's already in memory.</summary>
+    public static (byte[] Image, byte[] Symbols) Prepare(byte[] image, byte[] symbols, bool rename)
+    {
+        bool hasSymbols = symbols != null;
+
+        using var input = new MemoryStream(image);
+        using var pdbInput = hasSymbols ? new MemoryStream(symbols) : null;
         var readParams = new ReaderParameters
         {
             ReadSymbols = hasSymbols,

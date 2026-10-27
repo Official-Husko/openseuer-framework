@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/mods/">
     <Project Path="mods/DevBridge/DevBridge.csproj" />
+    <Project Path="mods/ObenPatches/ObenPatches.csproj" />
     <Project Path="mods/ScriptRunner/ScriptRunner.csproj" />
   </Folder>
   <Folder Name="/tools/">

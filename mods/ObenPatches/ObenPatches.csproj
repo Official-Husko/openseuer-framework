@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ObenPatches</RootNamespace>
+    <Description>Fixes for bugs in the game itself, each one a switch of its own.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+  </ItemGroup>
+</Project>

@@ -12,8 +12,9 @@ public sealed class InstallCommand : ICommand
     public Task<int> RunAsync(Args args)
     {
         var game = GameInstall.Locate(args.Get("game"));
+        // Unity reads its startup files only at launch, so a running game just picks this up next time.
         if (GameProcess.IsRunning(game))
-            throw new InvalidOperationException("Close the game first: the loader DLL is in use while it runs.");
+            Out.Warn("The game is running. The loader starts with it after a restart.");
 
         foreach (string step in new LoaderInstaller(game).Install())
             Out.Info("  " + step);

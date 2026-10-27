@@ -86,12 +86,16 @@ internal static class DependencySorter
         // loadAfter is only a hint: if following it would close a loop, skip it instead of failing.
         foreach (string id in mod.Manifest.LoadAfter)
         {
-            if (byId.TryGetValue(id, out var hint) && !visiting.Contains(hint.Id))
+            if (byId.TryGetValue(id, out var hint) && !visiting.Contains(hint.Id) && !Reaches(hint, mod.Id, byId))
                 Visit(hint, byId, visiting, done, ordered);
         }
 
         visiting.Remove(mod.Id);
         done.Add(mod.Id);
+
+        // Already marked as part of a cycle while visiting its dependencies; keep that reason.
+        if (mod.State == ModState.Failed)
+            return;
 
         // A dependency may have failed during the visit above.
         foreach (string id in mod.Manifest.Dependencies.Keys)
@@ -104,5 +108,27 @@ internal static class DependencySorter
         }
 
         ordered.Add(mod);
+    }
+
+    // True when "from" leads to "target" through dependencies or loadAfter hints.
+    private static bool Reaches(ModInfo from, string target, Dictionary<string, ModInfo> byId)
+    {
+        var seen = new HashSet<string>();
+        var pending = new Stack<ModInfo>();
+        pending.Push(from);
+        while (pending.Count > 0)
+        {
+            var current = pending.Pop();
+            if (current.Id == target)
+                return true;
+            if (!seen.Add(current.Id))
+                continue;
+            foreach (string id in current.Manifest.Dependencies.Keys.Concat(current.Manifest.LoadAfter))
+            {
+                if (byId.TryGetValue(id, out var next))
+                    pending.Push(next);
+            }
+        }
+        return false;
     }
 }

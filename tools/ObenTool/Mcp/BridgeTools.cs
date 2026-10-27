@@ -45,19 +45,27 @@ public static class BridgeTools
             "Reload one hot-reload mod (and its dependents), or all of them.",
             Schema.Object().Str("id", "Mod id; omit to reload every hot-reload mod"));
 
-        yield return Forward("scene_find", "scene.find",
+        yield return Forward("obj_find", "obj.find",
             "Find GameObjects by name or component type in the loaded scenes.",
             Schema.Object()
                 .Str("name", "Substring of the object name")
                 .Str("component", "Component type name, e.g. Door")
+                .Bool("includeInactive", "Include inactive objects")
                 .Int("max", "At most this many results (default 50)"));
 
-        yield return Forward("obj_get", "obj.get",
-            "Read a GameObject's components, or one component's fields and properties.",
+        yield return Forward("obj_inspect", "obj.inspect",
+            "A GameObject's components, or every field and property of one component.",
             Schema.Object()
                 .Str("target", "Object path (Root/Child) or #instanceId", required: true)
-                .Str("component", "Component type name")
-                .Str("member", "Field or property name"));
+                .Str("component", "Component type name"));
+
+        yield return Forward("obj_get", "obj.get",
+            "Read one field or property of a component.",
+            Schema.Object()
+                .Str("target", "Object path (Root/Child) or #instanceId", required: true)
+                .Str("component", "Component type name", required: true)
+                .Str("member", "Field or property name", required: true)
+                .Int("depth", "How deep to expand objects (default 2)"));
 
         yield return Forward("obj_set", "obj.set",
             "Set a field or property on a component.",
@@ -67,12 +75,19 @@ public static class BridgeTools
                 .Str("member", "Field or property name", required: true)
                 .Any("value", "New value (JSON)", required: true));
 
-        yield return Forward("type_call", "type.call",
-            "Call a static method or read a static field/property on any loaded type, e.g. GameController.instance.",
+        yield return Forward("type_get", "type.get",
+            "Read a static field or property on any loaded type, e.g. type=GameController member=instance.",
             Schema.Object()
                 .Str("type", "Type name, e.g. SaveController", required: true)
-                .Str("member", "Method, field or property name", required: true)
-                .Arr("args", "Arguments for a method call"));
+                .Str("member", "Field or property name", required: true)
+                .Int("depth", "How deep to expand objects (default 2)"));
+
+        yield return Forward("type_call", "type.call",
+            "Call a static method on any loaded type.",
+            Schema.Object()
+                .Str("type", "Type name, e.g. SaveController", required: true)
+                .Str("method", "Method name", required: true)
+                .Arr("args", "Arguments"));
 
         yield return Forward("console_exec", "console.exec",
             "Run a command in the game's developer console (the F1 console), e.g. 'add_money 100'.",

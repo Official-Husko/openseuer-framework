@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DevBridge</RootNamespace>
+    <Description>Lets outside tools inspect and control the running game over a local socket.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenKit/ObenKit.csproj" />
+  </ItemGroup>
+</Project>

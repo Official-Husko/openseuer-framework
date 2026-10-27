@@ -17,7 +17,7 @@
 
   <!-- Game assemblies are compile-time only; the game already has them at runtime. -->
   <ItemGroup>
-    <ObenGameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;Newtonsoft.Json" />
+    <ObenGameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;Newtonsoft.Json;AstarPathfindingProject" />
     <ObenGameAssembly Include="Unity.InputSystem;Unity.TextMeshPro;Unity.Localization" />
     <ObenGameAssembly Include="UnityEngine;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.InputLegacyModule;UnityEngine.UI;UnityEngine.UIModule" />
     <ObenGameAssembly Include="UnityEngine.TextRenderingModule;UnityEngine.ImageConversionModule;UnityEngine.AudioModule;UnityEngine.AssetBundleModule" />

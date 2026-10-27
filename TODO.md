@@ -7,10 +7,11 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] ObenLoader: native loading through Unity's startup files, dependency order, hot reload
 - [x] `oben` tool: install, launch through umu/Heroic, logs, bridge calls, MCP server
 - [x] DevBridge and Script Runner (`oben eval`, `oben run --watch`)
-- [x] ObenFramework: events (MainMenu, WorldReady, save/load), WorldState, F1 console commands
+- [x] ObenFramework: events (MainMenu, WorldReady, save/load), WorldState, F1 console commands, switchable features
 - [ ] Error report file (errors.log) for bug reports, like NeetExtended's
 - [ ] Changelog from commit history (`oben changelog`), feeding an in-game What's New popup
 - [ ] Release packaging (zip with installer scripts, no DevBridge or Script Runner)
+- [x] GPL-3.0 license
 - [ ] A THIRD-PARTY-NOTICES file once the first code from the MIT reference projects is ported
 
 ## ObenFramework (core functionality)
@@ -45,7 +46,7 @@ A save format replacement as its own mod: open, documented JSON, compressed, wit
 - [ ] Hook the `.tnmt` read and write paths (`SaveController` write bytes path, `Deserialize`)
 - [ ] Import and export between the two formats with `oben save`
 
-## Co-op (ObenTogether or ObenCoop)
+## ObenCoop
 
 Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-reference.md`. Steam lobbies don't work on every install, so networking sits behind a transport interface with direct IP first.
 
@@ -74,16 +75,14 @@ From `docs/research/performance.md`, each one a switch of its own:
 - [ ] Drop the LINQ in `LightsController.FixedUpdate` / `LightCullZone`
 - [ ] Graphics knobs the options menu doesn't offer (shadow distance and cascades, LOD bias, volumetrics), and apply the SSAO option that's saved but never used
 
-## Game bug fixes (ideas)
+## Unofficial ObenPatches
 
-Found while reading the code; each needs checking in game first.
+Fixes for the game's own bugs, each a feature the player can switch off. Write-ups in `docs/game/known-bugs.md`.
 
-- [ ] `RefreshCubemapInTrigger` compares the tag against `"Player)"`
-- [ ] `NPC_FOV.CheckIfNPCsAreDetected` calls `GetComponent` on the wrong object
-- [ ] First run logs a `DirectoryNotFoundException` because `Saves/` doesn't exist yet
-- [ ] `TimeAndDay`'s constructor ignores its hours and minutes
-- [ ] `WeatherManager`'s rain and wind getters write to the log on every call
-- [ ] The F1 console clears `Achievements.globalDisable` when it closes
+- [x] MissingSavesFolder: error on the main menu before the first save
+- [x] RobbersSeePolice: NPC sight checks read the NPC's own head
+- [x] ReflectionProbeRefresh (off by default): `"Player)"` tag typo; needs a look in a level before it's turned on
+- [ ] More from playing: check `known-bugs.md`'s "not fixed" list and Player.log errors during real play
 
 ## Expansion mods
 

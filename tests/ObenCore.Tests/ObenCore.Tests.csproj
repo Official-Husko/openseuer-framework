@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Annotations only: the linked loader and framework sources were written without nullable checks. -->
+    <Nullable>annotations</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>ObenCore.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!--
+    The loader and framework projects reference Unity, so they aren't referenced here. The files with
+    pure logic are compiled into the test assembly instead; Stubs/ stands in for the few types
+    they touch outside that set.
+  -->
+  <ItemGroup>
+    <Compile Include="../../src/ObenLoader/Mods/SemVer.cs" Link="Linked/SemVer.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/DependencySorter.cs" Link="Linked/DependencySorter.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/ModInfo.cs" Link="Linked/ModInfo.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/ModManifest.cs" Link="Linked/ModManifest.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/ModState.cs" Link="Linked/ModState.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/LogBuffer.cs" Link="Linked/LogBuffer.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/LogEntry.cs" Link="Linked/LogEntry.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/LogLevel.cs" Link="Linked/LogLevel.cs" />
+    <Compile Include="../../src/ObenLoader/Config/JsonFile.cs" Link="Linked/JsonFile.cs" />
+    <Compile Include="../../src/ObenLoader/Runtime/Disposable.cs" Link="Linked/Disposable.cs" />
+    <Compile Include="../../src/ObenLoader/Runtime/ITracker.cs" Link="Linked/ITracker.cs" />
+    <Compile Include="../../src/ObenFramework/Events/HandlerList.cs" Link="Linked/HandlerList.cs" />
+    <Compile Include="../../src/ObenFramework/Console/ConsoleTokens.cs" Link="Linked/ConsoleTokens.cs" />
+    <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
+    <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
+    <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />
+    <Compile Include="../../tools/ObenTool/Scripting/ScriptSource.cs" Link="Linked/ScriptSource.cs" />
+  </ItemGroup>
+</Project>

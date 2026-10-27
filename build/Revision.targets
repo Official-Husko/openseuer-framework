@@ -1,0 +1,19 @@
+<Project>
+  <!--
+    Stamps the short commit hash into every assembly's informational version, for example
+    "0.1.0+1a2b3c4" ("-dirty" when built from uncommitted changes). Outside a git checkout the
+    version stays plain.
+  -->
+  <Target Name="ObenSourceRevision" BeforeTargets="InitializeSourceControlInformation" Condition="'$(SourceRevisionId)' == ''">
+    <Exec Command="git describe --always --dirty --abbrev=7 --exclude=*"
+          WorkingDirectory="$(MSBuildThisFileDirectory).."
+          ConsoleToMSBuild="true" EchoOff="true" IgnoreExitCode="true"
+          StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_ObenRevision" />
+      <Output TaskParameter="ExitCode" PropertyName="_ObenRevisionExitCode" />
+    </Exec>
+    <PropertyGroup Condition="'$(_ObenRevisionExitCode)' == '0'">
+      <SourceRevisionId>$(_ObenRevision)</SourceRevisionId>
+    </PropertyGroup>
+  </Target>
+</Project>

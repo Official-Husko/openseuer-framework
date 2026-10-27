@@ -1,0 +1,32 @@
+<Project>
+  <!--
+    Packaging for anything that ships as a mod folder: <game>/Mods/<ModId>/.
+    Copies the build output, mod.json and the assets/ folder.
+  -->
+  <PropertyGroup>
+    <ObenModId Condition="'$(ObenModId)' == ''">$(AssemblyName)</ObenModId>
+    <ObenModOutDir>$(ObenModsDir)/$(ObenModId)</ObenModOutDir>
+  </PropertyGroup>
+
+  <!-- Framework assemblies are already loaded by the game; never copy them next to a mod. -->
+  <ItemDefinitionGroup>
+    <ProjectReference>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <None Include="mod.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('mod.json')" />
+    <None Include="assets/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="ObenDeployMod" AfterTargets="Build" Condition="'$(ObenDeploy)' == 'true'">
+    <ItemGroup>
+      <_ObenModFile Include="$(OutDir)**/*" Exclude="$(OutDir)**/*.deps.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ObenModFile)"
+          DestinationFiles="@(_ObenModFile->'$(ObenModOutDir)/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="$(ObenModId) -> $(ObenModOutDir)" />
+  </Target>
+</Project>

@@ -1,0 +1,31 @@
+<Project>
+  <!-- Settings shared by every project in the repo. -->
+  <PropertyGroup>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <Authors>pawbeans</Authors>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <!-- The commit a build comes from, in each assembly's informational version. -->
+  <Import Project="build/Revision.targets" />
+
+  <!-- Optional per-machine overrides (gitignored), e.g. where the game lives. -->
+  <Import Project="build/Local.props" Condition="Exists('$(MSBuildThisFileDirectory)build/Local.props')" />
+
+  <!-- Where the game lives. Override with OBENSEUER_DIR or build/Local.props. -->
+  <PropertyGroup>
+    <ObenGameDir Condition="'$(ObenGameDir)' == '' and '$(OBENSEUER_DIR)' != ''">$(OBENSEUER_DIR)</ObenGameDir>
+    <ObenGameDir Condition="'$(ObenGameDir)' == '' and '$(OS)' == 'Windows_NT'">C:\Program Files (x86)\Steam\steamapps\common\Obenseuer</ObenGameDir>
+    <ObenGameDir Condition="'$(ObenGameDir)' == ''">$(HOME)/.local/share/Steam/steamapps/common/Obenseuer</ObenGameDir>
+    <ObenManagedDir>$(ObenGameDir)/Obenseuer_Data/Managed</ObenManagedDir>
+    <ObenModsDir>$(ObenGameDir)/Mods</ObenModsDir>
+    <!-- Copy builds into the game folder automatically when it exists. -->
+    <ObenDeploy Condition="'$(ObenDeploy)' == '' and Exists('$(ObenManagedDir)')">true</ObenDeploy>
+    <HarmonyVersion>2.3.6</HarmonyVersion>
+    <CecilVersion>0.11.4</CecilVersion>
+  </PropertyGroup>
+</Project>

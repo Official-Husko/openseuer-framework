@@ -1,0 +1,32 @@
+<Project>
+  <!-- Imported by every project that runs inside the game. -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>portable</DebugType>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- Unity serialized fields and unused event warnings are noise here. -->
+    <NoWarn>$(NoWarn);CS0649;CS0169;CS0414;MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Lib.Harmony" Version="$(HarmonyVersion)" IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game assemblies are compile-time only; the game already has them at runtime. -->
+  <ItemGroup>
+    <ObenGameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;Newtonsoft.Json" />
+    <ObenGameAssembly Include="Unity.InputSystem;Unity.TextMeshPro;Unity.Localization" />
+    <ObenGameAssembly Include="UnityEngine;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.InputLegacyModule;UnityEngine.UI;UnityEngine.UIModule" />
+    <ObenGameAssembly Include="UnityEngine.TextRenderingModule;UnityEngine.ImageConversionModule;UnityEngine.AudioModule;UnityEngine.AssetBundleModule" />
+    <ObenGameAssembly Include="UnityEngine.ScreenCaptureModule;UnityEngine.PhysicsModule;UnityEngine.AIModule;UnityEngine.AnimationModule;UnityEngine.ParticleSystemModule;UnityEngine.JSONSerializeModule" />
+    <Reference Include="@(ObenGameAssembly)" HintPath="$(ObenManagedDir)/%(Identity).dll" Private="false" />
+  </ItemGroup>
+
+  <Target Name="ObenCheckGameFiles" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(ObenManagedDir)/Assembly-CSharp.dll')"
+           Text="Obenseuer not found in '$(ObenGameDir)'. Set OBENSEUER_DIR or put &lt;ObenGameDir&gt; in build/Local.props." />
+  </Target>
+</Project>

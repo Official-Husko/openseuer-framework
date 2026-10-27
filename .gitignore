@@ -1,0 +1,20 @@
+# Build output
+bin/
+obj/
+*.user
+.vs/
+.idea/
+.vscode/
+
+# Decompiled game code stays local
+decompiled/
+
+# Reference projects we read but don't ship (each has its own license)
+example-mp/
+example-framework/
+
+# Local overrides
+build/Local.props
+
+# Release packages
+dist/

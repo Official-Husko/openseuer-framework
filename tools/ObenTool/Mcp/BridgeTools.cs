@@ -45,6 +45,16 @@ public static class BridgeTools
             "Reload one hot-reload mod (and its dependents), or all of them.",
             Schema.Object().Str("id", "Mod id; omit to reload every hot-reload mod"));
 
+        yield return Forward("features_list", "features.list",
+            "Every switchable feature of every loaded mod (bug fixes, cheats, tweaks) with its state.", Schema.Object());
+
+        yield return Forward("features_set", "features.set",
+            "Switch a feature on or off right now. The choice is saved.",
+            Schema.Object()
+                .Str("mod", "Mod id, e.g. ObenPatches", required: true)
+                .Str("id", "Feature id", required: true)
+                .Bool("enabled", "On or off", required: true));
+
         yield return Forward("obj_find", "obj.find",
             "Find GameObjects by name or component type in the loaded scenes.",
             Schema.Object()

@@ -1,4 +1,5 @@
 using ObenFramework.Events;
+using ObenFramework.Features;
 using ObenLoader;
 
 namespace ObenFramework;
@@ -12,8 +13,12 @@ public sealed class FrameworkMod : ObenMod
     {
         Instance = this;
         GameEvents.Init(this);
+        ModFeatures.Init(this);
+        FeatureCommand.Register(this);
         Log.Info("Ready.");
     }
+
+    public override void OnUpdate() => ModFeatures.Update();
 
     public override void OnUnload() => Instance = null;
 }

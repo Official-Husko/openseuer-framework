@@ -33,14 +33,20 @@ public static class LogHub
     internal static void Init(string logsDir)
     {
         _file = new LogFile(Path.Combine(logsDir, "latest" + Instance.Suffix + ".log"));
+        ErrorReport.Init(logsDir);
         Application.logMessageReceivedThreaded += OnUnityLog;
     }
 
-    internal static void Flush() => _file?.Flush();
+    internal static void Flush()
+    {
+        _file?.Flush();
+        ErrorReport.Flush();
+    }
 
     internal static void Shutdown()
     {
         Application.logMessageReceivedThreaded -= OnUnityLog;
+        ErrorReport.Shutdown();
         _file?.Dispose();
         _file = null;
     }

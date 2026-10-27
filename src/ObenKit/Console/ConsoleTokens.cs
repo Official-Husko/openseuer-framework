@@ -1,0 +1,27 @@
+using System;
+using System.Collections.Generic;
+
+namespace ObenKit.Console;
+
+/// <summary>Splits a console line the way the game does: on spaces, with "quoted parts" kept whole.</summary>
+internal static class ConsoleTokens
+{
+    public static string[] Split(string line)
+    {
+        var tokens = new List<string>();
+        if (string.IsNullOrEmpty(line))
+            return tokens.ToArray();
+
+        string[] parts = line.Split('"');
+        for (int i = 0; i < parts.Length; i++)
+        {
+            if (i % 2 == 1)
+            {
+                tokens.Add(parts[i]);
+                continue;
+            }
+            tokens.AddRange(parts[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+        return tokens.ToArray();
+    }
+}

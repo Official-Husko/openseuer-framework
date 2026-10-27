@@ -4,7 +4,11 @@ using System.Reflection;
 
 namespace ObenLoader.Mods;
 
-/// <summary>Loads a mod's DLLs and keeps track of copies that were replaced.</summary>
+/// <summary>
+/// Loads a mod's DLLs. Hot-reload mods are read into memory (so the files stay unlocked for
+/// rebuilding) and, once anything has been reloaded, rewritten so they bind to the newest copies
+/// of the assemblies they use.
+/// </summary>
 internal static class AssemblyLoading
 {
     private static readonly HashSet<Assembly> Stale = new HashSet<Assembly>();
@@ -14,7 +18,8 @@ internal static class AssemblyLoading
         var result = new List<Assembly>();
         foreach (string path in ModDiscovery.AssemblyPaths(mod))
         {
-            var assembly = Assembly.LoadFrom(path);
+            // The first copy keeps its real name; every reload gets a fresh one.
+            var assembly = mod.Manifest.HotReload ? FromMemory(path, rename: mod.LoadCount > 0) : Assembly.LoadFrom(path);
             AssemblyResolver.SetCurrent(assembly, Path.GetFileNameWithoutExtension(path));
             result.Add(assembly);
         }
@@ -41,5 +46,18 @@ internal static class AssemblyLoading
                 newest = t;
         }
         return newest;
+    }
+
+    private static Assembly FromMemory(string path, bool rename)
+    {
+        if (rename || AssemblyRewriter.Active)
+        {
+            var (image, symbols) = AssemblyRewriter.Prepare(path, rename);
+            return symbols != null ? Assembly.Load(image, symbols) : Assembly.Load(image);
+        }
+
+        byte[] raw = File.ReadAllBytes(path);
+        string pdb = Path.ChangeExtension(path, ".pdb");
+        return File.Exists(pdb) ? Assembly.Load(raw, File.ReadAllBytes(pdb)) : Assembly.Load(raw);
     }
 }

@@ -66,6 +66,7 @@ internal sealed class ModHost : MonoBehaviour
     private void Update()
     {
         MainThread.Drain(_log);
+        Mods.ModRegistry.Watcher.Tick();
         _update.Invoke(UpdateCall, _log);
 
         if (Time.unscaledTime >= _nextFlush)

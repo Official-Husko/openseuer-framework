@@ -91,6 +91,7 @@ public static partial class ModRegistry
     {
         _log = log;
         _settings = new ConfigFile<LoaderSettings>(Path.Combine(LoaderPaths.DataDir, "settings.json"), log);
+        Watcher.Enabled = _settings.Value.AutoReload;
     }
 
     internal static void Add(ModInfo mod)

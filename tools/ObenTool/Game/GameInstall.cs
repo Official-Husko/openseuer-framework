@@ -22,6 +22,9 @@ public sealed class GameInstall
 
     public string LoaderLogFile(int instance = 1) => Path.Combine(LogsDir, "latest" + Suffix(instance) + ".log");
 
+    /// <summary>The loader's error report: what went wrong this session, for bug reports. Missing when nothing did.</summary>
+    public string ErrorLogFile(int instance = 1) => Path.Combine(LogsDir, "errors" + Suffix(instance) + ".log");
+
     /// <summary>Unity's log. Extra instances write theirs next to the loader logs (see <c>launch --instance</c>).</summary>
     public string PlayerLogFile(int instance = 1) => instance <= 1
         ? Path.Combine(PersistentDataDir() ?? "", "Player.log")

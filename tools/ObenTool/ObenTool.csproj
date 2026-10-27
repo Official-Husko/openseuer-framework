@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>oben</AssemblyName>
+    <RootNamespace>ObenTool</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The loader reference only orders the build; the tool never loads it. -->
+    <NoWarn>$(NoWarn);NU1702</NoWarn>
+  </PropertyGroup>
+
+  <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game. -->
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <None Include="../../src/ObenLoader/bin/$(Configuration)/ObenLoader.dll" Link="payload/ObenLoader.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="../../src/ObenLoader/bin/$(Configuration)/ObenLoader.pdb" Link="payload/ObenLoader.pdb" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(NuGetPackageRoot)lib.harmony/$(HarmonyVersion)/lib/net472/0Harmony.dll" Link="payload/0Harmony.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(NuGetPackageRoot)mono.cecil/$(CecilVersion)/lib/net40/Mono.Cecil.dll" Link="payload/Mono.Cecil.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+</Project>

@@ -16,6 +16,7 @@ No BepInEx needed. The loader hooks into Unity's own startup files, so the game 
 | `docs/modding/` | Guides for the loader, the framework and the tools. Start with [getting-started.md](docs/modding/getting-started.md) and [dev-tools.md](docs/modding/dev-tools.md). |
 | `docs/research/` | Bigger investigations: the reference co-op mod, performance. |
 | `scripts/` | Example scripts for `oben run`. |
+| `TODO.md` | What's planned: framework modules, ObenUIKit, ObenSave, co-op, a cheat menu, performance fixes. |
 
 ## Building
 

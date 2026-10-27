@@ -48,3 +48,7 @@ dotnet tools/ObenTool/bin/Release/net10.0/oben.dll launch --wait 150
 ```
 
 On Linux the tool launches the game the same way Heroic does (umu-launcher, the game's Proton build and Wine prefix). See [docs/modding/dev-tools.md](docs/modding/dev-tools.md).
+
+## License
+
+GPL-3.0, see [LICENSE](LICENSE). Code adapted from other projects keeps its original notice; those are listed in THIRD-PARTY-NOTICES.md.

@@ -1,5 +1,6 @@
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenFramework.Saves;
 using ObenLoader;
 
 namespace ObenFramework;
@@ -15,6 +16,7 @@ public sealed class FrameworkMod : ObenMod
         GameEvents.Init(this);
         ModFeatures.Init(this);
         FeatureCommand.Register(this);
+        ModSaves.Init(this);
         Log.Info("Ready.");
     }
 

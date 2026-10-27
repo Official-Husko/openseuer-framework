@@ -1,3 +1,4 @@
+using ObenFramework.Clock;
 using ObenFramework.Events;
 using ObenFramework.Features;
 using ObenFramework.Saves;
@@ -17,6 +18,7 @@ public sealed class FrameworkMod : ObenMod
         ModFeatures.Init(this);
         FeatureCommand.Register(this);
         ModSaves.Init(this);
+        GameClock.Init(this);
         Log.Info("Ready.");
     }
 

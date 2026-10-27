@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ObenLoader</RootNamespace>
+    <Description>Mod loader for Obenseuer.</Description>
+  </PropertyGroup>
+
+  <!-- Cecil rewrites assembly names so mods (the framework included) can be reloaded while running. -->
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" />
+  </ItemGroup>
+
+  <!-- The loader, Harmony and Cecil live in Obenseuer_Data/Managed so Unity and Mono find them without help. -->
+  <Target Name="ObenDeployLoader" AfterTargets="Build" Condition="'$(ObenDeploy)' == 'true'">
+    <ItemGroup>
+      <_ObenLoaderFile Include="$(OutDir)ObenLoader.dll;$(OutDir)ObenLoader.pdb" />
+      <_ObenLoaderFile Include="$(NuGetPackageRoot)lib.harmony/$(HarmonyVersion)/lib/net472/0Harmony.dll" />
+      <_ObenLoaderFile Include="$(NuGetPackageRoot)mono.cecil/$(CecilVersion)/lib/net40/Mono.Cecil.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ObenLoaderFile)" DestinationFolder="$(ObenManagedDir)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="ObenLoader -> $(ObenManagedDir)" />
+  </Target>
+</Project>

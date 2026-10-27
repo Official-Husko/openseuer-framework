@@ -11,6 +11,11 @@
     <NoWarn>$(NoWarn);NU1702</NoWarn>
   </PropertyGroup>
 
+  <!-- Compiles scripts against the game's own assemblies for "oben run" and "oben eval". -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+  </ItemGroup>
+
   <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game. -->
   <ItemGroup>
     <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" ReferenceOutputAssembly="false" Private="false" />

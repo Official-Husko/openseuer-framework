@@ -17,8 +17,10 @@ public sealed class McpCommand : ICommand
         var bridge = new BridgeClient(port: args.BridgePort);
         string? gameDir = args.Get("game");
 
-        var tools = LocalTools.All(bridge, () => GameInstall.Locate(gameDir), args.InstanceFilter)
-            .Concat(BridgeTools.All(bridge));
+        Func<GameInstall> game = () => GameInstall.Locate(gameDir);
+        var tools = LocalTools.All(bridge, game, args.InstanceFilter)
+            .Concat(BridgeTools.All(bridge))
+            .Concat(ScriptTools.All(bridge, game));
 
         // stdout belongs to the protocol; anything else must go to stderr.
         var stdout = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = false };

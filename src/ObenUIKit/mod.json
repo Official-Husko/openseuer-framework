@@ -1,0 +1,10 @@
+{
+  "id": "ObenUIKit",
+  "name": "ObenUIKit",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "Windows and controls that look like the game's own, and the mod menu.",
+  "dependencies": { "ObenFramework": "0.1.0" },
+  "hotReload": true,
+  "essential": true
+}

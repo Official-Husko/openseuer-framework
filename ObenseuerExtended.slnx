@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/ObenLoader/ObenLoader.csproj" />
     <Project Path="src/ObenFramework/ObenFramework.csproj" />
+    <Project Path="src/ObenUIKit/ObenUIKit.csproj" />
   </Folder>
   <Folder Name="/mods/">
     <Project Path="mods/DevBridge/DevBridge.csproj" />

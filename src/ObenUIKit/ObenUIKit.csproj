@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ObenUIKit</RootNamespace>
+    <Description>UI toolkit for Obenseuer mods, built from the game's own UI elements, and the mod menu.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../ObenFramework/ObenFramework.csproj" />
+  </ItemGroup>
+
+  <!-- Ships as a regular mod folder: <game>/Mods/ObenUIKit. -->
+  <Import Project="$(RepoRoot)build/Mod.targets" />
+</Project>

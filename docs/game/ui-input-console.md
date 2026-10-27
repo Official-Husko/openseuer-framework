@@ -621,3 +621,11 @@ Looked at through the dev bridge, main menu and in a level.
 - `Main` holds seven direct-child buttons (Resume Game, Load Game, Save Game, Options, Difficulty, Quit to Menu, Quit to Desktop). `PauseNavigationHandler` collects direct-child buttons, so a cloned button slotted in gets navigation for free.
 - Look: a black centre column with soft grey edges over the blurred scene; underlined typewriter text, red for the selected entry; version label at the bottom.
 - Options pages (Display): grey gradient header bars with the setting name, `< value >` selectors (`OptionsButton`) for choices and on/off, sliders with a red fill and white knob, a dark red bar behind the selected row, underlined "Apply" and "Back" text buttons. Components on that page: Image 76, Relay 54, TextMeshProUGUI 46, Animator 22, TextButtonColorEffectTMP 20, Button 18, OptionsButton 10, Slider 2.
+
+### Control anatomy (main menu sign, Options > Display)
+
+Paths under `Other/Sign Menu/sign_003/Options/Menu options/Mask/Size/Display/Scroll/Display Scroll View/Viewport/Display/`. Text colour is almost always (0.642, 0.481, 0.481); Erika Ormig SDF Menu 30 pt on the sign.
+
+- **Option row** (`Resolution`, 958x65): `Option Title` (Image, 450x65) with a `Title` TMP, then `Main Menu Option Button` (Image + `HoverSoundEffect` + `OptionsButton`, 425x65) holding `Background` (Animator + Image, sprite "Pause Menu Options Button 1"), the value TMP (`ResolutionText`), and `<` / `>` buttons.
+- **Arrow button** (`<`, `>`): Image (sprite "UISprite", grey) + `Button` + `TextButtonColorEffectTMP` + `HoverSoundEffect` + `AudioSource` + `ContentSizeFitter` + `VerticalLayoutGroup`; child TMP in Roboto-Regular SDF 35 with `Selected` (Image, dark red 0.53/0.01/0.01 at 32% alpha), `OnSelected` and `OnUnselected` (`Relay`), and a `Press Audio` AudioSource. The same shape as the main menu's text buttons.
+- **Slider** (`Fov/Main Menu Option Button/Slider`, 500x65): value TMP (`FovNum`) and a `UnityEngine.UI.Slider` (350x15). Track and fill are drawn with the icon font: "Open Sewer Icons SDF" glyph `B` repeated (fill tinted red 1.0/0.26/0.26 at 60%); the handle (sprite "slider_handle_001", `TextButtonColorEffectTMP`, hover and press sounds) draws glyph `D` (round, grey) over `C` (edges, near black).

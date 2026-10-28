@@ -23,6 +23,7 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new AmbientSoundVariety());
         ModFeatures.Register(this, new DialogueLuaFunctions());
         ModFeatures.Register(this, new NpcSightChance());
+        ModFeatures.Register(this, new RenovationMaterialsOnce());
         BankInterest.State = ModSaves.Register<BankInterestState>(this, "bank-interest");
         ModFeatures.Register(this, new BankInterest());
     }

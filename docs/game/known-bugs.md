@@ -69,6 +69,12 @@ Fix: a transpiler replaces the roll with `Random.value`. Off by default because 
 
 Fix: a prefix applies the same formulas once per whole week since interest was last applied, and keeps that day in the save (`mods/ObenPatches.bank-interest.json` next to it). It then moves the game's last-check day to today, so the game's own (always zero) step skips itself and everything after it, like loan payments, runs as before. Counting starts the day the fix first runs, so nothing is charged for time that already passed. On by default: savings grow and debts grow, as the banks advertise. Tested on 0.5.13 by driving `CurrentTime` day by day with a test account: with the fix, day 7 brings 1000 OC to 1014 and a 1000 OC debt to 1029 (the game truncates coins); without it nothing ever changes.
 
+### RenovationMaterialsOnce: renovations take their materials from every resource storage
+
+`TenementController.RemoveRequiredItems` (`TenementController.cs:1052`) runs `tenementResourceStorage.RemoveItem(id, out remaining, amount)` for each tenement resource storage, always asking for the full `amount` instead of what is still missing, then removes `remaining` (what the last storage couldn't give) from the inventory. With one storage, or none, that is right. With two or more, every storage that has the material gives the full amount, and the inventory pays again whenever the last storage is short. Resource storages are furniture with a `TenementResourceStorage` component (`TenementResourceStorage.cs`), which registers itself on `Start`, so building a second one is enough. `TenementUpgrade.TakeRequiredItemsAndMoney` (`TenementUpgrade.cs:178`) is the only caller.
+
+Fix: a prefix (last, after the framework's extra inventory sources have lowered the amount) walks the storages with the amount still missing and takes only the rest from the inventory. With fewer than two storages it leaves the game's code to run. Ported from the reference framework's renovation tweak (`TakeRemainingOnly`). Check: build two resource storages, put 10 planks in each, order a renovation needing 10 planks: without the fix both storages end at 0, with it one keeps its 10. The tenement level loaded with `new_scene` had no resource storage, so this hasn't been watched in game yet.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

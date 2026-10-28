@@ -30,7 +30,7 @@ Build it with the solution (`dotnet build ObenseuerExtended.slnx -c Release`) an
 
 The tool starts the game the way Heroic does: through umu-launcher with the Proton build and Wine prefix set for the game in Heroic. It uses Heroic's own copy of umu-run (`~/.config/heroic/tools/runtimes/umu/umu-run`). Override any part with `OBEN_UMU`, `OBEN_PROTON` (a Proton folder) or `OBEN_PREFIX`. umu's output goes to `ObenLoader/logs/runner.log`. On Windows the exe is started directly.
 
-`--instance 2` starts a second copy for testing multiplayer on one machine. It gets `OBEN_INSTANCE=2`, its own log files (`latest-2.log`, `player-2.log`) and the bridge one port up.
+`--instance 2` starts a second copy for testing multiplayer on one machine (run `oben install --multi-instance` once first; the game allows only one copy otherwise). It gets `OBEN_INSTANCE=2`, its own log files (`latest-2.log`, `player-2.log`) and the bridge one port up.
 
 ## DevBridge
 
@@ -61,6 +61,8 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `player.get`, `player.stats`, `player.stat`, `player.teleport`, `player.heal`, `player.godmode` | see [framework/player.md](framework/player.md) | the player |
 | `items.find`, `items.give`, `items.count`, `items.spawn`, `money.get`, `money.add` | see [framework/items.md](framework/items.md) | items and money |
 | `clock.get`, `clock.set`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
+| `lua.get`, `lua.set`, `lua.run`, `quests.list`, `quests.set` | see [framework/dialogue.md](framework/dialogue.md), [framework/quests.md](framework/quests.md) | dialogue variables and the quest log |
+| `doors.list`, `doors.set`, `interact.target`, `furniture.list` | see [framework/world.md](framework/world.md) | doors, what's under the crosshair, placed furniture |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |
 
 Other mods can add commands: `ModRegistry.Get<DevBridgeMod>().Commands.Add(this, "my.command", "What it does", new[] { "param: meaning" }, p => ...)`. They're removed when that mod unloads.

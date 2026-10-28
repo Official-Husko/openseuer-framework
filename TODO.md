@@ -10,8 +10,9 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] ObenFramework: events (MainMenu, WorldReady, save/load), WorldState, F1 console commands, switchable features
 - [x] Error report file (errors.log) for bug reports
 - [x] Changelog from commit history (`oben changelog`)
-- [ ] In-game What's New popup reading changelog.json
-- [ ] Release packaging (zip with installer scripts, no DevBridge or Script Runner)
+- [x] In-game What's New page and popup reading changelog.json (needs a release with changelog.json to see it)
+- [x] Release packaging (`build/package.sh`, `build/release.sh`; dev mods marked `devOnly`)
+- [x] Unit tests (`dotnet test`) and `oben check` for hooks after game updates
 - [x] GPL-3.0 license
 - [ ] A THIRD-PARTY-NOTICES file once the first code from the MIT reference projects is ported
 
@@ -27,9 +28,9 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [ ] Notifications: the game's own toasts (`Notifications.instance.CreateNotification`)
 - [ ] Settings: typed settings per mod with an in-game page
 - [x] Clock and weather: time of day, minute/hour/day events, weather
-- [ ] Dialogue and Lua: read and set variables, register functions, start conversations
-- [ ] Quests: observe and drive `TaskController`
-- [ ] World: doors, interactables, furniture, power (`docs/game/world-building.md`)
+- [x] Dialogue and Lua: variables, Lua functions, conversations, started/ended events
+- [x] Quests: quest log, status changes, change events
+- [x] World: doors, interactables with stable addresses, furniture ids and events, lights, switches, power (read-only)
 
 ## ObenUIKit
 
@@ -37,9 +38,10 @@ UI that looks like the game's own: built from the game's uGUI elements, TMP font
 
 - [x] Theme taken from the main menu and the pause menu (stamped, not cloned)
 - [x] Window, headers, labels, buttons, cycles, toggles, sliders
-- [ ] Keyboard/controller navigation, text fields, key binds, long lists, tabs, tooltips, confirm dialogs
+- [x] Keyboard/controller navigation, text fields, key binds, confirm dialogs, toasts
+- [ ] Long lists, tabs, tooltips
 - [x] Mod menu: MODS in the main and pause menus, Mods page with mod and feature switches
-- [ ] Settings, Errors and What's New pages
+- [x] Settings, Errors and What's New pages
 
 ## ObenSave
 
@@ -53,20 +55,20 @@ A save format replacement as its own mod: open, documented JSON, compressed, wit
 
 Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-reference.md`. Steam lobbies don't work on every install, so networking sits behind a transport interface with direct IP first.
 
-- [ ] Transport interface, direct IP transport, channels, version handshake, persistent player id
-- [ ] Session: host, join, leave, roster
+- [x] Transport interface, direct IP transport, channels, version handshake, persistent player id
+- [x] Session: host, join, leave, roster (tested with two copies on one machine)
 - [ ] Other players' bodies: puppets, pose, sitting, appearance
-- [ ] Chat
+- [x] Chat (console command for now)
 - [ ] Shared clock and weather, sleep vote
 - [ ] Join ticket (send the host's world to a joining player)
 - [ ] Shared world: doors, items, containers, building, stations, shops, quests
 - [ ] Steam transport as a second option
 - [ ] Free roam (players in different levels), last
-- [ ] Second game instance on one machine for testing (`single-instance=` in boot.config)
+- [x] Second game instance on one machine (`oben install --multi-instance`, `oben launch --instance 2`)
 
 ## Cheat Menu
 
-- [ ] Its own window (ObenUIKit): god mode, stats, money, items, time and weather, noclip, teleport. Much of it can call the game's own console routines.
+- [x] Window on Insert and a MODS page: god mode, needs, heal, noclip, move speed, teleport spots, money, items, time, weather, crime (needs its in-game check)
 
 ## Performance Fixes
 
@@ -86,7 +88,8 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] MissingSavesFolder: error on the main menu before the first save
 - [x] RobbersSeePolice: NPC sight checks read the NPC's own head
 - [x] ReflectionProbeRefresh (off by default): `"Player)"` tag typo; needs a look in a level before it's turned on
-- [ ] More from playing: check `known-bugs.md`'s "not fixed" list and Player.log errors during real play
+- [x] EmailMonthNames, DialogueRealMoney, RandomPickSkipsLast, AmbientSoundVariety, DialogueLuaFunctions, NpcSightChance (off by default)
+- [ ] More from playing: check `known-bugs.md`'s "not fixed" list (bank interest, subscription dates) and Player.log errors during real play
 
 ## Expansion mods
 

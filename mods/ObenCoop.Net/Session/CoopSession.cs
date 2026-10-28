@@ -22,7 +22,7 @@ public sealed partial class CoopSession
     // the "full" answer instead of a bare refusal.
     private const int PendingSlack = 4;
 
-    private readonly ITransport _transport;
+    private ITransport _transport;
     private readonly List<PendingPeer> _pending = new List<PendingPeer>();
 
     private int _hostPeer = -1;
@@ -31,11 +31,8 @@ public sealed partial class CoopSession
 
     public CoopSession(ITransport transport, SessionOptions options)
     {
-        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
         Options = options ?? throw new ArgumentNullException(nameof(options));
-        _transport.PeerConnected += OnPeerConnected;
-        _transport.PeerDisconnected += OnPeerDisconnected;
-        _transport.PacketReceived += OnPacket;
+        Hook(transport ?? throw new ArgumentNullException(nameof(transport)));
         _processQueued = ProcessPacket;
         Blobs = new BlobTransfer(this);
     }
@@ -57,6 +54,9 @@ public sealed partial class CoopSession
     public bool IsActive => State == SessionState.Hosting || State == SessionState.Joined;
 
     public TransportStats Stats => _transport.Stats;
+
+    /// <summary>What the session runs on. Swap it with <see cref="UseTransport"/> while offline.</summary>
+    public ITransport Transport => _transport;
 
     /// <summary>Raised when this game is part of a session: the host is listening, or the host accepted the join.</summary>
     public event Action Started;
@@ -82,7 +82,7 @@ public sealed partial class CoopSession
         _transport.Host(port, max - 1 + PendingSlack);
         Roster.Add(new CoopPlayer(CoopPlayer.HostSlot, Options.PlayerId, CleanName(Options.PlayerName), true, -1));
         State = SessionState.Hosting;
-        Log($"Hosting on UDP port {port} for up to {max} players.");
+        Log($"Hosting on port {port} for up to {max} players.");
         Raise(Started);
     }
 
@@ -122,6 +122,23 @@ public sealed partial class CoopSession
             CloseHostPeers("The host closed the game.");
         _transport.Stop();
         End(new SessionEnd(EndKind.Left, RejectReason.None, "You left the game."));
+    }
+
+    /// <summary>
+    /// Runs the session on another transport from now on (direct IP or Steam, say). Only while
+    /// offline; channel handlers, blob listeners and event subscribers stay as they are.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The session is running.</exception>
+    public void UseTransport(ITransport transport)
+    {
+        if (transport == null)
+            throw new ArgumentNullException(nameof(transport));
+        if (ReferenceEquals(transport, _transport))
+            return;
+        if (State != SessionState.Offline)
+            throw new InvalidOperationException("Leave the session before switching how it connects.");
+        Unhook(_transport);
+        Hook(transport);
     }
 
     /// <summary>Call once per frame: delivers received packets and checks timeouts.</summary>
@@ -189,6 +206,21 @@ public sealed partial class CoopSession
     }
 
     internal void Log(string message) => Options.Log?.Invoke(message);
+
+    private void Hook(ITransport transport)
+    {
+        _transport = transport;
+        transport.PeerConnected += OnPeerConnected;
+        transport.PeerDisconnected += OnPeerDisconnected;
+        transport.PacketReceived += OnPacket;
+    }
+
+    private void Unhook(ITransport transport)
+    {
+        transport.PeerConnected -= OnPeerConnected;
+        transport.PeerDisconnected -= OnPeerDisconnected;
+        transport.PacketReceived -= OnPacket;
+    }
 
     private static string CleanName(string name)
     {

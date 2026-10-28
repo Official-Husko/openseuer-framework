@@ -43,6 +43,25 @@ public sealed class ModSet
     /// <summary>Sorted by id.</summary>
     public IReadOnlyList<ModEntry> Entries => _entries;
 
+    /// <summary>
+    /// A 32-bit hash of every id and version (FNV-1a over the sorted entries). Two sets with the same
+    /// mods have the same fingerprint, so a lobby can advertise it and a joiner can tell "different
+    /// mods" before connecting. The handshake still compares the full sets.
+    /// </summary>
+    public uint Fingerprint
+    {
+        get
+        {
+            uint hash = 2166136261;
+            foreach (var entry in _entries)
+            {
+                hash = Mix(hash, entry.Id);
+                hash = Mix(hash, entry.Version);
+            }
+            return hash;
+        }
+    }
+
     internal void Write(MessageWriter writer)
     {
         writer.WriteByte((byte)_entries.Length);
@@ -101,6 +120,17 @@ public sealed class ModSet
         Append(text, "The host doesn't have", extra);
         Append(text, "Different versions", different);
         return text.ToString();
+    }
+
+    private static uint Mix(uint hash, string text)
+    {
+        foreach (char c in text)
+        {
+            hash = (hash ^ (byte)c) * 16777619;
+            hash = (hash ^ (byte)(c >> 8)) * 16777619;
+        }
+        // A separator so ("ab", "c") and ("a", "bc") differ.
+        return (hash ^ 0xFF) * 16777619;
     }
 
     private static void Append(StringBuilder text, string label, List<string> items)

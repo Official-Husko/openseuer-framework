@@ -131,6 +131,9 @@ public sealed partial class DirectTransport : ITransport
             DisconnectTimeout = 20000,
             UpdateTime = 15,
             EnableStatistics = true,
+            // Lobby lookups arrive outside any connection, sent to this address or broadcast on the network.
+            UnconnectedMessagesEnabled = true,
+            BroadcastReceiveEnabled = true,
         };
         Attach(_listener);
     }
@@ -144,6 +147,7 @@ public sealed partial class DirectTransport : ITransport
         listener.PeerDisconnectedEvent += OnPeerDisconnected;
         listener.NetworkReceiveEvent += OnReceive;
         listener.NetworkErrorEvent += OnError;
+        listener.NetworkReceiveUnconnectedEvent += OnUnconnected;
     }
 
     private static void Unhook(EventBasedNetListener listener)
@@ -155,6 +159,7 @@ public sealed partial class DirectTransport : ITransport
         listener.ClearPeerDisconnectedEvent();
         listener.ClearNetworkReceiveEvent();
         listener.ClearNetworkErrorEvent();
+        listener.ClearNetworkReceiveUnconnectedEvent();
     }
 
     private void OnConnectionRequest(ConnectionRequest request)

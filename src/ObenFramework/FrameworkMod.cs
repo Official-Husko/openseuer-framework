@@ -38,6 +38,7 @@ public sealed class FrameworkMod : ObenMod
         AnimalsModule.Init(this);
         PlayerLookWatcher.Init(this);
         SurvivalEvents.Init(this);
+        Player.PlayerModule.Init(this);
         ShopsModule.Init(this);
         AssetsModule.Init(this);
         Log.Info("Ready.");

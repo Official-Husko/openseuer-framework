@@ -10,6 +10,7 @@ using ObenFramework.Player.Look;
 using ObenFramework.Player.Survival;
 using ObenFramework.Quests;
 using ObenFramework.Saves;
+using ObenFramework.SceneLook;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -42,6 +43,7 @@ public sealed class FrameworkMod : ObenMod
         ShopsModule.Init(this);
         AssetsModule.Init(this);
         WorldExtrasModule.Init(this);
+        SceneLookModule.Init(this);
         Log.Info("Ready.");
     }
 

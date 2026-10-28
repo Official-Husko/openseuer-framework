@@ -12,6 +12,11 @@ internal static class EconomyModule
     public static void Init(ObenMod framework)
     {
         BankLedger.Init(framework);
-        framework.Track(Disposable.Create(BankLedger.Shutdown));
+        PlayerShops.Init(framework);
+        framework.Track(Disposable.Create(() =>
+        {
+            BankLedger.Shutdown();
+            PlayerShops.Shutdown();
+        }));
     }
 }

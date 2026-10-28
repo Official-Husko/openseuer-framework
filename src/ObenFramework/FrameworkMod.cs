@@ -2,6 +2,7 @@ using ObenFramework.Clock;
 using ObenFramework.Dialogue;
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenFramework.Npcs;
 using ObenFramework.Quests;
 using ObenFramework.Saves;
 using ObenFramework.World;
@@ -25,10 +26,15 @@ public sealed class FrameworkMod : ObenMod
         DialogueModule.Init(this);
         QuestWatcher.Attach(this);
         WorldModule.Init(this);
+        NpcsModule.Init(this);
         Log.Info("Ready.");
     }
 
-    public override void OnUpdate() => ModFeatures.Update();
+    public override void OnUpdate()
+    {
+        ModFeatures.Update();
+        NpcsModule.Update();
+    }
 
     public override void OnUnload() => Instance = null;
 }

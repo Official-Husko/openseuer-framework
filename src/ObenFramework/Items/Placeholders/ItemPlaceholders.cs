@@ -20,7 +20,7 @@ namespace ObenFramework.Items;
 /// the real item on the spot.
 /// </summary>
 [PatchArea("ItemPlaceholders")]
-public static class ItemPlaceholders
+public static partial class ItemPlaceholders
 {
     private const string IconPath = "Sprites/Items/Paper Bag_spr";
     private const string PrefabPath = "Prefabs/Items/ERROR";

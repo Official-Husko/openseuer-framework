@@ -64,6 +64,18 @@ public class ItemManifestTests
     }
 
     [Fact]
+    public void ForgetModDropsOnlyThatModsEntries()
+    {
+        var book = new ItemManifestBook();
+        book.Load(File(Entry(Key, "keymod", "Rusty Key"), Entry(Lamp, "lampmod", "Lamp")), _ => false);
+        Assert.Equal(1, book.ForgetMod("KEYMOD"));
+        Assert.Null(book.Find(Key));
+        Assert.NotNull(book.Find(Lamp));
+        Assert.Equal(1, book.ForgetMod(null));
+        Assert.Equal(0, book.CarriedCount);
+    }
+
+    [Fact]
     public void LoadIsCapped()
     {
         var entries = Enumerable.Range(0, ItemManifestBook.MaxCarried + 5)

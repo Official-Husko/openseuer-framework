@@ -89,6 +89,26 @@ internal sealed class ItemManifestBook
 
     public void Clear() => _carried.Clear();
 
+    /// <summary>Stops carrying one mod's items (all of them for null). Returns how many entries went.</summary>
+    public int ForgetMod(string modId)
+    {
+        if (modId == null)
+        {
+            int all = _carried.Count;
+            _carried.Clear();
+            return all;
+        }
+        var ids = new List<int>();
+        foreach (var entry in _carried.Values)
+        {
+            if (string.Equals(entry.Mod, modId, StringComparison.OrdinalIgnoreCase))
+                ids.Add(entry.Id);
+        }
+        foreach (int id in ids)
+            _carried.Remove(id);
+        return ids.Count;
+    }
+
     /// <summary>"Missing item (Mod: Title)" for a placeholder's name.</summary>
     public static string Label(ItemManifestEntry entry)
     {

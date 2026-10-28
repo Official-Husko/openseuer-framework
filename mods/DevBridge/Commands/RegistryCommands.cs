@@ -24,6 +24,11 @@ internal static class RegistryCommands
         ["missingInSave"] = Entries(ItemPlaceholders.MissingInSave()),
     };
 
+    [BridgeCommand("registry.removemissing", "Delete stacks of missing mod items from the inventory and loaded containers (for good).",
+        Params = new[] { "mod?: only that mod's items, as the save lists them" })]
+    private static object RemoveMissing(JObject p) =>
+        new JObject { ["removed"] = ItemPlaceholders.RemoveMissing(p.Str("mod", null)) };
+
     private static JArray Entries(System.Collections.Generic.IEnumerable<ItemManifestEntry> entries)
     {
         var list = new JArray();

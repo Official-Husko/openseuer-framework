@@ -59,11 +59,19 @@ internal static class GamblingCommands
     };
 
     [BridgeCommand("gambling.payout", "The payout multipliers in force, or set the bridge's own for a game (1 removes it).",
-        Params = new[] { "game?: all, slotmachine, pajatso, chinahand, ristiseiska or ratfight", "multiplier?: 0 to 10" })]
+        Params = new[] { "game?: all, slotmachine, pajatso, chinahand, ristiseiska or ratfight", "multiplier?: 0 to 10", "clear?: true removes the bridge's multiplier for game, or all of them without game" })]
     private static object Payout(JObject p)
     {
         string game = p.Str("game", null);
-        if (game != null && p["multiplier"] != null)
+        if (p.Bool("clear", false))
+        {
+            foreach (GambleKind kind in Enum.GetValues(typeof(GambleKind)))
+            {
+                if (game == null || string.Equals(kind.ToString(), game, StringComparison.OrdinalIgnoreCase))
+                    Payouts.Remove(DevBridgeMod.Instance, kind);
+            }
+        }
+        else if (game != null && p["multiplier"] != null)
         {
             if (!Enum.TryParse(game, true, out GambleKind kind))
                 throw new ArgumentException("Unknown game '" + game + "'.");

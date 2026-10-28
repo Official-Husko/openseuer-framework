@@ -208,33 +208,36 @@ public static class SaveContainer
         }
     }
 
-    // Reads exactly the announced length and then expects the stream to end, so a damaged length field
-    // can't make a small file inflate into gigabytes.
+    // The output must be exactly the announced length. It is collected in chunks and abandoned as soon as
+    // it grows past that, so neither a damaged length field nor a decompression bomb can make a small
+    // file take up gigabytes.
     private static byte[] Inflate(byte[] data, int offset, int length)
     {
-        var content = new byte[length];
         try
         {
             using (var input = new MemoryStream(data, offset, data.Length - offset))
             using (var deflate = new DeflateStream(input, CompressionMode.Decompress))
+            using (var output = new MemoryStream())
             {
-                int read = 0;
-                while (read < length)
+                var chunk = new byte[64 * 1024];
+                long total = 0;
+                int n;
+                while ((n = deflate.Read(chunk, 0, chunk.Length)) > 0)
                 {
-                    int n = deflate.Read(content, read, length - read);
-                    if (n <= 0)
+                    total += n;
+                    if (total > length)
                         throw Damaged();
-                    read += n;
+                    output.Write(chunk, 0, n);
                 }
-                if (deflate.ReadByte() != -1)
+                if (total != length)
                     throw Damaged();
+                return output.ToArray();
             }
         }
         catch (InvalidDataException)
         {
             throw Damaged();
         }
-        return content;
     }
 
     private static InvalidDataException Damaged() =>

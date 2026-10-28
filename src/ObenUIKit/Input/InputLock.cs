@@ -1,4 +1,5 @@
 using System;
+using HarmonyLib;
 using ObenFramework.Events;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -14,6 +15,11 @@ namespace ObenUIKit.Input;
 /// </summary>
 public static class InputLock
 {
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraController, bool> MoveDisabled =
+        AccessTools.FieldRefAccess<ThirdPersonCameraController, bool>("moveDisabled");
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraController, bool> FirstPersonMoveDisabled =
+        AccessTools.FieldRefAccess<ThirdPersonCameraController, bool>("firstpersonMoveDisabled");
+
     private static GameObject _owner;
     private static int _leases;
     private static bool _menuNavigationWasOn;
@@ -71,11 +77,32 @@ public static class InputLock
         Cursor.visible = true;
     }
 
+    // GameController.ControlsEnabled also frees the camera unconditionally, which would undo a camera lock
+    // something else holds (sitting at a computer, lying in bed, a cutscene). Keep those as they were.
+    private static void Unlock(GameController game)
+    {
+        var camera = ThirdPersonCameraController.instance;
+        bool move = camera != null && MoveDisabled(camera);
+        bool firstPerson = camera != null && FirstPersonMoveDisabled(camera);
+        try
+        {
+            game.ControlsEnabled(_owner);
+        }
+        finally
+        {
+            if (camera != null)
+            {
+                MoveDisabled(camera) = move;
+                FirstPersonMoveDisabled(camera) = firstPerson;
+            }
+        }
+    }
+
     private static void Remove()
     {
         var game = GameController.instance;
         if (game != null && _owner != null)
-            game.ControlsEnabled(_owner);
+            Unlock(game);
 
         var menu = MainMenuNavigationHandler.Instance;
         if (_menuLocked && menu != null)

@@ -4,7 +4,7 @@
 
 Background on how the game does these things, and why the hooks are where they are, is in [../../game/world-building.md](../../game/world-building.md). The co-op notes in [../../research/coop-reference.md](../../research/coop-reference.md) (section 5) list the same game methods; the events below are the ones a mod that mirrors the world needs.
 
-What is covered: doors, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids (read only). What is not: elevators, trains, keypads, crafting machines. Those are in the game notes and can get the same treatment later.
+What is covered: doors, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids. What is not: elevators, trains, keypads, crafting machines. Those are in the game notes and can get the same treatment later.
 
 Props that mods place and keep in the save are in [world-props.md](world-props.md); a level's logic objects (relays, branches, counters, state machines), map landmarks, editable signs and per-object mod data in [scene-logic.md](scene-logic.md); character looks read from scene files in [scenelook.md](scenelook.md).
 
@@ -255,7 +255,7 @@ bool gone = FloorItems.Remove(id);                           // destroyed and re
 
 **Expiry.** Dropped items disappear after a random 0.5 to 1.5 times the game's expiry time (`FloorItemExpiry.GameMinutes`, 600 game minutes by default). `FloorItemExpiry.Set(this, minutes)` changes it for items whose timer starts from then on, until your mod unloads; the newest setter wins. Items the game spawns with their own time (never expiring, expiration zones) keep it.
 
-## Power grids (read only)
+## Power grids
 
 ```csharp
 PowerGrid grid = PowerGrids.TenementMain;                 // or PowerGrids.All(), PowerGrids.Find(id)
@@ -264,7 +264,9 @@ PowerGridInfo info = PowerGrids.Describe(grid);           // Enabled, BaseCapaci
 PowerGrids.GridChanged.Subscribe(this, c => ...);         // c.Grid, c.Kind (Toggled, CapacityChanged), c.Source, c.Info
 ```
 
-All numbers are watts as in the game's power meters. Which listeners lose power when a grid is overloaded depends on the order they were switched on, so two machines only agree if they see the same sequence of events. `GridChanged` covers `PowerGrid.Toggle` and `SetBaseBalance`; changes caused by devices being switched are not events, read `Describe` when you need the numbers. There are no grid setters yet.
+All numbers are watts as in the game's power meters. Which listeners lose power when a grid is overloaded depends on the order they were switched on, so two machines only agree if they see the same sequence of events. `GridChanged` covers `PowerGrid.Toggle` and `SetBaseBalance`; changes caused by devices being switched are not events, read `Describe` when you need the numbers.
+
+`PowerGrids.SetEnabled(grid, on)` switches a grid's breaker and `PowerGrids.SetBaseCapacity(grid, watts)` sets its own capacity (the tenement sets its main grid's capacity from the electricity upgrade again whenever its utilities update). The appliances, generators, consumers and batteries on a grid are in [environment.md](environment.md) (`PowerDevices`).
 
 ## Dev bridge
 

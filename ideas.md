@@ -195,6 +195,15 @@ Today ObenCoop shares the session itself: joining, the player list, chat, lobbie
    Built on: Trains, Elevators, Saunas, Casino, Npcs and NpcControl, Animals, Weapons, ResourceNodes, Law, Landmarks.
 7. **Free roam (last, maybe never):** players in different levels, which needs authority per scene. Decide early whether version 1 keeps everyone in the host's scene; keep an `Authority` accessor so it can be added later.
 
+The reference co-op mod ([NomadsReach/Obenseuer-Coop](https://github.com/NomadsReach/Obenseuer-Coop), local copy in `example-mp/`) shares all of the above, from lobbies to free roam. It still has a few limits of its own, which ours should avoid:
+
+- **Thunder** is rolled on each machine, so players can see different storms (its README). The host should own the roll and broadcast it. Built on: WeatherConditions (thunder state).
+- **An exhausted guest never passes out** (its README). The guest's exhaustion should run through the same pass-out path as the host's. Built on: Survival events (passed out, breakdown interception), PlayerSleep.
+- **Leaving a session sets your clock back** to where it was when the session started (its README). Keep the time the session reached, or ask. Built on: GameClock.SetDate and SetTime, Sessions.
+- **Furniture without a known id can't be moved or removed by guests** ("That piece is not shared in co-op", in its code). Our furniture ids are stable and kept with the save, and a guest can adopt the host's ids. Built on: PlacedFurniture ids, `Assign`.
+- **Mod furniture isn't shared** ("Mod furniture is not shared in co-op yet"). Custom pieces are defined by id; both sides need the same mod set, which the handshake already checks. Built on: CustomFurniture, ItemPlaceholders for a missing mod.
+- **Recipes added by mods can't be crafted by guests** ("This recipe is not shared in co-op"). Built on: RecipeRegistry (stable hashed ids on both sides).
+
 Smaller open items from the same list:
 
 - **Real Steam:** the Steam transport is only tested against a fake Steam, since this install's `steam_api64.dll` is replaced.

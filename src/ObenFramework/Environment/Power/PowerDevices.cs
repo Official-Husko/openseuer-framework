@@ -130,6 +130,20 @@ public static class PowerDevices
         return SetOn(device, on);
     }
 
+    /// <summary>True while some generator in the loaded scenes runs (switched on and burning or otherwise powered). A scan.</summary>
+    public static bool AnyGeneratorRunning
+    {
+        get
+        {
+            foreach (var generator in ObjectIds.Active<Generator>())
+            {
+                if (generator.PoweredAndActive)
+                    return true;
+            }
+            return false;
+        }
+    }
+
     /// <summary>Stations that are always on and on no grid don't use power in any way a mod can change.</summary>
     internal static bool IsDevice(CraftingBase station) =>
         station != null && station._Power != null

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using ObenFramework.World.Addressing;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -45,7 +46,8 @@ public readonly struct LightChange
 /// <summary>
 /// Light fixtures (<c>LightTurnOffOn</c>, the ceiling and wall lights that wall switches and the power
 /// grid drive). A fixture shines when its switch is on and it has power. Fixtures with several
-/// light states (<c>LightTurnOffOnMultiState</c>) and the old <c>LightsON</c> switches are not covered.
+/// light states (<c>LightTurnOffOnMultiState</c>) are <c>ObenFramework.Env.MultiStateLights</c>; the old
+/// <c>LightsON</c> switches are not covered.
 /// </summary>
 public static class Lights
 {
@@ -77,7 +79,10 @@ public static class Lights
     /// <summary>Switched on and powered: what the player sees.</summary>
     public static bool IsLit(LightTurnOffOn light) => light.on && !light.noPower;
 
-    /// <summary>Flips the fixture's switch the way a wall switch does (<c>turnLightOn</c> / <c>turnLightOff</c>).</summary>
+    /// <summary>
+    /// Flips the fixture's switch the way a wall switch does (<c>turnLightOn</c> / <c>turnLightOff</c>). A
+    /// fixture that is fading out (a timed or scripted switch-off) is faded back in, or it would go dark again.
+    /// </summary>
     public static void SetOn(LightTurnOffOn light, bool on)
     {
         if (light == null)
@@ -87,12 +92,18 @@ public static class Lights
 
         using (WorldChanges.EnterMod())
         {
-            if (on)
+            if (on && FadingOut(light))
+                light.TurnLightOnFade(false);
+            else if (on)
                 light.turnLightOn();
             else
                 light.turnLightOff();
         }
     }
+
+    private static readonly AccessTools.FieldRef<LightTurnOffOn, bool> FadeOut = AccessTools.FieldRefAccess<LightTurnOffOn, bool>("fadeOut");
+
+    private static bool FadingOut(LightTurnOffOn light) => FadeOut(light);
 
     /// <summary>Gives or takes the fixture's power the way the power grid does (<c>TogglePower</c>).</summary>
     public static void SetPowered(LightTurnOffOn light, bool powered)

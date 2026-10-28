@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace ObenFramework.World;
 
-/// <summary>Raises <see cref="Lights.LightChanged"/> from the three public methods that switch a fixture.</summary>
+/// <summary>Raises <see cref="Lights.LightChanged"/> from the public methods that switch a fixture (the fading switch-off included).</summary>
 [HarmonyPatch]
 internal static class LightPatches
 {
@@ -18,6 +18,7 @@ internal static class LightPatches
         yield return AccessTools.Method(typeof(LightTurnOffOn), nameof(LightTurnOffOn.turnLightOn));
         yield return AccessTools.Method(typeof(LightTurnOffOn), nameof(LightTurnOffOn.turnLightOff));
         yield return AccessTools.Method(typeof(LightTurnOffOn), nameof(LightTurnOffOn.TogglePower));
+        yield return AccessTools.Method(typeof(LightTurnOffOn), nameof(LightTurnOffOn.TurnLightOffFade));
     }
 
     [HarmonyPrefix]

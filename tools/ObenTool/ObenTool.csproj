@@ -27,7 +27,13 @@
     <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" />
   </ItemGroup>
 
-  <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game. -->
+  <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game.
+       They stay real files beside the executable when it is published as a single file. -->
+  <ItemDefinitionGroup>
+    <None>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" ReferenceOutputAssembly="false" Private="false" />
     <None Include="../../src/ObenLoader/bin/$(Configuration)/ObenLoader.dll" Link="payload/ObenLoader.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />

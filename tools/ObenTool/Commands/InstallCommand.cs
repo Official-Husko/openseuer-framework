@@ -6,7 +6,7 @@ namespace ObenTool.Commands;
 public sealed class InstallCommand : ICommand
 {
     public string Name => "install";
-    public string Usage => "install [--game DIR]";
+    public string Usage => "install [--game DIR] [--mods DIR]";
     public string Summary => "Hook the mod loader into the game (backs up the files it changes)";
 
     public Task<int> RunAsync(Args args)
@@ -18,6 +18,13 @@ public sealed class InstallCommand : ICommand
 
         foreach (string step in new LoaderInstaller(game).Install())
             Out.Info("  " + step);
+
+        // A release package passes its Mods folder; settings already in the game's mod folders are kept.
+        if (args.Get("mods") is { } mods)
+        {
+            foreach (string step in ModPackage.Install(game, mods))
+                Out.Info("  " + step);
+        }
 
         Out.Ok($"Installed into {game.Dir}");
         return Task.FromResult(0);

@@ -126,7 +126,9 @@ oben save convert --all --to plain|compressed
 - `import` is the reverse: it takes a folder of save files (either format) and writes them into a slot, compressed by default. It refuses to overwrite an existing slot without `--force`, and refuses while the game is running.
 - `convert` changes files in place, with the same temp-file-and-replace and verification as the mod. It also refuses while the game is running, unless `--force`.
 
-All of these work with or without the mod installed.
+Put options after the arguments (`--pretty` and the other switches take the next word as their value). `--saves <folder>` names a Saves folder directly instead of looking for the game's, which is handy for trying the commands on a copy; it also skips the "game is running" check, since the files are then not the game's. `oben save help` prints the list above.
+
+All of these work with or without the mod installed. The tool compiles the container source from `mods/ObenSave/Format` and `mods/ObenSave/Files` (see `tools/ObenTool/ObenTool.csproj`), and its own code is in `tools/ObenTool/Saves/` and `tools/ObenTool/Commands/SaveCommand.cs`.
 
 ## Checking it in the game
 

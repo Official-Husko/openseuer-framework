@@ -63,6 +63,8 @@
     <Compile Include="../../src/ObenFramework/World/Landmarks/LandmarkStore.cs" Link="Linked/World/LandmarkStore.cs" />
     <Compile Include="../../src/ObenFramework/World/Objects/ObjectDataStore.cs" Link="Linked/World/ObjectDataStore.cs" />
     <Compile Include="../../src/ObenFramework/World/Objects/VisitedSceneRules.cs" Link="Linked/World/VisitedSceneRules.cs" />
+    <!-- Door opening hours: plain day and hour arithmetic. -->
+    <Compile Include="../../src/ObenFramework/World/Doors/DoorScheduleRules.cs" Link="Linked/World/DoorScheduleRules.cs" />
     <!-- SceneLook: the scene file reader, the index and the rig, bind and mesh planning use no Unity types. -->
     <Compile Include="../../src/ObenFramework/SceneLook/SceneLookInfo.cs" Link="Linked/SceneLook/SceneLookInfo.cs" />
     <Compile Include="../../src/ObenFramework/SceneLook/Reading/*.cs" LinkBase="Linked/SceneLook/Reading" />

@@ -31,6 +31,8 @@ internal static class WorldModule
         FurnitureKinds.Reset();
         ContainerPatches.Reset();
         ContainerLocks.Clear();
+        LockHolders.Reset();
+        LockPicking.Clear();
         FloorItems.Reset();
         FloorItemPatches.Reset();
     }

@@ -4,7 +4,7 @@
 
 Background on how the game does these things, and why the hooks are where they are, is in [../../game/world-building.md](../../game/world-building.md). The co-op notes in [../../research/coop-reference.md](../../research/coop-reference.md) (section 5) list the same game methods; the events below are the ones a mod that mirrors the world needs.
 
-What is covered: doors, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids. What is not: elevators, trains, keypads, crafting machines. Those are in the game notes and can get the same treatment later.
+What is covered: doors and their opening hours, key locks and keypads, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids. Elevators, ladders, tarp doors, trains, drones and level changes are in [transport.md](transport.md); custom furniture in [furniture.md](furniture.md).
 
 Props that mods place and keep in the save are in [world-props.md](world-props.md); a level's logic objects (relays, branches, counters, state machines), map landmarks, editable signs and per-object mod data in [scene-logic.md](scene-logic.md); character looks read from scene files in [scenelook.md](scenelook.md).
 
@@ -97,6 +97,55 @@ How it works: patches on `OnOpen`, `Close`, `ToggleInterrupt`, `OnFullyOpen`, `O
 
 - Unlocking with a key or a lockpick sets the lock's flag inside the game's `Lock` class; it is reported when the door next acts (opening after a key goes through `Unlock()` and is reported at once).
 - A door that starts an auto close from its own Update (a timer) is reported when it settles (`Closed`) but not as `Closing`.
+
+### Opening hours
+
+Shops and other places lock and unlock their doors on the clock through the game's `DoorSchedule` (a table of day, opening hour, closing hour). `DoorSchedules` reads and changes it:
+
+```csharp
+DoorSchedule schedule = DoorSchedules.Of(door);            // null when the door has no schedule (a scan)
+List<OpeningHours> hours = DoorSchedules.HoursOf(schedule); // Day (DayOfWeek), Opens, Closes; empty = always locked
+bool open = DoorSchedules.IsOpenNow(schedule);
+IDisposable change = DoorSchedules.SetHours(this, schedule, DoorScheduleRules.EveryDay(6, 22));
+Vector3? stand = DoorSchedules.StandPositionOf(door);       // where characters stand to use the door
+```
+
+`SetHours` lasts until your mod unloads or you dispose the result; then the level's own hours come back (unless another mod changed them since). The doors follow at the next game minute. The game does not save schedules, so set them again from a world-ready handler if they should last. `DoorScheduleRules` (plain C#, unit tested) holds the conversion: the game's day 0 is Monday, and a door is open from the opening hour until before the closing hour.
+
+## Locks and keys
+
+Ten game classes carry a key lock (the game's `Lock` object): doors, doors to other levels, storages, liquid storages, stations (`CraftingBase`), the game's world `Button`, selection buttons, item put spots, breakable padlocks and market stalls. `Locks` works on the component that holds the lock:
+
+```csharp
+foreach (Component owner in Locks.All()) { ... }           // a scan of the ten types
+Component owner = Locks.Find(id);                           // id from Locks.IdOf(owner)
+LockInfo info = Locks.Describe(owner);                      // Kind, Locked, Lockpickable, Difficulty (0-2), KeyName, PlayerHasKey, RelockMinutes
+Locks.SetLocked(owner, false);                              // doors through Lock()/Unlock() so their relays fire
+Locks.SetLockpickable(owner, true);
+Locks.SetDifficulty(owner, 1.5f);
+TaskItem key = Locks.KeyOf(owner);                          // null when no key opens it
+Locks.SetKey(owner, someKey);                               // any key task item; part of the level design, not saved
+Locks.GiveKey(owner);                                       // hands the player the key with the game's notification
+Locks.StartLockpick(owner, ok => Log.Info("picked: " + ok));
+```
+
+`StartLockpick` starts the game's lockpicking on a locked, pickable lock. The game cancels lockpicking when the player looks away from the lock, so start it while they face it (from an interaction). The callback gets false on failure or cancel.
+
+Events: `Locks.Changed` (`LockChange`: `Owner`, `Locked`, `Source`) for every lock and unlock, whether by key, lockpick, timer, schedule, script or mod, and `Locks.Lockpicked` (`LockpickResult`: `Owner`, `Success`). A lock is a plain object inside its component, so the framework finds the component through an index built on first use per scene (rebuilt at most every two seconds when a new piece of furniture shows up).
+
+### Keypads
+
+Keypads and rotary combination locks have a code instead of a key:
+
+```csharp
+foreach (Keypad keypad in Keypads.All()) { ... }
+int[] code = Keypads.CodeOf(keypad);
+Keypads.SetCode(keypad, new[] { 4, 7, 1, 1 });   // 1 to 4 digits; lasts until the level loads again
+Keypads.SetOpen(keypad, true);                   // success sound and relay, as if the right code was typed
+bool powered = Keypads.HasPower(keypad);
+```
+
+`Keypads.Changed` reports `Solved`, `WrongCode` and `Locked`.
 
 ## Interactables
 
@@ -274,6 +323,12 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 |---|---|
 | `doors.list` | doors with id, phase, locked, position, distance; `radius`, `max`, `inactive` |
 | `doors.set` | `id` plus `open` and/or `locked`; `swing` (`default`, `opposite`), `respectLock` |
+| `locks.list` | key locks nearest first with kind, locked, lockpickable, difficulty, key; `radius`, `lockedOnly`, `max` |
+| `locks.set` | `id` plus `locked`, `lockpickable`, `difficulty` |
+| `locks.givekey` | gives the player the key of lock `id` |
+| `locks.events` | `Locked`, `Unlocked`, `Lockpicked` and keypad events since recording started |
+| `keypads.list`, `keypads.set` | keypads with codes; `id` plus `open` and/or `code` |
+| `doors.schedule` | opening hours of every schedule, or of `id` (a schedule or a scheduled door); `opens`+`closes` sets every day, `reset` restores |
 | `interact.target` | the crosshair target: id, address, title, type, and state for doors and switches |
 | `furniture.list` | placed furniture with ids; filters `type`, `manager`, `preplaced`, `max` |
 | `furniture.place` | `kind`, `x`/`y`/`z` or `pos`, `yaw`, `zone`, `skin`, `alternative`, `modelYaw`, `id`, `parent`, `attachedTo`, `source` |
@@ -289,6 +344,8 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 oben call doors.list radius=5
 oben call doors.set id=<id> open=true
 oben call interact.target
+oben call locks.list radius=6 lockedOnly=true
+oben call doors.schedule
 oben call furniture.list type=shelf
 oben call furniture.kinds text=chair
 oben call furniture.place kind="Red Metal Chair" pos=[103.1,-99,12.4] yaw=90

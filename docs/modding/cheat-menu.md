@@ -55,6 +55,7 @@ The **Show** row at the top picks the part (the kit has no tabs yet):
 | Global flags | Filter the save's global flags by name (Enter applies), switch any of up to 30 shown on or off, or set a flag by name. A flag a mod forces says so. |
 | Watches | Type a type name and press Enter to list its members, pick one (or type a path such as `currentTimeAndDay.hours`) and press **Watch it**. The value is read again four times a second while the window shows it. The first name is a static member, or an instance member of a game singleton (a type with a static `instance`, read through it). Watches are kept in `Watches` in the mod's config.json, up to 20. |
 | Session and story | Live lines: scene, world ready, paused; the session kind; the save gate; the clock; how many tasks are started; the story pump's ready gate and the names of the actions waiting in its queue. |
+| Player and world | Set any player stat by its console name (pick it, drag the slider, **Set it**), go to any entrypoint of the level (the tenement has `PlayerTenement_In`, `TenementBasementEntranceIn` and others), and find any item by part of its name or its id and give 1 or 10. |
 | From mods | Sections other mods added. |
 
 Every change made from the menu (not keeping a checkpoint) marks the save as dev-modified: `mods/CheatMenu.dev.json` is written next to the save at the next save, the menu shows a note, and the log says so once. A bug report from such a save should mention it.

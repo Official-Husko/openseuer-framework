@@ -104,6 +104,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `power.devices`, `power.set`, `power.grids`, `power.grid`, `hazards.list`, `hazards.set`, `blasts.list`, `blasts.detonate`, `radiation.info`, `water.info`, `water.set` | see [framework/environment.md](framework/environment.md) | power devices and grids, hazards, blast sites, the player's dose, swimming and bodies of water |
 | `weather.conditions`, `weather.zones`, `weather.zone`, `surfaces.list`, `surfaces.set`, `fixtures.list`, `fixtures.set` | see [framework/environment.md](framework/environment.md) | rain, wind, thunder, local weather zones, wall coverings, lanterns, tanks, flood gates, showers, saunas, multi-state lights |
 | `housing.apartments`, `housing.evict`, `tenants.list`, `tenants.check`, `tenants.rent`, `tenants.event`, `hotels.list`, `hotels.rent`, `renovations.list`, `mailboxes.list`, `lockers.list`, `trash.list` | see [framework/housing.md](framework/housing.md) | the tenement, tenants, hotels, renovations, mail boxes, trash |
+| `coop.status`, `coop.presence`, `coop.lobbies` | | see [coop.md](coop.md): the co-op session with roster, ping, traffic, lobby and Steam; every other player's area and pose now; the last lobby list |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |
 | `trace.start`, `trace.stop`, `trace.list` | `filter?`, `mods?`; `after?`, `max?`, `method?`, `top?`, `clear?` | the API call tracer (below) |
 

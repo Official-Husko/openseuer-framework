@@ -1,21 +1,26 @@
 # ObenCoop
 
-Co-op for Obenseuer, built in slices. This is the first one: the networking foundation. Two copies of the game can find each other over the network, shake hands, keep a list of who is in, and exchange messages. **Nothing touches game state yet**: no puppets, no shared world. The only visible features are the console commands and plain text chat.
+Co-op for Obenseuer, built in slices. The first ones are in: the networking foundation (two copies of the game find each other, shake hands, keep a list of who is in and exchange messages), lobbies (lists, join codes, invites and version checks, over direct IP and over Steam) and presence (where every player is). **Nothing touches game state yet**: no puppets, no shared world. The visible features are the console commands, plain text chat and the presence list.
 
-The reference for the whole port is [../research/coop-reference.md](../research/coop-reference.md) (the MIT co-op mod in `example-mp/`, which has no networking code of its own; everything goes through its framework). The design here follows its section 2.4 (an abstract transport) and section 8 (port order), and the structure of the owner's co-op mod for another game.
+The reference for the whole port is [../research/coop-reference.md](../research/coop-reference.md) (the MIT co-op mod in `example-mp/`, which has no networking code of its own; everything goes through its framework, whose `Lobby`, `Steam`, `SteamBridge`, `Net*` and `Presence` are module M12 in [../research/framework-reference.md](../research/framework-reference.md)). The design here follows its section 2.4 (an abstract transport) and section 8 (port order), and the structure of the owner's co-op mod for another game.
 
 ## Layers
 
 ```
-mods/ObenCoop/            the mod: CoopMod, console commands, chat, settings, identity file, reload handover
+mods/ObenCoop/            the mod: CoopMod, console commands, notices, chat, presence publisher, settings,
+                          identity file, reload handover, Steam glue (Steam/), JSON for the dev bridge (Bridge/)
   uses
 mods/ObenCoop.Net/        the library: no Unity or game references
+  Lobby/                  CoopLobby (state machine), LobbyInfo, LobbyCheck, JoinCode, LobbyAddress, LobbyBrowser,
+                          DirectLobbyBackend + LobbyScanner (direct IP), Matchmaking/ (Steam-style lobbies)
+  Presence/               CoopPresence: position sharing with interpolation data
   Session/                CoopSession: handshake, slots, roster, relay, persistence
   Messaging/              MessageRouter (channel ids), MessageWriter/Reader, MessagePool
   Blobs/                  BlobTransfer: big byte arrays in chunks (compression, CRC-32, windowed acks)
-  Transport/              ITransport, DirectTransport (LiteNetLib over UDP)
+  Transport/              ITransport, DirectTransport (LiteNetLib over UDP), P2P/P2PTransport (Steam-style P2P)
   uses
 LiteNetLib 1.3.1 (MIT)    reliable-ordered and unreliable UDP, connection handling
+Steamworks.NET            the game's own (Assembly-CSharp-firstpass), only through mods/ObenCoop/Steam/
 ```
 
 Each layer only knows the one below it:
@@ -32,7 +37,9 @@ Each layer only knows the one below it:
 
 Delivery is `ReliableOrdered` or `Unreliable`, chosen per message. Limits are in `TransportLimits`: 1200 bytes for an unreliable packet (envelope included), 64 KB for a reliable one. Big payloads (a world, a save) go through `session.Blobs`, which chunks them above the session like the reference's `NetBlob` (see "Big payloads" below).
 
-`DirectTransport` is LiteNetLib: one channel, `ConnectionKey = "ObenCoop"`, IPv4 only (dual-mode sockets misbehave under Wine), 20 s disconnect timeout (a level load can stall the main thread). It has no NAT punch-through or relay: the host has to forward the UDP port, or both players use a VPN or the same LAN. A Steam transport would be a second `ITransport` and needs no change above it.
+`DirectTransport` is LiteNetLib: one channel, `ConnectionKey = "ObenCoop"`, IPv4 only (dual-mode sockets misbehave under Wine), 20 s disconnect timeout (a level load can stall the main thread). It has no NAT punch-through or relay: the host has to forward the UDP port, or both players use a VPN or the same LAN. It also answers packets that arrive outside any connection through `Responder` (at most 32 replies a second); the lobby uses that to answer lobby queries on the game's own port.
+
+`P2PTransport` (in `Transport/P2P/`) is the second transport: connections over a peer-to-peer packet network addressed by 64-bit ids, `IP2PNetwork`, which is shaped after Steam's legacy `ISteamNetworking` (the API the game's Steamworks.NET has and the reference used). That API has sessions but no connect or disconnect, so the transport adds a small control layer: the first byte of every packet is `Hello` (client to host, with magic bytes), `Accept`, `Data`, `Bye` (with the reason, which carries the session's reject text), `Ping`/`Pong` (round trips, once a second). A host only lets in ids that `Admit` allows (the members of its Steam lobby); a session request from someone the lobby doesn't list yet waits up to 5 s, because Steam delivers lobby membership and P2P requests separately. 20 s of silence or a Steam session failure ends a connection, a client gives up after 15 s without an `Accept`, and sessions are closed 2 s after the goodbye so it still arrives. Steam's unreliable limit is 1200 bytes with the type byte, so the rare packet at exactly 1200 goes reliable. The session can switch transports while offline (`UseTransport`); channels, blob listeners and event handlers stay.
 
 ## Channels and messages
 
@@ -54,6 +61,8 @@ session.SendTo(player, channel, w);       // one player
 session.SendToHost(channel, w);           // the host only
 MessagePool.Return(w);
 ```
+
+Channel ids in use: `Chat = 1`, `Blob = 2` (the session's), `Presence = 3`.
 
 `MessageWriter` and `MessageReader` are little-endian binary with byte, bool, uint16, int32, uint32, int64, float, GUID, string (length-prefixed UTF-8, at most 4096 bytes) and raw bytes. Writers and readers come from `MessagePool`, so a steady-state send or receive allocates nothing (a test pins this; reading a string necessarily creates the string). Every read is bounds checked and throws `MessageFormatException` on a short or damaged message; the session drops such packets. The pool is per thread.
 
@@ -112,33 +121,122 @@ The topology is a star: clients only talk to the host, and the host passes on wh
 
 **Roster.** `session.Roster` lists players by slot (`Players`, `Local`, `Host`, `Find(slot)`, `Find(guid)`) and is the same on every game. Events: `Started` (hosting, or the host accepted the join), `PlayerJoined`, `PlayerLeft(player, reason)`, `Ended(SessionEnd)`. A joining client gets `PlayerJoined` once for each player already there. `SessionEnd.Kind` is `Left`, `Rejected` (with the `RejectReason`), `ConnectFailed` or `ConnectionLost`. If the host goes away the session ends; there is no host migration.
 
+## Presence
+
+`CoopPresence` (in `Presence/`, adapted from the reference framework's `Presence`) shares where every player is. It is the data layer that puppets will read; it draws nothing itself.
+
+```csharp
+var presence = new CoopPresence(session);                      // registers ChannelIds.Presence
+presence.Publish("Interior Player Tenement", position, yaw, velocity, PresenceFlags.Moving);   // every frame
+presence.Tick();                                                // every frame, after session.Poll()
+foreach (var remote in presence.Remotes)
+    if (presence.TryGetPose(remote.Player, out var pose)) Draw(remote.Player, pose.Area, pose.Position, pose.Yaw);
+presence.Appeared += r => ...; presence.Vanished += r => ...; presence.AreaChanged += r => ...;
+```
+
+- **What a sample holds:** a sequence number, the sender's clock (ms), the area (the scene name, 1 to 64 characters), position (3 floats), yaw (2 bytes), velocity (3 x 2 bytes, cm/s) and flags (`Moving`, `Walking`, `Crouching`, `Sitting`, `Swimming`, `Sleeping`, `Teleported`). About 30 bytes plus the area name; sent unreliable, relayed by the host.
+- **Rate:** 10 a second while anything changes (move over 2 cm, turn over 0.5 degrees, other flags or area), once a second while still, and at once when someone joins. When `Publish` hasn't been called for 1 s (main menu, loading) the game sends a reliable "withdrawn" and stops; the others drop it at once. A remote with no sample for 5 s is dropped too. `PresenceOptions` holds all of these.
+- **Interpolation:** each remote keeps its last 16 samples on the sender's clock. The gap between the clocks is the smallest delay seen so far (creeping up 1 ms per sample so a slower connection is followed). `TryGetPose` shows the player 200 ms behind the newest sample (two send intervals, so one lost packet doesn't show), interpolated between the two samples around that moment (yaw the short way round). When samples stop it carries a moving player forward along the velocity for at most 250 ms. A move over 8 m between samples is flagged `Teleported` and an area change counts the same: the view snaps instead of sliding through walls or across levels.
+- **Robustness:** late and repeated samples are dropped by sequence; NaN, infinite and far-out values (over 100000 from the origin) are rejected; a sender whose clock jumps over 10 s (its mod reloaded, or it was quiet for a long time) starts a fresh track. Steady-state sending and receiving allocate nothing (the area string is only made when the name changes).
+
+In the mod, `Presence/PresencePublisher.cs` publishes the local player every frame while `WorldState.IsReady` and no level change is under way: the scene name (read only when the scene changes), the body's position and yaw, a velocity measured over at least 50 ms, and the flags from `PlayerState`. `SharePresence` in `config.json` (or `coop presence on|off`) switches it.
+
+## Lobbies
+
+`CoopLobby` (in `Lobby/`) is the lobby around a session: how players find a game, check they can join it, and get in. It is one state machine for every way of playing (adapted from the reference's `Lobby`); a backend per kind does the platform's part.
+
+```csharp
+var lobby = new CoopLobby(session);
+lobby.AddBackend(new DirectLobbyBackend(directTransport, clock));     // always
+lobby.AddBackend(new MatchmakingBackend(steamLobbies, p2pTransport, clock));  // when Steam is up
+lobby.Host(LobbyKind.Direct, "Sam's flat", 27890);   // false + lobby.Error when it can't start
+lobby.Join("7K2Q-9MXA-B4C1");                         // or "192.168.1.20", "host:27891", "steam:109775241234567890"
+lobby.Browser.Scan(LobbyKind.Direct);                 // results in lobby.Browser.Results, then Finished
+LobbyInvite invite = lobby.Invite();                  // invite.Code, invite.OverlayOpened
+lobby.Leave();
+lobby.Poll();                                         // every frame, after session.Poll()
+```
+
+- **Status:** `Offline`, `Pending` (creating, or looking up and connecting), `Hosting`, `Joined`, with `StatusChanged`, `Error` (a sentence) and `JoinRequested` (an invite accepted outside the game). A request still Pending after 20 s is given up. A generation counter makes answers to an abandoned request harmless (a Steam lobby created after giving up is left at once).
+- **What a lobby advertises:** `LobbyInfo` (format byte, protocol version first, then a random lobby id, game version, the mod set's fingerprint and count, name, host name, players, max players, open flag, port). The fingerprint is a 32-bit FNV-1a over the sorted mod ids and versions (`ModSet.Fingerprint`).
+- **Version checks before connecting** (`LobbyCheck`, same order as the handshake): a different protocol, game version, a full or closed game is refused with a sentence and no connection is made. Different mods are only marked: the join goes ahead so the host's handshake can name exactly which mods are missing or different. The handshake stays the real gate.
+- **Join codes** (`JoinCode`): Crockford base32 with an 8-bit CRC, grouped by four. A direct code (12 characters, `7K2Q-9MXA-B4C1`) holds an IPv4 address and port; a Steam code (16 characters) holds a lobby id. Case, dashes and spaces don't matter, O/I/L read as 0/1/1, and every single wrong character is caught (a typo is reported as one). `LobbyAddress.TryParse` reads codes, `ip`, `ip:port`, host names, `steam:<id>` and bare Steam ids.
+- **Lists** (`LobbyBrowser`): one scan at a time, results with a verdict and a mark (`different mods`, `other game version`, `full`...), deduplicated by lobby id, the host's own lobby left out.
+- **Hot reload:** `SaveState`/`RestoreState` carry an open lobby (hosting or joined) next to the session; the backend picks it up again (`Resume`).
+
+### Direct play
+
+`DirectLobbyBackend`. Hosting sets the transport's `Responder`, so the game answers lobby queries on its own UDP port with its `LobbyInfo` (`LobbyWire`: `OBCQ` query, `OBCR` reply with the info). Joining asks the address first (2.5 s); without an answer it connects anyway and lets the handshake decide. A scan (`LobbyScanner`, its own socket, open only while it runs) broadcasts the query on the local network and also sends it to 127.0.0.1, on `Port` and the next `ScanPorts - 1` ports, for 1.5 s; the loopback query is what finds a second copy of the game on the same machine even where broadcasts don't loop back. `coop lobby list <address>` asks one host directly, which also works over the internet. Codes carry `PublicAddress` from `config.json` (or `coop invite <ip>`) when set, otherwise this machine's address on its network (LiteNetLib's `NetUtils.GetLocalIp`; under Proton here it gives the LAN address, 192.168.x.x); such a code works on the same network and on the same machine.
+
+### Steam
+
+Optional and never the default. Steam play needs the game's own Steam to be running: `SteamGate` reads the game's `SteamManager` (`s_instance` and `m_bInitialized`, private, through cached field refs, at most once a second until it says yes). It does **not** use the public `SteamManager.Initialized`, which creates a manager when none exists and so starts Steam itself (or throws if Steam was started once). Until the gate says yes nothing touches Steamworks; if anything fails to start, direct play carries on alone and the status says so.
+
+The logic is in the library, behind two interfaces shaped after Steamworks so it is tested without Steam:
+
+- `IP2PNetwork` (legacy `ISteamNetworking`) under `P2PTransport` (see Transport). In the mod, `Steam/SteamP2P.cs` implements it on channel 2789.
+- `IMatchmaking` (`ISteamMatchmaking` plus friends and rich presence) under `MatchmakingBackend`. In the mod, `Steam/SteamLobbies.cs` implements it.
+
+Hosting creates a lobby (`SteamLobbyType`: friends only by default, `public` or `private`), writes `game=obencoop` and the `LobbyInfo` (base64) into its data, sets rich presence `connect = "+connect_lobby <id>"` so friends can "Join game", and lets only lobby members connect over P2P; members who leave the Steam lobby are dropped. Joining enters the lobby, waits up to 3 s for its data, refuses lobbies that aren't ObenCoop (and leaves them), runs the version checks, then connects to the owner's Steam id. Lists show the lobbies friends playing Obenseuer are in plus public ObenCoop lobbies. `coop invite` opens the overlay's invite dialog. Accepted invites, "Join game" clicks and a `+connect_lobby <id>` on the game's command line (Steam starts the game that way from an invite) come out as `JoinRequested`; with `JoinInvites` on, the mod joins at once.
+
+This install's `steam_api64.dll` is replaced (an emulator answers with a fixed id), so Steam play could not be tried here; two copies on one machine would also share that id. The fake Steam in the tests (`FakeSteam.cs`) runs the whole flow instead: create, list, join, refusals, invites, members leaving, the host leaving, reloads.
+
 ## The mod
 
 Files in `mods/ObenCoop/`:
 
 | File | Job |
 |---|---|
-| `CoopMod.cs` | owns transport and session, pumps `Poll()` in `OnUpdate`, wires events to notices, registers the console command |
-| `CoopSettings.cs` | `config.json`: `PlayerName`, `Port` (27890), `MaxPlayers` (4), `IgnoredMods` |
+| `CoopMod.cs` | owns the direct transport, session, lobby (direct backend), Steam support, presence and chat; pumps them in `OnUpdate` (session, lobby, Steam start, presence publisher, presence tick); registers the console command |
+| `CoopSettings.cs` | `config.json` (below) |
 | `Identity/CoopIdentity.cs` | reads or creates the identity file |
-| `Sessions/SessionKeeper.cs` | parks and resumes the session across hot reloads |
+| `Sessions/SessionKeeper.cs` | parks and resumes session and lobby across hot reloads, on either transport |
 | `Sessions/ModSetBuilder.cs` | builds the mod set from `ModRegistry` |
+| `Lobby/LobbyNotices.cs` | joins, leaves, failures and opened lobbies as notices; prints a finished lobby list to the console; joins on accepted invites |
+| `Presence/PresencePublisher.cs` | feeds the local player into presence |
+| `Steam/SteamGate.cs`, `SteamP2P.cs`, `SteamLobbies.cs`, `SteamSupport.cs` | the only code that touches Steamworks; starts once the game's Steam is up |
 | `Chat/CoopChat.cs`, `CoopNotices.cs` | chat on `ChannelIds.Chat`; shows text as a game notification in a level and in the console otherwise |
-| `Commands/CoopCommands.cs`, `CoopStatus.cs` | the `coop` console command |
+| `Commands/CoopCommands.cs`, `LobbyCommands.cs`, `PresenceCommands.cs`, `CoopStatus.cs`, `LobbyText.cs` | the `coop` console command |
+| `Bridge/CoopMod.Bridge.cs` | `BridgeStatus`, `BridgePresence`, `BridgeLobbies`: JSON for the dev bridge's `coop.*` commands |
 
-Settings are re-read each time you host or join, so editing `config.json` does not need a reload. The default name is `Player` (`Player 2` in a second instance).
+Settings in `config.json` are re-read each time you host, join or list, so editing it does not need a reload:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `PlayerName` | `""` | what others see; empty is `Player` (`Player 2` in a second instance) |
+| `Port` | 27890 | UDP port a hosted game listens on, and the first port a lobby list asks |
+| `MaxPlayers` | 4 | host included, 2 to 16 |
+| `IgnoredMods` | `DevBridge`, `ScriptRunner` | left out of the "same mods" check |
+| `LobbyName` | `""` | name in lobby lists; empty is "<name>'s game" |
+| `PublicAddress` | `""` | IPv4 put in join codes; empty is this machine's network address |
+| `ScanPorts` | 4 | ports a lobby list asks, from `Port` up |
+| `Steam` | true | offer Steam lobbies when the game's Steam is running |
+| `SteamLobbyType` | `friends` | `friends`, `public` or `private` (invite only) |
+| `JoinInvites` | true | accepting a Steam invite joins at once |
+| `SharePresence` | true | share where you are |
 
 ### Console commands (F1)
 
 ```
-coop host [port]        listen on a UDP port (default from config.json)
-coop join <ip[:port]>   join a host; the result shows as a message
-coop leave              leave, or stop hosting
-coop status             state, roster with slots and ping, traffic, message counts
-coop say <text>         chat; other players see it as a notification (in a level) or in their console
+coop host [port]                      host a direct-play game (opens a lobby with a join code)
+coop join <ip[:port] | code | steam:id>   look the game up, check it, join; the result shows as a message
+coop leave                            leave, or stop hosting (also leaves a Steam lobby)
+coop status                           state, roster with slots and ping, traffic, lobby, presence, Steam
+coop say <text>                       chat; others see it as a notification (in a level) or in their console
+coop lobby create [steam] [name...]   host with a lobby name; "steam" makes it a Steam lobby
+coop lobby list [steam | <address>]   find games on the network and this machine, Steam friends' and public
+                                      lobbies, or ask one address; the numbered list prints to the console
+coop lobby join <number | code | address | steam:id>   join from the last list or directly
+coop lobby info                       the lobby and Steam state
+coop invite [public ip]               the join code (copied to the clipboard); opens Steam's invite dialog
+                                      for a Steam lobby
+coop presence [on | off]              where the other players are (area, position, distance, flags), or
+                                      switch sharing your own
 ```
 
-Chat text is stripped of `<` and `>` (the game's text is rich text) and cut to 200 characters.
+Chat text is stripped of `<` and `>` (the game's text is rich text) and cut to 200 characters. Lobby and player names from others lose `<`, `>` and control characters too.
+
+The dev bridge has `coop.status`, `coop.presence` and `coop.lobbies` (JSON of the same, built by `CoopMod.Bridge*`; the bridge calls them by name, so neither mod references the other).
 
 ### Why two assemblies and a library
 
@@ -146,6 +244,8 @@ Chat text is stripped of `<` and `>` (the game's text is rich text) and cut to 2
 
 - A hot reload throws the mod's assemblies away and loads fresh copies, but a live UDP socket cannot be recreated without dropping every connection. LiteNetLib's `NetManager` is never reloaded, so the old copy of the mod can hand it to the new one. `DirectTransport.Detach()` returns the `NetManager`, its listener and the peer limit as an `object[]` (types from the never-reloaded assembly), `Adopt()` takes them back and re-hooks the events. `CoopSession.SaveState()` is plain bytes (state, roster, peer ids) that `RestoreState()` reads. `SessionKeeper` puts both in `ReloadState` on unload and takes them in `OnLoad`. If nothing takes them within 10 s (the mod was switched off, not reloaded) the connection is closed.
 - `ObenCoop.Net.dll` is listed so that the networking code itself reloads too; it is the part that will change most. It is listed **first** on purpose: the loader renames each reloaded assembly and rewrites references only to assemblies it has already renamed, so `ObenCoop.dll` has to come after the library it references.
+
+A Steam connection has no socket to keep: Steam holds the sessions and the lobby. `P2PTransport.Detach()` returns who is who as plain arrays and `Adopt()` takes them back; the next copy starts its Steam support at once (the gate says yes straight away) to adopt them. `CoopLobby.SaveState()` carries an open lobby (kind, address, info) and `RestoreState()` hands it back to the backend (`Resume`: the direct backend answers queries again, the Steam one takes its lobby id back). A parcel nobody picks up within 10 s closes its connection and, for Steam, leaves the lobby.
 
 Anything parked must be plain data or a type from a never-reloaded assembly; a type from a reloaded one would not match in the next copy. A change to the wire format between two builds needs a game restart (the handshake's protocol version only protects connections between games).
 
@@ -159,32 +259,36 @@ dotnet test tests/ObenCoop.Net.Tests
 
 It covers the handshake, slots and roster, rejection by game version, mod set, protocol version, full game and duplicate GUID, a silent connection being dropped, reliable ordering both ways, relay between clients, directed sends, leave and host shutdown, a hot reload handover of a host and a client session, the codec and the zero-allocation pool, and the blob and flood control behaviour: a 5 MB blob intact, CRC and damaged-chunk detection, a disconnect mid-transfer failing both sides, concurrent transfers, cancel, timeouts and refusals, the receive budget spreading a burst over polls in order, the overflow disconnect and the send queue limit. No game is needed.
 
-**Two copies of the game on one machine.** `oben launch --instance 2` starts a second copy with `OBEN_INSTANCE=2`: its own loader and player logs (`latest-2.log`, `player-2.log`), the dev bridge one port up, its own `identity-2.json` and the name `Player 2`. Then:
+It also covers presence (codec, interpolation, late samples, extrapolation, jumps and level changes, restarts, idle rate, withdraw, timeouts, relay to a third player), lobbies for direct play (a scan finding a game on this machine, joining by code, refusing a different game version before connecting, the host leaving, nobody answering, a lobby carried over a reload, join codes catching every single wrong character), and Steam on an in-memory fake (`FakeSteam.cs`): the session over P2P with relay, refusals with their reason, timeouts, Steam failures, pings, handover; lobby create, list, join by code, version and foreign-lobby refusal, invites, non-members turned away, members leaving the lobby, the host leaving, reloads.
 
-1. In the first copy open the console (F1) and run `coop host`.
-2. In the second copy run `coop join 127.0.0.1`.
-3. `coop status` in both shows two players. `coop say hello` in one shows up in the other (as a notification once a level is loaded, otherwise in the console).
-4. `coop leave` in the second copy; the first sees the player leave. Rebuild the mod while connected (`OBENSEUER_DIR=... dotnet build mods/ObenCoop/ObenCoop.csproj -c Release`, with auto reload on) and the session should carry on: `coop status` still shows both players afterwards, and the log says "Carried the session over a reload".
+**Two copies of the game on one machine.** `oben install --multi-instance` once, then `oben launch --instance 2` starts a second copy with `OBEN_INSTANCE=2`: its own loader and player logs (`latest-2.log`, `player-2.log`), the dev bridge one port up, its own `identity-2.json` and the name `Player 2`. Everything below works in the F1 console of each copy, or through the bridge: `oben call console.exec command="coop status"` for the first copy, with `--instance 2` for the second.
 
-The same works through the dev bridge: `oben call console.exec command="coop status"`; add `--instance 2` for the second copy.
+1. Copy 1: `coop lobby create Test` (or `coop host`). It says "Lobby open: Test. Join code XXXX-XXXX-XXXX (192.168.x.x:27890)".
+2. Copy 2: `coop lobby list`. After about 1.5 s the console lists "1. Test 1/4 host Player ..." (`oben call coop.lobbies --instance 2` shows it as JSON).
+3. Copy 2: `coop lobby join 1`. Both show the join; `coop status` in both shows two players and the lobby (Hosting / Joined). `coop say hello` in one shows up in the other.
+4. Copy 2: `coop leave`, then `coop join <the code from step 1>` (or `coop invite` in copy 1 prints it). Joined again.
+5. Presence: load a level in both (`oben call console.exec command="new_scene Interior Player Tenement"`, and the same with `--instance 2`). After the world is ready, `coop presence` in copy 2 lists Player in Interior Player Tenement with a position and distance. `oben call player.get` in copy 1, then `oben call player.teleport x=<x+3> y=<y> z=<z>`; within a second `oben call coop.presence --instance 2` shows the new position under `latest`. A teleport of over 8 m shows `Teleported` in `flags`. `coop presence off` in copy 1 removes it from copy 2's list at once; `coop presence on` brings it back.
+6. A dead address: in copy 2 (offline) `coop join 127.0.0.1:27999`. Nobody answers the lookup (2.5 s), the connect is tried anyway and fails; within about 10 s a notice says so and `coop lobby info` shows it as the last problem. (A real version or mod mismatch needs two different installs, since both copies share the game and the `Mods` folder; the unit tests cover those.)
+7. Hot reload while connected: rebuild the mod (`OBENSEUER_DIR=... dotnet build mods/ObenCoop/ObenCoop.csproj -c Release`, auto reload on). `coop status` still shows both players and the lobby, the log says "Carried the session over a reload" and "Carried the lobby over a reload", and `coop lobby list` in copy 2 still finds copy 1's game.
 
 **The `single-instance=` entry.** The game's `Obenseuer_Data/boot.config` contains the line `single-instance=` (empty value). Unity's single-instance switch may make a second launch exit at once or just focus the first window. This has not been verified here. If the second copy does not stay up: close both, make a backup of `boot.config`, delete that line, and launch again. If it still refuses, the alternative is a second copy of the whole game folder run as a separate install. (The TODO item "Second game instance on one machine" is exactly this check.)
 
-Both copies share the `Mods` folder, so they share `config.json` (port, name) and the hot reload watcher reloads both when a DLL changes. Only one of them can host on a given port; a second hosting copy needs `coop host <other port>`.
+Both copies share the `Mods` folder, so they share `config.json` (port, name) and the hot reload watcher reloads both when a DLL changes. Only one of them can host on a given port; a second hosting copy needs `coop host <other port>` (lists ask `Port` and the next 3 ports, so it is still found).
 
 ## Not done yet
 
-- No Steam transport. `steam_api` is replaced in this install, so lobbies and P2P are out; direct IP is first, Steam is a second `ITransport` later.
-- No NAT help. Forward the UDP port, use a VPN, or play on a LAN.
+- Steam play is untested in a real Steam: this install's `steam_api64.dll` is replaced. Everything above the two thin Steamworks wrappers is tested on the fake. It uses legacy P2P (deprecated by Valve but in the game's Steamworks.NET); moving to `SteamNetworkingSockets` means a new `IP2PNetwork`, nothing else.
+- No NAT help for direct play. Forward the UDP port, use a VPN, or play on a LAN; or use Steam.
+- No lobby UI yet (ObenUIKit page with the list, codes and invites); everything is console commands.
 - No request/ack helper (`Shared.NextReqId` in the reference), no timers for periodic state (`HST` announces, digests).
 - Blobs are not resumable and don't survive a hot reload; there is no per-message rate window for features (the reference's `BuildHost` and friends), only the per-peer budget and queue limits.
-- The host is the only authority and there is no host migration.
+- The host is the only authority and there is no host migration (a Steam lobby whose owner leaves ends the session, as in the reference).
 
 ## Planned slices
 
 From section 8 of the research, in order:
 
-1. **Session plus players.** Both players load the same save by hand. Presence at 10 Hz on an unreliable channel, puppets for other players (body, pose, sitting, appearance), the roster shown in a window (ObenUIKit). Chat gets a proper UI. Delivers: you see each other walk, sit and look.
+1. **Session plus players.** Both players load the same save by hand. Presence at 10 Hz on an unreliable channel (done), puppets for other players (body, pose, sitting, appearance), the roster shown in a window (ObenUIKit). Chat gets a proper UI. Delivers: you see each other walk, sit and look.
 2. **World clock and weather**, then the sleep vote. Low risk, visible result.
 3. **Join ticket.** Blob transfer (`session.Blobs`, done) of the host's save, shipped to a joining player, guest save redirection and the guest gate. Hardest single slice; needs fixture saves and self checks.
 4. **Shared world state**: doors and lights, floor items and coins, containers, building. Requests go to the host, which validates and broadcasts the result; state is idempotent ("the state of X is Y") with periodic digests so late joiners and lost packets heal.
@@ -192,4 +296,4 @@ From section 8 of the research, in order:
 6. **The rest**: trains, elevators, sauna, slots, NPC and animal positions, combat, harvest, prison, map markers, players panel.
 7. **Last or never**: free roam (players in different levels, authority per scene). Decide early whether version 1 forces everyone into the host's scene; that removes the whole authority-per-scene layer. Keep an `Authority` accessor so it can be added later.
 
-A **Steam transport** can be added at any point after slice 1 without touching the layers above it.
+The **Steam transport** is in (lobbies, P2P, invites); it needed no change above the transport and lobby layers.

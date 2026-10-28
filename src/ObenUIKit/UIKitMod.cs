@@ -1,5 +1,6 @@
 using ObenLoader;
 using ObenUIKit.Input;
+using ObenUIKit.Runtime;
 
 namespace ObenUIKit;
 
@@ -12,6 +13,7 @@ public sealed class UIKitMod : ObenMod
     {
         Instance = this;
         InputLock.Init(this);
+        Track(new KitRuntime(this));
         Log.Info("Ready.");
     }
 

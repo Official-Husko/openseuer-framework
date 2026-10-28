@@ -18,6 +18,7 @@ public sealed class UIKitMod : ObenMod
         Instance = this;
         InputLock.Init(this);
         Track(new KitRuntime(this));
+        Track(new HudRuntime(KitRuntime.Current.Kit));
         Hotkeys.Init(this);
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());

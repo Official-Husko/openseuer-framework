@@ -18,5 +18,6 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new ReflectionProbeRefresh());
         ModFeatures.Register(this, new EmailMonthNames());
         ModFeatures.Register(this, new DialogueRealMoney());
+        ModFeatures.Register(this, new RandomPickSkipsLast());
     }
 }

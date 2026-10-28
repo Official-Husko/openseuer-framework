@@ -45,7 +45,8 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Transport and furniture: locks, exits and travel, elevators, ladders, trains, drones; custom furniture, blueprints; item icons and models, radios, TVs, guitar, computer apps
 - [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
 - [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
-- [ ] Coverage of the MIT framework: see PROGRESS.md
+- [x] Loader and core: mod id and game version checks, isolated framework parts and patch areas, log rate limits and log-once, load-aborted event, TimeControl, placeholders for items of removed mods
+- [ ] Coverage of the MIT framework: see PROGRESS.md (in-game test backlog in its Missing column)
 
 ## ObenUIKit
 

@@ -19,6 +19,7 @@ using ObenFramework.Saves;
 using ObenFramework.SceneLook;
 using ObenFramework.Transport;
 using ObenFramework.Story;
+using ObenFramework.Ui;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -33,6 +34,7 @@ public sealed class FrameworkMod : ObenMod
     {
         Instance = this;
         GameEvents.Init(this);
+        UiModule.Init(this);
         SaveState.Init(this);
         SaveGate.Init(this);
         SaveSlots.Init(this);

@@ -5,9 +5,9 @@ namespace ObenFramework.Economy;
 
 /// <summary>
 /// Per-mod price factors on traders, kept in the shared <see cref="OwnedFactors"/> table: one key per trader
-/// and direction (<c>{shopId}|buy</c>, <c>{shopId}|sell</c>), with <c>*</c> standing for every trader. Factors
-/// of different mods multiply; a mod's factors go away when it unloads. Reading allocates nothing: the
-/// per-shop keys are cached on the <see cref="ShopInfo"/>.
+/// address or trader name and direction (<c>{shopId}|buy</c>, <c>name:{name}|sell</c>), with <c>*</c> standing
+/// for every trader. Factors of different mods multiply; a mod's factors go away when it unloads. Reading
+/// allocates nothing: the per-shop keys are cached on the <see cref="ShopInfo"/>.
 /// </summary>
 internal static class TraderFactors
 {
@@ -22,6 +22,9 @@ internal static class TraderFactors
     public static bool Any => _factors.Table.Any;
 
     public static string KeyOf(string shopId, bool playerBuys) => shopId + (playerBuys ? "|buy" : "|sell");
+
+    /// <summary>The key part for every trader of a name (names are not unique, so it can cover several).</summary>
+    public static string NameKey(string name) => "name:" + (name ?? "").ToLowerInvariant();
 
     public static void Set(ITracker owner, string shopId, float buy, float sell)
     {
@@ -44,7 +47,7 @@ internal static class TraderFactors
             return 1f;
         float product = table.Of(playerBuys ? AllBuy : AllSell);
         if (shop != null)
-            product *= table.Of(shop.FactorKey(playerBuys));
+            product *= table.Of(shop.FactorKey(playerBuys)) * table.Of(shop.FactorNameKey(playerBuys));
         return product > Max ? Max : product;
     }
 

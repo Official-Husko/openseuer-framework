@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using ObenFramework.Saves;
 using ObenFramework.World;
+using ObenFramework.World.Addressing;
 using ObenLoader;
 using UnityEngine;
 
@@ -69,7 +70,8 @@ public static class Traders
     /// <summary>
     /// Scales one trader's prices for as long as <paramref name="owner"/> is loaded: <paramref name="buy"/> on
     /// what the player pays, <paramref name="sell"/> on what the player is paid (1 leaves it, 0.5 halves, at
-    /// most 10). Pass null as <paramref name="key"/> for every trader. Factors of different mods multiply; the
+    /// most 10). <paramref name="key"/> is a trader's name (every trader of that name, also ones in scenes loaded
+    /// later), its address, GUID or path (that one trader), or null for every trader. Factors of different mods multiply; the
     /// same mod and trader again replaces the earlier pair. They apply before <see cref="Prices"/> modifiers
     /// and are not saved: set them in <c>OnLoad</c>. Throws for a factor out of range.
     /// </summary>
@@ -86,13 +88,19 @@ public static class Traders
     public static bool ClearPriceFactors(ObenMod owner, string key) =>
         owner != null && TraderFactors.Clear(owner, IdOf(key));
 
-    // A factor is kept under the trader's address so it survives the scene being reloaded.
+    // A name covers every trader of that name, loaded now or later. An address, GUID or path names one
+    // trader and is kept as its address, so it survives the scene being reloaded; an address of a trader
+    // that isn't loaded is kept as given.
     private static string IdOf(string key)
     {
         if (key == null)
             return TraderFactors.AllTraders;
         var shop = Find(key, out _);
-        return shop != null ? shop.Id : key;
+        if (shop != null && !string.Equals(shop.Name, key, StringComparison.OrdinalIgnoreCase))
+            return shop.Id;
+        if (shop == null && ObjectAddress.TryParse(key, out _))
+            return key;
+        return TraderFactors.NameKey(key);
     }
 
     private static ShopInfo Find(string key, out Trade trade)

@@ -103,7 +103,7 @@ Traders.SetPriceFactors(this, null, buy: 1f, sell: 1.2f);
 Traders.ClearPriceFactors(this, "Brom's");
 ```
 
-- Price factors are per mod and per trader (or `null` for every trader), kept in the framework's shared factor table: different mods' factors multiply, the same mod and trader again replaces its pair, and a mod's factors go when it unloads. They scale the game's price first; `Prices` modifiers then see the scaled price. They are not saved: set them in `OnLoad`.
+- Price factors are per mod and per trader: a name covers every trader of that name, also in scenes loaded later; an address, GUID or path covers that one trader; `null` covers every trader. They are kept in the framework's shared factor table: different mods' factors multiply, the same mod and trader again replaces its pair, and a mod's factors go when it unloads. They scale the game's price first; `Prices` modifiers then see the scaled price. They are not saved: set them in `OnLoad`.
 - `SetMoney` does nothing (and returns false) while the difficulty gives traders infinite wealth.
 - `TraderInfo` also has the categories a trader takes or refuses, whether it buys stolen goods and at what factor, and whether it is a scripted trader (`Special`).
 

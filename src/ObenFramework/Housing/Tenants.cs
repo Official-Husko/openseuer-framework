@@ -69,7 +69,7 @@ public static class Tenants
         if (apartment.apartmentNumber == 1)
             return RentRefusal.PlayersApartment;
         var controller = TenementController.instance;
-        if (controller.ResidentRented(resident.resident.ID, true))
+        if (controller.ResidentRented(resident.resident.ID, true) || LivesInAnApartment(controller, resident))
             return RentRefusal.AlreadyRenting;
         if (apartment.resident != null && !apartment.onlyFurniture)
             return RentRefusal.Occupied;
@@ -138,6 +138,20 @@ public static class Tenants
         foreach (var apartment in TenementController.instance.apartments)
         {
             if (apartment != null && apartment.resident != null && apartment.resident.Compare(resident) && !apartment.moveStarted && !apartment.onlyFurniture)
+                return true;
+        }
+        return false;
+    }
+
+    // The game's own resident list only fills when someone rents during play, so tenants a level starts
+    // with are missing from it; the apartments know who lives where.
+    private static bool LivesInAnApartment(TenementController controller, TenementResident resident)
+    {
+        if (controller.apartments == null)
+            return false;
+        foreach (var apartment in controller.apartments)
+        {
+            if (apartment != null && apartment.resident != null && !apartment.onlyFurniture && apartment.resident.Compare(resident))
                 return true;
         }
         return false;

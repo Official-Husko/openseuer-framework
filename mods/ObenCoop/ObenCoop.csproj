@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ObenCoop</RootNamespace>
+    <Description>Co-op for Obenseuer: find each other, shake hands, keep a roster and chat.</Description>
+    <!-- Only the PDB of the net library goes next to the mod, not its XML docs. -->
+    <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+    <!-- Private="true": unlike the framework, ObenCoop.Net.dll is ours and has to be copied into the mod folder. -->
+    <ProjectReference Include="../ObenCoop.Net/ObenCoop.Net.csproj" Private="true" />
+  </ItemGroup>
+
+  <!--
+    LiteNetLib (MIT) does the UDP work. Its DLL sits in the mod folder but is not in mod.json "assemblies",
+    so the loader treats it as a library: resolved by name, loaded once, never reloaded. That is what lets a
+    live connection outlive a hot reload of the mod (see docs/modding/coop.md).
+  -->
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="1.3.1" GeneratePathProperty="true" />
+    <None Include="$(PkgLiteNetLib)/lib/net471/LiteNetLib.dll" Link="LiteNetLib.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+</Project>

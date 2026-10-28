@@ -1,0 +1,10 @@
+{
+  "id": "ObenCoop",
+  "name": "ObenCoop",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "Co-op for Obenseuer. For now: host or join over the network, a player list and chat. The shared world comes later.",
+  "assemblies": [ "ObenCoop.Net.dll", "ObenCoop.dll" ],
+  "dependencies": { "ObenFramework": "0.1.0" },
+  "hotReload": true
+}

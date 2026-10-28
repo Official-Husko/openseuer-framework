@@ -28,6 +28,7 @@ internal static class EnvironmentModule
         FlagOverrides.ReapplyAll();
         SettingOverrides.Reapply();
         ScreenBlur.Reapply();
+        WorldSky.Reapply();
     }
 
     private static void OnMainMenu()
@@ -43,6 +44,7 @@ internal static class EnvironmentModule
         SettingsChangedPatches.Reset();
         ScreenFade.ForgetScene();
         ScreenBlur.ForgetScene();
+        WorldSky.SceneChanging();
     }
 
     private static void Unload()
@@ -52,6 +54,7 @@ internal static class EnvironmentModule
         ScreenFade.Unload();
         ScreenBlur.Unload();
         ScreenVignette.Unload();
+        WorldSky.Unload();
         ForgetScene();
     }
 }

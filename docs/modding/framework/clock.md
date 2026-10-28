@@ -18,6 +18,11 @@ Both only exist in gameplay scenes. `GameClock.IsAvailable` and `GameWeather.IsA
 | `IsDaytime` | the game's own rule, 06:00 to 20:00 |
 | `TimeSpeed` | the game's speed factor, 1 is normal (a day takes `dayLenghtInMinutes` real minutes, 96 in 0.5.13), 0 stops time |
 | `SetTime(float hours)`, `SetTime(int hours, int minutes)` | jump to a time of day, same ranges as the console's `change_time` |
+| `SetDate(year, month, day)` | set the calendar date, keeping the time; `Day` doesn't change |
+| `Now` | a `ClockTime` with all of the above read at once |
+| `After(owner, minutes, action)` | run `action` once that many in-game minutes have passed; dispose the result to cancel |
+
+`After` counts the game's minute tick, so sleeping and waiting count and frozen time doesn't. What a mod scheduled is dropped when it unloads, when another game is loaded or a new one starts, and at the main menu; level changes keep it. `WaitingCount` says how many actions wait.
 
 `TimeSpeed` is the game's `timeSpeedOverrideFactor`. Sleeping and waiting set it themselves and put it back to 1 when they end, so a speed set by a mod doesn't survive them, and two mods setting it overwrite each other. Use `TimeControl` for anything a mod holds on to.
 
@@ -78,7 +83,7 @@ GameClock.SecondPassed.Subscribe(this, seconds => ...);
 
 ## Dev bridge
 
-`clock.get`, `clock.set` (`hours`, `minutes`, optional `speed`), `weather.get`, `weather.list`, `weather.set` (`name` as name or index, optional `transition`). At the main menu or in a scene without the system they return an error saying so.
+`clock.get`, `clock.set` (`hours`, `minutes`, optional `speed`), `clock.setdate` (`year`, `month`, `day`), `clock.after` (`minutes`, logs a line when they passed), `weather.get`, `weather.list`, `weather.set` (`name` as name or index, optional `transition`). At the main menu or in a scene without the system they return an error saying so.
 
 `time.control` shows the overrides; `time.freeze` (`on`, default true) and `time.speed` (`speed`, or `clear=true`) hold them in the bridge's name.
 

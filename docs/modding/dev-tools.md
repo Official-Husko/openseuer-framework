@@ -65,7 +65,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `items.find`, `items.give`, `items.count`, `items.spawn`, `money.get`, `money.add` | see [framework/items.md](framework/items.md) | items and money |
 | `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list`, `worlditems.events`, `registry.items`, `registry.placeholders` | see [framework/items.md](framework/items.md) | the inventory in detail, loot tables, containers in other scenes, objects that give items |
 | `crafting.stations`, `crafting.control`, `crafting.speed`, `crafting.quality`, `crafting.events`, `recipes.find`, `recipes.unlock` | see [framework/crafting.md](framework/crafting.md) | stations, factors, recipes |
-| `clock.get`, `clock.set`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
+| `clock.get`, `clock.set`, `clock.setdate`, `clock.after`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
 | `time.control`, `time.freeze`, `time.speed` | `on?`; `speed` or `clear` | clock overrides (freeze, speed) held by the bridge, and who holds what |
 | `lua.get`, `lua.set`, `lua.run`, `quests.list`, `quests.set` | see [framework/dialogue.md](framework/dialogue.md), [framework/quests.md](framework/quests.md) | dialogue variables and the quest log |
 | `quests.create`, `quests.edit`, `quests.rewind`, `story.queue` | see [framework/quest-authoring.md](framework/quest-authoring.md), [framework/story.md](framework/story.md) | DevBridge's own tasks (make, change, rewind, checkpoints) and the story queue |

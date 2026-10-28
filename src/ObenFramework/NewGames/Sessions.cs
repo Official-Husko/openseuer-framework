@@ -26,6 +26,9 @@ public static class Sessions
     /// </summary>
     public static readonly GameEvent<SessionKind> Started = new GameEvent<SessionKind>(nameof(Started));
 
+    /// <summary>Raised just before <see cref="Started"/>, for the framework's own per-session state (what the old session left behind).</summary>
+    internal static readonly GameEvent<SessionKind> Starting = new GameEvent<SessionKind>(nameof(Starting));
+
     /// <summary>How the running session began; <see cref="SessionKind.None"/> in the main menu.</summary>
     public static SessionKind Current => Rules.Current;
 
@@ -78,7 +81,9 @@ public static class Sessions
     private static void OnWorldReady(string scene)
     {
         var kind = Rules.WorldReady(string.Equals(scene, IntroScene, StringComparison.OrdinalIgnoreCase));
-        if (kind != SessionKind.None)
-            Started.Raise(kind, GameEvents.Log);
+        if (kind == SessionKind.None)
+            return;
+        Starting.Raise(kind, GameEvents.Log);
+        Started.Raise(kind, GameEvents.Log);
     }
 }

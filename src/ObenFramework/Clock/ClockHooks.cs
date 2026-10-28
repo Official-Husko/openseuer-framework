@@ -33,7 +33,7 @@ internal static class ClockHooks
         Sync(ref _secondHooked, GameClock.SecondPassed.HasSubscribers, () => TimeOfDayAzure.SecondsPassed += OnSeconds, () => TimeOfDayAzure.SecondsPassed -= OnSeconds);
         Sync(ref _dayHooked, GameClock.DayChanged.HasSubscribers, () => TimeOfDayAzure.DayChanged += OnDay, () => TimeOfDayAzure.DayChanged -= OnDay);
 
-        bool wantMinute = GameClock.MinutePassed.HasSubscribers || GameClock.HourChanged.HasSubscribers;
+        bool wantMinute = GameClock.MinutePassed.HasSubscribers || GameClock.HourChanged.HasSubscribers || GameClock.Countdowns.Count > 0;
         if (wantMinute && !_minuteHooked)
             _lastHour = GameClock.IsAvailable ? GameClock.Hour : -1;
         Sync(ref _minuteHooked, wantMinute, () => TimeOfDayAzure.MinutePassed += OnMinute, () => TimeOfDayAzure.MinutePassed -= OnMinute);
@@ -72,6 +72,12 @@ internal static class ClockHooks
                 _lastHour = hour;
                 if (known)
                     GameClock.HourChanged.Raise(hour, GameEvents.Log);
+            }
+            if (GameClock.Countdowns.Count > 0)
+            {
+                GameClock.TickCountdowns();
+                if (GameClock.Countdowns.Count == 0)
+                    Refresh();
             }
         }
         catch (Exception e)

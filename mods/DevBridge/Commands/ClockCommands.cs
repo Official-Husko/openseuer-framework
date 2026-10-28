@@ -40,6 +40,27 @@ internal static class ClockCommands
         return ClockGet(p);
     }
 
+    [BridgeCommand("clock.setdate", "Set the calendar date, keeping the time of day.", Params = new[] { "year", "month: 1-12", "day: 1-31" })]
+    private static object ClockSetDate(JObject p)
+    {
+        RequireClock();
+        int year = p["year"]?.Value<int>() ?? throw new ArgumentException("Missing parameter 'year'.");
+        int month = p["month"]?.Value<int>() ?? throw new ArgumentException("Missing parameter 'month'.");
+        int day = p["day"]?.Value<int>() ?? throw new ArgumentException("Missing parameter 'day'.");
+        GameClock.SetDate(year, month, day);
+        return GameClock.Now.ToString();
+    }
+
+    [BridgeCommand("clock.after", "Log a line after some in-game minutes (tests GameClock.After).", Params = new[] { "minutes: at least 1" })]
+    private static object ClockAfter(JObject p)
+    {
+        int minutes = p.Int("minutes", 0);
+        string start = GameClock.IsAvailable ? GameClock.TimeText : "?";
+        GameClock.After(DevBridgeMod.Instance, minutes, () =>
+            DevBridgeMod.Instance.Log.Info($"clock.after: {minutes} in-game minutes passed since {start}, now {GameClock.TimeText}"));
+        return new JObject { ["scheduledAt"] = start, ["minutes"] = minutes, ["waiting"] = GameClock.WaitingCount };
+    }
+
     [BridgeCommand("weather.get", "The active weather.")]
     private static object WeatherGet(JObject p)
     {

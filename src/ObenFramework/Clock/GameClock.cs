@@ -8,7 +8,7 @@ namespace ObenFramework.Clock;
 /// <see cref="IsAvailable"/> before reading it from code that can run at the main menu; the members
 /// throw <see cref="InvalidOperationException"/> when there is no clock.
 /// </summary>
-public static class GameClock
+public static partial class GameClock
 {
     /// <summary>
     /// A new in-game minute started, payload is the minute (0-59). Roughly once per real second at normal
@@ -98,7 +98,20 @@ public static class GameClock
     public static string TimeText => $"{Hour:00}:{Minute:00}";
 
     /// <summary>Hooks the clock events to the game. Called once by the framework.</summary>
-    internal static void Init(ObenMod framework) => ClockHooks.Init(framework);
+    internal static void Init(ObenMod framework)
+    {
+        Countdowns.Clear();
+        CountdownOwners.Clear();
+        ClockHooks.Init(framework);
+        // Waiting actions belong to the game they were scheduled in.
+        Events.GameEvents.MainMenu.Subscribe(framework, ClearCountdowns);
+        NewGames.Sessions.Starting.Subscribe(framework, _ => ClearCountdowns());
+        framework.Track(ObenLoader.Runtime.Disposable.Create(() =>
+        {
+            Countdowns.Clear();
+            CountdownOwners.Clear();
+        }));
+    }
 
     private static TimeOfDayAzure Azure
     {

@@ -49,6 +49,7 @@
     <Compile Include="../../src/ObenFramework/Events/HandlerList.cs" Link="Linked/HandlerList.cs" />
     <Compile Include="../../src/ObenFramework/Events/LoadAbortRules.cs" Link="Linked/LoadAbortRules.cs" />
     <Compile Include="../../src/ObenFramework/Clock/TimeOverrides.cs" Link="Linked/TimeOverrides.cs" />
+    <Compile Include="../../src/ObenFramework/Clock/MinuteCountdowns.cs" Link="Linked/MinuteCountdowns.cs" />
     <Compile Include="../../src/ObenFramework/Console/ConsoleTokens.cs" Link="Linked/ConsoleTokens.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveBlobLimits.cs" Link="Linked/SaveBlobLimits.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveGateState.cs" Link="Linked/SaveGateState.cs" />

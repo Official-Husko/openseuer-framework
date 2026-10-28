@@ -116,6 +116,8 @@
     <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionRules.cs" Link="Linked/NewGames/NewGameOptionRules.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionStore.cs" Link="Linked/NewGames/NewGameOptionStore.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionsFile.cs" Link="Linked/NewGames/NewGameOptionsFile.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/StartChoices/StartChoiceRules.cs" Link="Linked/NewGames/StartChoiceRules.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Tutorial/TutorialSteps.cs" Link="Linked/NewGames/TutorialSteps.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

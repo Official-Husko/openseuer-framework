@@ -65,6 +65,7 @@ public sealed class FrameworkMod : ObenMod
         ModFeatures.Update();
         NpcsModule.Update();
         ItemsModule.Update();
+        TransportModule.Update();
     }
 
     public override void OnUnload() => Instance = null;

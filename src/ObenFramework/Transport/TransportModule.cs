@@ -20,6 +20,7 @@ internal static class TransportModule
         GameEvents.MainMenu.Subscribe(framework, ForgetScene);
         GameEvents.WorldReady.Subscribe(framework, Levels.OnWorldReady);
         Travel.Init(framework);
+        TrainTickets.Init(framework);
         framework.Track(Disposable.Create(() =>
         {
             ForgetScene();
@@ -28,8 +29,14 @@ internal static class TransportModule
         }));
     }
 
+    /// <summary>Called every frame by the framework; returns at once unless someone listens for train movement.</summary>
+    public static void Update() => Trains.Update();
+
     // Everything here refers to objects of the scene that is going away.
     private static void ForgetScene()
     {
+        Trains.Reset();
+        Drones.Reset();
+        TrainTickets.ForgetScene();
     }
 }

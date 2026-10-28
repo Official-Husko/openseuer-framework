@@ -89,10 +89,10 @@ public readonly struct PowerGridInfo
 }
 
 /// <summary>
-/// Power grids, read only. A grid is a node with a capacity and a set of listeners (lights, appliances,
-/// generators) that it switches off, most recently switched on first, when they use more than it offers.
-/// Which listener loses power depends on the order they were switched on, so the outcome is only
-/// reproducible with the same sequence of events. Setting grid state from a mod is not offered yet.
+/// Power grids. A grid is a node with a capacity and a set of listeners (lights, appliances, generators)
+/// that it switches off, most recently switched on first, when they use more than it offers. Which
+/// listener loses power depends on the order they were switched on, so the outcome is only reproducible
+/// with the same sequence of events. The devices on a grid are in <c>ObenFramework.Env.PowerDevices</c>.
 /// </summary>
 public static class PowerGrids
 {
@@ -125,6 +125,32 @@ public static class PowerGrids
         if (grid == null)
             return null;
         return string.IsNullOrEmpty(grid.GUID) ? ObjectAddress.Of(grid).ToString() : grid.GUID;
+    }
+
+    /// <summary>Switches the grid's breaker the way a power meter or the main switch does (<c>Toggle</c>). The grid saves it.</summary>
+    public static void SetEnabled(PowerGrid grid, bool enabled)
+    {
+        if (grid == null)
+            throw new System.ArgumentNullException(nameof(grid));
+        if (grid.GridEnabled == enabled)
+            return;
+        using (WorldChanges.EnterMod())
+            grid.Toggle(enabled);
+    }
+
+    /// <summary>
+    /// Sets the capacity the grid has by itself, in watts (<c>SetBaseBalance</c>). The tenement sets its main
+    /// grid's capacity from the electricity upgrade again whenever its utilities update, so a change there
+    /// lasts until the next upgrade or level load.
+    /// </summary>
+    public static void SetBaseCapacity(PowerGrid grid, int watts)
+    {
+        if (grid == null)
+            throw new System.ArgumentNullException(nameof(grid));
+        if (watts < 0)
+            throw new System.ArgumentOutOfRangeException(nameof(watts), "Give 0 or more watts.");
+        using (WorldChanges.EnterMod())
+            grid.SetBaseBalance(watts);
     }
 
     public static PowerGridInfo Describe(PowerGrid grid) => new PowerGridInfo(

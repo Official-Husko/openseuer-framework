@@ -221,20 +221,28 @@ Built on: ObenCoop sessions, presence and blob transfer, Tenement, Containers, Q
 
 ### Mod and config sync for co-op (M to L)
 
-Today the co-op handshake compares mod sets and refuses a mismatch, naming the mods. Instead, a guest could be brought in line with the host.
+ObenCoop is meant for friends playing with friends, so the host's mods and setup go straight to the joiners, as in other games with modded multiplayer. It only goes one way: host to joiners. A joiner never sends mods or settings to the host. That would make no sense (the host's world is the real one) and would let any joiner push code onto the host.
 
-- **Configs first (M):**
-  - The host sends the settings that change gameplay: Game Tweaks values, feature switches from `features.json`, difficulty factors, payout and price factors.
-  - The guest applies them as overrides for the session only. They never write into the guest's own config files, and the guest's values come back on leaving. The framework already holds most of these per owner (`OwnedValues`, `MultiplierTable`).
-  - The mod's config classes would mark which fields are gameplay (synced) and which are personal (key binds, UI, volume; never synced).
-- **Mods (L, careful):** installing a mod means running code someone else sent you, so never take DLLs straight from another player.
-  - The handshake lists what's missing or outdated by id, version and SHA-256.
-  - The guest downloads those exact versions from the official release index (the same one the updater below uses), checks the hash, and installs.
-  - New mods load through the loader's rescan, updated ones through hot reload; a framework or loader update needs a restart.
-  - The guest confirms in a window first. Mods that aren't in the index can't be synced, only named.
-  - Mods marked client-only in `mod.json` (cosmetic, HUD) are left out of the comparison altogether.
+**The setup (the same as Neet's co-op, `mods/Coop/Session/ModSync.cs` there):**
 
-Built on: the handshake's mod-set check, blob transfer (for configs), ModFeatures, Game Tweaks config, `ModRegistry.Rescan` and hot reload, ObenUIKit.
+- **The host decides** which mods run, their feature switches, and the settings marked as shared (gameplay values such as Game Tweaks, difficulty, payout and price factors).
+- **The joiner follows it live** while in the session. The mod menu is locked for those mods.
+- **Nothing is written** into the joiner's own config files, and leaving restores the joiner's own setup.
+- **Personal mods and settings stay per player:** key binds, UI, volume, HUD and cosmetic mods marked client-only. Dev-only mods (DevBridge, Script Runner) are never synced.
+
+**The mods themselves (beyond Neet, which still asks the joiner to install the same version):**
+
+1. **The handshake compares** the joiner's mods with the host's shared set by id, version and SHA-256.
+2. **The joiner confirms first,** in a window that lists every mod to be synced (name, version, author, size). Its warning, in plain words: mods are programs that run on your computer; only join games of people you trust.
+   - Accept downloads the mods; Decline leaves the session.
+   - "Always trust this host" skips the window next time, keyed by the host's persistent player id (or Steam id).
+3. **The host sends the files directly:** the mod's DLL, `mod.json` and assets, through blob transfer (chunked, CRC-checked, acknowledged). After the transfer the joiner checks every file against the hashes in the host's list. That protects against broken transfers, not against a host you shouldn't have trusted; the confirmation is the protection there.
+4. **Synced mods are kept apart** from the joiner's own installation (for example `Mods/.synced/<host id>/<mod>@<version>/`). They load for the session, new ones through the loader's rescan, and updated ones in place of the joiner's own copy only for the session. On leaving they're unloaded and the joiner's own mods come back. A "keep this mod" choice can install one for good.
+5. **The loader and the framework itself are not hot-swapped.** If the host runs a different loader or framework version, the joiner is told to update (or the updater below does it) and to join again.
+
+Built on:
+- **Already there:** the handshake's mod-set check, blob transfer, ModFeatures overrides, `OwnedValues` for session-only settings, `ModRegistry.Rescan`, hot reload and `LoadedAssemblies.LoadFromMemory`, the persistent player id, ObenUIKit dialogs.
+- **New:** a shared/client-only flag in `mod.json`, and a `[Shared]` attribute on config fields, as in Neet.
 
 ## Tools
 
@@ -262,4 +270,4 @@ A small standalone program that keeps the loader and the mods up to date. Why Go
 
 Built on: `build/release.sh` and `build/package.sh`, `oben install`'s rules, `changelog.json`, the What's New page, ObenUIKit.
 
-These two fit together: co-op mod sync uses the updater's index and signatures to fetch the host's mod versions, so both share one trusted source of mods.
+The two can meet later: when a mod the host runs is also in the release index, the joiner could fetch it from there, verified by signature, instead of from the host. Mods that aren't in the index still come from the host.

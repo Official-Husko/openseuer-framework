@@ -27,8 +27,8 @@ internal sealed class Node : IDisposable
     public SessionOptions Options { get; }
     public CoopSession Session { get; set; }
     public int StartedCount;
-    public List<Player> Joined { get; } = new List<Player>();
-    public List<(Player Player, string Reason)> Left { get; } = new List<(Player, string)>();
+    public List<CoopPlayer> Joined { get; } = new List<CoopPlayer>();
+    public List<(CoopPlayer Player, string Reason)> Left { get; } = new List<(CoopPlayer, string)>();
     public List<SessionEnd> Ends { get; } = new List<SessionEnd>();
 
     public void Dispose() => Transport.Stop();

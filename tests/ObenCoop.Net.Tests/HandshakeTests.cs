@@ -16,7 +16,7 @@ public class HandshakeTests
         Assert.True(host.Session.IsHost);
         Assert.Equal(1, host.StartedCount);
         Assert.Single(host.Session.Roster.Players);
-        Assert.Equal(Player.HostSlot, host.Session.Roster.Local.Slot);
+        Assert.Equal(CoopPlayer.HostSlot, host.Session.Roster.Local.Slot);
         Assert.Same(host.Session.Roster.Local, host.Session.Roster.Host);
     }
 

@@ -56,10 +56,10 @@ public sealed partial class CoopSession
     public event Action Started;
 
     /// <summary>Raised when another player is in the roster, on every game. On joining, once per player already there.</summary>
-    public event Action<Player> PlayerJoined;
+    public event Action<CoopPlayer> PlayerJoined;
 
     /// <summary>Raised when another player has gone. The text says why.</summary>
-    public event Action<Player, string> PlayerLeft;
+    public event Action<CoopPlayer, string> PlayerLeft;
 
     /// <summary>Raised once when the session ends for this game, for any reason, including <see cref="Leave"/>.</summary>
     public event Action<SessionEnd> Ended;
@@ -74,7 +74,7 @@ public sealed partial class CoopSession
 
         Leave();
         _transport.Host(port, max - 1 + PendingSlack);
-        Roster.Add(new Player(Player.HostSlot, Options.PlayerId, CleanName(Options.PlayerName), true, -1));
+        Roster.Add(new CoopPlayer(CoopPlayer.HostSlot, Options.PlayerId, CleanName(Options.PlayerName), true, -1));
         State = SessionState.Hosting;
         Log($"Hosting on UDP port {port} for up to {max} players.");
         Raise(Started);
@@ -130,7 +130,7 @@ public sealed partial class CoopSession
     }
 
     /// <summary>Round trip time to a player in milliseconds, -1 if unknown (clients only know the host).</summary>
-    public int PingOf(Player player)
+    public int PingOf(CoopPlayer player)
     {
         if (player == null || player.IsLocal)
             return -1;

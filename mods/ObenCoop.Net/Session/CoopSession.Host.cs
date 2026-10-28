@@ -84,7 +84,7 @@ public sealed partial class CoopSession
             return;
         }
 
-        var player = new Player((byte)slot, id, UniqueName(CleanName(name)), false, peer);
+        var player = new CoopPlayer((byte)slot, id, UniqueName(CleanName(name)), false, peer);
         RemovePending(peer);
         Roster.Add(player);
         SendWelcome(player);
@@ -93,7 +93,7 @@ public sealed partial class CoopSession
         Raise(PlayerJoined, player);
     }
 
-    private void SendWelcome(Player player)
+    private void SendWelcome(CoopPlayer player)
     {
         var writer = MessagePool.RentWriter();
         try
@@ -111,7 +111,7 @@ public sealed partial class CoopSession
     }
 
     // Sends the roster to everyone except one player (the one who just got a Welcome with it).
-    private void BroadcastRoster(Player except)
+    private void BroadcastRoster(CoopPlayer except)
     {
         var writer = MessagePool.RentWriter();
         try

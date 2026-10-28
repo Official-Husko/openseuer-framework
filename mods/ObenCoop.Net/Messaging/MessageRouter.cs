@@ -7,7 +7,7 @@ namespace ObenCoop.Net.Messaging;
 /// Handles a message that arrived on a channel. <paramref name="sender"/> is the player who sent it;
 /// <paramref name="reader"/> is positioned at the payload and is only valid during the call.
 /// </summary>
-public delegate void MessageHandler(Player sender, MessageReader reader);
+public delegate void MessageHandler(CoopPlayer sender, MessageReader reader);
 
 /// <summary>
 /// Maps channel ids to handlers. A channel is one feature's message stream (chat, positions, ...):
@@ -46,7 +46,7 @@ public sealed class MessageRouter
     }
 
     /// <summary>Delivers a message to the channel's handler. Returns false when it was dropped.</summary>
-    public bool Dispatch(byte channel, Player sender, MessageReader reader)
+    public bool Dispatch(byte channel, CoopPlayer sender, MessageReader reader)
     {
         var handler = _handlers[channel];
         if (handler == null)

@@ -21,7 +21,7 @@ public sealed partial class CoopSession
     }
 
     /// <summary>Sends a message to one player. On a client the host passes it on unless the target is the host.</summary>
-    public bool SendTo(Player target, byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
+    public bool SendTo(CoopPlayer target, byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
     {
         if (target == null || target.IsLocal || Roster.Find(target.Slot) != target)
             return false;
@@ -32,12 +32,12 @@ public sealed partial class CoopSession
 
     /// <summary>Sends a message to the host only. False on the host itself.</summary>
     public bool SendToHost(byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered) =>
-        State == SessionState.Joined && SendToHostPeer(Player.HostSlot, channel, payload, mode);
+        State == SessionState.Joined && SendToHostPeer(CoopPlayer.HostSlot, channel, payload, mode);
 
     // Host: to one player or, with null, to everyone else. The slot byte says who sent it (the host).
-    private bool SendFromHost(Player only, byte channel, MessageWriter payload, DeliveryMode mode)
+    private bool SendFromHost(CoopPlayer only, byte channel, MessageWriter payload, DeliveryMode mode)
     {
-        var envelope = Envelope(mode, channel, Player.HostSlot, payload.Buffer, 0, payload.Length);
+        var envelope = Envelope(mode, channel, CoopPlayer.HostSlot, payload.Buffer, 0, payload.Length);
         try
         {
             bool sent = false;
@@ -94,9 +94,9 @@ public sealed partial class CoopSession
         byte target = reader.ReadByte();
         var payload = reader.ReadRest();
 
-        if (target == Protocol.AllOthers || target == Player.HostSlot)
+        if (target == Protocol.AllOthers || target == CoopPlayer.HostSlot)
             DeliverLocally(channel, sender, payload);
-        if (target == Player.HostSlot)
+        if (target == CoopPlayer.HostSlot)
             return;
 
         var envelope = Envelope(mode, channel, sender.Slot, payload.Array, payload.Offset, payload.Count);
@@ -130,7 +130,7 @@ public sealed partial class CoopSession
         Router.Dispatch(channel, sender, reader);
     }
 
-    private void DeliverLocally(byte channel, Player sender, ArraySegment<byte> payload)
+    private void DeliverLocally(byte channel, CoopPlayer sender, ArraySegment<byte> payload)
     {
         var reader = MessagePool.RentReader().Init(payload);
         try

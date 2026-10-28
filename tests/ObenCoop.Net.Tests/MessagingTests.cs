@@ -11,14 +11,14 @@ public class MessagingTests
     private const byte Numbers = ChannelIds.FirstFree;
     private const byte Other = ChannelIds.FirstFree + 1;
 
-    private static List<(Player From, int Value)> Collect(Node node, byte channel)
+    private static List<(CoopPlayer From, int Value)> Collect(Node node, byte channel)
     {
-        var received = new List<(Player, int)>();
+        var received = new List<(CoopPlayer, int)>();
         node.Session.Router.Register(channel, (from, reader) => received.Add((from, reader.ReadInt32())));
         return received;
     }
 
-    private static void SendNumber(Node node, byte channel, int value, DeliveryMode mode = DeliveryMode.ReliableOrdered, Player to = null)
+    private static void SendNumber(Node node, byte channel, int value, DeliveryMode mode = DeliveryMode.ReliableOrdered, CoopPlayer to = null)
     {
         var writer = MessagePool.RentWriter();
         writer.WriteInt32(value);

@@ -7,19 +7,19 @@ namespace ObenCoop.Net.Session;
 /// <summary>Who is in the session, ordered by slot. The host and every client keep the same list.</summary>
 public sealed class Roster
 {
-    private readonly List<Player> _players = new List<Player>();
+    private readonly List<CoopPlayer> _players = new List<CoopPlayer>();
 
-    public IReadOnlyList<Player> Players => _players;
+    public IReadOnlyList<CoopPlayer> Players => _players;
 
     public int Count => _players.Count;
 
     /// <summary>This game's own player, or null when no session is running.</summary>
-    public Player Local { get; private set; }
+    public CoopPlayer Local { get; private set; }
 
     /// <summary>The host's player, or null when no session is running.</summary>
-    public Player Host { get; private set; }
+    public CoopPlayer Host { get; private set; }
 
-    public Player Find(byte slot)
+    public CoopPlayer Find(byte slot)
     {
         for (int i = 0; i < _players.Count; i++)
         {
@@ -29,7 +29,7 @@ public sealed class Roster
         return null;
     }
 
-    public Player Find(Guid id)
+    public CoopPlayer Find(Guid id)
     {
         for (int i = 0; i < _players.Count; i++)
         {
@@ -39,7 +39,7 @@ public sealed class Roster
         return null;
     }
 
-    internal Player FindByPeer(int peer)
+    internal CoopPlayer FindByPeer(int peer)
     {
         for (int i = 0; i < _players.Count; i++)
         {
@@ -70,7 +70,7 @@ public sealed class Roster
         return -1;
     }
 
-    internal void Add(Player player)
+    internal void Add(CoopPlayer player)
     {
         int index = _players.Count;
         while (index > 0 && _players[index - 1].Slot > player.Slot)
@@ -82,7 +82,7 @@ public sealed class Roster
             Host = player;
     }
 
-    internal bool Remove(Player player)
+    internal bool Remove(CoopPlayer player)
     {
         if (!_players.Remove(player))
             return false;

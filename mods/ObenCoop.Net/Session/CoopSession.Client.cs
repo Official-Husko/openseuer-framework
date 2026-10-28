@@ -9,7 +9,7 @@ namespace ObenCoop.Net.Session;
 public sealed partial class CoopSession
 {
     private readonly List<Roster.RosterEntry> _entries = new List<Roster.RosterEntry>();
-    private readonly List<Player> _gone = new List<Player>();
+    private readonly List<CoopPlayer> _gone = new List<CoopPlayer>();
 
     private void SendHello()
     {
@@ -69,7 +69,7 @@ public sealed partial class CoopSession
         Roster.ReadEntries(reader, _entries);
 
         foreach (var entry in _entries)
-            Roster.Add(new Player(entry.Slot, entry.Id, entry.Name, entry.Slot == mySlot, -1));
+            Roster.Add(new CoopPlayer(entry.Slot, entry.Id, entry.Name, entry.Slot == mySlot, -1));
         if (Roster.Local == null || Roster.Host == null)
         {
             Abort(new SessionEnd(EndKind.Rejected, RejectReason.BadHello, "The host sent a roster without you in it."));
@@ -79,7 +79,7 @@ public sealed partial class CoopSession
         State = SessionState.Joined;
         Log($"Joined as {Roster.Local} with {Roster.Count - 1} other player(s).");
         Raise(Started);
-        foreach (var player in new List<Player>(Roster.Players))
+        foreach (var player in new List<CoopPlayer>(Roster.Players))
         {
             if (!player.IsLocal)
                 Raise(PlayerJoined, player);
@@ -105,13 +105,13 @@ public sealed partial class CoopSession
         {
             if (Roster.Find(entry.Slot) != null)
                 continue;
-            var player = new Player(entry.Slot, entry.Id, entry.Name, false, -1);
+            var player = new CoopPlayer(entry.Slot, entry.Id, entry.Name, false, -1);
             Roster.Add(player);
             Raise(PlayerJoined, player);
         }
     }
 
-    private bool InEntries(Player player)
+    private bool InEntries(CoopPlayer player)
     {
         foreach (var entry in _entries)
         {

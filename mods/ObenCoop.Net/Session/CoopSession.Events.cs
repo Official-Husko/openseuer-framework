@@ -11,13 +11,13 @@ public sealed partial class CoopSession
         catch (Exception e) { Log("A handler threw: " + e); }
     }
 
-    private void Raise(Action<Player> handlers, Player player)
+    private void Raise(Action<CoopPlayer> handlers, CoopPlayer player)
     {
         try { handlers?.Invoke(player); }
         catch (Exception e) { Log("A handler threw: " + e); }
     }
 
-    private void Raise(Action<Player, string> handlers, Player player, string text)
+    private void Raise(Action<CoopPlayer, string> handlers, CoopPlayer player, string text)
     {
         try { handlers?.Invoke(player, text); }
         catch (Exception e) { Log("A handler threw: " + e); }

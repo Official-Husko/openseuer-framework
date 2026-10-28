@@ -8,12 +8,12 @@ namespace ObenCoop.Net.Session;
 /// player's persistent GUID (the same on every join, from their identity file), so a profile or
 /// save can be kept per person; the slot can differ from one session to the next.
 /// </summary>
-public sealed class Player
+public sealed class CoopPlayer
 {
     /// <summary>The host's slot.</summary>
     public const byte HostSlot = 0;
 
-    internal Player(byte slot, Guid id, string name, bool isLocal, int peer)
+    internal CoopPlayer(byte slot, Guid id, string name, bool isLocal, int peer)
     {
         Slot = slot;
         Id = id;

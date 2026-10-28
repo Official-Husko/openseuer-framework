@@ -64,7 +64,7 @@ public sealed partial class CoopSession
                 string name = reader.ReadString();
                 bool local = reader.ReadBool();
                 int peer = reader.ReadInt32();
-                Roster.Add(new Player(slot, id, name, local, peer));
+                Roster.Add(new CoopPlayer(slot, id, name, local, peer));
             }
 
             State = restored;

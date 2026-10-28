@@ -1,4 +1,5 @@
 using System;
+using ObenFramework.World;
 using UnityEngine;
 using Currency = Money.Currency;
 
@@ -12,6 +13,12 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class Wallet
 {
+    /// <summary>
+    /// A balance changed through the game's <c>Money.AddMoney</c> or <c>RemoveMoney</c>, whoever called it: a
+    /// shop, a bank, a quest, a mod. Raised once per currency that changed, after the change.
+    /// </summary>
+    public static readonly WorldEvent<MoneyChange> Changed = new WorldEvent<MoneyChange>(nameof(Changed));
+
     /// <summary>True when balances can be read.</summary>
     public static bool CanRead => Money.instance != null;
 

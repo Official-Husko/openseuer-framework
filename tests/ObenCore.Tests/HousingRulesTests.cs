@@ -56,7 +56,7 @@ public class HousingRulesTests
     [InlineData("3/")]
     [InlineData("-1/roof")]
     [InlineData("x/roof")]
-    public void BadRenovationIdsAreRejected(string id) =>
+    public void BadRenovationIdsAreRejected(string? id) =>
         Assert.False(HousingRules.TryParseRenovationId(id, out _, out _));
 
     [Theory]

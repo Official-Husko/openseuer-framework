@@ -1,3 +1,4 @@
+using ObenFramework.Assets;
 using ObenFramework.Clock;
 using ObenFramework.Dialogue;
 using ObenFramework.Economy;
@@ -36,6 +37,7 @@ public sealed class FrameworkMod : ObenMod
         PlayerLookWatcher.Init(this);
         SurvivalEvents.Init(this);
         ShopsModule.Init(this);
+        AssetsModule.Init(this);
         Log.Info("Ready.");
     }
 

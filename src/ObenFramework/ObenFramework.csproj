@@ -8,6 +8,11 @@
     <ProjectReference Include="../ObenLoader/ObenLoader.csproj" />
   </ItemGroup>
 
+  <!-- Loading OGG and MP3 goes through UnityWebRequestMultimedia. The audio and image modules are built against netstandard 2.1. -->
+  <ItemGroup>
+    <Reference Include="netstandard;UnityEngine.UnityWebRequestModule;UnityEngine.UnityWebRequestAudioModule"
+               HintPath="$(ObenManagedDir)/%(Identity).dll" Private="false" />  </ItemGroup>
+
   <!-- Ships as a regular mod folder: <game>/Mods/ObenFramework. -->
   <Import Project="$(RepoRoot)build/Mod.targets" />
 </Project>

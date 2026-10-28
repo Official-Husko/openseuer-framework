@@ -77,11 +77,8 @@ internal static class CameraView
     {
         WantThird = false;
         var view = ThirdPersonCameraCollision.instance;
-        if (view != null && !view.firstperson)
-        {
-            view.currentDistance = 0f;
-            view.FirstPerson();
-        }
+        if (view != null)
+            PullIn(view);
         Settle();
         return true;
     }
@@ -105,7 +102,7 @@ internal static class CameraView
             Unlock(view);
     }
 
-    /// <summary>Whether scroll zoom changed; settles the locks.</summary>
+    /// <summary>Turns scroll zoom on or off; off gives the locks back unless third person still needs them.</summary>
     internal static void SetScrollZoom(bool on)
     {
         ScrollZoom = on;
@@ -172,11 +169,17 @@ internal static class CameraView
             return;
         view.disableThirdPerson = _hadDisableThirdPerson;
         view.firstpersonOnly = _hadFirstPersonOnly || Forced();
-        if (view.firstpersonOnly && !view.firstperson)
-        {
-            view.currentDistance = 0f;
+        if (view.firstpersonOnly || view.disableThirdPerson)
+            PullIn(view);
+    }
+
+    // Back to the head. The distance matters as much as the mode: near a wall the game shows first person
+    // while the distance is still set, and would go back out once there is room.
+    private static void PullIn(ThirdPersonCameraCollision view)
+    {
+        view.currentDistance = 0f;
+        if (!view.firstperson)
             view.FirstPerson();
-        }
     }
 
     private static bool Forced()

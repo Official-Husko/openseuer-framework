@@ -54,7 +54,8 @@ UI that looks like the game's own: built from the game's uGUI elements, TMP font
 - [x] Theme taken from the main menu and the pause menu (stamped, not cloned)
 - [x] Window, headers, labels, buttons, cycles, toggles, sliders
 - [x] Keyboard/controller navigation, text fields, key binds, confirm dialogs, toasts
-- [ ] Long lists, tabs, tooltips
+- [x] Long lists, tabs, tooltips, segmented choices, swatches, steppers, cards, docked and floating windows, 3D model previews
+- [x] HUD prompts and guides, main menu buttons for any mod, UiState and input capture
 - [x] Mod menu: MODS in the main and pause menus, Mods page with mod and feature switches
 - [x] Settings, Errors and What's New pages
 

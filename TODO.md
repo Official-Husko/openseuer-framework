@@ -35,6 +35,10 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Building: place, move and remove furniture from code; containers and floor items with stable ids and events
 - [x] Shops and mail: shop stock and prices for traders and vending machines, letters and parcels
 - [x] Assets: textures, sprites, WAV/OGG/MP3 sounds and OBJ/MTL models from a mod's folder
+- [x] NPCs and animals: mod NPCs with looks, orders and routines, NPC actions, relationships, animals and breeding, police, robbers, janitors, surveillance, phones in the scene
+- [x] Player actions: movement multipliers, sleep and waits, skills and custom skills, effects, conditions, medical, seats, interactions, wardrobe, weapons, notes and books, jobs, achievements
+- [x] Items and crafting: inventory events, extra inventory and crafting sources, containers in unloaded scenes, loot, resource nodes, spawners, breakables, stations, speed and quality, recipe filters, recycling, growing, autofarms
+- [x] World props, scene logic, landmarks, signs, visited scenes and scene looks (character looks from scene files)
 - [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
 - [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
 - [ ] Coverage of the MIT framework: see PROGRESS.md
@@ -98,6 +102,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] ReflectionProbeRefresh (off by default): `"Player)"` tag typo; needs a look in a level before it's turned on
 - [x] EmailMonthNames, DialogueRealMoney, RandomPickSkipsLast, AmbientSoundVariety, DialogueLuaFunctions, NpcSightChance (off by default)
 - [x] BankInterest: weekly interest on savings and debts
+- [ ] TenementRequiredItems: `TenementController.RemoveRequiredItems` passes the full amount to every storage instead of what's still missing, so renovations take the item from every storage that holds it
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
 ## Expansion mods

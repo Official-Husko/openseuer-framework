@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>ObenCoop</RootNamespace>
-    <Description>Co-op for Obenseuer: find each other, shake hands, keep a roster and chat.</Description>
+    <Description>Co-op for Obenseuer: lobbies (direct IP and Steam), handshake, roster, chat and presence.</Description>
     <!-- Only the PDB of the net library goes next to the mod, not its XML docs. -->
     <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>

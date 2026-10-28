@@ -4,7 +4,7 @@
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
     <RootNamespace>ObenCoop.Net</RootNamespace>
     <AssemblyName>ObenCoop.Net</AssemblyName>
-    <Description>Networking for ObenCoop: transport, channels, handshake and roster. No game references.</Description>
+    <Description>Networking for ObenCoop: transports, channels, handshake, roster, blobs, presence and lobbies. No game references.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>

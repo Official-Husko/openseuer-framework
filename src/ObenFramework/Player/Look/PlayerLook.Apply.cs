@@ -79,10 +79,16 @@ public static partial class PlayerLook
         Costumes.RemoveWhere(c => c == null);
     }
 
-    private static Character BuildCharacter(LookData look)
+    /// <summary>
+    /// Writes a look into a <c>Character</c> the caller owns (a private copy, never one of the game's
+    /// shared assets), the same way <see cref="Apply"/> fills its own. Unknown names fall back like there.
+    /// </summary>
+    public static void WriteTo(Character character, LookData look)
     {
-        var character = ScriptableObject.CreateInstance<Character>();
-        character.name = "Mod Look";
+        if (character == null)
+            throw new ArgumentNullException(nameof(character));
+        if (look == null)
+            throw new ArgumentNullException(nameof(look));
         character.GenderString = look.male ? "Male" : "Female";
         character.Advanced = look.advanced;
         foreach (var dial in LookDials.All)
@@ -94,6 +100,20 @@ public static partial class PlayerLook
                 wearable = WearableTable.First(slot, look.male);
             slot.Put(character, wearable);
         }
+    }
+
+    /// <summary>
+    /// The Appearance ran its Start, so changing its Character needs <c>LoadCharacter()</c> to show. Before
+    /// that the game applies whatever Character it holds when it starts.
+    /// </summary>
+    public static bool IsStarted(Appearance appearance) =>
+        appearance != null ? PlayerAppearances.IsStarted(appearance) : throw new ArgumentNullException(nameof(appearance));
+
+    private static Character BuildCharacter(LookData look)
+    {
+        var character = ScriptableObject.CreateInstance<Character>();
+        character.name = "Mod Look";
+        WriteTo(character, look);
         return character;
     }
 }

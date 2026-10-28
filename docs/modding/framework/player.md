@@ -100,6 +100,8 @@ LookData back = LookData.FromBytes(wire);         // throws FormatException on b
 PlayerLook.Apply(puppetAppearance, back);         // dress any Appearance
 PlayerLook.ApplyToPlayer(back);                   // or the local player, until the next level load
 PlayerLook.Release(puppetAppearance);             // when the puppet is destroyed
+PlayerLook.WriteTo(myOwnCharacterCopy, back);     // fill a Character you own yourself
+bool started = PlayerLook.IsStarted(appearance);  // after Start, a new Character needs LoadCharacter()
 
 PlayerLook.Changed.Subscribe(this, l => Send(l.ToBytes()));
 ```

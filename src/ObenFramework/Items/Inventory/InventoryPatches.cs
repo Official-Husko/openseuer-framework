@@ -43,6 +43,16 @@ internal static class InventoryPatches
     [HarmonyPatch(typeof(ItemStack), nameof(ItemStack.ChangeItem))]
     private static void StackItemChanged() => InventoryWatch.MarkDirty();
 
+    // The stack methods above are small enough that the JIT may inline them into callers compiled before the
+    // patches went in; these slot methods around them are not.
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(SlotController), nameof(SlotController.TakeItem), new[] { typeof(Item), typeof(int), typeof(int), typeof(object[]) })]
+    private static void Taken() => InventoryWatch.MarkDirty();
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(SlotController), nameof(SlotController.RemoveItem))]
+    private static void SlotEmptied() => InventoryWatch.MarkDirty();
+
     // These three write itemId or itemAmount themselves instead of going through the stack's methods.
     [HarmonyPostfix]
     [HarmonyPatch(typeof(SlotController), nameof(SlotController.ChangeItem))]

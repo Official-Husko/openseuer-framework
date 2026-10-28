@@ -12,6 +12,7 @@
     <Project Path="mods/ScriptRunner/ScriptRunner.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ObenCore.Tests/ObenCore.Tests.csproj" />
     <Project Path="tests/ObenSave.Tests/ObenSave.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">

@@ -22,6 +22,11 @@
     <Compile Include="../../mods/ObenSave/Files/*.cs" Link="Saves/Files/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- Reads the game's and the mods' assemblies for "oben check". -->
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" />
+  </ItemGroup>
+
   <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game. -->
   <ItemGroup>
     <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" ReferenceOutputAssembly="false" Private="false" />

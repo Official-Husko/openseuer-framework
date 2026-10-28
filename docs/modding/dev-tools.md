@@ -19,6 +19,7 @@ Build it with the solution (`dotnet build ObenseuerExtended.slnx -c Release`) an
 | `oben call <method> [key=value ...]` | Runs a bridge command, e.g. `oben call game.info`. |
 | `oben eval "<code>"` | Runs C# in the game (see Scripts). |
 | `oben run file.cs [--watch]` | Runs a script file, again on every save with `--watch`. |
+| `oben check [--installed]` | Checks every Harmony patch and AccessTools lookup in the built mods against the installed game; run it after a game update (see [testing.md](testing.md)). |
 | `oben mcp` | MCP server on stdio. |
 
 ### Finding the game

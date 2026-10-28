@@ -86,3 +86,4 @@ handle.Dispose();                                             // or Payouts.Remo
 - `cards.tables`: card tables and their games.
 - `contests.list`: contests going on and the opponent's tolerance.
 - `gambling.payout` (`game?`, `multiplier?`): the multipliers in force; with both arguments it sets the bridge's own multiplier for that game (1 removes it).
+- `gambling.events` (`clear?`): recorded casino, card game and contest events.

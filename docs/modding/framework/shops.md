@@ -180,7 +180,8 @@ PlayerShops.CollectEarnings("kiosk");                    // the till goes to the
 
 - `shops.list` (`kind?`): shops of the scene with their address.
 - `shops.stock` (`address`): the stock and current prices of a trader or vending machine.
-- `traders.list`, `traders.money` (`shop`, `amount?`, `restock?`), `shops.hours` (`shop`)
+- `traders.list`, `traders.money` (`shop`, `amount?`, `restock?`), `traders.factor` (`shop?`, `buy`, `sell`: the bridge's own factors; 1 and 1 remove them), `shops.hours` (`shop`)
+- `economy.events` (`clear?`): recorded money, ledger, invoice, legal, checkout, opening hours, fuel and player shop events
 - `markets.list`, `markets.lock` (`shop`, `locked`), `furnitureshops.list`
 - `fuel.stations`, `fuel.price` (`station`, `price`)
 - `playershops.list`, `playershops.create` (`id`, `name?`, `currency?`), `playershops.set` (`id`, `open?`, `markup?`, `area?`, `addContainer?`, `removeContainer?`, `item?` + `price?`), `playershops.stock` (`id`), `playershops.sell` (`id`, `container`, `slot`, `item`, `count?`), `playershops.collect` (`id`), `playershops.delete` (`id`, `force?`)

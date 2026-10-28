@@ -24,3 +24,7 @@ Wallet.TryRemove(coins: 20, realMoney: 1.5f);   // both or neither
 - Items 0 and 1 are the two currencies, not stacks: `PlayerItems.Give/Take/Count` with those ids call the wallet. See [items.md](items.md).
 
 Bridge commands: `money.get`, `money.add`.
+
+## Shops and mail
+
+Changing prices, listing and stocking shops and reacting to purchases are in [shops.md](shops.md). Sending the player letters and parcels is in [mail.md](mail.md). Banks are not covered here; the interest bug is fixed by the ObenPatches mod.

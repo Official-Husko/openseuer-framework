@@ -16,6 +16,8 @@ internal static class WorldExtrasModule
     {
         PropsModule.Init(framework);
         Landmarks.Init(framework);
+        WorldObjects.Init(framework);
+        WorldLocation.Init(framework);
         GameEvents.LevelChanging.Subscribe(framework, Signs.Reset);
         GameEvents.MainMenu.Subscribe(framework, Signs.Reset);
         framework.Track(Disposable.Create(() =>

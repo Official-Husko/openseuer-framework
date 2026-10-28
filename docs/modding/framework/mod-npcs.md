@@ -9,7 +9,7 @@ Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.Npcs
 ```csharp
 var barkeep = ModNpcs.Spawn(this, "barkeep", new ModNpcSpec
 {
-    Template = 59,                 // a game character to copy (see npcs.characters)
+    Template = 253,                // a game character to copy; 253 has an AI body, so it can walk
     FirstName = "Raimo",
     LastName = "Baarimikko",
     Position = counterSpot,
@@ -43,7 +43,23 @@ What the copy gets: a character id from 1,000,000 up, hashed from your mod id an
 
 `ModNpcs.Get(this, "barkeep")`, `ModNpcs.Get(characterId)`, `ModNpcs.List(this)` and `ModNpcs.All()` find them again; `ModNpcs.Despawn(this, name)` and `ModNpcs.Clear(this)` remove them. Every NPC your mod spawned is removed when your mod unloads (saved ones come back when it loads again) and when the level changes.
 
-Templates: of the game's 294 characters (0.5.13) only 79 have a body of their own, and only 2 of those have character editor sliders (Lizzy Mopper is the one used for templates without a body). The other 215 are spawned on that slider body with their own slider values; 40 of them carry worn items, the rest get a head of their gender. `Characters.All()` and `oben call npcs.characters` show `HasBody` and `HasSliders` for each.
+### Which templates can walk
+
+Of the game's 294 characters (0.5.13) only 79 have a body of their own, and only 11 of those bodies have the game's NPC AI (an `NPCController` with a path finding agent). Only a copy of one of these can walk, take orders or follow a routine; every other body stands where it is spawned (it can still be talked to, claimed for looks and animations, and saved). `ModNpc.CanMove` says which kind you got. Orders on a body without AI return false and log once why; `NpcRoutines.Set` refuses such a body.
+
+| Id | Character | Body |
+|---|---|---|
+| 144 | Empty Test Map NPC | a plain townsperson; the safest choice for testing |
+| 145 | Empty Test Map NPC Follower | plain |
+| 146 | Empty Test Map Police | the only AI body with character editor sliders (wears a `LookData`) |
+| 253 | Bror Stjäla | |
+| 289 | Jaana Ahovaara | the only female AI body |
+| 107 | Crazy Neighbor | story NPC |
+| 84, 85, 172, 173, 188 | the police of the market square, backyard, gold store, bazaar and slums | police bodies |
+
+To give another character's look an AI body, set `Body`: for example `Template = 59, Body = 144` walks on the plain body, and a character without a body of its own (`HasBody` false) with `Body = 146` gets its own slider values on the one slider body that walks. Bodies without AI are not made to walk: the framework does not add AI components to a prefab that was not built with them.
+
+Of the 79 bodies only 2 have character editor sliders (Lizzy Mopper, 126, without AI, is the one used for templates that have no body; Empty Test Map Police, 146, has AI). The other 215 characters are spawned on Lizzy Mopper's body with their own slider values; 40 of them carry worn items, the rest get a head of their gender. `Characters.All()` and `oben call npcs.characters` show `HasBody`, `HasAi` and `HasSliders` for each (`oben call npcs.characters ai=true` lists the walking ones).
 
 ## Saved NPCs
 
@@ -84,7 +100,7 @@ barkeep.StopOrder();
 
 Orders use the game's own NPC path finding (`NPCController.SetTargetPosition`, so doors and waypoints work) and, for sitting and sleeping, the game's own `Act_sit` and `Act_Sleep` activities. One order at a time: a new one replaces the last, whose `done` gets false. `WalkTo` ends on arrival (`done(true)`, then the NPC turns to `yaw`) or after a timeout of three times the walking time plus ten seconds; wandering (between random reachable points, waiting 4 to 15 seconds at each), patrolling (round and round) and sitting or sleeping go on until stopped. `Order` says what it is doing.
 
-Orders wait while the player talks to the NPC, while a claim pauses or freezes it, and end when it dies or leaves. An order given right after `Spawn` waits the few frames until the NPC's controller has started. Orders are not saved.
+Orders wait while the player talks to the NPC, while a claim pauses or freezes it, and end when it dies or leaves. An order given right after `Spawn` waits the few frames until the NPC's controller has started. Orders are not saved. On a body without AI (`CanMove` false) every order returns false and the log says why once.
 
 ## Routines
 
@@ -96,7 +112,7 @@ var routine = new NpcRoutine()
     .Sleep(NpcDays.Every, TimeSpan.FromHours(23), TimeSpan.FromHours(7), "Interior Bar", bed)   // past midnight
     .Door("Interior Bar", barDoor);
 
-NpcRoutines.Set(this, "barkeep", new ModNpcSpec { Template = 59, FirstName = "Raimo" }, routine);
+NpcRoutines.Set(this, "barkeep", new ModNpcSpec { Template = 253, FirstName = "Raimo" }, routine);
 NpcRoutines.StepChanged.Subscribe(this, change => Log.Info(change.ToString()));
 ```
 
@@ -110,7 +126,7 @@ A routine is a weekly timetable: steps on some days (`NpcDays` flags) between tw
 
 ## Things to know
 
-- The NPC's body is the template's prefab; it does what that body does. Some bodies stand still unless given orders, which is normal: a mod NPC has no game schedule.
+- The NPC's body is the template's prefab (or `Body`'s); it does what that body does. Only AI bodies move at all (see above), and even they stand still unless given orders or a routine: a mod NPC has no game schedule.
 - Spawning, saving and restoring were written from the game's code (0.5.13) and checked against it, but treat them as new: test a template in game before relying on it.
 - Character ids from 1,000,000 up are reserved for mod NPCs; `ModNpcs.IsModNpc(id)` tells them apart.
 
@@ -118,8 +134,9 @@ A routine is a weekly timetable: steps on some days (`NpcDays` flags) between tw
 
 ```sh
 oben call npcs.characters name=Agnes
-oben call npcs.spawn name=test template=59 first=Testi
-oben call npcs.spawn name=test2 template=35 x=1 y=0 z=4 yaw=90 saved=true
+oben call npcs.characters ai=true
+oben call npcs.spawn name=test template=144 first=Testi
+oben call npcs.spawn name=test2 template=59 x=1 y=0 z=4 yaw=90 saved=true   # a baked body without AI: stands
 oben call npcs.mods
 oben call npcs.order name=test order=walk          # to the player
 oben call npcs.order name=test order=wander radius=5

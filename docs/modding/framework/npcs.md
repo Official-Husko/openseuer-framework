@@ -193,7 +193,7 @@ Ids are what the game's Lua `RelationshipIdActive` checks; a name works too. Val
 
 ## Characters
 
-`Characters.All()` lists the game's character database: every character it has an asset for (294 in 0.5.13), the player first, with `HasBody` (the game can spawn it: 79 of them) and `HasSliders` (its body has character editor sliders: only 2). Use it to pick mod NPC templates. At the main menu, before the database is filled, the assets are read from the game's resources.
+`Characters.All()` lists the game's character database: every character it has an asset for (294 in 0.5.13), the player first, with `HasBody` (the game can spawn it: 79 of them), `HasAi` (that body has NPC AI and can walk: 11) and `HasSliders` (its body has character editor sliders: only 2). Use it to pick mod NPC templates. At the main menu, before the database is filled, the assets are read from the game's resources.
 
 ## Police, robbers, janitors and surveillance
 

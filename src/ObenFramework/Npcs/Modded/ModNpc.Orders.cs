@@ -19,7 +19,7 @@ public sealed partial class ModNpc
     /// Walks (or runs) to a point with the game's NPC path finding, then turns to <paramref name="yaw"/>.
     /// <paramref name="done"/> gets true on arrival and false when the walk is replaced, stopped, stuck for
     /// too long, or the NPC dies or leaves. Orders replace each other and override a routine step until they
-    /// end. False when the NPC is gone, paused by a claim or frozen.
+    /// end. False when the NPC is gone, paused by a claim or frozen, or its body has no AI (see <see cref="CanMove"/>).
     /// </summary>
     public bool WalkTo(Vector3 point, float yaw = 0f, bool run = false, Action<bool> done = null)
     {

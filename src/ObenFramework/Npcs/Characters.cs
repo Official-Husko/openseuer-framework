@@ -20,6 +20,12 @@ public sealed class CharacterRecord
     /// <summary>Its body has character editor sliders (a mod NPC copying it can wear a <c>LookData</c>).</summary>
     public bool HasSliders { get; }
 
+    /// <summary>
+    /// Its body has the game's NPC AI, so a mod NPC copying it can walk and take orders and routines. Only the
+    /// characters with an AI prefab have one (11 in 0.5.13); the other bodies stand where they are put.
+    /// </summary>
+    public bool HasAi { get; }
+
     /// <summary>The player's own character (the database's first entry).</summary>
     public bool IsPlayer { get; }
 
@@ -39,6 +45,7 @@ public sealed class CharacterRecord
         var prefab = ModNpcTemplates.PrefabOf(character);
         HasBody = prefab != null && prefab.GetComponent<NPCInfo>() != null;
         HasSliders = prefab != null && prefab.GetComponentInChildren<Appearance>(true) != null;
+        HasAi = ModNpcTemplates.HasAi(character);
     }
 
     public override string ToString() => $"{FullName} ({Id})";

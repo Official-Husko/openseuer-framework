@@ -79,7 +79,7 @@ internal static class ModNpcBuilder
             UnityEngine.Object.DestroyImmediate(holder);
             holder = null;
             NPCManager.instance.AddNpcToList(info);
-            return new ModNpc(plan.Owner, plan.Name, template, body == template ? 0 : body.ID, clone, go, info, sliders, plan.Saved);
+            return new ModNpc(plan.Owner, plan.Name, template, body, clone, go, info, sliders, plan.Saved);
         }
         catch
         {

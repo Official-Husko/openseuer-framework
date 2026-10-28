@@ -42,6 +42,13 @@ internal static class ModNpcTemplates
         return DefaultBody();
     }
 
+    /// <summary>The character's body has the game's NPC AI (an <c>NPCController</c>), so a copy of it can walk.</summary>
+    public static bool HasAi(Character character)
+    {
+        var prefab = character != null ? PrefabOf(character) : null;
+        return prefab != null && prefab.GetComponent<NPCController>() != null;
+    }
+
     /// <summary>
     /// The point on the ground below <paramref name="position"/> (looking from a metre above it, down to
     /// four metres), or false when there is nothing to stand on.

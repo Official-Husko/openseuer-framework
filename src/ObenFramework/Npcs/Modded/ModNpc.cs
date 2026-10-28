@@ -11,13 +11,14 @@ namespace ObenFramework.Npcs;
 /// </summary>
 public sealed partial class ModNpc
 {
-    internal ModNpc(string owner, string name, Character template, int bodyId, Character clone, GameObject body, NPCInfo info, bool sliders, bool saved)
+    internal ModNpc(string owner, string name, Character template, Character bodyCharacter, Character clone, GameObject body, NPCInfo info, bool sliders, bool saved)
     {
         Owner = owner;
         Name = name;
         TemplateCharacter = template;
         Template = template.ID;
-        Body = bodyId;
+        Body = bodyCharacter == template ? 0 : bodyCharacter.ID;
+        BodyDescription = $"{bodyCharacter.FullName} (character {bodyCharacter.ID})";
         Clone = clone;
         CharacterId = clone.ID;
         Root = body;
@@ -50,6 +51,13 @@ public sealed partial class ModNpc
 
     /// <summary>Its body has character editor sliders, so <see cref="SetLook"/> works; otherwise only blend shapes do.</summary>
     public bool HasSliders { get; }
+
+    /// <summary>
+    /// Its body has the game's NPC AI (a controller and a path finding agent), so it can walk and take orders
+    /// and routines. Only the few characters with an AI body give one (see <see cref="CharacterRecord.HasAi"/>);
+    /// the others stand where they are spawned.
+    /// </summary>
+    public bool CanMove => Loaded && Info.npcController != null && Info.npcController.richAI != null;
 
     /// <summary>First and last name.</summary>
     public string FullName => Clone != null ? Clone.FullName : Name;
@@ -84,7 +92,14 @@ public sealed partial class ModNpc
     public override string ToString() => $"{FullName} ({Owner}/{Name}, {CharacterId})";
 
     internal Character TemplateCharacter { get; }
+    internal string BodyDescription { get; }
     internal Character Clone { get; }
     internal GameObject Root { get; }
     internal NPCInfo Info { get; }
+
+    // Says once per NPC why orders are refused on a body without AI.
+    internal void WarnCannotMove() =>
+        NpcsLog.WarnOnce("static " + Owner + "/" + Name,
+            $"Mod NPC {Owner}/{Name} cannot walk or take orders: its body, {BodyDescription}, has no AI. " +
+            "Use a template (or Body) whose character has an AI body; npcs.characters ai=true lists them, 144 is a plain one.");
 }

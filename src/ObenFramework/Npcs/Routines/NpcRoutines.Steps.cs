@@ -55,6 +55,13 @@ public static partial class NpcRoutines
 
     private static void Spawn(NpcRoutineEntry entry, NpcRoutineStep step, string scene, bool walkIn)
     {
+        string problem = BodyProblem(entry.Spec);
+        if (problem != null)
+        {
+            NpcsLog.Warn($"{entry.OwnerId}: the routine for {entry.Name} was dropped: {problem}");
+            Entries.Remove(entry);
+            return;
+        }
         var at = step.Points[0];
         if (walkIn && entry.Doors.TryGetValue(scene, out var door))
             at = door;

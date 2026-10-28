@@ -15,6 +15,13 @@ internal static class NpcsLog
 
     public static void Warn(string message) => FrameworkMod.Instance?.Log.Warn(message);
 
+    /// <summary>A warning logged the first time <paramref name="key"/> comes up, then not again until the framework reloads.</summary>
+    public static void WarnOnce(string key, string message)
+    {
+        if (Reported.Add(key))
+            FrameworkMod.Instance?.Log.Warn(message);
+    }
+
     public static void Failed(string where, Exception e)
     {
         if (Reported.Add(where))

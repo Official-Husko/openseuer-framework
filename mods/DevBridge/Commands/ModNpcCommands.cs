@@ -67,7 +67,10 @@ internal static class ModNpcCommands
             case "stop": ok = npc.StopOrder(); break;
             default: throw new ArgumentException("order is walk, wander, patrol, sit, sleep or stop.");
         }
-        return new JObject { ["ok"] = ok, ["order"] = npc.Order.ToString() };
+        var result = new JObject { ["ok"] = ok, ["order"] = npc.Order.ToString(), ["ai"] = npc.CanMove };
+        if (!npc.CanMove)
+            result["reason"] = "its body has no AI and cannot walk; spawn it from a template with ai=true in npcs.characters";
+        return result;
     }
 
     [BridgeCommand("npcs.look", "Reads or changes a DevBridge mod NPC's look: a look JSON, a blend shape, or a reset. Lists its meshes.",
@@ -102,20 +105,22 @@ internal static class ModNpcCommands
     }
 
     [BridgeCommand("npcs.characters", "The game's character database: ids to use as mod NPC templates and bodies.",
-        Params = new[] { "body?: only characters with a body to spawn, default true", "name?: only names containing this text" })]
+        Params = new[] { "body?: only characters with a body to spawn, default true", "ai?: only bodies with AI (they can walk and take orders), default false",
+            "name?: only names containing this text" })]
     private static object CharacterList(JObject p)
     {
         bool bodyOnly = p.Bool("body", true);
+        bool aiOnly = p.Bool("ai", false);
         string name = p.Str("name", null);
         var list = new JArray();
         foreach (var c in Characters.All())
         {
-            if ((bodyOnly && !c.HasBody) || (name != null && c.FullName.IndexOf(name, StringComparison.OrdinalIgnoreCase) < 0))
+            if ((bodyOnly && !c.HasBody) || (aiOnly && !c.HasAi) || (name != null && c.FullName.IndexOf(name, StringComparison.OrdinalIgnoreCase) < 0))
                 continue;
             list.Add(new JObject
             {
                 ["id"] = c.Id, ["name"] = c.FullName, ["job"] = c.Job, ["gender"] = c.Gender, ["age"] = c.Age,
-                ["body"] = c.HasBody, ["sliders"] = c.HasSliders, ["player"] = c.IsPlayer, ["mod"] = c.IsModNpc,
+                ["body"] = c.HasBody, ["ai"] = c.HasAi, ["sliders"] = c.HasSliders, ["player"] = c.IsPlayer, ["mod"] = c.IsModNpc,
             });
         }
         return new JObject { ["total"] = list.Count, ["characters"] = list };
@@ -162,6 +167,7 @@ internal static class ModNpcCommands
         ["saved"] = npc.Saved,
         ["order"] = npc.Order.ToString(),
         ["sliders"] = npc.HasSliders,
+        ["ai"] = npc.CanMove,
         ["claimedBy"] = NpcControl.ClaimedBy(npc.CharacterId),
     };
 

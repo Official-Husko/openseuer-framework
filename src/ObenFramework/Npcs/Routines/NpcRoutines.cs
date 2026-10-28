@@ -50,6 +50,14 @@ public static partial class NpcRoutines
             throw new ArgumentException("The routine needs at least one step.", nameof(routine));
         spec.Validate(name);
 
+        // The character database is only filled in a level; set at the main menu, the body is checked at the first spawn.
+        string problem = CharacterDatabase.Characters.Count > 0 ? BodyProblem(spec) : null;
+        if (problem != null)
+        {
+            NpcsLog.Warn($"{owner.Info.Id}: the routine for {name} was refused: {problem}");
+            return false;
+        }
+
         var old = Find(owner.Info.Id, name);
         if (old == null && Count(owner.Info.Id) >= MaxPerMod)
             return false;
@@ -195,6 +203,21 @@ public static partial class NpcRoutines
             Tracked.Remove(id);
             ClearOwner(id);
         }));
+    }
+
+    // Null when the spec's body can walk, else why not. A routine on a body without AI would stand at its first step forever.
+    internal static string BodyProblem(ModNpcSpec spec)
+    {
+        var template = ModNpcTemplates.Find(spec.Template);
+        if (template == null)
+            return $"there is no game character {spec.Template} to copy.";
+        var body = ModNpcTemplates.BodyFor(template, spec.Body);
+        if (body == null)
+            return $"character {(spec.Body != 0 ? spec.Body : spec.Template)} has no body to spawn.";
+        if (!ModNpcTemplates.HasAi(body))
+            return $"its body, {body.FullName} (character {body.ID}), has no AI and cannot walk. " +
+                   "Use a template (or Body) whose character has an AI body; npcs.characters ai=true lists them, 144 is a plain one.";
+        return null;
     }
 
     private static int ClearOwner(string owner)

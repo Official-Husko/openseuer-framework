@@ -34,7 +34,12 @@ internal static partial class NpcOrders
         if (npc == null || !npc.Alive || SaveGate.IsBusy || AstarPath.active == null)
             return false;
         var controller = npc.Info.npcController;
-        if (controller == null || controller.richAI == null || NpcControl.Holds(npc.Info, NpcHolds.Freeze))
+        if (controller == null || controller.richAI == null)
+        {
+            npc.WarnCannotMove();
+            return false;
+        }
+        if (NpcControl.Holds(npc.Info, NpcHolds.Freeze))
             return false;
         bool ready = Ready(controller);
         if (ready && controller.activityDisabled)

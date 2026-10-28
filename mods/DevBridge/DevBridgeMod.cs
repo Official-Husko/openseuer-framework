@@ -1,4 +1,6 @@
 using DevBridge.Server;
+using DevBridge.Tracing;
+using ObenFramework.Features;
 using ObenLoader;
 
 namespace DevBridge;
@@ -24,7 +26,16 @@ public sealed class DevBridgeMod : ObenMod
         _server = Track(new BridgeServer(config.Value, Commands, Log));
         _server.Start();
         BackgroundRunning.Init(this, config.Value.KeepRunningInBackground);
+
+        var trace = LoadConfig<TraceSettings>("trace.json");
+        trace.Save();
+        ApiTrace.Instance = new ApiTrace(trace);
+        ModFeatures.Register(this, ApiTrace.Instance);
     }
 
-    public override void OnUnload() => Instance = null;
+    public override void OnUnload()
+    {
+        Instance = null;
+        ApiTrace.Instance = null;
+    }
 }

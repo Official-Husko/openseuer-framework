@@ -36,6 +36,9 @@ public static class FurnitureKinds
             return null;
 
         kind = kind.Trim();
+        // A mod's piece by its id (oben:modId/key), defined or a stand-in.
+        if (Building.FurnitureIds.IsModId(kind))
+            return Building.CustomFurniture.Get(kind);
         Refresh();
         if (Index.TryGetValue(kind, out var known) && known != null)
             return known;

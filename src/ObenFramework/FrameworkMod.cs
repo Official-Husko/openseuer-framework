@@ -1,5 +1,6 @@
 using ObenFramework.Animals;
 using ObenFramework.Assets;
+using ObenFramework.Building;
 using ObenFramework.Clock;
 using ObenFramework.Crafting;
 using ObenFramework.Dialogue;
@@ -55,6 +56,7 @@ public sealed class FrameworkMod : ObenMod
         CraftingModule.Init(this);
         EnvironmentModule.Init(this);
         TransportModule.Init(this);
+        CustomFurniture.Init(this);
         Log.Info("Ready.");
     }
 

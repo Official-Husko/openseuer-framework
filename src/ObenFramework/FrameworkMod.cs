@@ -21,6 +21,9 @@ public sealed class FrameworkMod : ObenMod
     {
         Instance = this;
         GameEvents.Init(this);
+        SaveState.Init(this);
+        SaveGate.Init(this);
+        SaveSlots.Init(this);
         ModFeatures.Init(this);
         FeatureCommand.Register(this);
         ModSaves.Init(this);

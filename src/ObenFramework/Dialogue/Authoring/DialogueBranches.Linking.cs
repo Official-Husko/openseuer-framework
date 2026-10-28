@@ -18,8 +18,23 @@ public static partial class DialogueBranches
     internal static void RetryWaiting(bool all = false)
     {
         var master = DialogueAnchors.Master;
-        if (master == null)
+        if (master == null || _retrying)
             return;
+        _retrying = true;
+        try
+        {
+            Retry(master, all);
+        }
+        finally
+        {
+            _retrying = false;
+        }
+    }
+
+    private static bool _retrying;
+
+    private static void Retry(DialogueDatabase master, bool all)
+    {
         foreach (var record in Branches.ToArray())
         {
             if (record.Failed || (record.Linked && !all))

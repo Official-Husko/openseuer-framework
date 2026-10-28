@@ -50,7 +50,11 @@ public static class DialogueAuthoring
         if (owner == null) throw new ArgumentNullException(nameof(owner));
         if (definition != null && definition.Key == Narration.Key)
             return Refuse(ConversationRefusal.BadInput, $"the key '{Narration.Key}' is kept for narration");
-        return AddWith(owner, definition, -1);
+        var result = AddWith(owner, definition, -1);
+        // A branch may have been waiting for this conversation.
+        if (result.Added)
+            DialogueBranches.RetryWaiting();
+        return result;
     }
 
     /// <summary>Removes one of this mod's conversations. False while it is running or when it isn't this mod's.</summary>
@@ -101,7 +105,6 @@ public static class DialogueAuthoring
             }
             AddedConversations[title] = new Added { Owner = owner, Database = database };
             Track(owner);
-            DialogueBranches.RetryWaiting();
             return new DialogueEditResult(title, ConversationRefusal.None, null);
         }
         catch (Exception e)

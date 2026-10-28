@@ -107,13 +107,17 @@ public static class PlayerEffects
         return active;
     }
 
-    /// <summary>Sends the player to the wasteland with the game's transition. False without a player or while saving.</summary>
+    /// <summary>
+    /// Sends the player to the wasteland with the game's transition. It lasts until <see cref="StopWasteland"/>:
+    /// the game would otherwise end it within seconds when the player has no SMV in them. False without a
+    /// player or while saving.
+    /// </summary>
     public static bool StartWasteland(bool warningEffects = true)
     {
         var smv = SMVEffects.instance;
         if (smv == null || SaveGate.IsBusy)
             return false;
-        smv.EnableWasteland(warningEffects);
+        smv.EnableWasteland(warningEffects, disableStop: true);
         return true;
     }
 

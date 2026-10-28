@@ -28,5 +28,6 @@ internal static class WorldModule
         GuidIndex.Reset();
         Doors.ClearCaches();
         PlacedFurniture.ForgetScene();
+        FurnitureKinds.Reset();
     }
 }

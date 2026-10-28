@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using ObenFramework.Events;
 using ObenFramework.Game;
@@ -7,6 +6,7 @@ using ObenFramework.Saves;
 using ObenLoader;
 using ObenLoader.Mods;
 using ObenLoader.Runtime;
+using UnityEngine;
 
 namespace ObenFramework.World;
 
@@ -18,7 +18,8 @@ public static partial class Landmarks
         _save.DataLoaded.Subscribe(framework, data => LandmarkStore.Clean(data));
         LandmarkStore.Clean(_save.Value);
 
-        GameEvents.WhenWorldReady(framework, _ => framework.StartCoroutine(RestoreWhenMapLoads()));
+        LandmarkRestore.Create(framework);
+        GameEvents.WhenWorldReady(framework, _ => LandmarkRestore.Wait());
         GameEvents.LevelChanging.Subscribe(framework, ForgetScene);
         GameEvents.MainMenu.Subscribe(framework, ForgetScene);
         ModRegistry.ModUnloading += OnModUnloading;
@@ -38,18 +39,6 @@ public static partial class Landmarks
         }));
     }
 
-    // The map fills its lists a moment after a load (MapController waits 0.7 s); wait for it.
-    private static IEnumerator RestoreWhenMapLoads()
-    {
-        var controller = MapController.instance;
-        while (controller != null && (controller.loadingMap || SaveGate.IsBusy))
-            yield return null;
-        if (controller == null || controller != MapController.instance)
-            yield break;
-        try { Restore(); }
-        catch (Exception e) { Log.Error("Restore", e); }
-    }
-
     private static void OnModUnloading(ModInfo mod)
     {
         try { WithdrawMod(mod.Id); }
@@ -62,5 +51,42 @@ public static partial class Landmarks
             return;
         try { Restore(id => id == mod.Id); }
         catch (Exception e) { Log.Error("mod loaded", e); }
+    }
+}
+
+/// <summary>
+/// Puts the saved mod landmarks back once the map has loaded: the map fills its lists a moment after a
+/// load (MapController waits 0.7 s), so this waits for that. Disabled while there is nothing to wait for.
+/// </summary>
+internal sealed class LandmarkRestore : MonoBehaviour
+{
+    private static LandmarkRestore _instance;
+
+    public static void Create(ObenMod framework)
+    {
+        _instance = framework.CreateObject("LandmarkRestore").AddComponent<LandmarkRestore>();
+        _instance.enabled = false;
+        framework.Track(Disposable.Create(() => _instance = null));
+    }
+
+    public static void Wait()
+    {
+        if (_instance != null)
+            _instance.enabled = true;
+    }
+
+    private void Update()
+    {
+        var controller = MapController.instance;
+        if (controller == null)
+        {
+            enabled = false;
+            return;
+        }
+        if (controller.loadingMap || SaveGate.IsBusy)
+            return;
+        enabled = false;
+        try { Landmarks.Restore(); }
+        catch (Exception e) { Landmarks.Log.Error("Restore", e); }
     }
 }

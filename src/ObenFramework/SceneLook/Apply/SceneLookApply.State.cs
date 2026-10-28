@@ -107,18 +107,28 @@ internal static partial class SceneLookApply
             Forget(look, assets);
     }
 
-    public static void BodyGone(GameObject body)
+    /// <summary>
+    /// A look's holder was destroyed. Only that look is finished: the holder of a look taken off is destroyed
+    /// at the end of the frame, by which time the body may already wear a new one.
+    /// </summary>
+    public static void HolderGone(SceneLookApplied state)
     {
         try
         {
-            if (ReferenceEquals(body, null) || !Bodies.TryGetValue(body.GetInstanceID(), out var state))
+            if (state == null)
                 return;
-            Bodies.Remove(body.GetInstanceID());
-            Finish(state);
+            foreach (var pair in Bodies)
+            {
+                if (!ReferenceEquals(pair.Value, state))
+                    continue;
+                Bodies.Remove(pair.Key);
+                Finish(state);
+                return;
+            }
         }
         catch (Exception e)
         {
-            SceneLooks.Log.Error("body gone", e);
+            SceneLooks.Log.Error("holder gone", e);
         }
     }
 

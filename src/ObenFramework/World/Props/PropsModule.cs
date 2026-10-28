@@ -37,7 +37,7 @@ internal static class PropsModule
 
     private static void Restore(string scene)
     {
-        if (WorldProps.Restore(scene) > 0)
+        if (WorldProps.Restore(scene) != 0)
             PropRetry.Schedule();
     }
 
@@ -70,7 +70,8 @@ internal static class PropsModule
 
 /// <summary>
 /// Tries again, once a second for a while, to build props that are waiting for a model (models load in
-/// the background, often after the world is ready). Disabled, and free, while nothing waits.
+/// the background, often after the world is ready) or for the game to finish saving. Disabled, and free,
+/// while nothing waits.
 /// </summary>
 internal sealed class PropRetry : MonoBehaviour
 {

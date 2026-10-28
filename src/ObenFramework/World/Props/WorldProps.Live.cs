@@ -77,11 +77,16 @@ public static partial class WorldProps
         }));
     }
 
-    /// <summary>Builds every prop of <paramref name="scene"/> that isn't in the world yet. Returns how many still can't be.</summary>
+    /// <summary>
+    /// Builds every prop of <paramref name="scene"/> that isn't in the world yet. Returns how many wait for a
+    /// model, -1 when the game is busy saving or loading (try again later), 0 when nothing is left to do.
+    /// </summary>
     internal static int Restore(string scene)
     {
-        if (_save == null || SaveGate.IsBusy || !SceneManager.GetSceneByName(scene).isLoaded)
+        if (_save == null || !SceneManager.GetSceneByName(scene).isLoaded)
             return 0;
+        if (SaveGate.IsBusy)
+            return -1;
         int waiting = 0;
         foreach (var record in PropRules.InScene(Store, scene))
         {

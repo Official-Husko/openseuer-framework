@@ -106,12 +106,17 @@ public static partial class Landmarks
             throw new ArgumentException("id must be 1 to 64 letters, digits, '.', '_' or '-'", nameof(id));
         if (!LandmarkStore.Finite(position.x) || !LandmarkStore.Finite(position.y) || !LandmarkStore.Finite(position.z) || width < 0 || height < 0)
             throw new ArgumentException("position must be finite and the size not negative");
-        if (!WritesAllowed("Create") || !MapReady())
+        if (!WritesAllowed("Create"))
             return false;
+        string map = CurrentMapId();
+        if (map.Length == 0 || MapController.instance == null)
+        {
+            Log.Warn("Create no map", "this scene has no map to put a landmark on");
+            return false;
+        }
 
         string mod = owner.Info.Id;
         string full = LandmarkStore.FullId(mod, id);
-        string map = CurrentMapId();
         var entry = LandmarkStore.Find(Entries, mod, id, map);
         bool fresh = entry == null;
         if (fresh)
@@ -133,6 +138,9 @@ public static partial class Landmarks
         try
         {
             var landmark = Define(full, entry.Title, priority, sprite, width, height);
+            // Right after a load the map fills its lists a moment later; the restore that runs then adds it.
+            if (!MapReady())
+                return true;
             if (AddToMap(landmark, new Vector3(entry.X, entry.Y, entry.Z), showNotification, false) || OnCurrentMap(full))
                 return true;
         }

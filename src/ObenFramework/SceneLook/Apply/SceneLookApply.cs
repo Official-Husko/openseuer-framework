@@ -41,7 +41,7 @@ internal static partial class SceneLookApply
                     if (built && reason == null)
                     {
                         Hide(body, state);
-                        state.Holder.AddComponent<SceneLookBodyWatch>().Body = body;
+                        state.Holder.AddComponent<SceneLookBodyWatch>().State = state;
                         Bodies[body.GetInstanceID()] = state;
                         assets.Bodies++;
                         Note(modId, look, body, plan);

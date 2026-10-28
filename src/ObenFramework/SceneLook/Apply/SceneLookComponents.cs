@@ -54,12 +54,15 @@ internal sealed class SceneLookPoseDriver : MonoBehaviour
     }
 }
 
-/// <summary>Lets the framework forget a body's applied look when the body is destroyed with its scene.</summary>
+/// <summary>
+/// Sits on a look's holder and lets the framework forget the look when the holder goes, which happens when
+/// the body is destroyed with its scene (or by anything else that destroys the holder).
+/// </summary>
 internal sealed class SceneLookBodyWatch : MonoBehaviour
 {
-    public GameObject Body;
+    internal SceneLookApplied State;
 
-    private void OnDestroy() => SceneLookApply.BodyGone(Body);
+    private void OnDestroy() => SceneLookApply.HolderGone(State);
 }
 
 /// <summary>

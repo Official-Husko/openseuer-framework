@@ -104,6 +104,11 @@
     <Compile Include="../../src/ObenFramework/Environment/Sky/SkyChannel.cs" Link="Linked/Environment/SkyChannel.cs" />
     <!-- Housing: timer limits, cleaning days, renovation ids. -->
     <Compile Include="../../src/ObenFramework/Housing/HousingRules.cs" Link="Linked/Housing/HousingRules.cs" />
+    <!-- Story timing and sessions: the retry gate, the deferred queue and the session rules. -->
+    <Compile Include="../../src/ObenFramework/Story/RetryGate.cs" Link="Linked/Story/RetryGate.cs" />
+    <Compile Include="../../src/ObenFramework/Story/StoryQueue.cs" Link="Linked/Story/StoryQueue.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/SessionKind.cs" Link="Linked/NewGames/SessionKind.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/SessionRules.cs" Link="Linked/NewGames/SessionRules.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

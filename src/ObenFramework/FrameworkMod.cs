@@ -10,6 +10,7 @@ using ObenFramework.Events;
 using ObenFramework.Features;
 using ObenFramework.Gambling;
 using ObenFramework.Items;
+using ObenFramework.NewGames;
 using ObenFramework.Npcs;
 using ObenFramework.Player.Look;
 using ObenFramework.Player.Survival;
@@ -17,6 +18,7 @@ using ObenFramework.Quests;
 using ObenFramework.Saves;
 using ObenFramework.SceneLook;
 using ObenFramework.Transport;
+using ObenFramework.Story;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -40,6 +42,8 @@ public sealed class FrameworkMod : ObenMod
         GameClock.Init(this);
         DialogueModule.Init(this);
         QuestWatcher.Attach(this);
+        NewGamesModule.Init(this);
+        StoryModule.Init(this);
         WorldModule.Init(this);
         NpcsModule.Init(this);
         AnimalsModule.Init(this);

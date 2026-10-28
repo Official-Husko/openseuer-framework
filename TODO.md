@@ -25,13 +25,16 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Items: give, take, spawn, register new items and recipes at runtime
 - [x] Money: wallet in both currencies
 - [x] Saves: per-mod data in side files next to the save (needs an in-game test with real saves)
-- [ ] Input: mod hotkeys on free keys, input lock while a mod window is open (`docs/game/ui-input-console.md`)
-- [ ] Notifications: the game's own toasts (`Notifications.instance.CreateNotification`)
+- [x] Input: input lock, rebindable mod hotkeys with a Hotkeys page
+- [x] Notifications and HUD: toasts, hints in the game's hint panel, subtitles, bars
 - [ ] Settings: typed settings per mod with an in-game page
 - [x] Clock and weather: time of day, minute/hour/day events, weather
 - [x] Dialogue and Lua: variables, Lua functions, conversations, started/ended events
 - [x] Quests: quest log, status changes, change events
 - [x] World: doors, interactables with stable addresses, furniture ids and events, lights, switches, power (read-only)
+- [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
+- [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
+- [ ] Coverage of the MIT framework: see PROGRESS.md
 
 ## ObenUIKit
 

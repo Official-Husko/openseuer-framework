@@ -44,6 +44,8 @@
     <Compile Include="../../src/ObenFramework/Console/ConsoleTokens.cs" Link="Linked/ConsoleTokens.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveBlobLimits.cs" Link="Linked/SaveBlobLimits.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveGateState.cs" Link="Linked/SaveGateState.cs" />
+    <!-- The asset formats (WAV, OBJ, MTL, mesh layout, image headers) use no Unity types. -->
+    <Compile Include="../../src/ObenFramework/Assets/Formats/*.cs" LinkBase="Linked/Assets" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

@@ -90,7 +90,10 @@ public static class ItemPlaceholders
         {
             item = Create(id);
             Cache[id] = item;
-            ItemsLog.WarnOnce("placeholder:" + id, $"Item {id} isn't added by any loaded mod; it shows as '{item.Title}' and keeps its id until the mod is back.");
+            // A registered item looked up before the game's database exists gets a stand-in too; it turns
+            // into the real one as soon as the item is added, so that isn't worth a warning.
+            if (!ItemRegistry.IsModded(id))
+                ItemsLog.WarnOnce("placeholder:" + id, $"Item {id} isn't added by any loaded mod; it shows as '{item.Title}' and keeps its id until the mod is back.");
         }
         return item;
     }

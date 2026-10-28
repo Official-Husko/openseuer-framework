@@ -119,6 +119,29 @@ public static partial class Npcs
         return director != null ? director.GetNPCDataByID(id) : null;
     }
 
+    // The character id whose state object this is: the database first, then the NPCs in the scene (mod
+    // NPCs and scene-only NPCs get their own state from their controller). 0 when nobody owns it.
+    internal static int IdOfState(NPCDataState state)
+    {
+        var database = NPCDirector.globalDatabase;
+        if (database != null)
+        {
+            for (int i = 0; i < database.Count; i++)
+            {
+                if (database[i] != null && database[i].state == state)
+                    return database[i].ID;
+            }
+        }
+        var live = LiveObjects();
+        for (int i = 0; i < live.Count; i++)
+        {
+            var controller = live[i] != null ? live[i].npcController : null;
+            if (controller != null && controller.Data != null && controller.Data.state == state)
+                return controller.Data.ID;
+        }
+        return 0;
+    }
+
     private static readonly List<NPCInfo> NoObjects = new List<NPCInfo>();
 
     // The game's own list of NPC objects in the scene. Empty (never null) outside a level.

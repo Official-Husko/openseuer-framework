@@ -16,6 +16,7 @@ internal static class ItemsModule
         GameEvents.LevelChanging.Subscribe(framework, ForgetScene);
         GameEvents.MainMenu.Subscribe(framework, ForgetScene);
         GameEvents.WorldReady.Subscribe(framework, _ => InventoryWatch.Reset());
+        UnloadedStorage.Init(framework);
         framework.Track(Disposable.Create(() =>
         {
             ForgetScene();

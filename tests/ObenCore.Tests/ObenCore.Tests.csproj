@@ -70,6 +70,10 @@
     <!-- Inventory counting and take checks: plain collections only. -->
     <Compile Include="../../src/ObenFramework/Items/Inventory/ItemTally.cs" Link="Linked/Items/ItemTally.cs" />
     <Compile Include="../../src/ObenFramework/Items/Inventory/TakeMath.cs" Link="Linked/Items/TakeMath.cs" />
+    <!-- The unloaded storage queue rules and the scene file reader (Newtonsoft only). -->
+    <Compile Include="../../src/ObenFramework/Items/Unloaded/UnloadedStorageTypes.cs" Link="Linked/Items/UnloadedStorageTypes.cs" />
+    <Compile Include="../../src/ObenFramework/Items/Unloaded/UnloadedStorageRules.cs" Link="Linked/Items/UnloadedStorageRules.cs" />
+    <Compile Include="../../src/ObenFramework/Items/Unloaded/UnloadedStorageReader.cs" Link="Linked/Items/UnloadedStorageReader.cs" />
     <!-- Crafting factors, source order and recipe filter rules. -->
     <Compile Include="../../src/ObenFramework/Crafting/FactorTable.cs" Link="Linked/Crafting/FactorTable.cs" />
     <Compile Include="../../src/ObenFramework/Crafting/OwnedFactors.cs" Link="Linked/Crafting/OwnedFactors.cs" />

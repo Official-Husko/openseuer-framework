@@ -170,6 +170,85 @@ Freeze time, a free camera, a hidden HUD, screen effects.
 
 Built on: TimeControl, ScreenFx, Hud.HideGameHud, the Game Tweaks camera.
 
+## Weather
+
+The game has named weathers (Heavy Rain and others through `WeatherManager.SetWeather`), conditions for rain, snow, wind, thunder and temperature, weather zones, and an Azure sky with fog and ambient light. It uses little of it for gameplay. These mods give weather consequences. Seasons and Holidays (above) is the calendar side.
+
+### Living Weather (M)
+
+Weather that moves instead of switching:
+
+- fronts cross the districts one weather zone at a time;
+- rain builds up and eases off;
+- wind gusts, and fog rolls in at night.
+
+A forecast comes on the radio, the TV and a computer app. A barometer item gives the trend.
+
+Built on: WeatherZones, WeatherConditions, GameWeather, WorldSky, Radios, Televisions, ComputerApps, GameClock.
+
+### Sewer Floods (M to L)
+
+Heavy rain raises the water in the Open Sewer districts.
+
+- Flood gates have to be closed in time (or opened to drain).
+- Water reaches low shacks: floor items float away and furniture gets damaged.
+- Powered pumps clear it afterwards.
+
+Built on: WeatherConditions, FloodGates, WorldWater, FloorItems, PlacedFurniture, PowerDevices, Hud.Prompt, PhoneNumbers (a warning call).
+
+### Rain Barrels (S)
+
+Barrels and tanks left outside fill with rainwater while it rains. That water has to be boiled or filtered before drinking (new recipes). Useful for brewing and for players without a water supply.
+
+Built on: Tanks, WeatherConditions, RecipeRegistry, CraftingStations.
+
+### Wet and Cold (M)
+
+Being out in rain or snow without cover makes you wet:
+
+- hygiene and mood drop, and tiredness rises faster;
+- a raincoat or umbrella helps;
+- a shower, the sauna or a heater dries you off.
+
+It shows as a status with its own HUD bar.
+
+Built on: Survival (StatDrain, StatThresholds), Conditions, Wardrobe, Saunas, Showers, Hud.Bar, WeatherConditions.
+
+### Thunderstorms (M)
+
+Lightning hits the power grid: lights flicker, a district blacks out until it's fixed, and generators earn their keep. Thunder shakes the camera slightly. In co-op the host owns the thunder roll, which fixes one of the reference mod's limits.
+
+Built on: WeatherConditions (thunder), PowerGrids and PowerDevices, Blackouts, Lights, ScreenFx shake, ModSounds.
+
+### Fallout Storms (M)
+
+Rare storms from the wasteland:
+
+- the sky turns sickly and radiation rises outdoors;
+- sirens and a phone warning tell you to get inside;
+- a dosimeter and protective gear matter.
+
+Afterwards, contaminated puddles stay as hazards for a while.
+
+Built on: Radiation, Hazards, WorldSky, ScreenFx (vignette), WeatherConditions, PhoneNumbers, Hud.Prompt, the wasteland effects.
+
+### Weather and the City (M)
+
+The city reacts to the weather:
+
+- **NPCs** head for cover when it rains, and their barks mention the weather.
+- **Fewer customers** come out in storms.
+- **Prices move:** hot drinks sell better in the cold, umbrellas in the rain, fuel spikes after a storm.
+- **Robbers** like foggy nights.
+
+Built on: Npcs and NpcControl (walk to cover), Prices, Traders, FuelStations, PlayerShops (Corner Shop), Robbers, WeatherConditions.
+
+### Weather Control (S)
+
+A weather page in the Cheat Menu or the developer menu: pick a weather, lock it, set rain, wind, fog and thunder by hand, and save presets. Handy for photo mode and for testing the mods above.
+
+Built on: GameWeather, WeatherConditions, WeatherZones, WorldSky, TimeControl-style holds, ObenUIKit.
+
 ## Co-op
 
 ### What ObenCoop doesn't share yet

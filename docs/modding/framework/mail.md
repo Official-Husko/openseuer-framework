@@ -42,7 +42,12 @@ Everything is one `BundleMail`, the game's own mail type for several things at o
 
 `PlayerMail.Received` fires when mail reaches the mailbox or locker, from any source: quest scripts, achievements, delayed mail whose timer ran out, or your own `Send`. It does not fire again for mail that is already waiting when a save loads (the game's own `MailReceived` event does, which is why it isn't used). Handlers run in their own try/catch.
 
+## Junk mail
+
+Every world has a junk mail sender (the game's `RandommailSender`, on the mail controller): each day but Sunday, in the morning, it mails one or two random letters, recipes, notes or parcels, and with a 15% chance a forged invoice (one of 26 senders, 22 to 500 coins, never a crime to ignore). `MailSchedules.Senders()` lists the senders with their mail names and chances; `MailSchedules.SendNow()` makes one send a day's worth at once and `SendRandom(key, min, max)` a chosen number (the upper end is exclusive, as in the game).
+
 ## Bridge commands
 
 - `mail.send` (`title`, `text?`, `item?`, `amount?`, `kind?`, `delay?`)
 - `mail.list` (`kind?`: `letter`, `parcel` or `transit`)
+- `mail.junk` (`send?`, `sender?`): the junk mail senders; `send=true` sends a day's worth now

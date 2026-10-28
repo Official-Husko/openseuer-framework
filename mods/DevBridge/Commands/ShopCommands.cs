@@ -94,4 +94,24 @@ internal static class ShopCommands
             ["secondsLeft"] = m.SecondsLeft,
         }).ToArray());
     }
+
+    [BridgeCommand("mail.junk", "The junk mail senders, or make one send a day's worth now with send=true.",
+        Params = new[] { "send?: true to send now", "sender?: address or GUID, default the first" })]
+    private static object Junk(JObject p)
+    {
+        bool sent = p.Bool("send", false) && MailSchedules.SendNow(p.Str("sender", null));
+        return new JObject
+        {
+            ["sent"] = sent,
+            ["senders"] = new JArray(MailSchedules.Senders().Select(s => new JObject
+            {
+                ["id"] = s.Id,
+                ["entries"] = s.Entries,
+                ["mailNames"] = new JArray(s.MailNames.Cast<object>().ToArray()),
+                ["perDayMin"] = s.PerDayMin,
+                ["perDayMax"] = s.PerDayMax,
+                ["fakeInvoiceChance"] = s.FakeInvoiceChance,
+            }).ToArray()),
+        };
+    }
 }

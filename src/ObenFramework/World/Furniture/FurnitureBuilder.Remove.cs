@@ -1,3 +1,4 @@
+// Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
 using HarmonyLib;

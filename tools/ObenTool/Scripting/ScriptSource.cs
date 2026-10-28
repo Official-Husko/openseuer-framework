@@ -23,9 +23,9 @@ public static class ScriptSource
         if (IsWholeFile(code))
             return code;
 
-        string body = code.Trim();
+        var (ownUsings, body) = SplitUsings(code.Trim());
         bool expression = !body.Contains(';') && !body.StartsWith('{');
-        var usings = string.Join("\n", DefaultUsings.Select(u => $"using {u};"));
+        var usings = string.Join("\n", DefaultUsings.Select(u => $"using {u};").Concat(ownUsings));
         string inner = expression
             ? $"return (object)({body});"
             : body + "\n#line hidden\nreturn null;";
@@ -45,5 +45,29 @@ public static class ScriptSource
                 }
             }
             """;
+    }
+
+    /// <summary>
+    /// Leading "using X;" lines of a snippet are directives, not statements, so they move above the
+    /// generated class. A "using (...)" or "using var" statement stays where it is.
+    /// </summary>
+    private static (List<string> Usings, string Body) SplitUsings(string code)
+    {
+        var usings = new List<string>();
+        var lines = code.Split('\n');
+        int i = 0;
+        for (; i < lines.Length; i++)
+        {
+            string line = lines[i].Trim();
+            if (line.Length == 0)
+                continue;
+            bool directive = line.StartsWith("using ") && line.EndsWith(";") && !line.StartsWith("using (") && !line.StartsWith("using var ");
+            if (!directive)
+                break;
+            usings.Add(line);
+        }
+        // Blank lines keep the user's line numbers lined up with the #line directive.
+        string body = new string('\n', i) + string.Join("\n", lines.Skip(i));
+        return (usings, body.TrimEnd());
     }
 }

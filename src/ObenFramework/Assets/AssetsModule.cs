@@ -15,6 +15,9 @@ internal static class AssetsModule
         AssetsLog.Source = framework;
         framework.Track(Disposable.Create(() =>
         {
+            ItemIcons.Reset();
+            ItemModels.Reset();
+            GameText.Reset();
             AssetSets.ReleaseAll();
             ModSounds.Reset();
             ModelMaterials.Reset();

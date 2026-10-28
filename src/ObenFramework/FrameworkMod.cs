@@ -57,6 +57,7 @@ public sealed class FrameworkMod : ObenMod
         EnvironmentModule.Init(this);
         TransportModule.Init(this);
         CustomFurniture.Init(this);
+        MediaModule.Init(this);
         Log.Info("Ready.");
     }
 
@@ -66,6 +67,7 @@ public sealed class FrameworkMod : ObenMod
         NpcsModule.Update();
         ItemsModule.Update();
         TransportModule.Update();
+        MediaModule.Update();
     }
 
     public override void OnUnload() => Instance = null;

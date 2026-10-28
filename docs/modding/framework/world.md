@@ -166,6 +166,25 @@ List<Component> all = Interactables.All();               // a scan
 
 `Interacted` is raised after the game's own call returned (a call that throws raises nothing), for the local player's uses only. It is not raised for things the game or a mod interacts with by code. The address is taken before the use, so it is available even when the target is gone afterwards. `Interactables.All` covers the `Interactable` base class and `WorkableResourceSource`, which implements `IInteractable` alone; anything that asks for "all interactables" with `Interactable` alone misses it.
 
+## Radios, televisions and the guitar
+
+```csharp
+RadioInfo radio = Radios.Describe(r);       // Enabled (power), Station (0 = off), Stations, Playing
+Radios.SetStation(r, 3);
+Radios.SetEnabled(r, false);
+Televisions.SetOn(tv, true);                // false without power or when the level locked it
+```
+
+`Radios.Changed` and `Televisions.Changed` report every change. The guitar must be in the player's hands (`Instruments.Held`):
+
+```csharp
+Instruments.Strum(guitar);
+Instruments.PlaySong(this, guitar, new[] { 0f, 0.5f, 0.5f, 0.25f, 0.25f, 1f });   // seconds before each strum
+Instruments.Hold(guitar, 0);                // one of its long notes, until StopHold
+```
+
+Songs and held notes stop when the guitar is put away, a menu or conversation opens, the level changes or the mod unloads; at most four strums fall on one frame. `Instruments.Strummed` and `Instruments.Commented` (an NPC's comment, with `Positive` from the game's music skill roll) report what happened.
+
 ## Lights and switches
 
 ```csharp
@@ -329,6 +348,11 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 | `locks.events` | `Locked`, `Unlocked`, `Lockpicked` and keypad events since recording started |
 | `keypads.list`, `keypads.set` | keypads with codes; `id` plus `open` and/or `code` |
 | `doors.schedule` | opening hours of every schedule, or of `id` (a schedule or a scheduled door); `opens`+`closes` sets every day, `reset` restores |
+| `radios.list`, `radios.set` | radios; `id` plus `station`, `enabled` |
+| `tvs.list`, `tvs.set` | televisions; `id` plus `on` |
+| `guitar.play` | the guitar in hand: `strum`, `song` (waits), `hold`, `stop` |
+| `media.events` | radio, television, strum and comment events since recording started |
+| `computers.list` | computers with e-mail and file counts; `id` for one with its documents |
 | `interact.target` | the crosshair target: id, address, title, type, and state for doors and switches |
 | `furniture.list` | placed furniture with ids; filters `type`, `manager`, `preplaced`, `max` |
 | `furniture.place` | `kind`, `x`/`y`/`z` or `pos`, `yaw`, `zone`, `skin`, `alternative`, `modelYaw`, `id`, `parent`, `attachedTo`, `source` |

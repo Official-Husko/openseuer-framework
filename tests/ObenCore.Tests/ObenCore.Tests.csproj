@@ -69,6 +69,8 @@
     <Compile Include="../../src/ObenFramework/Building/FurnitureIds.cs" Link="Linked/Building/FurnitureIds.cs" />
     <!-- Ticket price rules: plain numbers. -->
     <Compile Include="../../src/ObenFramework/Transport/TicketPriceRules.cs" Link="Linked/Transport/TicketPriceRules.cs" />
+    <!-- Guitar song timing: plain arithmetic. -->
+    <Compile Include="../../src/ObenFramework/World/Media/GuitarSong.cs" Link="Linked/World/GuitarSong.cs" />
     <!-- SceneLook: the scene file reader, the index and the rig, bind and mesh planning use no Unity types. -->
     <Compile Include="../../src/ObenFramework/SceneLook/SceneLookInfo.cs" Link="Linked/SceneLook/SceneLookInfo.cs" />
     <Compile Include="../../src/ObenFramework/SceneLook/Reading/*.cs" LinkBase="Linked/SceneLook/Reading" />

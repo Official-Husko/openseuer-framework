@@ -123,6 +123,40 @@ Reading the file, parsing, laying out vertices and calculating normals run on a 
 
 `ModelTemplate` has `Mesh`, `Materials`, `Bounds`, `VertexCount`, `TriangleCount` and `Prefab`, an inactive object the copies come from. Add components to the prefab before spawning if every copy should have them. It and its copies' mesh and materials are destroyed when the owning mod unloads: copies placed in the world should be destroyed or replaced by then (the framework doesn't track them).
 
+## Item icons and models
+
+Any item, the game's or a mod's, can get a mod's icon or model for as long as the mod is loaded:
+
+```csharp
+ItemIcons.SetFromFile(this, 35180, "icons/scrap.png");                // or ItemIcons.Set(this, id, sprite)
+ModelRegistry.Load(this, "mug", "models/mug.obj", done: model =>
+{
+    ItemModels.SetWorldModel(this, 35180, model);                      // lying in the world
+    ItemModels.SetHeldModel(this, someEquipableId, model);             // in the player's hands
+});
+```
+
+- **Icons** replace the item's inventory sprite (and its skins' sprites). They are put back whenever the game reloads the item's sprites, and the original returns when the mod unloads. The newest replacement of an item wins.
+- **World models** swap the look of every pickup of the item when it appears, including pickups loaded from a save: the original renderers are hidden and the model shown in their place, centred on them and scaled so its longest side matches (pass `fit: false` for the model's own size). Colliders and behaviour stay the item's own. When the mod unloads, pickups in the world get their own look back.
+- **Held models** work for items that can be held (with an `ItemEquipable` action): the framework copies the item's held object and puts the model on its first and third person meshes. It applies the next time the item is taken in hand.
+- Placed furniture with a model is in [furniture.md](furniture.md).
+
+## Texts in the player's language
+
+`GameText` reads the game's own translations (its Unity Localization string tables, `Menu` by default) and lets mods register their own:
+
+```csharp
+GameText.Register(this, "English", new Dictionary<string, string> { ["mymod.greeting"] = "Hello" });
+GameText.Register(this, "fi", new Dictionary<string, string> { ["mymod.greeting"] = "Moi" });
+string text = GameText.Get("mymod.greeting");             // mod text, else the game's table, else English, else the key
+string language = GameText.Language;                      // "English (en)" as the game names it
+GameText.OnLanguageChanged(this, language => Rebuild());
+```
+
+A language is matched by the game's full name ("English (en)"), the name alone or the code. 18 languages ship with 0.5.13.
+
+Bridge: `items.model` (`item`, `model`, `held`, `clear`) shows a loaded model on an item, owned by the bridge; `text.get` (`key`, `table`) returns a text and the languages.
+
 ## What is tracked
 
 `ModAssets.List()` (and the bridge command `assets.list`) reports per mod each texture, sprite, sound and model with its size, source file and the memory Unity reports. Use `oben call assets.list mod=MyMod` to check that nothing is held that shouldn't be, or that a reload released everything.

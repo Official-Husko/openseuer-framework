@@ -18,6 +18,8 @@ _Last updated: 2026-10-28._
 
 Coverage is an estimate per module of how much of what the reference module offers a mod author can do with ours, weighted by the reference module's line count. A small module done counts little; the big ones (NPCs, SceneLook, shops, player) move the number most.
 
+The in-game checks still open for each module are collected in [to-test.md](to-test.md).
+
 Status: **Done**, **Partial** (some of it, listed), **In progress** (being built now), **Not started**, **Replaced** (ours does the same job differently).
 
 ## By module

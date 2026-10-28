@@ -19,8 +19,6 @@ namespace ObenFramework.World;
 /// </remarks>
 public static partial class Containers
 {
-    private const string FurniturePrefix = "furniture:";
-
     /// <summary>The local player opened a container (or a mod or the game did; see <see cref="ContainerEvent.Source"/>).</summary>
     public static readonly WorldEvent<ContainerEvent> Opened = new WorldEvent<ContainerEvent>(nameof(Opened));
 
@@ -61,41 +59,10 @@ public static partial class Containers
     /// (the n-th container inside that piece), because their prefab GUID is shared by every copy. Every other
     /// container is its game GUID, or its <see cref="ObjectAddress"/> text when it has none.
     /// </summary>
-    public static string IdOf(Storage storage)
-    {
-        if (storage == null)
-            return null;
-
-        var piece = storage.GetComponentInParent<FurniturePlaceable>();
-        if (piece != null && !piece.isPreplacedFurniture && piece.furniture != null)
-        {
-            var inside = piece.GetComponentsInChildren<Storage>(true);
-            int index = Array.IndexOf(inside, storage);
-            if (index >= 0)
-                return FurniturePrefix + PlacedFurniture.IdOf(piece) + ":" + index;
-        }
-        return GuidIndex.GuidOf(storage) ?? ObjectAddress.Of(storage).ToString();
-    }
+    public static string IdOf(Storage storage) => SceneIds.IdOf(storage);
 
     /// <summary>The container with this id (or any text <see cref="ObjectResolver.Find{T}"/> understands), or null.</summary>
-    public static Storage Find(string id)
-    {
-        if (string.IsNullOrEmpty(id))
-            return null;
-
-        if (id.StartsWith(FurniturePrefix, StringComparison.Ordinal))
-        {
-            int split = id.LastIndexOf(':');
-            if (split <= FurniturePrefix.Length || !int.TryParse(id.Substring(split + 1), out int index) || index < 0)
-                return null;
-            var piece = PlacedFurniture.Find(id.Substring(FurniturePrefix.Length, split - FurniturePrefix.Length));
-            if (piece == null)
-                return null;
-            var inside = piece.GetComponentsInChildren<Storage>(true);
-            return index < inside.Length ? inside[index] : null;
-        }
-        return ObjectResolver.Find<Storage>(id);
-    }
+    public static Storage Find(string id) => SceneIds.Find<Storage>(id);
 
     public static ContainerInfo Describe(Storage storage)
     {

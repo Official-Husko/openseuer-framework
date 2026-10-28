@@ -256,6 +256,25 @@ The built-in pages:
 - **What's New** shows the release notes from `changelog.json`, newest release first, grouped by mod and by Added, Changed, Fixed and Removed. See `docs/modding/changelog.md` for where the file comes from.
 - **Errors** lists this session's problems from `ErrorReport`: who reported each one, its title, how often and when it last happened, the scene, and the first lines of its details. Clear empties the report, Copy report puts it on the clipboard. Bug reports should attach `ObenLoader/logs/errors.log`, which holds the same list with the game and mod versions.
 
+## Main menu buttons
+
+Any mod can put its own button on the main menu:
+
+```csharp
+using ObenUIKit.Menu;
+
+MainMenuButtons.Add(this, "host", "Host co-op", () => OpenHostWindow());
+var join = MainMenuButtons.Add(this, "join", "Join", () => OpenJoinWindow(), order: 20);
+join.Interactable = false;     // greyed out the game's way until a server is found
+join.Label = "Join (2)";
+```
+
+- Each button is a copy of the menu's own Credits button: the sign's font, colours, hover and click sounds. The copy loses the original's click action, relays and translation component.
+- They go in rows of three under the game's 2x3 grid (New Game, Load Game, Options / MODS, Credits, Quit), in the grid's own columns and row spacing, sorted by `order` and then by when they were added.
+- The keyboard and pad reach them: down from the bottom row goes into the mod rows, up from the first mod row goes back to the button above, left and right move along a row. The game's own grid moves are untouched. This is done with postfixes on `MainMenuNavigationHelper.GetButtonAbove/Below/OnTheLeft/OnTheRight` that only answer for moves out of the bottom row and between mod buttons.
+- A button goes away when its mod unloads (or with `Remove()`); the rest close up. Ids are per mod; adding the same id again replaces the old button. `MainMenuButtons.All` and `Find(modId, id)` list them.
+- MODS itself stays in the grid's unused "???" slot and isn't one of these.
+
 ## Settings pages
 
 Register a config file and the Settings page builds the controls for it:

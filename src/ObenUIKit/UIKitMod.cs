@@ -39,6 +39,7 @@ public sealed class UIKitMod : ObenMod
         ChangelogFeed.Init(this);
         WhatsNewPrompt.Init(this, config);
         MainMenuEntry.Init(this);
+        MainMenuButtons.Init(this);
         PauseMenuEntry.Init(this);
         ComputerApps.Init(this);
         Log.Info("Ready.");

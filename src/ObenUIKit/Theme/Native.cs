@@ -20,6 +20,10 @@ internal static class Native
 
     public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuOptions = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("options");
     public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuUnknown = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("unknown");
+    public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuNewGame = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("newGame");
+    public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuLoadGame = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("loadGame");
+    public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuCredits = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("credits");
+    public static readonly AccessTools.FieldRef<MainMenuNavigationHelper, UnityEngine.UI.Button> MenuQuit = Ref<MainMenuNavigationHelper, UnityEngine.UI.Button>("quit");
 
     public static readonly AccessTools.FieldRef<OptionsMenu, Slider> OptionsFov = Ref<OptionsMenu, Slider>("fovSlider");
     public static readonly AccessTools.FieldRef<OptionsMenu, OptionsButton> OptionsLanguage = Ref<OptionsMenu, OptionsButton>("languageButton");

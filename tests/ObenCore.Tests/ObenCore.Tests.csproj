@@ -63,6 +63,10 @@
     <Compile Include="../../src/ObenFramework/World/Landmarks/LandmarkStore.cs" Link="Linked/World/LandmarkStore.cs" />
     <Compile Include="../../src/ObenFramework/World/Objects/ObjectDataStore.cs" Link="Linked/World/ObjectDataStore.cs" />
     <Compile Include="../../src/ObenFramework/World/Objects/VisitedSceneRules.cs" Link="Linked/World/VisitedSceneRules.cs" />
+    <!-- SceneLook: the scene file reader, the index and the rig, bind and mesh planning use no Unity types. -->
+    <Compile Include="../../src/ObenFramework/SceneLook/SceneLookInfo.cs" Link="Linked/SceneLook/SceneLookInfo.cs" />
+    <Compile Include="../../src/ObenFramework/SceneLook/Reading/*.cs" LinkBase="Linked/SceneLook/Reading" />
+    <Compile Include="../../src/ObenFramework/SceneLook/Planning/*.cs" LinkBase="Linked/SceneLook/Planning" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

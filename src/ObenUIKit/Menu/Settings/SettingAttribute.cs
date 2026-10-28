@@ -27,6 +27,9 @@ public sealed class SettingAttribute : Attribute
     /// <summary>A line of help under the control.</summary>
     public string Description { get; set; }
 
+    /// <summary>Longer help shown as a tooltip when the mouse rests on the control (or the keyboard highlights it).</summary>
+    public string Tooltip { get; set; }
+
     /// <summary>Lowest value of a slider. A slider needs both <see cref="Min"/> and <see cref="Max"/>.</summary>
     public float Min { get; set; } = float.NaN;
 

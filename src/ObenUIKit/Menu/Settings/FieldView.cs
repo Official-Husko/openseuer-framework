@@ -13,6 +13,8 @@ internal enum FieldKind
     Whole,
     Decimal,
     Text,
+    Key,
+    Color,
     Other,
 }
 
@@ -25,6 +27,7 @@ internal sealed class FieldView
     public FieldKind Kind;
     public string Label;
     public string Description;
+    public string Tooltip;
     public bool HasRange;
     public float Min, Max;
 
@@ -61,6 +64,7 @@ internal sealed class FieldView
             Kind = KindOf(field.FieldType),
             Label = setting?.Label ?? Prettify(field.Name),
             Description = setting?.Description ?? field.GetCustomAttribute<DescriptionAttribute>()?.Description,
+            Tooltip = setting?.Tooltip,
         };
         if (view.Kind == FieldKind.Choice)
         {
@@ -81,12 +85,16 @@ internal sealed class FieldView
     {
         if (type == typeof(bool))
             return FieldKind.Switch;
-        if (type.IsEnum)
+        if (type.IsEnum && type != typeof(UnityEngine.KeyCode))
             return type.IsDefined(typeof(FlagsAttribute), false) ? FieldKind.Other : FieldKind.Choice;
         if (type == typeof(int) || type == typeof(long))
             return FieldKind.Whole;
         if (type == typeof(float) || type == typeof(double))
             return FieldKind.Decimal;
+        if (type == typeof(UnityEngine.KeyCode))
+            return FieldKind.Key;
+        if (type == typeof(UnityEngine.Color))
+            return FieldKind.Color;
         return type == typeof(string) ? FieldKind.Text : FieldKind.Other;
     }
 
@@ -106,7 +114,7 @@ internal sealed class FieldView
     }
 
     /// <summary>"PauseWhileOpen" becomes "Pause while open".</summary>
-    private static string Prettify(string name)
+    internal static string Prettify(string name)
     {
         var sb = new StringBuilder(name.Length + 8);
         for (int i = 0; i < name.Length; i++)

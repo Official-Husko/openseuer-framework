@@ -312,10 +312,42 @@ Every public instance field becomes a control, in declaration order:
 | enum (not `[Flags]`) | cycle through the names, written as words ("PauseMenu" shows as "Pause menu") |
 | `int`, `long`, `float`, `double` with bounds in `[Setting]` | slider; whole numbers move by one, decimals are rounded to `Step` (or to a step picked from the size of the range) |
 | `int`, `long`, `float`, `double` without bounds | cycle through round values (0, 1, 2, 5, 10, 20, ...) and the current value if it isn't one of them |
-| `string` | a read-only line for now; edit it in the config file |
+| `string` | a text field; typing is written once it settles, leaving the field writes it at once |
+| `KeyCode` | a key binding row |
+| `Color` | colour swatches: a palette of eleven colours, with the field's own colour first when it isn't one of them |
 | anything else | a note to edit it in the config file |
 
-`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Tooltip` (longer help in a tooltip on the control), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+
+### Actions
+
+Things a player does once rather than sets (clear a cache, reset a quest, rescan a folder) are buttons under the mod's settings. Either mark a public method of the settings class:
+
+```csharp
+public sealed class MyConfig
+{
+    public bool ShowOverlay = true;
+
+    [SettingAction("Reset the overlay", Description = "Puts the overlay back in the top left corner.", Confirm = true)]
+    public string ResetOverlay()
+    {
+        OverlayX = 20; OverlayY = 20;
+        return "The overlay is back in the corner.";
+    }
+}
+```
+
+or register one from the mod:
+
+```csharp
+ModActions.Register(this, "Forget seen hints", () => { _seen.Clear(); return $"Forgot {count} hints."; },
+    description: "Every hint shows again.", confirm: true);
+```
+
+- The method takes no arguments and returns nothing or a string. After it runs the config is saved and the page is built again (the method may have changed fields shown above).
+- A registered action's function returns the text to show as its result, or null for "Done.". With `confirm` the player is asked first in a small window.
+- The result of the last run stays under the button. An exception is logged and shown as "Failed: ...".
+- A mod with actions but no registered config still gets its own entry on the Settings page. Registered actions go away when the mod unloads; `ModActions.All` and `ModActions.Of(modId)` list them.
 
 Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, or when the menu closes. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several registered configs a `Mod` cycle at the top picks the one to edit. A registration goes away when the mod that made it unloads. The kit registers its own config the same way (the option to show What's New after updates).
 
@@ -448,4 +480,3 @@ The computers themselves (which one the player uses, sitting down and getting up
 - Only one list scrolls at a time under the mouse wheel: over a list the wheel scrolls the list, not the window.
 - A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
-- String settings show on the Settings page but are edited in the config file for now; the page doesn't use text fields yet.

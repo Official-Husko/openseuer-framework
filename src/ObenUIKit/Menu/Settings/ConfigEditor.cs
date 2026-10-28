@@ -1,11 +1,20 @@
 using System;
 using ObenUIKit.Controls;
+using UnityEngine;
 
 namespace ObenUIKit.Menu.Settings;
 
-/// <summary>Builds a control for each public field of a settings object and writes edits back.</summary>
+/// <summary>Builds a control for each public field of a settings object and writes edits back, then its action buttons.</summary>
 internal static class ConfigEditor
 {
+    // Offered for colour fields, with the field's own colour first when it isn't one of these.
+    private static readonly Color[] Palette =
+    {
+        Color.white, new Color(0.6f, 0.6f, 0.6f), new Color(0.2f, 0.2f, 0.2f), new Color(0.9f, 0.2f, 0.2f),
+        new Color(1f, 0.55f, 0.1f), new Color(1f, 0.85f, 0.2f), new Color(0.35f, 0.8f, 0.3f), new Color(0.2f, 0.75f, 0.8f),
+        new Color(0.25f, 0.45f, 0.95f), new Color(0.6f, 0.35f, 0.9f), new Color(0.95f, 0.45f, 0.7f),
+    };
+
     public static void Build(UiBuilder ui, SettingsSection section)
     {
         object settings = section.Value;
@@ -13,13 +22,21 @@ internal static class ConfigEditor
             return;
 
         var views = FieldView.For(settings.GetType());
-        if (views.Count == 0)
+        bool methods = ActionRows.HasMethods(settings.GetType());
+        if (views.Count == 0 && !methods)
             ui.Label("Nothing to change here.", muted: true);
         foreach (var view in views)
         {
             BuildField(ui, section, settings, view);
+            if (!string.IsNullOrEmpty(view.Tooltip))
+                ui.Tooltip(view.Tooltip);
             if (!string.IsNullOrEmpty(view.Description))
                 ui.Label(view.Description, muted: true);
+        }
+        if (methods)
+        {
+            ui.Space(10f);
+            ActionRows.BuildMethods(ui, section, settings);
         }
     }
 
@@ -48,14 +65,37 @@ internal static class ConfigEditor
                 BuildNumber(ui, view, Convert.ToDouble(value), (v, deferred) => Set(Convert.ChangeType(v, field.FieldType), deferred));
                 break;
             case FieldKind.Text:
-                ui.Label($"{view.Label}: {value}");
-                ui.Label("Edit this one in the config file for now.", muted: true);
+                // Typing is written like a slider drag, once it settles; leaving the field writes it at once.
+                ui.TextField(view.Label, (string)value ?? "", v => Set(v, deferred: true), v => Set(v));
+                break;
+            case FieldKind.Key:
+                ui.KeyBind(view.Label, (KeyCode)value, k => Set(k));
+                break;
+            case FieldKind.Color:
+                BuildColor(ui, view, (Color)value, c => Set(c));
                 break;
             default:
                 ui.Label($"{view.Label}: edit in the config file", muted: true);
                 break;
         }
     }
+
+    private static void BuildColor(UiBuilder ui, FieldView view, Color value, Action<Color> set)
+    {
+        int index = Array.FindIndex(Palette, c => Close(c, value));
+        var colors = Palette;
+        if (index < 0)
+        {
+            colors = new Color[Palette.Length + 1];
+            colors[0] = value;
+            Array.Copy(Palette, 0, colors, 1, Palette.Length);
+            index = 0;
+        }
+        ui.Swatches(view.Label, colors, index, i => set(colors[i]));
+    }
+
+    private static bool Close(Color a, Color b) =>
+        Mathf.Abs(a.r - b.r) < 0.01f && Mathf.Abs(a.g - b.g) < 0.01f && Mathf.Abs(a.b - b.b) < 0.01f && Mathf.Abs(a.a - b.a) < 0.01f;
 
     private static void BuildNumber(UiBuilder ui, FieldView view, double value, Action<double, bool> set)
     {

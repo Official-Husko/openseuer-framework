@@ -51,6 +51,60 @@ public static partial class BankAccounts
         return BankResult.Ok;
     }
 
+    /// <summary>
+    /// Moves money from the wallet into the account, with no branch involved (online banking, a cash machine).
+    /// Real Money moves in tenths, as the wallet keeps it. The game's own branches mostly don't take deposits
+    /// (the Stalburg Bank desks only pay out), so this is the way in for mods that want one.
+    /// </summary>
+    public static BankResult DepositFromWallet(string bank, Currency currency, float amount)
+    {
+        var refusal = Check(bank, out var account, allowFrozen: false);
+        if (refusal != BankResult.Ok)
+            return refusal;
+        bool rm = currency == Currency.RM;
+        float value = rm ? Money.RoundRM(amount) : (float)Math.Floor(amount);
+        if (!(value > 0f) || value > AccountMath.MaxAmount || (!rm && !AccountMath.CoinsFit(account.OC, value)))
+            return BankResult.Refused;
+        if (!Wallet.CanChange)
+            return BankResult.NotReady;
+        if (!Wallet.TryRemove(currency, value))
+            return BankResult.Insufficient;
+
+        if (rm)
+            account.RM = AccountMath.CreditRm(account.RM, value);
+        else
+            account.OC += (int)value;
+        BankLedger.Reconcile(LedgerKind.Deposit);
+        return BankResult.Ok;
+    }
+
+    /// <summary>Moves money from the account into the wallet, with no branch involved. Real Money moves in tenths.</summary>
+    public static BankResult WithdrawToWallet(string bank, Currency currency, float amount)
+    {
+        var refusal = Check(bank, out var account, allowFrozen: false);
+        if (refusal != BankResult.Ok)
+            return refusal;
+        bool rm = currency == Currency.RM;
+        float value = rm ? Money.RoundRM(amount) : (float)Math.Floor(amount);
+        if (!(value > 0f) || value > AccountMath.MaxAmount)
+            return BankResult.Refused;
+        if (!AccountMath.Covers(rm, account.OC, account.RM, value))
+            return BankResult.Insufficient;
+        if (!Wallet.CanChange)
+            return BankResult.NotReady;
+
+        int coins = account.OC;
+        float realMoney = account.RM;
+        TakeFrom(account, rm, value);
+        if (!Wallet.Add(currency, value))
+        {
+            Restore(account, coins, realMoney);
+            return BankResult.Refused;
+        }
+        BankLedger.Reconcile(LedgerKind.Withdrawal);
+        return BankResult.Ok;
+    }
+
     /// <summary>Pays loan debt in one currency from the account's balance. At most what is owed is taken.</summary>
     public static BankResult RepayDebt(string bank, Currency currency, float amount)
     {

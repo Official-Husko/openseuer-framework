@@ -85,6 +85,21 @@ internal static class BankCommands
             : BankAccounts.Charge(p.Str("bank"), currency, amount));
     }
 
+    [BridgeCommand("bank.transfer", "Move money between the wallet and an account, with no branch involved.",
+        Params = new[] { "bank: the bank's name", "currency: oc or rm", "amount", "to: account or wallet" })]
+    private static object Transfer(JObject p)
+    {
+        string bank = p.Str("bank");
+        var currency = MoneyCommands.ParseCurrency(p.Str("currency"));
+        float amount = p.Float("amount");
+        switch (p.Str("to").Trim().ToLowerInvariant())
+        {
+            case "account": return Result(BankAccounts.DepositFromWallet(bank, currency, amount));
+            case "wallet": return Result(BankAccounts.WithdrawToWallet(bank, currency, amount));
+            default: throw new ArgumentException("to must be 'account' or 'wallet'.");
+        }
+    }
+
     [BridgeCommand("bank.freeze", "Freeze or unfreeze an account.", Params = new[] { "bank: the bank's name", "frozen: true or false" })]
     private static object Freeze(JObject p) => Result(BankAccounts.SetFrozen(p.Str("bank"), p.Bool("frozen")));
 

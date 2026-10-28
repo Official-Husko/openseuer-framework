@@ -3,7 +3,7 @@ using System;
 namespace ObenFramework.Player;
 
 /// <summary>Flags about what the player is doing, plus the god mode switch. Reads are null-safe.</summary>
-public static class PlayerState
+public static partial class PlayerState
 {
     /// <summary>
     /// The game's god mode: death is blocked, but health still drops to 0. The flag is saved, so a

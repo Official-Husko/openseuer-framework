@@ -13,6 +13,8 @@ internal static class PlayerModule
     public static void Init(ObenMod framework)
     {
         PlayerMovement.Init(framework);
+        PlayerControls.Init(framework);
+        PlayerState.InitClaims(framework);
         ModWait.Init(framework);
         TimePicker.Init(framework);
         PlayerSkills.Init(framework);

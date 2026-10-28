@@ -24,6 +24,7 @@ public static class Loader
         Log.Info($"ObenLoader {Version} on Unity {Application.unityVersion}, game {Application.version}, instance {Instance.Number}");
         Log.Info($"Game folder: {LoaderPaths.GameDir}");
 
+        InlineJumps.Use(Log);
         ModLifecycle.Init(ModHost.Create(Log), Log);
 
         var found = ModDiscovery.Scan(LoaderPaths.ModsDir, Log);

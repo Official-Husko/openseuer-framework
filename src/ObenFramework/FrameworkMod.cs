@@ -3,6 +3,7 @@ using ObenFramework.Dialogue;
 using ObenFramework.Events;
 using ObenFramework.Features;
 using ObenFramework.Npcs;
+using ObenFramework.Player.Look;
 using ObenFramework.Quests;
 using ObenFramework.Saves;
 using ObenFramework.World;
@@ -27,6 +28,7 @@ public sealed class FrameworkMod : ObenMod
         QuestWatcher.Attach(this);
         WorldModule.Init(this);
         NpcsModule.Init(this);
+        PlayerLookWatcher.Init(this);
         Log.Info("Ready.");
     }
 

@@ -172,6 +172,38 @@ Built on: TimeControl, ScreenFx, Hud.HideGameHud, the Game Tweaks camera.
 
 ## Co-op
 
+### What ObenCoop doesn't share yet
+
+Today ObenCoop shares the session itself: joining, the player list, chat, lobbies and join codes, and where everyone is (positions, without bodies). Everything else is still each player's own game. The plan in `docs/modding/coop.md` ("Not done yet" and "Planned slices") gives the order. Most slices now have the framework APIs they need, because the parity work added the events and setters a sync layer listens to and replays. The rule for all of them: requests go to the host, the host checks them and broadcasts the result as plain state ("door X is open"), and periodic digests heal late joiners and lost packets. To keep changes from echoing back, a mirroring mod applies the network's changes through the framework's setters, which run as `ChangeSource.Mod` (or inside `WorldChanges.Enter`), and forwards only events whose source is `Game` or `LocalPlayer`.
+
+1. **Other players' bodies (L):** puppets with body, pose, sitting and appearance, a roster window, and a proper chat UI.
+   Built on: presence (done), PlayerLook capture and apply (bytes, onto any puppet), Seats, ObenUIKit.
+2. **Clock, weather and the sleep vote (M):** one shared time and weather, and sleeping only when everyone agrees.
+   Built on: GameClock, TimeControl (freeze or speed per mod), GameWeather and WeatherConditions, PlayerSleep and SleepEvents.
+3. **Join ticket (L, the hardest single slice):** the host's save is shipped to a joining player and loaded in a redirected guest save, so nobody has to copy saves by hand.
+   Built on: blob transfer (done), SaveState capture and apply, SaveSlots, SaveGate, Sessions.
+4. **Shared world state (L):** doors and lights, floor items and coins, containers, building.
+   Built on: Doors (change events, echo-free), Lights and Switches, FloorItems (stable ids), Containers (stable ids, who has one open), PlacedFurniture and FurnitureBuilder (stable ids, place, move and remove from code).
+5. **Stations and NPC features (L):** crafting, liquids, power, shops, vending, dialogue, quests.
+   Built on: CraftingEvents and CraftingStations, PowerDevices, Shops (Bought/Sold), ShopStock, Conversations, QuestLog with its change events.
+6. **The rest (L):**
+   - trains, elevators, the sauna, slot machines;
+   - NPC and animal positions;
+   - combat, harvesting, prison;
+   - map markers, a players panel.
+
+   Built on: Trains, Elevators, Saunas, Casino, Npcs and NpcControl, Animals, Weapons, ResourceNodes, Law, Landmarks.
+7. **Free roam (last, maybe never):** players in different levels, which needs authority per scene. Decide early whether version 1 keeps everyone in the host's scene; keep an `Authority` accessor so it can be added later.
+
+Smaller open items from the same list:
+
+- **Real Steam:** the Steam transport is only tested against a fake Steam, since this install's `steam_api64.dll` is replaced.
+- **No NAT help for direct play:** forward the UDP port, use a VPN, play on a LAN, or use Steam.
+- **No lobby page in ObenUIKit** (list, codes, invites); everything is console commands.
+- **No request/ack helper** and no timers for periodic state (announces, digests); slice 4 needs both.
+- **Blobs** aren't resumable and don't survive a hot reload.
+- **No host migration:** a Steam lobby whose owner leaves ends the session.
+
 ### Shared Tenement (L)
 
 Co-landlords: rent income split between players, shared storage and a shared quest log. This is the natural next step for ObenCoop once its testing pass is done (see to-test.md, section 4).

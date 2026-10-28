@@ -1,12 +1,14 @@
+using ObenUIKit.Input;
 using ObenUIKit.Windows;
 using UnityEngine;
 
 namespace ObenUIKit.Runtime;
 
 /// <summary>
-/// The kit's only per-frame code, enabled only while a window is open: Esc closes the top window
-/// (a frame later, so the same key press can't also reach the game), and open windows refresh
-/// a few times a second.
+/// The kit's only per-frame code, enabled only while a window is open: Esc or the pad's B closes
+/// the top window (a frame later, so the same key press can't also reach the game, and not while a
+/// text field or key capture has the keyboard), the top window gets keyboard and controller
+/// navigation, and open windows refresh a few times a second.
 /// </summary>
 internal sealed class KitTick : MonoBehaviour
 {
@@ -36,8 +38,13 @@ internal sealed class KitTick : MonoBehaviour
             _windows.Top.Close();
             return;
         }
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape) && _windows.Top.CloseOnEscape)
+
+        bool typing = InputFocus.Busy;
+        var top = _windows.Top;
+        if (!typing && top.CloseOnEscape && NavKeys.Back())
             _closePending = true;
+        else if (!typing)
+            top.Nav.Tick(Time.unscaledTime);
 
         if (Time.unscaledTime >= _nextRefresh)
         {

@@ -1,5 +1,6 @@
 using System;
 using ObenLoader.Logging;
+using ObenUIKit.Input;
 using ObenUIKit.Runtime;
 using ObenUIKit.Theme;
 using TMPro;
@@ -13,14 +14,16 @@ namespace ObenUIKit.Controls;
 /// pressed and disabled taken from the game, its hover and click sounds, click on release.
 /// </summary>
 internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler,
-    IPointerUpHandler, IPointerClickHandler
+    IPointerUpHandler, IPointerClickHandler, INavTarget
 {
     private TMP_Text _text;
     private UiTheme _theme;
     private UiSounds _sounds;
     private ModLogger _log;
     private Action _onClick;
+    private UiNav _nav;
     private bool _hover;
+    private bool _focus;
     private bool _pressed;
     private bool _interactable = true;
 
@@ -37,6 +40,23 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     /// <summary>Kept highlighted, for the selected tab or page.</summary>
     public bool Selected { get; set; }
 
+    public RectTransform Rect => (RectTransform)transform;
+
+    public bool Focusable => _interactable && isActiveAndEnabled;
+
+    /// <summary>Makes the button reachable from the keyboard and lets the mouse move the highlight.</summary>
+    internal void Bind(UiNav nav) => _nav = nav;
+
+    public void SetFocus(bool on)
+    {
+        _focus = on;
+        Paint();
+    }
+
+    public void Activate() => Click();
+
+    public bool Step(int delta) => false;
+
     internal void Init(TMP_Text text, KitContext kit, Action onClick)
     {
         _text = text;
@@ -50,6 +70,7 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     public void OnPointerEnter(PointerEventData data)
     {
         _hover = true;
+        _nav?.Hover(this);
         if (_interactable)
             _sounds.Hover();
         Paint();
@@ -59,6 +80,7 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         _hover = false;
         _pressed = false;
+        _nav?.Unhover(this);
         Paint();
     }
 
@@ -78,6 +100,11 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         if (!_interactable || data.button != PointerEventData.InputButton.Left)
             return;
+        Click();
+    }
+
+    private void Click()
+    {
         _sounds.Press();
         try { _onClick?.Invoke(); }
         catch (Exception e) { _log.Error($"Button '{_text.text}' failed", e); }
@@ -89,7 +116,7 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
             return;
         _text.color = !_interactable ? _theme.TextDisabled
             : _pressed ? _theme.TextPress
-            : _hover || Selected ? _theme.TextHover
+            : _hover || _focus || Selected ? _theme.TextHover
             : _theme.Text;
     }
 }

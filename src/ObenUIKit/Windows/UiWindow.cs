@@ -21,6 +21,7 @@ public sealed class UiWindow
     private readonly List<Action> _refreshers = new List<Action>();
     private WindowLayout.Parts _parts;
     private IDisposable _inputLease;
+    private readonly UiNav _nav;
 
     /// <summary>Raised once when the window closes, for any reason.</summary>
     public event Action Closed;
@@ -31,6 +32,9 @@ public sealed class UiWindow
     /// <summary>Esc closes the window (the default). Turn off for windows that must be answered.</summary>
     public bool CloseOnEscape { get; set; } = true;
 
+    /// <summary>Keyboard and controller navigation over this window's controls.</summary>
+    internal UiNav Nav => _nav;
+
     public string Title
     {
         get => _parts.Title.text;
@@ -38,13 +42,14 @@ public sealed class UiWindow
     }
 
     internal UiWindow(KitContext kit, ITracker owner, string id, string title, Action<UiBuilder> build,
-        Action<UiBuilder> footer, float width)
+        Action<UiBuilder> footer, float width, float height)
     {
         _kit = kit;
         _build = build;
         _footer = footer;
         Id = id;
-        _parts = WindowLayout.Build(kit.Root.Rect, kit.Theme, "Window " + id, width);
+        _parts = WindowLayout.Build(kit.Root.Rect, kit.Theme, "Window " + id, width, height);
+        _nav = new UiNav(kit, _parts.Scroll);
         _parts.Title.text = title;
         IsOpen = true;
 
@@ -62,12 +67,13 @@ public sealed class UiWindow
         if (!IsOpen)
             return;
         _refreshers.Clear();
+        _nav.BeginRebuild();
         Clear(_parts.Content);
         Clear(_parts.Footer);
         try
         {
             _build?.Invoke(new UiBuilder(_kit, this, _parts.Content));
-            var footer = new UiBuilder(_kit, this, _parts.Footer);
+            var footer = new UiBuilder(_kit, this, _parts.Footer, inBody: false, group: _nav.NewGroup());
             if (_footer != null)
                 _footer(footer);
             else
@@ -77,6 +83,7 @@ public sealed class UiWindow
         {
             _kit.Log.Error($"Building window '{Id}' failed", e);
         }
+        _nav.EndRebuild();
     }
 
     public void Close()

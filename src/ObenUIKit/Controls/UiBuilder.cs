@@ -1,4 +1,5 @@
 using System;
+using ObenUIKit.Input;
 using ObenUIKit.Runtime;
 using ObenUIKit.Theme;
 using ObenUIKit.Windows;
@@ -21,12 +22,16 @@ public sealed partial class UiBuilder
     private readonly KitContext _kit;
     private readonly UiWindow _window;
     private readonly RectTransform _parent;
+    private readonly bool _inBody;
+    private readonly int _group;
 
-    internal UiBuilder(KitContext kit, UiWindow window, RectTransform parent)
+    internal UiBuilder(KitContext kit, UiWindow window, RectTransform parent, bool inBody = true, int group = 0)
     {
         _kit = kit;
         _window = window;
         _parent = parent;
+        _inBody = inBody;
+        _group = group;
     }
 
     private UiTheme Theme => _kit.Theme;
@@ -76,6 +81,8 @@ public sealed partial class UiBuilder
         hit.color = Color.clear; // Catches the pointer over the whole button, not just the glyphs.
         var button = holder.gameObject.AddComponent<KitButton>();
         button.Init(label, _kit, onClick);
+        button.Bind(_window.Nav);
+        _window.Nav.Add(button, _inBody, _group);
         return new ButtonHandle(button, label);
     }
 
@@ -94,7 +101,14 @@ public sealed partial class UiBuilder
         layout.childControlHeight = true;
         layout.childForceExpandWidth = false;
         layout.childForceExpandHeight = false;
-        build(new UiBuilder(_kit, _window, row));
+        build(new UiBuilder(_kit, _window, row, _inBody, _window.Nav.NewGroup()));
+    }
+
+    /// <summary>Makes an option row reachable from the keyboard and controller.</summary>
+    private void Register(KitRow row, Func<int, bool> step, Action activate, Action click = null)
+    {
+        row.Bind(_window.Nav, step, activate, click);
+        _window.Nav.Add(row, _inBody, _group);
     }
 
     private void Guard(string what, Action action)

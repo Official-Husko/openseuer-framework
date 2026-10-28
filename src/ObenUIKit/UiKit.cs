@@ -23,17 +23,18 @@ public static class UiKit
 
     /// <summary>
     /// Opens a window and fills it with <paramref name="build"/>. Without a <paramref name="footer"/>
-    /// it gets a Back button. Opening a window with an id that's already open brings back the open one.
+    /// it gets a Back button. A <paramref name="height"/> above 0 makes a centred box instead of the
+    /// full-height column. Opening a window with an id that's already open brings back the open one.
     /// </summary>
     public static UiWindow Open(ITracker owner, string id, string title, Action<UiBuilder> build,
-        Action<UiBuilder> footer = null, float width = DefaultWidth)
+        Action<UiBuilder> footer = null, float width = DefaultWidth, float height = 0f)
     {
         foreach (var open in Kit.Windows.Open)
         {
             if (open.Id == id)
                 return open;
         }
-        return new UiWindow(Kit, owner, id, title, build, footer, width);
+        return new UiWindow(Kit, owner, id, title, build, footer, width, height);
     }
 
     /// <summary>Closes every kit window.</summary>

@@ -14,7 +14,8 @@ public sealed partial class UiBuilder
     public CycleHandle Cycle(string label, string[] options, int index, Action<int> onChange)
     {
         Header(label);
-        var row = OptionRow(label);
+        var kitRow = OptionRow(label);
+        var row = kitRow.Rect;
         var value = UiParts.Text(row, Theme, "", Theme.TextSize, Theme.Text);
         value.textWrappingMode = TextWrappingModes.NoWrap;
         UiParts.Stretch(value.rectTransform, 70f, 0f, 70f, 0f);
@@ -23,6 +24,8 @@ public sealed partial class UiBuilder
         handle = new CycleHandle(value, options, index, i => Guard(label, () => onChange?.Invoke(i)));
         Arrow(row, "<", left: true, () => handle.Step(-1));
         Arrow(row, ">", left: false, () => handle.Step(1));
+        Register(kitRow, d => { _kit.Sounds.Press(); handle.Step(d); return true; },
+            () => { _kit.Sounds.Press(); handle.Step(1); });
         return handle;
     }
 
@@ -35,7 +38,8 @@ public sealed partial class UiBuilder
         string format = "0", bool wholeNumbers = false)
     {
         Header(label);
-        var row = OptionRow(label);
+        var kitRow = OptionRow(label);
+        var row = kitRow.Rect;
         var readout = UiParts.Text(row, Theme, value.ToString(format), Theme.TextSize, Theme.Text, TextAlignmentOptions.MidlineLeft);
         readout.rectTransform.anchorMin = new Vector2(0f, 0f);
         readout.rectTransform.anchorMax = new Vector2(0.22f, 1f);
@@ -52,15 +56,18 @@ public sealed partial class UiBuilder
             readout.text = v.ToString(format);
             Guard(label, () => onChange?.Invoke(v));
         });
+        float step = wholeNumbers ? Mathf.Max(1f, Mathf.Round((max - min) / 50f)) : (max - min) / 20f;
+        Register(kitRow, d => { slider.value += d * step; return true; }, null);
         return new SliderHandle(slider);
     }
 
-    private RectTransform OptionRow(string name)
+    private KitRow OptionRow(string name)
     {
         var background = UiParts.Image(_parent, "Row " + name, Theme.RowSprite, Color.clear, raycast: true);
         UiParts.Height(background, RowHeight);
-        background.gameObject.AddComponent<KitRow>().Init(background, Theme);
-        return background.rectTransform;
+        var row = background.gameObject.AddComponent<KitRow>();
+        row.Init(background, Theme);
+        return row;
     }
 
     private void Arrow(RectTransform row, string glyph, bool left, Action step)

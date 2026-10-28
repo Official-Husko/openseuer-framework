@@ -25,7 +25,8 @@ internal static class WindowLayout
         public RectTransform Footer;
     }
 
-    public static Parts Build(RectTransform root, UiTheme theme, string name, float width)
+    /// <summary>A <paramref name="height"/> of 0 gives the full-height column of the pause menu; anything else a centred box.</summary>
+    public static Parts Build(RectTransform root, UiTheme theme, string name, float width, float height = 0f)
     {
         var frame = UiParts.Stretch(UiParts.Child(root, name));
         var dim = frame.gameObject.AddComponent<Image>();
@@ -33,11 +34,17 @@ internal static class WindowLayout
         dim.raycastTarget = true; // Clicks never fall through to the game behind.
 
         var column = UiParts.Image(frame, "Column", null, theme.Panel, raycast: true).rectTransform;
-        column.anchorMin = new Vector2(0.5f, 0f);
-        column.anchorMax = new Vector2(0.5f, 1f);
-        column.sizeDelta = new Vector2(width, 0f);
+        bool box = height > 0f;
+        column.anchorMin = new Vector2(0.5f, box ? 0.5f : 0f);
+        column.anchorMax = new Vector2(0.5f, box ? 0.5f : 1f);
+        column.sizeDelta = new Vector2(width, box ? height : 0f);
         Edge(column, theme, left: true);
         Edge(column, theme, left: false);
+        if (box)
+        {
+            Cap(column, theme, top: true);
+            Cap(column, theme, top: false);
+        }
 
         var title = UiParts.Text(column, theme, "", theme.TitleSize, theme.Text);
         UiParts.Stretch(title.rectTransform, 30f, 30f, 30f, 0f);
@@ -88,6 +95,15 @@ internal static class WindowLayout
         scroll.viewport = body;
         scroll.content = content;
         return (scroll, content);
+    }
+
+    private static void Cap(RectTransform column, UiTheme theme, bool top)
+    {
+        var cap = UiParts.Image(column, top ? "EdgeTop" : "EdgeBottom", null, theme.PanelEdge).rectTransform;
+        cap.anchorMin = new Vector2(0f, top ? 1f : 0f);
+        cap.anchorMax = new Vector2(1f, top ? 1f : 0f);
+        cap.pivot = new Vector2(0.5f, top ? 1f : 0f);
+        cap.sizeDelta = new Vector2(0f, EdgeWidth);
     }
 
     private static void Edge(RectTransform column, UiTheme theme, bool left)

@@ -1,5 +1,6 @@
 using ObenUIKit.Theme;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace ObenUIKit.Controls;
@@ -34,6 +35,21 @@ internal static class SliderParts
         var colors = slider.colors;
         colors.highlightedColor = new Color(1f, 0.85f, 0.85f, 1f);
         slider.colors = colors;
+        area.gameObject.AddComponent<KitSliderRelease>();
         return slider;
+    }
+}
+
+/// <summary>
+/// A clicked slider stays selected and the event system would then move it on arrow keys too,
+/// on top of the kit's own keyboard navigation. Letting go gives the selection back.
+/// </summary>
+internal sealed class KitSliderRelease : MonoBehaviour, IPointerUpHandler
+{
+    public void OnPointerUp(PointerEventData data)
+    {
+        var events = EventSystem.current;
+        if (events != null && events.currentSelectedGameObject == gameObject)
+            events.SetSelectedGameObject(null);
     }
 }

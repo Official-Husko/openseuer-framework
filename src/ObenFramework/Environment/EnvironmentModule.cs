@@ -13,6 +13,7 @@ internal static class EnvironmentModule
 {
     public static void Init(ObenMod framework)
     {
+        GameEvents.Loading.Subscribe(framework, FlagOverrides.BeforeLoad);
         GameEvents.Loaded.Subscribe(framework, FlagOverrides.ReapplyAll);
         GameEvents.WorldReady.Subscribe(framework, OnWorldReady);
         GameEvents.LevelChanging.Subscribe(framework, ForgetScene);

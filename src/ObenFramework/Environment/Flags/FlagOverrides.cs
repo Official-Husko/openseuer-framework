@@ -125,6 +125,25 @@ internal static class FlagOverrides
         }
     }
 
+    /// <summary>
+    /// A save starts loading (a level change or another save): put the values underneath back and forget
+    /// them, so the forces are read again from whatever the load leaves in place.
+    /// </summary>
+    public static void BeforeLoad()
+    {
+        _suspended = false;
+        var store = GlobalState.instance;
+        if (store != null)
+        {
+            foreach (var pair in Vanilla)
+            {
+                if (pair.Value.Store == store)
+                    WriteUnderneath(store, pair.Key, pair.Value);
+            }
+        }
+        Vanilla.Clear();
+    }
+
     /// <summary>The framework unloads: put every forced flag back.</summary>
     public static void RestoreAll()
     {

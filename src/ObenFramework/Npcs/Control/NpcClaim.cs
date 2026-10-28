@@ -108,16 +108,16 @@ public sealed partial class NpcClaim : IDisposable
         NpcControl.Remove(this);
     }
 
-    // The NPC object is being destroyed or died, so there is nothing to put back.
+    // The NPC died or its object is being destroyed: no walking or schedule to give back, but a dead body
+    // keeps lying there, so its looks and fade distance are put back.
     internal void Abandon()
     {
         if (_released)
             return;
         _released = true;
+        RestoreAppearance();
+        LetHide();
         _holds = NpcHolds.None;
-        _undo.Clear();
-        if (_dressed != null)
-            Player.Look.PlayerLook.Release(_dressed);
         StopAnimation(0f);
         FinishMove(false, halt: false);
         NpcControl.Remove(this);

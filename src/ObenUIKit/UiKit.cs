@@ -37,6 +37,20 @@ public static class UiKit
         return new UiWindow(Kit, owner, id, title, build, footer, width, height);
     }
 
+    /// <summary>
+    /// Asks a yes or no question in a small window on top of everything. <paramref name="onYes"/> runs
+    /// after the window closes; No, Esc and the pad's B just close it.
+    /// </summary>
+    public static UiWindow Confirm(ITracker owner, string title, string text, Action onYes,
+        string yes = "Yes", string no = "No") =>
+        Dialogs.Confirm(Kit, owner, title, text, onYes, yes, no);
+
+    /// <summary>
+    /// Shows a short notice: the game's own notification in a level, a small notice in the corner
+    /// at the main menu.
+    /// </summary>
+    public static void Toast(string text, string title = "Notice") => Toasts.Show(Kit, title, text);
+
     /// <summary>Closes every kit window.</summary>
     public static void CloseAll() => Kit.Windows.CloseAll();
 

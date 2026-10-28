@@ -12,6 +12,7 @@ internal sealed class KitContext
     public UiSounds Sounds;
     public WindowStack Windows;
     public KitTick Tick;
+    public KitToasts Toasts;
     public ModLogger Log;
 
     public UiTheme Theme => Themes.Current;

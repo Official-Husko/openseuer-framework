@@ -28,12 +28,15 @@ internal sealed class KitRuntime : IDisposable
         var windows = new WindowStack();
         var tick = root.Root.AddComponent<KitTick>();
         tick.Init(windows);
+        var toasts = root.Root.AddComponent<KitToasts>();
+        toasts.Init(root.Rect);
         Kit = new KitContext
         {
             Root = root,
             Themes = themes,
             Windows = windows,
             Tick = tick,
+            Toasts = toasts,
             Sounds = new UiSounds(root.Root, themes),
             Log = mod.Log,
         };

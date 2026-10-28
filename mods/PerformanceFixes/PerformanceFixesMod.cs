@@ -26,6 +26,7 @@ public sealed class PerformanceFixesMod : ObenMod
         ModFeatures.Register(this, new InventoryRefreshThrottle());
         ModFeatures.Register(this, new InteractableLookup());
         ModFeatures.Register(this, new LightZoneCheck());
+        ModFeatures.Register(this, new InventorySlotBuffers());
 
         GameConsole.Register(this, "perf", "perf [seconds|reset]", PerfCommand.Run);
     }

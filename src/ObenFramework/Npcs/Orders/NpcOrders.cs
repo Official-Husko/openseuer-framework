@@ -25,58 +25,74 @@ internal static partial class NpcOrders
     private static readonly List<NpcOrder> Orders = new List<NpcOrder>();
     private static readonly System.Random Random = new System.Random();
 
+    /// <summary>
+    /// Starts an order. An NPC spawned this frame has no running controller yet; its order waits for it and
+    /// starts within a few frames (a sit or sleep that then finds no seat ends with false).
+    /// </summary>
     public static bool Begin(ModNpc npc, NpcStepKind kind, Vector3[] points, float yaw, float radius, bool run, bool routine, bool once, Action<bool> done)
     {
         if (npc == null || !npc.Alive || SaveGate.IsBusy || AstarPath.active == null)
             return false;
         var controller = npc.Info.npcController;
-        if (controller == null || controller.richAI == null || controller.Data == null || controller.Data.state == null || controller.activityDisabled)
+        if (controller == null || controller.richAI == null || NpcControl.Holds(npc.Info, NpcHolds.Freeze))
             return false;
-        if (NpcControl.Holds(npc.Info, NpcHolds.Freeze))
+        bool ready = Ready(controller);
+        if (ready && controller.activityDisabled)
             return false;
-
-        Activity activity = null;
-        if (kind == NpcStepKind.Sit || kind == NpcStepKind.Sleep)
-        {
-            activity = kind == NpcStepKind.Sit ? NpcSeats.SitNear(points[0]) : NpcSeats.SleepNear(points[0]);
-            if (activity == null)
-            {
-                if (!routine)
-                    return false;
-                // A routine keeps going: the NPC stands at the step's point instead.
-                kind = NpcStepKind.Stand;
-            }
-        }
 
         var previous = Find(npc);
         if (previous != null)
             Finish(previous, false);
 
+        var order = new NpcOrder
+        {
+            Npc = npc, Kind = kind, Points = points, Yaw = yaw, Radius = radius, Run = run,
+            Routine = routine, Once = once, Done = done, Pending = !ready,
+        };
+        Orders.Add(order);
+        if (order.Pending)
+            return true;
+        if (Start(order))
+            return true;
+        Orders.Remove(order);
+        order.Done = null;
+        return false;
+    }
+
+    // Sets the order going on a running controller: the sit or sleep activity, or the first walk.
+    private static bool Start(NpcOrder order)
+    {
+        var controller = order.Npc.Info.npcController;
+        if (order.Kind == NpcStepKind.Sit || order.Kind == NpcStepKind.Sleep)
+        {
+            var point = order.Points[0];
+            order.Activity = order.Kind == NpcStepKind.Sit ? NpcSeats.SitNear(point) : NpcSeats.SleepNear(point);
+            if (order.Activity == null)
+            {
+                if (!order.Routine)
+                    return false;
+                // A routine keeps going: the NPC stands at the step's point instead.
+                order.Kind = NpcStepKind.Stand;
+            }
+        }
         try
         {
             if (controller.Data.state.CurrentActivity != null)
                 controller.ForceStopActivity();
-            var order = new NpcOrder
-            {
-                Npc = npc, Kind = kind, Points = points, Yaw = yaw, Radius = radius, Run = run,
-                Routine = routine, Once = once, Done = done, Activity = activity,
-            };
-            Orders.Add(order);
-            if (activity != null)
-                controller.ForceStartActivity(activity);
-            else if (kind != NpcStepKind.Wander)
-                StartWalk(order, points[0]);
+            if (order.Activity != null)
+                controller.ForceStartActivity(order.Activity);
+            else if (order.Kind != NpcStepKind.Wander)
+                StartWalk(order, order.Points[0]);
             return true;
         }
         catch (Exception e)
         {
             NpcsLog.Failed("Starting an NPC order", e);
-            var started = Find(npc);
-            if (started != null)
-                Finish(started, false);
             return false;
         }
     }
+
+    private static bool Ready(NPCController controller) => controller.Data != null && controller.Data.state != null;
 
     /// <summary>The kind of order the NPC is on, or Away.</summary>
     public static NpcStepKind Current(ModNpc npc)
@@ -154,7 +170,21 @@ internal static partial class NpcOrders
     {
         var npc = order.Npc;
         var controller = npc.Loaded ? npc.Info.npcController : null;
-        if (!npc.Alive || controller == null || !npc.Root.activeInHierarchy || controller.Data == null || controller.Data.state == null)
+        if (!npc.Alive || controller == null || !npc.Root.activeInHierarchy)
+        {
+            Finish(order, false);
+            return;
+        }
+        if (order.Pending)
+        {
+            if (!Ready(controller))
+                return;
+            order.Pending = false;
+            if (controller.activityDisabled || !Start(order))
+                Finish(order, false);
+            return;
+        }
+        if (!Ready(controller))
         {
             Finish(order, false);
             return;

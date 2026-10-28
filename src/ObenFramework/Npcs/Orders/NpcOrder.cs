@@ -47,6 +47,9 @@ internal sealed class NpcOrder
     /// <summary>The game activity a sit or sleep order runs, or null for walking orders.</summary>
     public Activity Activity;
 
+    /// <summary>Waiting for a freshly spawned NPC's controller to start.</summary>
+    public bool Pending;
+
     public Vector3 Target;
     public int Index;
     public bool Walking;

@@ -218,3 +218,48 @@ Smaller open items from the same list:
 Co-landlords: rent income split between players, shared storage and a shared quest log. This is the natural next step for ObenCoop once its testing pass is done (see to-test.md, section 4).
 
 Built on: ObenCoop sessions, presence and blob transfer, Tenement, Containers, QuestLog.
+
+### Mod and config sync for co-op (M to L)
+
+Today the co-op handshake compares mod sets and refuses a mismatch, naming the mods. Instead, a guest could be brought in line with the host.
+
+- **Configs first (M):**
+  - The host sends the settings that change gameplay: Game Tweaks values, feature switches from `features.json`, difficulty factors, payout and price factors.
+  - The guest applies them as overrides for the session only. They never write into the guest's own config files, and the guest's values come back on leaving. The framework already holds most of these per owner (`OwnedValues`, `MultiplierTable`).
+  - The mod's config classes would mark which fields are gameplay (synced) and which are personal (key binds, UI, volume; never synced).
+- **Mods (L, careful):** installing a mod means running code someone else sent you, so never take DLLs straight from another player.
+  - The handshake lists what's missing or outdated by id, version and SHA-256.
+  - The guest downloads those exact versions from the official release index (the same one the updater below uses), checks the hash, and installs.
+  - New mods load through the loader's rescan, updated ones through hot reload; a framework or loader update needs a restart.
+  - The guest confirms in a window first. Mods that aren't in the index can't be synced, only named.
+  - Mods marked client-only in `mod.json` (cosmetic, HUD) are left out of the comparison altogether.
+
+Built on: the handshake's mod-set check, blob transfer (for configs), ModFeatures, Game Tweaks config, `ModRegistry.Rescan` and hot reload, ObenUIKit.
+
+## Tools
+
+### Auto updater, a companion app in Go (M)
+
+A small standalone program that keeps the loader and the mods up to date. Why Go and not the `oben` tool:
+
+- `oben` needs .NET 10, which players don't have; a Go build is one static binary for Windows and Linux with nothing to install.
+- It runs outside the game, so it can replace files the game has open.
+
+`oben` stays the developer tool.
+
+**What it does:**
+
+- **Checks the releases.** It reads GitHub releases or a small index file listing, per component (loader, framework, kit, each mod), the version, download URL, SHA-256 and the minimum loader and game version. `build/release.sh` and `build/package.sh` already produce the packages; they would also write the index.
+- **Downloads and verifies.** It checks the SHA-256 and a signature (ed25519, for example minisign), with the public key built into the updater, so a hijacked download host can't push code.
+- **Installs safely.**
+  - It waits for the game to close, or asks.
+  - It installs with the same rules as `oben install`: the two Unity JSON files are only touched by the installer, with `.obenbak` backups.
+  - It keeps the previous version of everything it replaces, for a one-step rollback.
+- **Installs per mod.** It updates only what changed, respects mods the player switched off, and can add or remove mods from the index. That makes it a small mod manager.
+- **Shows what's new.** It shows the changelog lines from `changelog.json` (generated from commit trailers) before and after updating. The in-game What's New popup still shows on the next start.
+- **Has a game side.** An "Updates" page in the MODS menu (ObenUIKit) checks the index at the main menu, shows what's available, and launches the updater when you quit. The game never installs anything itself.
+- **Finds the game.** On Linux it finds Heroic, umu and Steam installs (the same detection as `oben launch`); on Windows, Steam libraries and a manual path. It would live in `tools/obenupdate/`.
+
+Built on: `build/release.sh` and `build/package.sh`, `oben install`'s rules, `changelog.json`, the What's New page, ObenUIKit.
+
+These two fit together: co-op mod sync uses the updater's index and signatures to fetch the host's mod versions, so both share one trusted source of mods.

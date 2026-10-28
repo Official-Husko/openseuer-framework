@@ -1,0 +1,9 @@
+{
+  "id": "CheatMenu",
+  "name": "Cheat Menu",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "Press Insert for cheats: god mode, needs, noclip, speed, teleport spots, money, items, time, weather and crime.",
+  "dependencies": { "ObenFramework": "0.1.0", "ObenUIKit": "0.1.0" },
+  "hotReload": true
+}

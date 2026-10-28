@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>CheatMenu</RootNamespace>
+    <Description>A cheat window on the Insert key, also a page in the mod menu.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+    <ProjectReference Include="../../src/ObenUIKit/ObenUIKit.csproj" />
+  </ItemGroup>
+</Project>

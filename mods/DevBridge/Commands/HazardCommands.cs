@@ -55,6 +55,29 @@ internal static class HazardCommands
         return new JObject { ["id"] = h.Id, ["kind"] = h.Kind.ToString(), ["enabled"] = h.Enabled };
     }
 
+    [BridgeCommand("blasts.list", "Dynamite cones (blast sites) of the loaded scenes.")]
+    private static object BlastsList(JObject p)
+    {
+        var list = new JArray();
+        foreach (var b in BlastSites.All())
+            list.Add(new JObject
+            {
+                ["id"] = b.Id, ["name"] = b.Name, ["dynamite"] = b.DynamitePlaced, ["detonated"] = b.Detonated,
+                ["linked"] = b.Linked, ["linkedPlaced"] = b.LinkedPlaced,
+            });
+        return new JObject { ["sites"] = list };
+    }
+
+    [BridgeCommand("blasts.detonate", "Set off a blast site that has dynamite in it and in every linked cone.", Params = new[] { "id: cone id" })]
+    private static object BlastsDetonate(JObject p)
+    {
+        string id = p.Str("id");
+        var cone = BlastSites.Find(id);
+        if (cone == null)
+            throw new ArgumentException($"No blast site '{id}'.");
+        return new JObject { ["detonated"] = BlastSites.Detonate(cone) };
+    }
+
     [BridgeCommand("radiation.info", "The player's dose, the rate here, the background and the dosimeter in hand; dose sets the dose.",
         Params = new[] { "dose?: set the player's dose (mSv)" })]
     private static object RadiationInfo(JObject p)

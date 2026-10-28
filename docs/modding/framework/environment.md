@@ -98,6 +98,8 @@ WorldWater.ResetBreath();
 WorldWater.SetVolume(id, drownDamage: 0f);
 ```
 
+`BlastSites` lists the mines' dynamite cones (dynamite in, linked cones, already blown), sets one off with `Detonate` (only when it and every linked cone have dynamite, like its fuse) and raises `Detonated` per cone.
+
 Zones a mod switches are back to the scene's state after the level loads again; radiation sources save their switch with the game. A damage zone of the radiation type adds a radiation zone component to itself; `Entered` reports it once, as the damage zone.
 
 ## Weather details and zones
@@ -123,4 +125,4 @@ Liquids are items of the `Liquid` category (Clean Water 10840, Dirty Water 12980
 
 ## Dev bridge
 
-`flags.list/get/set`, `settings.get/override`, `sky.get/override/clear`, `screenfx`, `power.devices/set/grids/grid`, `hazards.list/set`, `radiation.info`, `water.info/set`, `weather.conditions/zones/zone`, `surfaces.list/set`, `fixtures.list/set`. Overrides made through the bridge belong to the bridge, or to the mod named in `mod`.
+`flags.list/get/set`, `settings.get/override`, `sky.get/override/clear`, `screenfx`, `power.devices/set/grids/grid`, `hazards.list/set`, `blasts.list/detonate`, `radiation.info`, `water.info/set`, `weather.conditions/zones/zone`, `surfaces.list/set`, `fixtures.list/set`. Overrides made through the bridge belong to the bridge, or to the mod named in `mod`.

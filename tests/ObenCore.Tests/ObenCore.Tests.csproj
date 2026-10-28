@@ -14,6 +14,9 @@
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    <!-- Only for the hook checker's fixtures: patch classes the checker is pointed at. -->
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,5 +46,6 @@
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />
     <Compile Include="../../tools/ObenTool/Scripting/ScriptSource.cs" Link="Linked/ScriptSource.cs" />
+    <Compile Include="../../tools/ObenTool/Checks/*.cs" LinkBase="Linked/Checks" />
   </ItemGroup>
 </Project>

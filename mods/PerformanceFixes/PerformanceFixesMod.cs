@@ -2,10 +2,12 @@ using ObenFramework.Console;
 using ObenFramework.Features;
 using ObenLoader;
 using ObenLoader.Config;
+using PerformanceFixes.Clock;
 using PerformanceFixes.Interaction;
 using PerformanceFixes.Lighting;
 using PerformanceFixes.Measuring;
 using PerformanceFixes.Slots;
+using PerformanceFixes.Stats;
 using PerformanceFixes.Weather;
 
 namespace PerformanceFixes;
@@ -29,6 +31,8 @@ public sealed class PerformanceFixesMod : ObenMod
         ModFeatures.Register(this, new LightZoneCheck());
         ModFeatures.Register(this, new InventorySlotBuffers());
         ModFeatures.Register(this, new AmbientColorCache());
+        ModFeatures.Register(this, new IdleStatEffects());
+        ModFeatures.Register(this, new TimerSnapshot());
 
         GameConsole.Register(this, "perf", "perf [seconds|reset]", PerfCommand.Run);
     }

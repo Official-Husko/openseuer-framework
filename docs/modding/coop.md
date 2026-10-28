@@ -12,6 +12,7 @@ mods/ObenCoop/            the mod: CoopMod, console commands, chat, settings, id
 mods/ObenCoop.Net/        the library: no Unity or game references
   Session/                CoopSession: handshake, slots, roster, relay, persistence
   Messaging/              MessageRouter (channel ids), MessageWriter/Reader, MessagePool
+  Blobs/                  BlobTransfer: big byte arrays in chunks (compression, CRC-32, windowed acks)
   Transport/              ITransport, DirectTransport (LiteNetLib over UDP)
   uses
 LiteNetLib 1.3.1 (MIT)    reliable-ordered and unreliable UDP, connection handling
@@ -29,7 +30,7 @@ Each layer only knows the one below it:
 
 `ITransport` is deliberately small: `Host(port, maxPeers)`, `Connect(host, port)`, `Poll()`, `Send(peer, buffer, offset, count, mode)`, `SendToAll`, `DisconnectPeer(peer, reason)`, `PingOf`, `Stats`, `Stop`, plus events `PeerConnected`, `PeerDisconnected(peer, reason)` and `PacketReceived(peer, segment)`. The segment is only valid during the call.
 
-Delivery is `ReliableOrdered` or `Unreliable`, chosen per message. Limits are in `TransportLimits`: 1200 bytes for an unreliable packet (envelope included), 64 KB for a reliable one. Big payloads (a world, a save) will need chunking above the session, like the reference's `NetBlob`; that comes with the join ticket slice.
+Delivery is `ReliableOrdered` or `Unreliable`, chosen per message. Limits are in `TransportLimits`: 1200 bytes for an unreliable packet (envelope included), 64 KB for a reliable one. Big payloads (a world, a save) go through `session.Blobs`, which chunks them above the session like the reference's `NetBlob` (see "Big payloads" below).
 
 `DirectTransport` is LiteNetLib: one channel, `ConnectionKey = "ObenCoop"`, IPv4 only (dual-mode sockets misbehave under Wine), 20 s disconnect timeout (a level load can stall the main thread). It has no NAT punch-through or relay: the host has to forward the UDP port, or both players use a VPN or the same LAN. A Steam transport would be a second `ITransport` and needs no change above it.
 
@@ -55,6 +56,40 @@ MessagePool.Return(w);
 ```
 
 `MessageWriter` and `MessageReader` are little-endian binary with byte, bool, uint16, int32, uint32, int64, float, GUID, string (length-prefixed UTF-8, at most 4096 bytes) and raw bytes. Writers and readers come from `MessagePool`, so a steady-state send or receive allocates nothing (a test pins this; reading a string necessarily creates the string). Every read is bounds checked and throws `MessageFormatException` on a short or damaged message; the session drops such packets. The pool is per thread.
+
+## Big payloads (blobs)
+
+A reliable packet is at most 64 KB; the host's world is megabytes. `session.Blobs` (`BlobTransfer`, in `Blobs/`) sends a `byte[]` of any size to one player and hands it to a listener on the other side. It is the idea of the reference's `NetBlob` (compress, chunk, CRC, acks, progress) reworked for bytes instead of base64 text, per-player instead of Steam ids, and owned by the session so it dies with it.
+
+```csharp
+// Receiving: one listener per blob channel (blob channels are their own numbering, not message channels).
+Track(session.Blobs.Register(WorldChannel,
+    (sender, data, blob) => LoadWorld(data),                       // complete and CRC-checked; data is yours
+    blob => ShowProgress(blob.BytesDone, blob.BytesTotal),         // optional
+    blob => ShowError(blob.Failure, blob.Message)));               // optional, any failure
+
+// Sending (host to a client here; a client can send to the host or, relayed by the host, to another client):
+BlobStatus send = session.Blobs.Send(player, WorldChannel, bytes, "world",
+    progress: s => bar.Value = s.Progress,
+    finished: s => { if (!s.Succeeded) Say(s.Message); },
+    timeoutMs: 120000);                                            // optional overall limit
+send.Cancel();                                                     // either side can cancel
+```
+
+`Send` returns at once. The `BlobStatus` it returns is updated in place (`State`, `BytesDone`, `BytesTotal`, `WireBytes`, `Progress`, `Failure`, `Message`) and is the same kind of object the receiver's callbacks get, with `Direction` and `Peer` telling which end you are. `bytes` must not change until the transfer finished. If it can't start (not in the session, over the size limit, too many transfers) the status comes back already `Failed` and `finished` has run.
+
+**How it works.** The data is deflated on a worker thread (sent as it is when that doesn't make it smaller), together with a CRC-32 of the original. An `Open` message says size, chunk size, window, CRC and a label; the receiver checks it (is anyone listening on that channel, size limit, how many transfers and how much memory it already holds) and answers with an ack of 0 chunks or an abort. Then the sender keeps up to `WindowChunks` (16) chunks of `ChunkBytes` (16 KB) unacknowledged; the receiver acknowledges every `AckEveryChunks` (4) and at the end, so a slow receiver is never handed more than about 256 KB at a time (its acks also wait behind its own receive budget). When the last chunk is in, the receiver inflates and CRC-checks on a worker thread, replies `Done` or aborts with `Corrupt`, and calls the listener. Chunks are plain reliable messages on `ChannelIds.Blob` (2), which the session owns; the host relays them between clients like any other message.
+
+**Failures.** Every end state other than success is a `BlobFailure` plus a sentence in `Message`, delivered to both sides where they can still be reached: `Cancelled`, `TimedOut` (nothing acknowledged for `StallTimeoutMs`, 30 s, or the `timeoutMs` passed to `Send`), `PeerLeft` (the other player left; raised on the host from `PlayerLeft`), `SessionEnded` (this game left or the connection to the host dropped), `NoHandler` (nobody listens on that channel there, or the listener was disposed), `TooLarge`, `Busy` (too many transfers or too much memory in flight), `Corrupt` (did not unpack, wrong size or CRC), `Protocol`, `NotConnected`, `Internal`. A failure on one transfer never affects another.
+
+**Limits** are `SessionOptions.Blobs` (`BlobOptions`): `MaxBlobBytes` 32 MB, `ChunkBytes`, `WindowChunks`, `AckEveryChunks`, `MaxOutgoing` 16, `MaxIncoming` 16, `MaxIncomingBytes` 96 MB, `StallTimeoutMs`, `Compression` (Fastest). They are read when a transfer starts or an offer arrives. Several transfers can run at once, each with its own id (the sender's counter; the receiver keys by sender and id). Everything is driven by `Poll()`; callbacks run there, never on the worker threads. Chunk handling reuses the pooled writers and reader, so steady state allocates about 70 bytes per chunk on both ends together (a test pins it under 1 KB per 16 KB chunk); each transfer allocates its compressed array and, on the receiver, the result, which is what the data costs. A transfer does not survive a hot reload of the session.
+
+## Flood control
+
+Two limits keep one peer from wrecking the frame or the memory, both in `SessionOptions`:
+
+- **Receive budget.** `MaxMessagesPerPoll` (default 128; 0 for no limit) is how many packets from one peer a `Poll()` handles. A packet over the budget is copied into a pooled buffer and waits in that peer's queue; the next `Poll()` works the queue off first, oldest first, and while a peer has anything queued its new packets go behind it, so order never changes. Budgets are per peer: a burst from one player doesn't delay another's messages. When a peer disconnects, what it had queued is handled first, so a last message before leaving still arrives. `MaxQueuedMessages` (8192) bounds a queue: a peer that gets past it is disconnected with the text "Too many messages were waiting to be handled" (unreliable packets over the bound are just dropped). `session.ReceivesDeferred` and `ReceivesWaiting` show how often the budget bit. The reference's version is 4 packets per peer per frame with a queue of 1024 that drops the overflow; reliable messages can't be dropped here, hence the disconnect.
+- **Send queue limit.** `MaxSendQueue` (2048; 0 for no limit) is how many reliable packets may be waiting to go out to one peer (`ITransport.QueuedPackets`, counted in network packets, so a 16 KB chunk is about a dozen). Over it, `Broadcast`/`SendTo`/`SendToHost` return false for that peer and `session.SendRefused(player, text)` is raised once per backed-up spell with a sentence such as "Can't send to Sam: 2048 packets are already waiting to go out (limit 2048)...". `session.SendsRefused` counts every refusal. Blob chunks check for room before sending and simply wait; their small control messages are not limited, so an ack is never lost to a full queue.
 
 ## Session, handshake and roster
 
@@ -122,7 +157,7 @@ Anything parked must be plain data or a type from a never-reloaded assembly; a t
 dotnet test tests/ObenCoop.Net.Tests
 ```
 
-It covers the handshake, slots and roster, rejection by game version, mod set, protocol version, full game and duplicate GUID, a silent connection being dropped, reliable ordering both ways, relay between clients, directed sends, leave and host shutdown, a hot reload handover of a host and a client session, the codec and the zero-allocation pool. No game is needed.
+It covers the handshake, slots and roster, rejection by game version, mod set, protocol version, full game and duplicate GUID, a silent connection being dropped, reliable ordering both ways, relay between clients, directed sends, leave and host shutdown, a hot reload handover of a host and a client session, the codec and the zero-allocation pool, and the blob and flood control behaviour: a 5 MB blob intact, CRC and damaged-chunk detection, a disconnect mid-transfer failing both sides, concurrent transfers, cancel, timeouts and refusals, the receive budget spreading a burst over polls in order, the overflow disconnect and the send queue limit. No game is needed.
 
 **Two copies of the game on one machine.** `oben launch --instance 2` starts a second copy with `OBEN_INSTANCE=2`: its own loader and player logs (`latest-2.log`, `player-2.log`), the dev bridge one port up, its own `identity-2.json` and the name `Player 2`. Then:
 
@@ -141,8 +176,8 @@ Both copies share the `Mods` folder, so they share `config.json` (port, name) an
 
 - No Steam transport. `steam_api` is replaced in this install, so lobbies and P2P are out; direct IP is first, Steam is a second `ITransport` later.
 - No NAT help. Forward the UDP port, use a VPN, or play on a LAN.
-- No flood control. The reference caps packets per peer per frame (4 per frame, queue of 1024) and drops what is over; this belongs in the session's receive path once there are streams worth limiting. Only the size limits and the reader's bounds checks exist now.
-- No chunking for large payloads, no request/ack helper (`Shared.NextReqId` in the reference), no timers for periodic state (`HST` announces, digests).
+- No request/ack helper (`Shared.NextReqId` in the reference), no timers for periodic state (`HST` announces, digests).
+- Blobs are not resumable and don't survive a hot reload; there is no per-message rate window for features (the reference's `BuildHost` and friends), only the per-peer budget and queue limits.
 - The host is the only authority and there is no host migration.
 
 ## Planned slices
@@ -151,7 +186,7 @@ From section 8 of the research, in order:
 
 1. **Session plus players.** Both players load the same save by hand. Presence at 10 Hz on an unreliable channel, puppets for other players (body, pose, sitting, appearance), the roster shown in a window (ObenUIKit). Chat gets a proper UI. Delivers: you see each other walk, sit and look.
 2. **World clock and weather**, then the sleep vote. Low risk, visible result.
-3. **Join ticket.** Chunked blob transfer over the reliable channel, the host's save shipped to a joining player, guest save redirection and the guest gate. Hardest single slice; needs fixture saves and self checks.
+3. **Join ticket.** Blob transfer (`session.Blobs`, done) of the host's save, shipped to a joining player, guest save redirection and the guest gate. Hardest single slice; needs fixture saves and self checks.
 4. **Shared world state**: doors and lights, floor items and coins, containers, building. Requests go to the host, which validates and broadcasts the result; state is idempotent ("the state of X is Y") with periodic digests so late joiners and lost packets heal.
 5. **Stations and NPC features**: crafting, liquids, power, shops, vending, dialogue, quests.
 6. **The rest**: trains, elevators, sauna, slots, NPC and animal positions, combat, harvest, prison, map markers, players panel.

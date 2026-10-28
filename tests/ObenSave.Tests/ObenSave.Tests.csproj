@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>ObenSave.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <!-- The codec and the file helpers have no Unity dependency, so they are compiled into the tests directly. -->
+  <ItemGroup>
+    <Compile Include="../../mods/ObenSave/Format/*.cs" Link="Source/Format/%(Filename)%(Extension)" />
+    <Compile Include="../../mods/ObenSave/Files/*.cs" Link="Source/Files/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

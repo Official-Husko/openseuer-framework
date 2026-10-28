@@ -81,6 +81,10 @@ public sealed class LobbyBrowser
     {
         if (generation != _generation)
             return;
+        // This game's own lobby answers its own scan; it isn't something to join.
+        var own = _lobby.Info;
+        if (_lobby.Status == LobbyStatus.Hosting && own != null && own.Id != 0 && own.Id == listing.Info.Id)
+            return;
         // A game on this machine answers on several routes (loopback and the network); keep the first.
         for (int i = 0; i < _results.Count; i++)
         {

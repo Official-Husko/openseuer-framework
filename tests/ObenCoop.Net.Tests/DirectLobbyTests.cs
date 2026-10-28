@@ -74,6 +74,20 @@ public class DirectLobbyTests
     }
 
     [Fact]
+    public void AHostDoesNotListItsOwnGame()
+    {
+        using var host = Host();
+        host.Direct.BasePort = PortOf(host);
+        host.Direct.ScanPorts = 1;
+
+        host.Lobby.Browser.Scan(LobbyKind.Direct);
+        Rig.Until(() => !host.Lobby.Browser.Scanning, "scan over", host.Node);
+
+        Assert.Empty(host.Lobby.Browser.Results);
+        Assert.True(host.Node.Transport.Answered > 0);
+    }
+
+    [Fact]
     public void JoiningByCodeGetsIn()
     {
         using var host = Host();

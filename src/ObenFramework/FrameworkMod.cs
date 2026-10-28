@@ -41,6 +41,7 @@ public sealed class FrameworkMod : ObenMod
         Player.PlayerModule.Init(this);
         ShopsModule.Init(this);
         AssetsModule.Init(this);
+        WorldExtrasModule.Init(this);
         Log.Info("Ready.");
     }
 

@@ -3,9 +3,15 @@ using System.IO;
 using ObenCoop.Chat;
 using ObenCoop.Commands;
 using ObenCoop.Identity;
+using ObenCoop.Lobby;
+using ObenCoop.Net.Lobby;
+using ObenCoop.Net.Lobby.Matchmaking;
+using ObenCoop.Net.Presence;
 using ObenCoop.Net.Session;
 using ObenCoop.Net.Transport;
+using ObenCoop.Presence;
 using ObenCoop.Sessions;
+using ObenCoop.Steam;
 using ObenFramework.Console;
 using ObenLoader;
 using ObenLoader.Config;
@@ -15,22 +21,35 @@ using UnityEngine;
 namespace ObenCoop;
 
 /// <summary>
-/// ObenCoop. For now it owns one co-op session (host, join, roster, chat) and pumps its network in
-/// OnUpdate; nothing touches game state yet. The session survives a hot reload of the mod: the live
-/// connection and the session bytes are parked in ReloadState (see <see cref="SessionKeeper"/>).
+/// ObenCoop. Owns one co-op session with its lobby (direct play always, Steam lobbies when the
+/// game's Steam is up), presence and chat, and pumps the network in OnUpdate. Nothing else touches
+/// game state yet. The session and lobby survive a hot reload of the mod (see <see cref="SessionKeeper"/>).
 /// </summary>
-public sealed class CoopMod : ObenMod
+public sealed partial class CoopMod : ObenMod
 {
     private const int ErrorLogIntervalMs = 5000;
 
     private ConfigFile<CoopSettings> _settings;
-    private DirectTransport _transport;
     private int _lastPollErrorTick;
     private bool _pollErrorLogged;
 
     internal CoopSession Session { get; private set; }
 
+    internal CoopLobby Lobby { get; private set; }
+
+    internal DirectTransport Direct { get; private set; }
+
+    internal DirectLobbyBackend DirectLobby { get; private set; }
+
+    internal SteamSupport Steam { get; private set; }
+
+    internal CoopPresence Presence { get; private set; }
+
+    internal PresencePublisher Publisher { get; private set; }
+
     internal CoopChat Chat { get; private set; }
+
+    internal LobbyNotices Notices { get; private set; }
 
     internal CoopSettings Settings => _settings.Value;
 
@@ -46,17 +65,20 @@ public sealed class CoopMod : ObenMod
             GameVersion = Application.version,
             Log = message => Log.Info(message),
         };
-        _transport = new DirectTransport { Log = message => Log.Warn(message) };
-        Session = new CoopSession(_transport, options);
+        Direct = new DirectTransport { Log = message => Log.Warn(message) };
+        Session = new CoopSession(Direct, options);
+        Lobby = new CoopLobby(Session);
+        DirectLobby = new DirectLobbyBackend(Direct, options.Clock);
+        Lobby.AddBackend(DirectLobby);
+        Steam = new SteamSupport(Lobby, options.Clock, Log);
+        Presence = new CoopPresence(Session);
+        Publisher = new PresencePublisher(Presence);
         RefreshOptions();
 
-        Session.Started += OnStarted;
-        Session.PlayerJoined += player => CoopNotices.Show(Log, "Co-op", player.Name + " joined.");
-        Session.PlayerLeft += (player, reason) => CoopNotices.Show(Log, "Co-op", $"{player.Name} left. {reason}");
-        Session.Ended += end => CoopNotices.Show(Log, "Co-op", end.Message);
+        Notices = new LobbyNotices(this);
         Chat = new CoopChat(this, Session, Log);
 
-        if (SessionKeeper.TryResume(Session, _transport, Log))
+        if (SessionKeeper.TryResume(this, Log))
             CoopNotices.Show(Log, "Co-op", "The session carried on after a mod reload.");
 
         GameConsole.Register(this, CoopCommands.Name, CoopCommands.Usage, args => CoopCommands.Run(this, args));
@@ -67,6 +89,11 @@ public sealed class CoopMod : ObenMod
         try
         {
             Session.Poll();
+            Lobby.Poll();
+            Steam.Update();
+            if (Settings.SharePresence && Session.IsActive)
+                Publisher.Update();
+            Presence.Tick();
             _pollErrorLogged = false;
         }
         catch (Exception e)
@@ -81,11 +108,21 @@ public sealed class CoopMod : ObenMod
         }
     }
 
-    public override void OnUnload() => SessionKeeper.Park(Session, _transport, Log);
+    public override void OnUnload()
+    {
+        // Park first (it needs the transports and the lobby as they are), then let go of everything
+        // without leaving: a reload carries the session and lobby over.
+        SessionKeeper.Park(this, Log);
+        Notices.Dispose();
+        Presence.Dispose();
+        Lobby.Dispose();
+        DirectLobby.Dispose();
+        Steam.Dispose();
+    }
 
-    public override void OnQuit() => Session?.Leave();
+    public override void OnQuit() => Lobby?.Leave();
 
-    /// <summary>Copies the current settings and loaded mods into the session options. Call before hosting or joining.</summary>
+    /// <summary>Copies config.json and the loaded mods into the session, lobby and Steam settings. Call before hosting, joining or listing.</summary>
     internal void RefreshOptions()
     {
         _settings.Reload();
@@ -96,13 +133,41 @@ public sealed class CoopMod : ObenMod
             : settings.PlayerName.Trim();
         options.MaxPlayers = Math.Max(2, Math.Min(Protocol.MaxPlayers, settings.MaxPlayers));
         options.Mods = ModSetBuilder.Current(settings.IgnoredMods);
+
+        Lobby.Options.DefaultPort = settings.Port;
+        DirectLobby.BasePort = settings.Port;
+        DirectLobby.ScanPorts = Math.Max(1, Math.Min(32, settings.ScanPorts));
+        DirectLobby.PublicHost = settings.PublicAddress;
+        Steam.Enabled = settings.Steam;
+        Steam.Visibility = ParseVisibility(settings.SteamLobbyType);
     }
 
-    private void OnStarted()
+    /// <summary>Switches presence sharing and keeps the choice in config.json.</summary>
+    internal void SetSharePresence(bool on)
     {
-        string where = Session.IsHost
-            ? $"Hosting for up to {Session.Options.MaxPlayers} players."
-            : $"Joined {Session.Roster.Host.Name}'s game as {Session.Roster.Local.Name}.";
-        CoopNotices.Show(Log, "Co-op", where);
+        _settings.Reload();
+        _settings.Value.SharePresence = on;
+        _settings.Save();
+    }
+
+    /// <summary>The name a hosted lobby shows: the setting, or "&lt;player&gt;'s game".</summary>
+    internal string LobbyName(string given)
+    {
+        if (!string.IsNullOrWhiteSpace(given))
+            return given.Trim();
+        if (!string.IsNullOrWhiteSpace(Settings.LobbyName))
+            return Settings.LobbyName.Trim();
+        return Session.Options.PlayerName + "'s game";
+    }
+
+    private static LobbyVisibility ParseVisibility(string text)
+    {
+        switch ((text ?? "").Trim().ToLowerInvariant())
+        {
+            case "public": return LobbyVisibility.Public;
+            case "private":
+            case "invite": return LobbyVisibility.Private;
+            default: return LobbyVisibility.FriendsOnly;
+        }
     }
 }

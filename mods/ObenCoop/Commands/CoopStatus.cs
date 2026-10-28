@@ -16,6 +16,8 @@ internal static class CoopStatus
         {
             text.Append("\nYou are ").Append(session.Options.PlayerName).Append(" (").Append(session.Options.PlayerId).Append(')');
             text.Append("\nProtocol ").Append(Protocol.Version).Append(", game ").Append(session.Options.GameVersion);
+            text.Append('\n').Append(LobbyText.Describe(mod.Lobby));
+            text.Append("\nSteam: ").Append(mod.Steam.Describe());
             return text.ToString();
         }
 
@@ -37,6 +39,9 @@ internal static class CoopStatus
             .Append(stats.BytesReceived).Append(" bytes in ").Append(stats.PacketsReceived).Append(" packets, ")
             .Append(stats.PacketsLost).Append(" lost.");
         text.Append("\nMessages delivered ").Append(session.Router.Delivered).Append(", dropped ").Append(session.Router.Dropped).Append('.');
+        text.Append('\n').Append(LobbyText.Describe(mod.Lobby));
+        text.Append('\n').Append(PresenceCommands.Describe(mod));
+        text.Append("\nSteam: ").Append(mod.Steam.Describe());
         return text.ToString();
     }
 }

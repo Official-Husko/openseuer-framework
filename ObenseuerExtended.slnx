@@ -6,12 +6,15 @@
   </Folder>
   <Folder Name="/mods/">
     <Project Path="mods/DevBridge/DevBridge.csproj" />
+    <Project Path="mods/ObenCoop.Net/ObenCoop.Net.csproj" />
+    <Project Path="mods/ObenCoop/ObenCoop.csproj" />
     <Project Path="mods/ObenPatches/ObenPatches.csproj" />
     <Project Path="mods/ObenSave/ObenSave.csproj" />
     <Project Path="mods/PerformanceFixes/PerformanceFixes.csproj" />
     <Project Path="mods/ScriptRunner/ScriptRunner.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ObenCoop.Net.Tests/ObenCoop.Net.Tests.csproj" />
     <Project Path="tests/ObenCore.Tests/ObenCore.Tests.csproj" />
     <Project Path="tests/ObenSave.Tests/ObenSave.Tests.csproj" />
   </Folder>

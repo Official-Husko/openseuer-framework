@@ -41,6 +41,7 @@ public static class ItemRegistry
         owner.Track(Disposable.Create(() => Unregister(item)));
         Apply(item);
         RecipeRegistry.Sync();
+        LootPools.Sync();
         return item;
     }
 
@@ -67,6 +68,7 @@ public static class ItemRegistry
         foreach (var item in Entries.Values)
             Apply(item);
         RecipeRegistry.ItemsChanged();
+        LootPools.Sync();
     }
 
     private static void Validate(Item item)

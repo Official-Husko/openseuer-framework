@@ -73,6 +73,9 @@ public sealed partial class ModNpc
         return result;
     }
 
+    /// <summary>The body's meshes with their materials and blend shape names.</summary>
+    public List<NpcMesh> Meshes() => Loaded ? NpcMesh.Of(Root) : new List<NpcMesh>();
+
     /// <summary>Puts the template's look and blend shapes back and forgets the mod's.</summary>
     public bool ResetLook()
     {

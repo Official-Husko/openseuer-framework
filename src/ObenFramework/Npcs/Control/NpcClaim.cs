@@ -92,14 +92,15 @@ public sealed partial class NpcClaim : IDisposable
     }
 
     /// <summary>
-    /// Gives the NPC back: stops an animation, lifts the holds, stops looking, cancels a walk and resumes
-    /// the schedule.
+    /// Gives the NPC back: stops an animation, puts its appearance back, lifts the holds, stops looking,
+    /// cancels a walk and resumes the schedule.
     /// </summary>
     public void Dispose()
     {
         if (_released)
             return;
         StopAnimation(0f);
+        RestoreAppearance();
         ReleaseHolds();
         StopLooking();
         Resume();
@@ -114,6 +115,9 @@ public sealed partial class NpcClaim : IDisposable
             return;
         _released = true;
         _holds = NpcHolds.None;
+        _undo.Clear();
+        if (_dressed != null)
+            Player.Look.PlayerLook.Release(_dressed);
         StopAnimation(0f);
         FinishMove(false, halt: false);
         NpcControl.Remove(this);

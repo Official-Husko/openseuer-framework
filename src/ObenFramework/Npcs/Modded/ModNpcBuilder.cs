@@ -97,6 +97,7 @@ internal static class ModNpcBuilder
     /// <summary>Takes a built NPC out of the game: off the NPC list and the character database, its objects destroyed.</summary>
     public static void Tear(ModNpc npc)
     {
+        npc.Tearing = true;
         CharacterDatabase.Characters.Remove(npc.Clone);
         if (npc.Root != null)
         {
@@ -144,6 +145,10 @@ internal static class ModNpcBuilder
             UnityEngine.Object.DestroyImmediate(increment);
         foreach (var destructible in go.GetComponentsInChildren<PersistentDestructible>(true))
             UnityEngine.Object.DestroyImmediate(destructible);
+        // Some story NPCs carry a DestroyGameObject that a relay fires (Crazy Neighbor's start-selection relay
+        // destroys him a few seconds in). Relays skip calls to a removed component, so taking it off is enough.
+        foreach (var destroyer in go.GetComponentsInChildren<DestroyGameObject>(true))
+            UnityEngine.Object.DestroyImmediate(destroyer);
     }
 
     // Points the body's look components at the copy, so the copy's look (not the template's asset) is what

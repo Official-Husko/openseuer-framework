@@ -30,7 +30,7 @@ if (barkeep == null) return;       // the reason is in the log
 
 The name (`"barkeep"`) is per mod: two mods can both have a barkeep. `Spawn` returns the NPC if it is already here, so calling it from `GameEvents.WhenWorldReady` every time is fine. It returns null outside a level, while a save or load runs, when the template has no body to spawn or there is no ground below the position; the reason is logged.
 
-What the copy gets: a character id from 1,000,000 up, hashed from your mod id and the name so it is the same every session (Lua, mail and the console can use it), moved on by one if another character already has it. Everything that would tie the body to the template is stripped: its save ids (the game does not save the copy as the template), its persistence components, its barks.
+What the copy gets: a character id from 1,000,000 up, hashed from your mod id and the name so it is the same every session (Lua, mail and the console can use it), moved on by one if another character already has it. Everything that would tie the body to the template is stripped: its save ids (the game does not save the copy as the template), its persistence components, its barks, and `DestroyGameObject` components that the template's story wiring fires (a start-selection relay on Crazy Neighbor's body destroys it a few seconds after it starts).
 
 `ModNpc` is the handle:
 
@@ -43,6 +43,12 @@ What the copy gets: a character id from 1,000,000 up, hashed from your mod id an
 
 `ModNpcs.Get(this, "barkeep")`, `ModNpcs.Get(characterId)`, `ModNpcs.List(this)` and `ModNpcs.All()` find them again; `ModNpcs.Despawn(this, name)` and `ModNpcs.Clear(this)` remove them. Every NPC your mod spawned is removed when your mod unloads (saved ones come back when it loads again) and when the level changes.
 
+```csharp
+ModNpcs.Despawned.Subscribe(this, npc => Log.Info($"{npc.FullName} left"));
+```
+
+`ModNpcs.Despawned` is raised whenever a mod NPC leaves the scene, whatever the reason: a despawn, its mod unloading, the level changing, or the game destroying its object. That last one should not happen, but a template's body can carry story wiring the framework does not know about; when it does, the framework notices within a frame, logs once which NPC and body it was, takes the copy out, and a saved NPC comes back at the next world ready.
+
 ### Which templates can walk
 
 Of the game's 294 characters (0.5.13) only 79 have a body of their own, and only 11 of those bodies have the game's NPC AI (an `NPCController` with a path finding agent). Only a copy of one of these can walk, take orders or follow a routine; every other body stands where it is spawned (it can still be talked to, claimed for looks and animations, and saved). `ModNpc.CanMove` says which kind you got. Orders on a body without AI return false and log once why; `NpcRoutines.Set` refuses such a body.
@@ -54,7 +60,7 @@ Of the game's 294 characters (0.5.13) only 79 have a body of their own, and only
 | 146 | Empty Test Map Police | the only AI body with character editor sliders (wears a `LookData`) |
 | 253 | Bror Stjäla | |
 | 289 | Jaana Ahovaara | the only female AI body |
-| 107 | Crazy Neighbor | story NPC |
+| 107 | Crazy Neighbor | story NPC; the wiring that destroys his body is removed from copies |
 | 84, 85, 172, 173, 188 | the police of the market square, backyard, gold store, bazaar and slums | police bodies |
 
 To give another character's look an AI body, set `Body`: for example `Template = 59, Body = 144` walks on the plain body, and a character without a body of its own (`HasBody` false) with `Body = 146` gets its own slider values on the one slider body that walks. Bodies without AI are not made to walk: the framework does not add AI components to a prefab that was not built with them.

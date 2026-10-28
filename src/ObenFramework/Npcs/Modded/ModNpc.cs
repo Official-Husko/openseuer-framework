@@ -93,6 +93,9 @@ public sealed partial class ModNpc
 
     internal Character TemplateCharacter { get; }
     internal string BodyDescription { get; }
+
+    // Set while the framework itself takes the NPC out, so its going is not mistaken for the game destroying it.
+    internal bool Tearing { get; set; }
     internal Character Clone { get; }
     internal GameObject Root { get; }
     internal NPCInfo Info { get; }

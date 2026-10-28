@@ -15,7 +15,7 @@ namespace ObenFramework.Npcs;
 /// mod spawned is removed when the mod unloads (saved ones come back when it loads again) and when the
 /// level changes. Names are per mod: two mods can both have a "barkeep".
 /// </summary>
-public static class ModNpcs
+public static partial class ModNpcs
 {
     private static readonly List<ModNpc> Live = new List<ModNpc>();
     private static readonly HashSet<string> Tracked = new HashSet<string>();
@@ -184,47 +184,5 @@ public static class ModNpcs
             RemoveAll(null);
             Tracked.Clear();
         }));
-    }
-
-    // Removes the mod's NPCs from the scene without forgetting saved ones (an unload, not a despawn).
-    private static void RemoveAll(string owner)
-    {
-        foreach (var npc in List(owner))
-        {
-            if (npc.Saved)
-                ModNpcStore.Keep(npc);
-            Release(npc);
-        }
-    }
-
-    private static void Release(ModNpc npc)
-    {
-        Live.Remove(npc);
-        try
-        {
-            NpcOrders.End(npc, false);
-            NpcRoutines.Forget(npc);
-            ModNpcBuilder.Tear(npc);
-        }
-        catch (Exception e)
-        {
-            NpcsLog.Failed("Removing a mod NPC", e);
-        }
-    }
-
-    // NPCs whose objects went with the old level: their characters still need taking out.
-    private static void ForgetGone()
-    {
-        for (int i = Live.Count - 1; i >= 0; i--)
-            Release(Live[i]);
-    }
-
-    private static void Prune()
-    {
-        for (int i = Live.Count - 1; i >= 0; i--)
-        {
-            if (!Live[i].Loaded)
-                Release(Live[i]);
-        }
     }
 }

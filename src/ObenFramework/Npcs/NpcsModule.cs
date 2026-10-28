@@ -27,6 +27,7 @@ internal static class NpcsModule
     {
         NpcControl.Tick();
         NpcAnimation.Tick();
+        ModNpcs.Tick();
         NpcRoutines.Tick();
         NpcOrders.Tick();
     }

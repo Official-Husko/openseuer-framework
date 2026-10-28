@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -21,6 +22,10 @@ public static class LogHub
     private static string _lastUnityMessage;
     private static int _repeats;
 
+    // Loggers that dropped lines over their rate limit and still owe a note about it.
+    private static readonly HashSet<ModLogger> Dropping = new HashSet<ModLogger>();
+    private static readonly List<ModLogger> DropsToReport = new List<ModLogger>();
+
     /// <summary>Recent lines from mods, the loader and Unity itself.</summary>
     public static LogBuffer Buffer { get; } = new LogBuffer(4096);
 
@@ -39,8 +44,37 @@ public static class LogHub
 
     internal static void Flush()
     {
+        ReportDrops();
         _file?.Flush();
         ErrorReport.Flush();
+    }
+
+    /// <summary>Counts an error line a logger dropped (rate limit, log-once) in errors.log without writing it.</summary>
+    internal static void CountError(string source, string message) => RaiseError(source, message);
+
+    /// <summary>A logger started dropping lines; its note is written on the next flush if it goes quiet.</summary>
+    internal static void WatchDrops(ModLogger logger)
+    {
+        lock (Dropping)
+            Dropping.Add(logger);
+    }
+
+    // Main thread only (the host's flush). Held under the lock so a logger that starts dropping again
+    // while its note is written is watched again rather than lost.
+    private static void ReportDrops()
+    {
+        lock (Dropping)
+        {
+            if (Dropping.Count == 0)
+                return;
+            DropsToReport.AddRange(Dropping);
+            foreach (var logger in DropsToReport)
+            {
+                if (logger.ReportDrops())
+                    Dropping.Remove(logger);
+            }
+            DropsToReport.Clear();
+        }
     }
 
     internal static void Shutdown()

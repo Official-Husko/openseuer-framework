@@ -98,6 +98,22 @@ public sealed class MyMod : ObenMod
 
 Framework APIs that take the mod as an owner (`GameEvents.X.Subscribe(this, ...)`, `GameConsole.Register(this, ...)`) clean up after themselves, so most mods don't need `OnUnload` at all.
 
+## Logging
+
+`Log` writes to `ObenLoader/logs/latest.log`, the in-game log buffer (`oben logs`) and Unity's Player.log, tagged with the mod id. Errors also land in `errors.log` and on the Errors page of the Mods menu.
+
+| Call | Use |
+| --- | --- |
+| `Log.Debug/Info/Warn/Error(message)` | Plain lines. Debug lines only reach the file with `"VerboseLog": true` in `ObenLoader/settings.json`. |
+| `Log.Error(message, exception)` | The exception and its stack go under the message. |
+| `Log.Debug(key, message)` | Change-only: written when `message` differs from the last one under `key`. For state you check every frame. |
+| `Log.InfoOnce/WarnOnce(key, message)`, `Log.ErrorOnce(key, message, e)` | Written the first time `key` comes up, then not again until the mod reloads. Returns whether it was written. Repeated errors still count in errors.log. |
+| `Log.Failed(where, e)` | For Harmony handlers and game event handlers, which must never throw: "where failed" once per place. |
+| `Log.ForgetOnce(prefix)` | Lets the once-keys starting with `prefix` (all with null) log again, e.g. after a level change. |
+| `Log.LineLimit` | Lines per second before the logger starts dropping them (default 100). Dropped lines are counted in one note when the second is over. |
+
+A new logger comes with every load, so the once-keys and the change-only memory start over after a hot reload.
+
 ## Hot reload
 
 With `"hotReload": true`, rebuilding a mod while the game runs swaps in the new code within about two seconds. The loader:

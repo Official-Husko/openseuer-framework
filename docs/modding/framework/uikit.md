@@ -110,6 +110,7 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | `Stepper(label, value, min, max, step, onChange, format)` | a header and a `< 5 >` row that counts in steps and stops at the ends | `StepperHandle` (`Value`, `Set`, `SetRange`) |
 | `Card(title, c => ...)` | a framed grey box with its own controls and a small title | `CardHandle` (`Title`, `Visible`) |
 | `List(count, (i, row) => ..., onPick, rows)` | a long list that only builds the rows on screen | `ListHandle` (`Count`, `SetCount`, `Refresh`, `ScrollTo`, `Selected`) |
+| `ModelPreview(model or object, height)` | a box showing a 3D model, turned by dragging | `ModelPreviewHandle` (`Show`, `ShowItem`, `Clear`, `Spin`, `Rotation`, `Zoom`) |
 | `Tooltip(text)` | gives the control built just before it a tooltip | the builder, so calls chain |
 | `Row(r => ...)` | controls side by side, centred | |
 | `Space(height)` | empty space | |
@@ -181,6 +182,42 @@ ui.Tooltip("Puts every setting on this page back to its default.");
 ```
 
 `Tooltip` applies to the control built just before it (for options with a header, the row under it). The box shows after the mouse rests on the control for about half a second, next to the pointer, and when the keyboard or pad highlights the control, beside it. It's the kit's own box in the theme's colours; the game's own tooltip is tied to the inventory.
+
+### Model previews
+
+```csharp
+var model = ModelRegistry.LoadNow(this, "lamp", "models/lamp.obj");
+var preview = ui.ModelPreview(model, height: 400f);
+preview.Spin = 30f;                 // degrees per second; 0 keeps it still
+
+ui.ModelPreview().ShowItem(0);      // a game item's world model (0 is the Open Sewer coin)
+ui.ModelPreview(somePrefab);        // any object: only its meshes and materials are copied
+```
+
+The model is copied onto a small stage of its own far below the world, on a layer the game's cameras don't draw, with its own camera and three lamps, and drawn into a texture the window shows. Drag to turn it, scroll to zoom, Enter (or the pad's A) puts it back, left and right turn it from the keyboard. It draws a frame only when something changed or while it spins, and only while it is visible (a hidden tab draws nothing). The copy is look-only: the original's scripts, colliders, animators and sounds are removed before it is switched on, so a game prefab can't register itself with saves or the HUD. The stage, texture and copy are destroyed when the window closes.
+
+The scene's sun lights every layer, so while a preview is open its light is kept off the preview layer (the game doesn't use that layer, so nothing in the world changes) and handed back when the last preview closes.
+
+### Text fields and key bindings
+
+`onChange` runs on every edit and `onEnd` when the player leaves the field (Enter, Esc or a click elsewhere), both with the current text. Esc leaves the field without undoing what was typed, and doesn't close the window. Game keys stay locked while typing because the open window already locks them; the kit never uses `GameController`'s `writeLock` (it closes the notes panel on Esc).
+
+A key binding row waits for the next key after a click or Enter. Esc, the pad's B or a click elsewhere cancels. Mouse buttons and pad buttons can't be bound, modifier keys can. The row only reports the key; saving it and acting on it is up to your mod.
+
+## Keyboard and controller
+
+Every kit window can be used without the mouse. Controls register themselves as they are built, so the order is the order you wrote them, body first and then the footer.
+
+| Input | Does |
+| --- | --- |
+| Up / Down, W / S, d-pad or left stick | moves the highlight to the previous or next control, wrapping around; held, it repeats after 0.3 s and then every 0.15 s like the game's menus |
+| Left / Right, A / D, d-pad or left stick | steps a cycle or toggle, moves a slider by a twentieth of its range (a whole number for whole-number sliders), or moves along a row of buttons (a `Row` or the footer) |
+| Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
+| Esc, pad B | closes the top window |
+
+The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
+
+Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings.
 
 ## Questions and notices
 

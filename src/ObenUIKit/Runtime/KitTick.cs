@@ -16,6 +16,7 @@ internal sealed class KitTick : MonoBehaviour
 
     private WindowStack _windows;
     private bool _closePending;
+    private UiWindow _pendingClose;
     private float _nextRefresh;
 
     public void Init(WindowStack windows)
@@ -32,18 +33,23 @@ internal sealed class KitTick : MonoBehaviour
             return;
         }
 
+        var top = _windows.TopModal;
         if (_closePending)
         {
             _closePending = false;
-            _windows.Top.Close();
+            if (top != null && top == _pendingClose)
+                top.Close(WindowCloseReason.Escape);
+            _pendingClose = null;
             return;
         }
 
         bool typing = InputFocus.Busy;
-        var top = _windows.Top;
-        if (!typing && top.CloseOnEscape && NavKeys.Back())
+        if (top != null && !typing && top.CloseOnEscape && NavKeys.Back())
+        {
             _closePending = true;
-        else if (!typing)
+            _pendingClose = top;
+        }
+        else if (top != null && !typing)
             top.Nav.Tick(Time.unscaledTime);
 
         if (Time.unscaledTime >= _nextRefresh)

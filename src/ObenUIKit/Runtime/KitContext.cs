@@ -13,6 +13,7 @@ internal sealed class KitContext
     public WindowStack Windows;
     public KitTick Tick;
     public KitToasts Toasts;
+    public TooltipLayer Tooltips;
     public ModLogger Log;
 
     public UiTheme Theme => Themes.Current;

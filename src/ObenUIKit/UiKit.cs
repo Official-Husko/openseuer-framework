@@ -18,8 +18,8 @@ public static class UiKit
     /// <summary>The look in use right now (main menu or level, whichever fits).</summary>
     public static UiTheme Theme => Kit.Theme;
 
-    /// <summary>True while any kit window is open.</summary>
-    public static bool AnyWindowOpen => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.Any;
+    /// <summary>True while a kit window that takes the player's input is open.</summary>
+    public static bool AnyWindowOpen => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.AnyModal;
 
     /// <summary>
     /// Opens a window and fills it with <paramref name="build"/>. Without a <paramref name="footer"/>
@@ -27,14 +27,39 @@ public static class UiKit
     /// full-height column. Opening a window with an id that's already open brings back the open one.
     /// </summary>
     public static UiWindow Open(ITracker owner, string id, string title, Action<UiBuilder> build,
-        Action<UiBuilder> footer = null, float width = DefaultWidth, float height = 0f)
+        Action<UiBuilder> footer = null, float width = DefaultWidth, float height = 0f) =>
+        Open(owner, id, title, build, new WindowOptions { Footer = footer, Width = width, Height = height });
+
+    /// <summary>
+    /// Opens a window with the given <paramref name="options"/>: docked to an edge, floating, display-only,
+    /// closing on errors. Opening a window with an id that's already open brings back the open one.
+    /// </summary>
+    public static UiWindow Open(ITracker owner, string id, string title, Action<UiBuilder> build, WindowOptions options)
     {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        foreach (var open in Kit.Windows.Open)
+        {
+            if (open.Id == id)
+            {
+                Kit.Windows.Raise(open);
+                return open;
+            }
+        }
+        return new UiWindow(Kit, owner, id, title, build, (options ?? new WindowOptions()).Copy());
+    }
+
+    /// <summary>The open window with this id, or null.</summary>
+    public static UiWindow Find(string id)
+    {
+        if (KitRuntime.Current == null)
+            return null;
         foreach (var open in Kit.Windows.Open)
         {
             if (open.Id == id)
                 return open;
         }
-        return new UiWindow(Kit, owner, id, title, build, footer, width, height);
+        return null;
     }
 
     /// <summary>
@@ -54,6 +79,6 @@ public static class UiKit
     /// <summary>Closes every kit window.</summary>
     public static void CloseAll() => Kit.Windows.CloseAll();
 
-    private static KitContext Kit =>
+    internal static KitContext Kit =>
         KitRuntime.Current?.Kit ?? throw new InvalidOperationException("ObenUIKit isn't loaded.");
 }

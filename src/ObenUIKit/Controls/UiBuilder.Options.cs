@@ -63,14 +63,14 @@ public sealed partial class UiBuilder
 
     private KitRow OptionRow(string name)
     {
-        var background = UiParts.Image(_parent, "Row " + name, Theme.RowSprite, Color.clear, raycast: true);
+        var background = Built(UiParts.Image(_parent, "Row " + name, Theme.RowSprite, Color.clear, raycast: true));
         UiParts.Height(background, RowHeight);
         var row = background.gameObject.AddComponent<KitRow>();
         row.Init(background, Theme);
         return row;
     }
 
-    private void Arrow(RectTransform row, string glyph, bool left, Action step)
+    private KitButton Arrow(RectTransform row, string glyph, bool left, Action step)
     {
         var holder = UiParts.Child(row, glyph);
         holder.anchorMin = new Vector2(left ? 0f : 1f, 0f);
@@ -84,6 +84,8 @@ public sealed partial class UiBuilder
         if (Theme.ArrowFont != null)
             text.font = Theme.ArrowFont;
         UiParts.Stretch(text.rectTransform);
-        holder.gameObject.AddComponent<KitButton>().Init(text, _kit, step);
+        var button = holder.gameObject.AddComponent<KitButton>();
+        button.Init(text, _kit, step);
+        return button;
     }
 }

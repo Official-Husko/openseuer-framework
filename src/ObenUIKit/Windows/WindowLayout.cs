@@ -7,37 +7,42 @@ using UnityEngine.UI;
 namespace ObenUIKit.Windows;
 
 /// <summary>
-/// Builds a window's frame the way the pause menu looks: the scene dimmed behind, a black column
-/// with grey edges in the middle, a title on top, a scrolling body and a footer for buttons.
+/// Builds a window's frame the way the pause menu looks: a black column with grey edges, a title on
+/// top, a scrolling body and a footer for buttons. The centred column dims the scene behind; docked
+/// columns sit on the left or right edge, and a floating box can be dragged by its title.
 /// </summary>
 internal static class WindowLayout
 {
     public const float TitleHeight = 120f;
     public const float FooterHeight = 110f;
     public const float EdgeWidth = 4f;
+    private const float DockMargin = 24f;
 
     public sealed class Parts
     {
         public RectTransform Frame;
+        public RectTransform Column;
         public TextMeshProUGUI Title;
         public ScrollRect Scroll;
         public RectTransform Content;
         public RectTransform Footer;
+
+        /// <summary>The title's drag handle; floating windows only.</summary>
+        public WindowDrag Drag;
     }
 
-    /// <summary>A <paramref name="height"/> of 0 gives the full-height column of the pause menu; anything else a centred box.</summary>
-    public static Parts Build(RectTransform root, UiTheme theme, string name, float width, float height = 0f)
+    public static Parts Build(RectTransform root, UiTheme theme, string name, WindowOptions options)
     {
         var frame = UiParts.Stretch(UiParts.Child(root, name));
         var dim = frame.gameObject.AddComponent<Image>();
-        dim.color = theme.Dim;
-        dim.raycastTarget = true; // Clicks never fall through to the game behind.
+        dim.color = options.Dims ? theme.Dim : Color.clear;
+        // A dimmed window keeps clicks from falling through to the game behind; the others leave the rest of the screen alone.
+        dim.raycastTarget = options.Dims;
 
         var column = UiParts.Image(frame, "Column", null, theme.Panel, raycast: true).rectTransform;
+        float height = options.ResolvedHeight;
         bool box = height > 0f;
-        column.anchorMin = new Vector2(0.5f, box ? 0.5f : 0f);
-        column.anchorMax = new Vector2(0.5f, box ? 0.5f : 1f);
-        column.sizeDelta = new Vector2(width, box ? height : 0f);
+        Place(column, options, height);
         Edge(column, theme, left: true);
         Edge(column, theme, left: false);
         if (box)
@@ -53,6 +58,13 @@ internal static class WindowLayout
         title.rectTransform.pivot = new Vector2(0.5f, 1f);
         title.fontStyle = FontStyles.Underline;
 
+        WindowDrag drag = null;
+        if (options.Dock == WindowDock.Floating)
+        {
+            title.raycastTarget = true;
+            drag = title.gameObject.AddComponent<WindowDrag>();
+        }
+
         var footer = UiParts.Child(column, "Footer");
         footer.anchorMin = new Vector2(0f, 0f);
         footer.anchorMax = new Vector2(1f, 0f);
@@ -67,7 +79,35 @@ internal static class WindowLayout
         row.childControlHeight = true;
 
         var (scroll, content) = Body(column);
-        return new Parts { Frame = frame, Title = title, Scroll = scroll, Content = content, Footer = footer };
+        return new Parts { Frame = frame, Column = column, Title = title, Scroll = scroll, Content = content, Footer = footer, Drag = drag };
+    }
+
+    private static void Place(RectTransform column, WindowOptions options, float height)
+    {
+        bool box = height > 0f;
+        float width = options.Width;
+        switch (options.Dock)
+        {
+            case WindowDock.Left:
+            case WindowDock.Right:
+                float x = options.Dock == WindowDock.Left ? 0f : 1f;
+                column.anchorMin = new Vector2(x, box ? 0.5f : 0f);
+                column.anchorMax = new Vector2(x, box ? 0.5f : 1f);
+                column.pivot = new Vector2(x, 0.5f);
+                column.sizeDelta = new Vector2(width, box ? height : 0f);
+                column.anchoredPosition = new Vector2(options.Dock == WindowDock.Left ? DockMargin : -DockMargin, 0f);
+                break;
+            case WindowDock.Floating:
+                column.anchorMin = column.anchorMax = column.pivot = new Vector2(0.5f, 0.5f);
+                column.sizeDelta = new Vector2(width, height);
+                column.anchoredPosition = options.Position;
+                break;
+            default:
+                column.anchorMin = new Vector2(0.5f, box ? 0.5f : 0f);
+                column.anchorMax = new Vector2(0.5f, box ? 0.5f : 1f);
+                column.sizeDelta = new Vector2(width, box ? height : 0f);
+                break;
+        }
     }
 
     private static (ScrollRect, RectTransform) Body(RectTransform column)

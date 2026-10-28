@@ -1,3 +1,4 @@
+using ObenFramework.Ui;
 using ObenLoader;
 using ObenUIKit.Computer;
 using ObenUIKit.Input;
@@ -18,6 +19,9 @@ public sealed class UIKitMod : ObenMod
     {
         Instance = this;
         InputLock.Init(this);
+        // The framework's UiState answers for every UI mod; the kit reports its windows and typing.
+        UiState.Report(this, UiActivity.ModWindow, () => UiKit.AnyWindowOpen);
+        UiState.Report(this, UiActivity.Typing, () => InputFocus.Busy);
         Track(new KitRuntime(this));
         Track(new HudRuntime(KitRuntime.Current.Kit));
         Hotkeys.Init(this);

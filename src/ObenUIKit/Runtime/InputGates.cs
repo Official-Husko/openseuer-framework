@@ -10,7 +10,7 @@ namespace ObenUIKit.Runtime;
 [HarmonyPatch]
 internal static class InputGates
 {
-    private static bool WindowOpen => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.Any;
+    private static bool WindowOpen => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.AnyModal;
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PauseMenu), nameof(PauseMenu.Pause))]

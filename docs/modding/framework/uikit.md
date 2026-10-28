@@ -43,7 +43,53 @@ UiWindow window = UiKit.Open(this, "mymod.settings", "My Mod", ui =>
 
 A `height` argument (default 0, the full-height column) makes a centred box instead, which is what `UiKit.Confirm` uses.
 
-`UiWindow` has `Title`, `IsOpen`, `Close()`, `Rebuild()` (build the body again with current values), `CloseOnEscape` and a `Closed` event.
+`UiWindow` has `Title`, `IsOpen`, `Close()`, `Rebuild()` (build the body again with current values), `CloseOnEscape`, `CloseReason`, `Dock`, `LocksInput` and a `Closed` event. `UiKit.Find(id)` returns an open window by id.
+
+### Docked, floating and display-only windows
+
+Pass a `WindowOptions` for anything beyond the centred column:
+
+```csharp
+UiKit.Open(this, "mymod.tracker", "Tracker", ui => ui.Live(() => Status()), new WindowOptions
+{
+    Dock = WindowDock.Right,   // Center (default), Left, Right, Floating
+    Width = 520f,
+    LockInput = false,         // display-only: the player keeps playing, no cursor, no Esc
+});
+
+UiKit.Open(this, "mymod.notes", "Notes", Build, new WindowOptions
+{
+    Dock = WindowDock.Floating,
+    Width = 600f, Height = 500f,
+    Position = new Vector2(-500f, 100f),   // the window's centre, from the screen's centre, in 1920x1080 units
+    CloseOnError = true,
+});
+```
+
+| Option | Default | Does |
+| --- | --- | --- |
+| `Dock` | `Center` | `Center` is the pause menu's column; `Left` and `Right` are columns along the screen edge; `Floating` is a box the player drags by its title (clicking it brings it to the front) |
+| `Width`, `Height` | 760, 0 | in 1920x1080 units; height 0 is the full screen height (640 for a floating window) |
+| `Position` | centre | floating windows: where the centre goes |
+| `Footer` | Back button | builds the bottom bar |
+| `LockInput` | true | off makes a display-only panel: game keys, mouse look and Esc stay with the game, there's no keyboard navigation, and the HUD and hotkeys don't step aside for it. In a level the cursor stays hidden, so it can't be clicked; at the main menu it can |
+| `Dim` | centre only | darken the scene behind; a dimmed window also stops clicks reaching the game |
+| `CloseOnEscape` | true | |
+| `CloseOnError` | false | close the window as soon as one of its callbacks (a control, a `Live` text, the build itself) throws. The error is logged either way |
+| `KeepOnLevelChange` | false | stay open through a level change |
+
+### A window is a lifetime scope
+
+`UiWindow` is an `ITracker`: anything passed to `window.Track(disposable)`, and anything subscribed or registered with the window as its owner, is disposed when the window closes, whatever the reason (Back, Esc, the owner unloading, a level change, an error).
+
+```csharp
+var window = UiKit.Open(this, "mymod.watch", "Watch", ui => ...);
+GameClock.MinutePassed.Subscribe(window, OnMinute);    // unsubscribed when the window closes
+window.Track(InputCapture.Key(this, KeyCode.G));       // the game gets G back when it closes
+window.Closed += () => Log.Info("closed: " + window.CloseReason);
+```
+
+`CloseReason` is one of `Requested`, `Escape`, `OwnerUnloaded`, `LevelChange`, `Error` or `KitUnloaded`. `window.Run(what, action)` runs a callback of yours with the same guard the controls use.
 
 ## Controls
 
@@ -58,31 +104,83 @@ A `height` argument (default 0, the full-height column) makes a centred box inst
 | `Slider(label, min, max, value, onChange, format, wholeNumbers)` | a header and a slider with its value on the left | `SliderHandle` (`Value`, `Set`) |
 | `TextField(label, value, onChange, onEnd)` | a header and a box styled like the developer console's input field | `FieldHandle` (`Text`, `Set`, `Enabled`, `Focus()`) |
 | `KeyBind(label, key, onChange)` | a header and a row showing the key; click or Enter, then press the new key | `KeyBindHandle` (`Key`, `Set`) |
+| `Segmented(label, options, index, onChange)` | a header and a row with every option side by side; the picked one is lit and underlined | `ChoiceHandle` (`Index`, `Set`) |
+| `Tabs(names, (i, tab) => ..., index, onChange)` | a row of tab names over one page per tab | `TabsHandle` (`Selected`, `Select`, `Rename`) |
+| `Swatches(label, colors, index, onChange)` | a header and a row of colour squares; the picked one is framed | `SwatchHandle` (`Index`, `Color`, `Set`) |
+| `Stepper(label, value, min, max, step, onChange, format)` | a header and a `< 5 >` row that counts in steps and stops at the ends | `StepperHandle` (`Value`, `Set`, `SetRange`) |
+| `Card(title, c => ...)` | a framed grey box with its own controls and a small title | `CardHandle` (`Title`, `Visible`) |
+| `List(count, (i, row) => ..., onPick, rows)` | a long list that only builds the rows on screen | `ListHandle` (`Count`, `SetCount`, `Refresh`, `ScrollTo`, `Selected`) |
+| `Tooltip(text)` | gives the control built just before it a tooltip | the builder, so calls chain |
 | `Row(r => ...)` | controls side by side, centred | |
 | `Space(height)` | empty space | |
 
-`Set` on a handle changes what's shown without calling your callback. Callbacks are guarded: an exception is logged with the window's id and the window stays open.
+`Set` on a handle changes what's shown without calling your callback. Callbacks are guarded: an exception is logged with the window's id and the window stays open (unless it was opened with `CloseOnError`).
 
-### Text fields and key bindings
+### Choices
 
-`onChange` runs on every edit and `onEnd` when the player leaves the field (Enter, Esc or a click elsewhere), both with the current text. Esc leaves the field without undoing what was typed, and doesn't close the window. Game keys stay locked while typing because the open window already locks them; the kit never uses `GameController`'s `writeLock` (it closes the notes panel on Esc).
+```csharp
+ui.Segmented("Speed", new[] { "Slow", "Normal", "Fast" }, 1, i => SetSpeed(i));
+ui.Swatches("Colour", new[] { Color.red, Color.green, new Color(0.2f, 0.4f, 1f) }, 0, i => SetColour(i));
+ui.Stepper("Copies", 3, 1, 10, 1, v => _copies = (int)v);
+ui.Stepper("Scale", 1f, 0.25f, 4f, 0.25f, v => _scale = v, "0.00x");
+```
 
-A key binding row waits for the next key after a click or Enter. Esc, the pad's B or a click elsewhere cancels. Mouse buttons and pad buttons can't be bound, modifier keys can. The row only reports the key; saving it and acting on it is up to your mod.
+- A segmented row is a `Cycle` that shows all its options at once; use it for two to five short ones. Left and right step through them, clicks pick.
+- Swatch colours are given the way an image editor shows them; the kit converts them for the game's linear colour space, so a square looks like the colour you passed.
+- A stepper doesn't wrap: its arrows grey out at `min` and `max`. Values snap to `min + n * step`.
 
-## Keyboard and controller
+### Tabs
 
-Every kit window can be used without the mouse. Controls register themselves as they are built, so the order is the order you wrote them, body first and then the footer.
+```csharp
+ui.Tabs(new[] { "General", "Items", "World" }, (i, tab) =>
+{
+    if (i == 0) tab.Toggle("God mode", god, SetGod);
+    if (i == 1) tab.List(items.Count, (n, row) => row.Text = items[n].Title, n => Give(items[n]));
+    if (i == 2) tab.Button("Noon", () => GameClock.SetTime(12, 0));
+});
+```
 
-| Input | Does |
-| --- | --- |
-| Up / Down, W / S, d-pad or left stick | moves the highlight to the previous or next control, wrapping around; held, it repeats after 0.3 s and then every 0.15 s like the game's menus |
-| Left / Right, A / D, d-pad or left stick | steps a cycle or toggle, moves a slider by a twentieth of its range (a whole number for whole-number sliders), or moves along a row of buttons (a `Row` or the footer) |
-| Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
-| Esc, pad B | closes the top window |
+Every page is built once, when the window builds; switching tabs only shows another page, so it's instant. The tab picked is kept when the window rebuilds (as long as the build creates the same tab rows in the same order). Left and right on the tab row switch tabs; up and down go into the page. Controls on hidden pages are skipped by keyboard navigation.
 
-The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
+### Cards
 
-Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings.
+```csharp
+foreach (var save in saves)
+    ui.Card(save.Name, c =>
+    {
+        c.Label(save.Date, muted: true);
+        c.Row(r => { r.Button("Load", () => Load(save)); r.Button("Delete", () => Delete(save)); });
+    });
+```
+
+### Long lists
+
+```csharp
+var all = ItemLookup.All;
+ListHandle list = ui.List(all.Count, (i, row) =>
+{
+    row.Text = all[i].Title;
+    row.Detail = "#" + all[i].ID;
+    row.Muted = !CanGive(all[i]);
+}, i => Give(all[i]), rows: 10);
+```
+
+Only the rows on screen exist (ten plus two here), and they are filled again as the list scrolls, so 1,240 items cost the same as twelve. `bind` runs for a row when it scrolls into view; set every field every time, because the row object is reused for other entries, and don't keep it. Nothing is allocated by the list while it scrolls, so what `bind` costs is up to you (format strings once up front if you can).
+
+- Mouse: the wheel and dragging scroll it, a click picks. A thin bar on the right shows where you are.
+- Keyboard and pad: up and down move a highlight inside the list and leave it at the first and last entry; left and right jump a page; Enter picks.
+- `SetCount(n)` after the data changed in size, `Refresh()` after the entries changed in place, `ScrollTo(i)` to show and highlight one. The scroll position is kept when the window rebuilds.
+
+### Tooltips
+
+```csharp
+ui.Toggle("Hardcore", hardcore, SetHardcore);
+ui.Tooltip("Saves only when you sleep, and death deletes the save.");
+ui.Button("Reset", Reset);
+ui.Tooltip("Puts every setting on this page back to its default.");
+```
+
+`Tooltip` applies to the control built just before it (for options with a header, the row under it). The box shows after the mouse rests on the control for about half a second, next to the pointer, and when the keyboard or pad highlights the control, beside it. It's the kit's own box in the theme's colours; the game's own tooltip is tied to the inventory.
 
 ## Questions and notices
 
@@ -236,10 +334,11 @@ The computers themselves (which one the player uses, sitting down and getting up
 
 ## Known limitations
 
-- No lists with many rows, tabs or tooltips yet (planned, see the design notes).
 - HUD bars and the fallback hint panel have fixed places (top left, right edge); the game's own HUD layout isn't read.
 - A hotkey can only be a keyboard key with Ctrl, Shift or Alt; mouse and pad buttons can't be bound, same as the key binding row.
-- The window always uses the centred column layout of the pause menu, or the small box of a dialog.
+- Windows can't be resized by the player; a floating window can only be moved.
+- A display-only window (`LockInput = false`) can't be clicked in a level, because the game keeps the cursor hidden.
+- Only one list scrolls at a time under the mouse wheel: over a list the wheel scrolls the list, not the window.
 - A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
 - String settings show on the Settings page but are edited in the config file for now; the page doesn't use text fields yet.

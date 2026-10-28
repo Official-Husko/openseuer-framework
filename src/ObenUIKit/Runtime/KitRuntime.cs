@@ -30,6 +30,8 @@ internal sealed class KitRuntime : IDisposable
         tick.Init(windows);
         var toasts = root.Root.AddComponent<KitToasts>();
         toasts.Init(root.Rect);
+        var tooltips = root.Root.AddComponent<TooltipLayer>();
+        tooltips.Init(root.Rect, themes);
         Kit = new KitContext
         {
             Root = root,
@@ -37,6 +39,7 @@ internal sealed class KitRuntime : IDisposable
             Windows = windows,
             Tick = tick,
             Toasts = toasts,
+            Tooltips = tooltips,
             Sounds = new UiSounds(root.Root, themes),
             Log = mod.Log,
         };
@@ -45,14 +48,14 @@ internal sealed class KitRuntime : IDisposable
         // The menus only finish setting themselves up after the scene starts, so look a frame later.
         GameEvents.MainMenu.Subscribe(mod, () => mod.StartCoroutine(NextFrame(themes.CaptureMainMenu)));
         GameEvents.WhenWorldReady(mod, _ => themes.CaptureWorld());
-        GameEvents.LevelChanging.Subscribe(mod, windows.CloseAll);
+        GameEvents.LevelChanging.Subscribe(mod, windows.CloseForLevelChange);
         if (WorldState.InMainMenu)
             themes.CaptureMainMenu();
     }
 
     public void Dispose()
     {
-        Kit.Windows.CloseAll();
+        Kit.Windows.CloseAll(WindowCloseReason.KitUnloaded);
         if (Current == this)
             Current = null;
     }

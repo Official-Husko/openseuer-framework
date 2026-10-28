@@ -105,6 +105,23 @@ internal sealed class UiNav
 
     private void Move(int direction)
     {
+        // A list moves its own selection first and lets go at its ends.
+        if (_focus >= 0 && _focus < _items.Count && _items[_focus].Target is INavVertical inner && _items[_focus].Target.Focusable)
+        {
+            bool moved;
+            try { moved = inner.StepVertical(direction); }
+            catch (Exception e)
+            {
+                _kit.Log.Error("A list failed while navigating with the keyboard", e);
+                moved = false;
+            }
+            if (moved)
+            {
+                _kit.Sounds.Hover();
+                return;
+            }
+        }
+
         int n = _items.Count;
         int i = _focus;
         for (int k = 0; k < n; k++)
@@ -114,6 +131,9 @@ internal sealed class UiNav
                 continue;
             SetFocus(i, scroll: true);
             _byHover = false;
+            if (_items[i].Target is INavVertical entered)
+                entered.Enter(direction);
+            ShowTooltip(_items[i].Target);
             _kit.Sounds.Hover();
             return;
         }
@@ -135,9 +155,21 @@ internal sealed class UiNav
                 continue;
             SetFocus(i, scroll: false);
             _byHover = false;
+            ShowTooltip(_items[i].Target);
             _kit.Sounds.Hover();
             return;
         }
+    }
+
+    // The keyboard landed on a control: its tooltip shows beside it, and the previous one goes.
+    private void ShowTooltip(INavTarget target)
+    {
+        var tips = _kit.Tooltips;
+        if (tips == null)
+            return;
+        tips.Leave(null);
+        if (target.Rect != null && target.Rect.TryGetComponent(out Controls.KitTooltip tip))
+            tip.Focus();
     }
 
     // direction 0 activates; anything else steps. Returns whether the control did something.

@@ -24,6 +24,7 @@ public sealed partial class UiBuilder
     private readonly RectTransform _parent;
     private readonly bool _inBody;
     private readonly int _group;
+    private RectTransform _last;
 
     internal UiBuilder(KitContext kit, UiWindow window, RectTransform parent, bool inBody = true, int group = 0)
     {
@@ -42,7 +43,7 @@ public sealed partial class UiBuilder
     /// <summary>A grey title bar like the ones above the game's settings.</summary>
     public LabelHandle Header(string text)
     {
-        var bar = UiParts.Image(_parent, "Header", Theme.HeaderSprite, Theme.Header);
+        var bar = Built(UiParts.Image(_parent, "Header", Theme.HeaderSprite, Theme.Header));
         UiParts.Height(bar, HeaderHeight);
         var label = UiParts.Text(bar.transform, Theme, text, Theme.HeaderSize, Theme.Text);
         UiParts.Stretch(label.rectTransform, 12f, 0f, 12f, 0f);
@@ -52,7 +53,7 @@ public sealed partial class UiBuilder
     /// <summary>Plain text that wraps. Muted text is greyer, for hints and descriptions.</summary>
     public LabelHandle Label(string text, bool muted = false, TextAlignmentOptions align = TextAlignmentOptions.Center)
     {
-        var label = UiParts.Text(_parent, Theme, text, Theme.TextSize * (muted ? 0.85f : 1f), muted ? Theme.TextMuted : Theme.Text, align);
+        var label = Built(UiParts.Text(_parent, Theme, text, Theme.TextSize * (muted ? 0.85f : 1f), muted ? Theme.TextMuted : Theme.Text, align));
         var fitter = label.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         return new LabelHandle(label);
@@ -69,7 +70,7 @@ public sealed partial class UiBuilder
     /// <summary>An underlined text button, like Apply and Back in the game's options.</summary>
     public ButtonHandle Button(string text, Action onClick)
     {
-        var holder = UiParts.Child(_parent, "Button " + text);
+        var holder = Built(UiParts.Child(_parent, "Button " + text));
         UiParts.Height(holder, RowHeight);
         var label = UiParts.Text(holder, Theme, text, Theme.ButtonSize, Theme.Text);
         label.fontStyle = FontStyles.Underline;
@@ -92,7 +93,7 @@ public sealed partial class UiBuilder
     /// <summary>Controls side by side, centred.</summary>
     public void Row(Action<UiBuilder> build)
     {
-        var row = UiParts.Child(_parent, "Row");
+        var row = Built(UiParts.Child(_parent, "Row"));
         UiParts.Height(row, RowHeight);
         var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
         layout.childAlignment = TextAnchor.MiddleCenter;
@@ -111,9 +112,12 @@ public sealed partial class UiBuilder
         _window.Nav.Add(row, _inBody, _group);
     }
 
-    private void Guard(string what, Action action)
+    private void Guard(string what, Action action) => _window.Run(what, action);
+
+    /// <summary>Remembers the control just built, for <see cref="Tooltip"/>.</summary>
+    private T Built<T>(T control) where T : Component
     {
-        try { action(); }
-        catch (Exception e) { _kit.Log.Error($"'{what}' in window '{_window.Id}' failed", e); }
+        _last = control != null ? control.transform as RectTransform : null;
+        return control;
     }
 }

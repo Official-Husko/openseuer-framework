@@ -92,6 +92,7 @@
     <Compile Include="../../src/ObenFramework/Gambling/PayoutMath.cs" Link="Linked/Gambling/PayoutMath.cs" />
     <!-- Environment: owned overrides, fades and sky channels. -->
     <Compile Include="../../src/ObenFramework/Environment/Overrides/OwnedValues.cs" Link="Linked/Environment/OwnedValues.cs" />
+    <Compile Include="../../src/ObenFramework/Environment/ScreenFx/FadeTrack.cs" Link="Linked/Environment/FadeTrack.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

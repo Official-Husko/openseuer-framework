@@ -5,9 +5,9 @@ using ObenLoader.Runtime;
 namespace ObenFramework.Env;
 
 /// <summary>
-/// Sets up the environment module: forced flags and option overrides are put back into a new scene when
-/// it is ready, and everything a mod changed is undone when the framework unloads. The Harmony patches are
-/// applied by the loader like the framework's others.
+/// Sets up the environment module: forced flags, option overrides, sky and screen effects are put back
+/// into a new scene when it is ready, and everything a mod changed is undone when the framework unloads.
+/// The Harmony patches are applied by the loader like the framework's others.
 /// </summary>
 internal static class EnvironmentModule
 {
@@ -27,24 +27,31 @@ internal static class EnvironmentModule
     {
         FlagOverrides.ReapplyAll();
         SettingOverrides.Reapply();
+        ScreenBlur.Reapply();
     }
 
     private static void OnMainMenu()
     {
         ForgetScene();
         SettingOverrides.Reapply();
+        ScreenBlur.Reapply();
     }
 
     private static void ForgetScene()
     {
         FovPatches.Reset();
         SettingsChangedPatches.Reset();
+        ScreenFade.ForgetScene();
+        ScreenBlur.ForgetScene();
     }
 
     private static void Unload()
     {
         FlagOverrides.RestoreAll();
         SettingOverrides.ReleaseAll();
+        ScreenFade.Unload();
+        ScreenBlur.Unload();
+        ScreenVignette.Unload();
         ForgetScene();
     }
 }

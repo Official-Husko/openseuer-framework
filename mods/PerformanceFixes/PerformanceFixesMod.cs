@@ -6,6 +6,7 @@ using PerformanceFixes.Interaction;
 using PerformanceFixes.Lighting;
 using PerformanceFixes.Measuring;
 using PerformanceFixes.Slots;
+using PerformanceFixes.Weather;
 
 namespace PerformanceFixes;
 
@@ -27,6 +28,7 @@ public sealed class PerformanceFixesMod : ObenMod
         ModFeatures.Register(this, new InteractableLookup());
         ModFeatures.Register(this, new LightZoneCheck());
         ModFeatures.Register(this, new InventorySlotBuffers());
+        ModFeatures.Register(this, new AmbientColorCache());
 
         GameConsole.Register(this, "perf", "perf [seconds|reset]", PerfCommand.Run);
     }

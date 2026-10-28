@@ -1,0 +1,7 @@
+<Project>
+  <!--
+    This library has no Unity or game references, so it must not pick up mods/Directory.Build.props
+    (which adds the game's assemblies and Harmony). Only the repo-wide settings are imported.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../../'))" />
+</Project>

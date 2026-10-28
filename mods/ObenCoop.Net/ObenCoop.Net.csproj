@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- net472 is what the game's Mono loads; netstandard2.0 lets the tests run on modern .NET. -->
+    <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
+    <RootNamespace>ObenCoop.Net</RootNamespace>
+    <AssemblyName>ObenCoop.Net</AssemblyName>
+    <Description>Networking for ObenCoop: transport, channels, handshake and roster. No game references.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="1.3.1" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" Condition="'$(TargetFramework)' == 'net472'" />
+  </ItemGroup>
+</Project>

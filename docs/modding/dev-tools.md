@@ -73,6 +73,10 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `npcs.spawn`, `npcs.despawn`, `npcs.mods`, `npcs.order`, `npcs.look` | see [framework/mod-npcs.md](framework/mod-npcs.md) | mod NPCs (owned by DevBridge) |
 | `animals.list`, `animals.act`, `animals.breeders` | see [framework/animals.md](framework/animals.md) | animals, taming, breeding pens |
 | `phone.list`, `phone.scene` | see [framework/phone.md](framework/phone.md) | phone numbers and the phones in the scene |
+| `props.list`, `props.spawn`, `props.move`, `props.remove` | see [framework/world-props.md](framework/world-props.md) | props that stay in the save |
+| `scene.state`, `scene.set`, `scene.fire`, `landmarks.list`, `landmarks.unlock`, `landmarks.mark`, `signs.list`, `signs.set`, `objects.near`, `world.visited` | see [framework/scene-logic.md](framework/scene-logic.md) | level logic, map landmarks, signs, saved objects |
+| `scenelook.list`, `scenelook.find`, `scenelook.apply`, `scenelook.remove`, `scenelook.applied` | see [framework/scenelook.md](framework/scenelook.md) | character looks from scene files |
+| `npcs.list`, `npcs.get`, `npcs.nearest`, `phone.list` | see [framework/npcs.md](framework/npcs.md), [framework/phone.md](framework/phone.md) | NPCs and phone numbers |
 | `player.look`, `player.drain` | see [framework/player.md](framework/player.md) | the player's look, active drain multipliers |
 | `player.speed`, `player.skills`, `player.effects`, `player.conditions`, `player.sleep`, `player.seats`, `player.wardrobe`, `player.notes`, `player.weapons`, `player.jobs`, `player.medical`, `player.achievements` | see [framework/player-actions.md](framework/player-actions.md) | movement multipliers, skills, effects, rest, seats, gear, notes, jobs, doctors, achievements |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |

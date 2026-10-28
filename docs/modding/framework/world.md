@@ -6,6 +6,8 @@ Background on how the game does these things, and why the hooks are where they a
 
 What is covered: doors, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids (read only). What is not: elevators, trains, keypads, crafting machines. Those are in the game notes and can get the same treatment later.
 
+Props that mods place and keep in the save are in [world-props.md](world-props.md); a level's logic objects (relays, branches, counters, state machines), map landmarks, editable signs and per-object mod data in [scene-logic.md](scene-logic.md); character looks read from scene files in [scenelook.md](scenelook.md).
+
 ## Reading the rules once
 
 All events share the same behaviour.

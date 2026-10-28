@@ -68,8 +68,10 @@ public class SceneLookInstalledGameTests
             Assert.True(scan.Error == null, level + ": " + scan.Error);
             foreach (var npc in scan.Npcs)
             {
-                if (npc.Body != 0 && npc.Character != null && npc.Character.Id > 0 && !string.IsNullOrEmpty(npc.Character.Name))
-                    linked++;
+                if (npc.Body == 0 || npc.Character == null || npc.Character.Id <= 0 || string.IsNullOrEmpty(npc.Character.Name))
+                    continue;
+                linked++;
+                _output.WriteLine($"  {level} {npc.Path}: character {npc.Character.Id} {npc.Character.Name}");
             }
             _output.WriteLine($"{level}: {scan.Roots.Count} bodies, {scan.Npcs.Count} npcs, {scan.CleanRenderers}/{scan.Renderers} renderers clean, {scan.Seconds:0.00}s");
         }

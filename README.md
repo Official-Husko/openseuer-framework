@@ -11,7 +11,7 @@ No BepInEx needed. The loader hooks into Unity's own startup files, so the game 
 | `src/ObenLoader/` | The mod loader: finds mods, loads them in dependency order, hot reloads them while the game runs. |
 | `src/ObenFramework/` | The framework mods build on: game events, switchable features, the F1 console, player, items and money, per-save mod data, clock and weather, dialogue and quests, doors, interactables and furniture. |
 | `src/ObenUIKit/` | Windows and controls that look like the game's own options pages (with keyboard and controller navigation, text fields, key binds, dialogs, toasts), and the Mods menu in the main and pause menus with Mods, Settings, What's New and Errors pages. |
-| `mods/` | One folder per mod: Unofficial ObenPatches (game bug fixes), Performance Fixes, ObenSave (compressed saves), Cheat Menu, ObenCoop (co-op, networking so far), DevBridge and Script Runner (dev tools). |
+| `mods/` | One folder per mod: Unofficial ObenPatches (game bug fixes), Performance Fixes, Game Tweaks (optional gameplay tweaks), ObenSave (compressed saves), Cheat Menu (with a developer menu), ObenCoop (co-op, networking so far), DevBridge and Script Runner (dev tools). |
 | `tests/` | Unit tests (`dotnet test`). |
 | `tools/ObenTool/` | The `oben` command line tool: install the loader, launch the game, read logs, talk to a running game, run scripts, MCP server. |
 | `docs/game/` | Notes on how the game's own code works. |

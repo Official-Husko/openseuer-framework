@@ -85,6 +85,11 @@ Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-
 ## Cheat Menu
 
 - [x] Window on Insert and a MODS page: god mode, needs, heal, noclip, move speed, teleport spots, money, items, time, weather, crime (needs its in-game check)
+- [x] Developer menu (F8, off by default): quests, global flags, watches, session and story, player and world, sections from mods
+
+## Game Tweaks
+
+- [x] Needs, stack size, spoilage, crafting and dishwasher speed, no minimum skill, renovation cost/money-only/time, day length, third-person camera; each its own switch, off by default (needs its in-game checks, see docs/modding/game-tweaks.md)
 
 ## Performance Fixes
 
@@ -106,7 +111,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] ReflectionProbeRefresh (off by default): `"Player)"` tag typo; needs a look in a level before it's turned on
 - [x] EmailMonthNames, DialogueRealMoney, RandomPickSkipsLast, AmbientSoundVariety, DialogueLuaFunctions, NpcSightChance (off by default)
 - [x] BankInterest: weekly interest on savings and debts
-- [ ] TenementRequiredItems: `TenementController.RemoveRequiredItems` passes the full amount to every storage instead of what's still missing, so renovations take the item from every storage that holds it
+- [x] RenovationMaterialsOnce: `TenementController.RemoveRequiredItems` passed the full amount to every storage instead of what's still missing, so renovations took the item from every storage that held it
 - [ ] BankExchangeCoins: changing Real Money into coins uses an integer division (`TotalOCSupply / DailyAverageOcSpending`), so it pays 0 coins whenever the bank's coin supply is below its daily spending; the quote checks the RM supply instead and divides by zero when daily coin spending is 0
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 

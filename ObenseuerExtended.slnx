@@ -7,6 +7,7 @@
   <Folder Name="/mods/">
     <Project Path="mods/CheatMenu/CheatMenu.csproj" />
     <Project Path="mods/DevBridge/DevBridge.csproj" />
+    <Project Path="mods/GameTweaks/GameTweaks.csproj" />
     <Project Path="mods/ObenCoop.Net/ObenCoop.Net.csproj" />
     <Project Path="mods/ObenCoop/ObenCoop.csproj" />
     <Project Path="mods/ObenPatches/ObenPatches.csproj" />

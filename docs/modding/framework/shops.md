@@ -171,7 +171,7 @@ PlayerShops.Sold.Subscribe(this, sale => Log.Info($"sold {sale.Amount} {sale.Ite
 PlayerShops.CollectEarnings("kiosk");                    // the till goes to the wallet
 ```
 
-- **Shelves** are the containers inside every piece of furniture of a building area (the game's `FurnitureManager`, by GUID: the apartment, a workshop, a shop space) plus containers added one by one by their `Containers.IdOf` id. A trader's storage is never a shelf. Only shelves in loaded scenes can sell; `PlayerShopInfo.ShelvesLoaded` counts them.
+- **Shelves** are the containers inside every piece of furniture of a building area (a building zone: `FurnitureBuilder.Zones()` or the `furniture.zones` bridge command lists them with their GUIDs; the apartment, a workshop, a shop space) plus containers added one by one by their `Containers.IdOf` id. A trader's storage is never a shelf. Only shelves in loaded scenes can sell; `PlayerShopInfo.ShelvesLoaded` counts them.
 - **Prices**: an item's sale value times the markup (1.2 by default), rounded to whole coins; a Real Money shop asks a tenth of that, in tenths. That is the rule of the game's own unused player shop. A fixed price is in the shop's currency; 0 takes the item off sale.
 - **Sell** checks the shop is open, the slot holds that many of the item and it has a price, then takes the goods off the shelf and puts the total in the till. It returns a `ShopSaleResult`. Stolen goods sell too; `PlayerShopSale.Stolen` says so.
 - **The till** keeps both currencies. `CollectEarnings` pays it out with the game's "Money added" note; `AddEarnings` and `TakeEarnings` move money in and out (tips, wages). `Delete` refuses while the till has money, unless forced.

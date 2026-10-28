@@ -1,8 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System.Collections.Generic;
 using ObenFramework.World;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace ObenFramework.Economy;
 
@@ -18,7 +16,7 @@ internal static class PlayerShopShelves
         if (record == null)
             return shelves;
 
-        var area = Area(record.Area);
+        var area = FurnitureBuilder.FindZone(record.Area);
         if (area != null)
         {
             foreach (var piece in area.AllFurnitures)
@@ -41,18 +39,6 @@ internal static class PlayerShopShelves
         {
             if (Containers.IdOf(shelf) == containerId)
                 return shelf;
-        }
-        return null;
-    }
-
-    private static FurnitureManager Area(string guid)
-    {
-        if (string.IsNullOrEmpty(guid))
-            return null;
-        foreach (var manager in Object.FindObjectsByType<FurnitureManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-        {
-            if (manager.GUID == guid)
-                return manager;
         }
         return null;
     }

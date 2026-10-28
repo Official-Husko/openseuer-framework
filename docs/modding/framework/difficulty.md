@@ -54,4 +54,4 @@ GameDifficulty.RegisterPreset(this, "harsh", "Harsh", "Needs drain faster and tr
 | `difficulty.get` | current settings, levels here, factors, active preset |
 | `difficulty.set factor=<multiplier> value=<f>` | a DevBridge-owned factor (no `value` removes it) |
 | `difficulty.set preset=<modId.id>` / `level=<name>` / `clear=true` | switch preset or level, forget the preset |
-| `difficulty.presets` | the registered presets |
+| `difficulty.presets [add=<id> name=<name> basedOn=<level> needs=<f>]` | the registered presets; `add` registers a DevBridge-owned test preset first |

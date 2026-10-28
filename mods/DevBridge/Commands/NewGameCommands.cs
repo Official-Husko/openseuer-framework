@@ -72,6 +72,20 @@ internal static class NewGameCommands
         return new JObject { ["options"] = options, ["stored"] = stored };
     }
 
+    [BridgeCommand("newgame.testoptions", "Registers four DevBridge-owned sample options (one of each kind) to try the New Game screen. They go when DevBridge unloads.")]
+    private static object TestOptions(JObject p)
+    {
+        var bridge = DevBridgeMod.Instance;
+        if (NewGameOptions.Find(bridge.Info.Id, "toggle") == null)
+        {
+            NewGameOptions.RegisterToggle(bridge, "toggle", "Test toggle", "A sample toggle from the dev bridge.", true);
+            NewGameOptions.RegisterChoice(bridge, "choice", "Test choice", null, new[] { "low", "mid", "high" }, new[] { "Low", "Mid", "High" }, 1);
+            NewGameOptions.RegisterInteger(bridge, "count", "Test count", null, 0, 50, 5, NewGamePlacement.CustomPanel);
+            NewGameOptions.RegisterFloat(bridge, "rate", "Test rate", "Half to double, in quarters.", 0.5f, 2f, 0.25f, 1f, NewGamePlacement.CustomPanel);
+        }
+        return Options(new JObject { ["mod"] = bridge.Info.Id });
+    }
+
     [BridgeCommand("start.choices", "The start choices picked in this game and the relationship the game derives from them.")]
     private static object StartChoicesList(JObject p)
     {

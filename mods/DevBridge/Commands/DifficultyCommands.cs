@@ -83,9 +83,29 @@ internal static class DifficultyCommands
         return Get(p);
     }
 
-    [BridgeCommand("difficulty.presets", "The difficulty presets mods registered.")]
+    [BridgeCommand("difficulty.presets", "The difficulty presets mods registered. With 'add', registers a DevBridge-owned test preset first.",
+        Params = new[]
+        {
+            "add: optional preset id to register for DevBridge",
+            "name: its name on the New Game screen, default the id",
+            "basedOn: a game level, default Default",
+            "needs: optional needs speed factor for the preset (makes it a Custom level)",
+        })]
     private static object Presets(JObject p)
     {
+        string add = p.Str("add", null);
+        if (add != null)
+        {
+            if (!Enum.TryParse(p.Str("basedOn", "Default"), true, out Difficulty basedOn))
+                throw new ArgumentException("'basedOn' is not a game level.");
+            float? needs = p["needs"] == null ? (float?)null : p.Float("needs");
+            Action<DifficultyPresetSettings> configure = null;
+            if (needs != null)
+                configure = s => s.NeedsSpeed = needs.Value;
+            if (GameDifficulty.RegisterPreset(DevBridgeMod.Instance, add, p.Str("name", add), "A test preset from the dev bridge.", basedOn, configure) == null)
+                throw new InvalidOperationException($"DevBridge already registered '{add}'.");
+        }
+
         var presets = new JArray();
         foreach (var preset in GameDifficulty.Presets())
         {

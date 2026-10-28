@@ -80,4 +80,5 @@ StartChoices.Chosen.Subscribe(this, choice => Log.Info("Picked " + choice.Id));
 | `session.info` | session kind, running, new game |
 | `newgame.last` | the last `NewGameInfo` of this run |
 | `newgame.options [mod] [key value]` | registered options with screen and stored values; with `mod`, `key` and `value` sets the screen value |
+| `newgame.testoptions` | registers four DevBridge-owned sample options (one of each kind) for trying the screen |
 | `start.choices` | picks and relationship |

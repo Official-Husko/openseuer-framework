@@ -18,9 +18,11 @@ public sealed class UIKitMod : ObenMod
         Instance = this;
         InputLock.Init(this);
         Track(new KitRuntime(this));
+        Hotkeys.Init(this);
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());
         ModMenu.AddPage(this, SettingsPage.Create());
+        ModMenu.AddPage(this, HotkeysPage.Create());
         ModMenu.AddPage(this, WhatsNewPage.Create());
         ModMenu.AddPage(this, ErrorsPage.Create());
 
@@ -32,6 +34,8 @@ public sealed class UIKitMod : ObenMod
         PauseMenuEntry.Init(this);
         Log.Info("Ready.");
     }
+
+    public override void OnUpdate() => Hotkeys.Tick();
 
     public override void OnUnload() => Instance = null;
 }

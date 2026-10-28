@@ -8,6 +8,9 @@ public sealed class CheatMenuConfig
     /// <summary>The key that opens and closes the cheat window (a Unity key name such as Insert, Home or F2).</summary>
     public string Key = "Insert";
 
+    /// <summary>Move speed multiplier, kept between sessions (1 is the game's own speed).</summary>
+    public float MoveSpeed = 1f;
+
     /// <summary>The saved teleport spots. Always <see cref="SpotCount"/> entries after <see cref="Normalise"/>.</summary>
     public SavedSpot[] Spots = new SavedSpot[SpotCount];
 
@@ -25,6 +28,9 @@ public sealed class CheatMenuConfig
             Spots[i] ??= new SavedSpot();
         if (string.IsNullOrWhiteSpace(Key))
             Key = "Insert";
+        if (float.IsNaN(MoveSpeed) || float.IsInfinity(MoveSpeed))
+            MoveSpeed = 1f;
+        MoveSpeed = System.Math.Max(Cheats.MoveSpeed.Min, System.Math.Min(Cheats.MoveSpeed.Max, MoveSpeed));
     }
 }
 

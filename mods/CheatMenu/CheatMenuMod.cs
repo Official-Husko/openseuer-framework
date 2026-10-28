@@ -37,12 +37,17 @@ public sealed class CheatMenuMod : ObenMod
         ModMenu.AddPage(this, new ModPage("Cheats", ui => CheatPanel.Build(ui, _context)) { Order = 20 });
 
         // The game builds a new player controller on every level, so a speed setting is put back each time.
+        MoveSpeed.Set(_config.Value.MoveSpeed);
         GameEvents.WhenWorldReady(this, _ => MoveSpeed.Apply());
         Track(Disposable.Create(MoveSpeed.Restore));
+        Track(Disposable.Create(_context.Flush));
     }
+
+    public override void OnQuit() => _context.Flush();
 
     public override void OnUpdate()
     {
+        _context.Tick();
         if (_key == KeyCode.None || !Input.GetKeyDown(_key))
             return;
 

@@ -48,7 +48,12 @@ internal static class PlayerSection
         if (MoveSpeed.Available)
         {
             ui.Slider("Move speed", MoveSpeed.Min, MoveSpeed.Max, MoveSpeed.Factor,
-                v => ctx.Run("Move speed", () => MoveSpeed.Set(v)), "0.0x");
+                v => ctx.Run("Move speed", () =>
+                {
+                    MoveSpeed.Set(v);
+                    ctx.Config.Value.MoveSpeed = MoveSpeed.Factor;
+                    ctx.SaveSoon();
+                }), "0.0x");
         }
 
         BuildSpots(ui, ctx);

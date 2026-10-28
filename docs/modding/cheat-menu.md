@@ -18,7 +18,7 @@ Most cheats need a loaded game. At the main menu the sections say "Load a game t
 | Refill needs | The console's `clear_needs`: full health, no hunger, thirst, tiredness or cravings, clean. |
 | Full heal | Health to 100, bleeding stopped, nothing left to regenerate. Needs are left alone. |
 | Noclip | The console's `noclip`: fly through walls with the movement keys. Hold Walk to go faster. Moving up and down uses the game's Up and Down actions (not bound by default) or the controller bumpers. |
-| Move speed | Scales walking, running, swimming, sneaking and strafing from 0.5x to 5x. It is put back on each new level and switched off again when the mod unloads. |
+| Move speed | Scales walking, running, swimming, sneaking and strafing from 0.5x to 5x. It is remembered between sessions (`MoveSpeed` in the mod's config.json) and put back on each new level. |
 | Teleport spot | Pick spot 1, 2 or 3. **Save here** stores your position and facing; **Go there** teleports you. A spot belongs to the scene it was saved in, so it won't take you from the street to a spot saved in your flat. Spots are kept in `config.json` and survive restarts. |
 
 ## Money

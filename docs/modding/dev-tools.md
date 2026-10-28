@@ -61,6 +61,8 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `features.list`, `features.set` | `mod`, `id`, `enabled` | switchable features of every mod |
 | `player.get`, `player.stats`, `player.stat`, `player.teleport`, `player.heal`, `player.godmode` | see [framework/player.md](framework/player.md) | the player |
 | `items.find`, `items.give`, `items.count`, `items.spawn`, `money.get`, `money.add` | see [framework/items.md](framework/items.md) | items and money |
+| `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list`, `worlditems.events` | see [framework/items.md](framework/items.md) | the inventory in detail, loot tables, containers in other scenes, objects that give items |
+| `crafting.stations`, `crafting.control`, `crafting.speed`, `crafting.quality`, `crafting.events`, `recipes.find`, `recipes.unlock` | see [framework/crafting.md](framework/crafting.md) | stations, factors, recipes |
 | `clock.get`, `clock.set`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
 | `lua.get`, `lua.set`, `lua.run`, `quests.list`, `quests.set` | see [framework/dialogue.md](framework/dialogue.md), [framework/quests.md](framework/quests.md) | dialogue variables and the quest log |
 | `doors.list`, `doors.set`, `interact.target`, `furniture.list` | see [framework/world.md](framework/world.md) | doors, what's under the crosshair, placed furniture |

@@ -107,14 +107,18 @@ public static class PlayerTeleport
             // location's direction. The angle is also negated by the invert-X option (see its LateUpdate).
             float rigYaw = yaw.Value + 180f;
             rig.rotY = rig.InvertX ? -rigYaw : rigYaw;
-            rig.rotX = pitch ?? 0f;
+            rig.rotX = RigPitch(rig, pitch ?? 0f);
         }
         else if (pitch.HasValue)
         {
-            rig.rotX = pitch.Value;
+            rig.rotX = RigPitch(rig, pitch.Value);
         }
         rig.MoveToTarget();
     }
+
+    // Looking back along its yaw also flips the pitch: a positive angle on the rig tilts the view up.
+    // The invert-Y option negates it once more.
+    private static float RigPitch(ThirdPersonCameraController rig, float pitch) => rig.InvertY ? pitch : -pitch;
 
     // The player's PersistLocation is what a save right after the teleport would write.
     private static void KeepForSave(PlayerLocator locator)

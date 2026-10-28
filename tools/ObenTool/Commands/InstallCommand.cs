@@ -6,7 +6,7 @@ namespace ObenTool.Commands;
 public sealed class InstallCommand : ICommand
 {
     public string Name => "install";
-    public string Usage => "install [--game DIR] [--mods DIR]";
+    public string Usage => "install [--game DIR] [--mods DIR] [--multi-instance | --single-instance]";
     public string Summary => "Hook the mod loader into the game (backs up the files it changes)";
 
     public Task<int> RunAsync(Args args)
@@ -25,6 +25,13 @@ public sealed class InstallCommand : ICommand
             foreach (string step in ModPackage.Install(game, mods))
                 Out.Info("  " + step);
         }
+
+        // For testing co-op on one machine: let a second copy of the game start.
+        var boot = new BootConfig(game);
+        if (args.Has("multi-instance"))
+            Out.Info("  " + boot.AllowMultipleCopies());
+        else if (args.Has("single-instance") && boot.Restore() is { } restored)
+            Out.Info("  " + restored);
 
         Out.Ok($"Installed into {game.Dir}");
         return Task.FromResult(0);

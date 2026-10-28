@@ -23,6 +23,10 @@ public sealed class LaunchCommand : ICommand
             return 0;
         }
 
+        if (instance > 1 && !new BootConfig(game).AllowsMultipleCopies)
+            throw new InvalidOperationException(
+                "The game only allows one copy at a time. Run 'oben install --multi-instance' first (undo with --single-instance).");
+
         var gameArgs = args.Has("fullscreen") ? Array.Empty<string>() : GameProcess.WindowedArgs;
         Out.Info(GameProcess.Launch(game, instance, gameArgs));
 

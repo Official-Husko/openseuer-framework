@@ -15,6 +15,8 @@ public sealed class UninstallCommand : ICommand
         if (GameProcess.IsRunning(game))
             throw new InvalidOperationException("Close the game first.");
 
+        if (new BootConfig(game).Restore() is { } restored)
+            Out.Info("  " + restored);
         foreach (string step in new LoaderInstaller(game).Uninstall(args.Has("remove-mods")))
             Out.Info("  " + step);
         Out.Ok("Game is back to vanilla.");

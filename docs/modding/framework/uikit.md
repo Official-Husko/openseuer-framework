@@ -9,7 +9,8 @@ Add `"ObenUIKit": "0.1.0"` to your mod.json dependencies and a project reference
 The kit doesn't clone the game's widgets (they carry scene references, sound sources and save ids). It reads the game's look off its own menus and builds its controls with those values:
 
 - at the main menu, from the menu's Options button and the options sign (language row, FOV slider);
-- in a level, from the pause menu's Resume button and its options page.
+- in a level, from the pause menu's Resume button and its options page;
+- for text fields, from the developer console's input field (box colour, selection colour, caret).
 
 That gives the font (Erika Ormig) and its material, text colours for normal, hover, pressed and disabled, the hover and click sounds and their mixer group, the option row sprite and its dark red hover bar, the arrow font and the slider handle. The look is taken again on every main menu and every level, and `UiKit.Theme` hands out the one that fits where the player is.
 
@@ -35,10 +36,12 @@ UiWindow window = UiKit.Open(this, "mymod.settings", "My Mod", ui =>
 - The first argument is the owner (your mod, or one of its features). The window closes when the owner unloads.
 - The id keeps a window single: opening the same id again returns the open window.
 - Without a `footer` the window gets a Back button. Pass `footer: f => { f.Button(...); }` for your own.
-- Esc closes the top window. It closes a frame later, so the same key press doesn't also reach the game.
+- Esc (or the pad's B) closes the top window. It closes a frame later, so the same key press doesn't also reach the game. While a text field or a key binding row has the keyboard, Esc goes to it instead and the window stays.
 - The window locks game input (movement, mouse look, hotkeys) and shows the cursor while open. In a level that goes through the game's own `GameController` lock; at the main menu the menu's keyboard navigation is paused.
 - Over the pause menu, the pause menu's keyboard handler and its Esc toggle are held off until the window closes.
 - Windows close on their own when the player changes level.
+
+A `height` argument (default 0, the full-height column) makes a centred box instead, which is what `UiKit.Confirm` uses.
 
 `UiWindow` has `Title`, `IsOpen`, `Close()`, `Rebuild()` (build the body again with current values), `CloseOnEscape` and a `Closed` event.
 
@@ -53,10 +56,47 @@ UiWindow window = UiKit.Open(this, "mymod.settings", "My Mod", ui =>
 | `Cycle(label, options, index, onChange)` | a header and a `< value >` row; arrows step, the row lights up dark red under the cursor | `CycleHandle` (`Index`, `Set`, `SetOptions`) |
 | `Toggle(label, value, onChange)` | a cycle between Off and On; the game has no checkboxes | `ToggleHandle` (`Value`, `Set`) |
 | `Slider(label, min, max, value, onChange, format, wholeNumbers)` | a header and a slider with its value on the left | `SliderHandle` (`Value`, `Set`) |
+| `TextField(label, value, onChange, onEnd)` | a header and a box styled like the developer console's input field | `FieldHandle` (`Text`, `Set`, `Enabled`, `Focus()`) |
+| `KeyBind(label, key, onChange)` | a header and a row showing the key; click or Enter, then press the new key | `KeyBindHandle` (`Key`, `Set`) |
 | `Row(r => ...)` | controls side by side, centred | |
 | `Space(height)` | empty space | |
 
 `Set` on a handle changes what's shown without calling your callback. Callbacks are guarded: an exception is logged with the window's id and the window stays open.
+
+### Text fields and key bindings
+
+`onChange` runs on every edit and `onEnd` when the player leaves the field (Enter, Esc or a click elsewhere), both with the current text. Esc leaves the field without undoing what was typed, and doesn't close the window. Game keys stay locked while typing because the open window already locks them; the kit never uses `GameController`'s `writeLock` (it closes the notes panel on Esc).
+
+A key binding row waits for the next key after a click or Enter. Esc, the pad's B or a click elsewhere cancels. Mouse buttons and pad buttons can't be bound, modifier keys can. The row only reports the key; saving it and acting on it is up to your mod.
+
+## Keyboard and controller
+
+Every kit window can be used without the mouse. Controls register themselves as they are built, so the order is the order you wrote them, body first and then the footer.
+
+| Input | Does |
+| --- | --- |
+| Up / Down, W / S, d-pad or left stick | moves the highlight to the previous or next control, wrapping around; held, it repeats after 0.3 s and then every 0.15 s like the game's menus |
+| Left / Right, A / D, d-pad or left stick | steps a cycle or toggle, moves a slider by a twentieth of its range (a whole number for whole-number sliders), or moves along a row of buttons (a `Row` or the footer) |
+| Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
+| Esc, pad B | closes the top window |
+
+The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
+
+Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings.
+
+## Questions and notices
+
+```csharp
+UiKit.Confirm(this, "Reset everything?", "All settings go back to their defaults.", Reset);
+UiKit.Confirm(this, "Delete the save?", "This can't be undone.", Delete, yes: "Delete", no: "Keep");
+
+UiKit.Toast("Settings saved");
+UiKit.Toast("The server is full", title: "Co-op");
+```
+
+`Confirm` opens a small modal window above any other kit window. `onYes` runs after the window closes and its exceptions are logged. No, Esc and the pad's B close it without calling anything. It returns the `UiWindow`.
+
+`Toast` goes through the game's own notification panel (`Notifications.instance.CreateNotification`, the title is the small heading) when you're in a level, and shows a small notice in the top right corner of the kit's overlay at the main menu, which fades after a few seconds.
 
 ## The mod menu
 
@@ -128,7 +168,8 @@ The list of fields is worked out by reflection once per settings class and cache
 
 ## Known limitations
 
-- Keyboard and controller navigation inside kit windows isn't there yet; use the mouse. Esc works.
-- No text fields, key binding rows, lists with many rows, tabs, tooltips or confirm dialogs yet (planned, see the design notes). Until text fields land, string settings are shown but not editable.
-- The window always uses the centred column layout of the pause menu.
-- Notifications still go through the game directly (`Notifications.instance.CreateNotification`); there's no kit wrapper yet.
+- No lists with many rows, tabs or tooltips yet (planned, see the design notes).
+- The window always uses the centred column layout of the pause menu, or the small box of a dialog.
+- A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
+- Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
+- String settings show on the Settings page but are edited in the config file for now; the page doesn't use text fields yet.

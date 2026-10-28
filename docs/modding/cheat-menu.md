@@ -40,6 +40,40 @@ Pick an item from a short list (Lock Pick, Bandage, Water, Rye Bread, Canned Mea
 
 **Reset crime** clears your crime and wanted level (the console's `reset_crime`).
 
+## Developer menu
+
+A second window for testing mods and quests, ported from the reference framework's developer menu (`DevMenu*`, NomadsReach, MIT). It is a feature of the mod and **off by default**: switch on "Developer menu" under Cheat Menu on the MODS menu's Mods page, or `features CheatMenu/DevMenu on` in the F1 console. While it is on:
+
+- **F8** opens and closes it (rebind it on the Hotkeys page). It opens in a level and at the main menu, but not over another mod window.
+- The MODS menu has a **Developer** page with the same content, and the Cheats window gets an "Open the developer menu" button.
+
+The **Show** row at the top picks the part (the kit has no tabs yet):
+
+| Part | What it does |
+| --- | --- |
+| Quests | Pick a started task (title and state), set it Active, Finished, Failed or Abandoned; pick an objective and set its state, or move its counter (-1, +1, fill, empty). Tasks made by a loaded mod can also be **reset**, **restarted**, **removed** (asks first), **jumped** to the chosen objective, and a **checkpoint** kept and gone back to for the session. Tasks the current level has loaded but the player hasn't started can be started. Everything goes through `QuestLog` and `QuestAuthoring`, which refuse with a reason (shown on the status line) rather than break the save. |
+| Global flags | Filter the save's global flags by name (Enter applies), switch any of up to 30 shown on or off, or set a flag by name. A flag a mod forces says so. |
+| Watches | Type a type name and press Enter to list its members, pick one (or type a path such as `currentTimeAndDay.hours`) and press **Watch it**. The value is read again four times a second while the window shows it. The first name is a static member, or an instance member of a game singleton (a type with a static `instance`, read through it). Watches are kept in `Watches` in the mod's config.json, up to 20. |
+| Session and story | Live lines: scene, world ready, paused; the session kind; the save gate; the clock; how many tasks are started; the story pump's ready gate and the names of the actions waiting in its queue. |
+| From mods | Sections other mods added. |
+
+Every change made from the menu (not keeping a checkpoint) marks the save as dev-modified: `mods/CheatMenu.dev.json` is written next to the save at the next save, the menu shows a note, and the log says so once. A bug report from such a save should mention it.
+
 ## For mod authors
 
 The mod is a small example of the kit: the hotkey is read with `Input.GetKeyDown` in `OnUpdate`, the window and the page share one build function (`Sections/CheatPanel.cs`), and each cheat is a framework call (`PlayerState`, `PlayerVitals`, `PlayerTeleport`, `Wallet`, `PlayerItems`, `GameClock`, `GameWeather`) or one of the game's own public routines (noclip, reset crime). See [framework/uikit.md](framework/uikit.md) and the other guides in [framework/](framework/).
+
+Other mods can add to the developer menu (add a project reference to `mods/CheatMenu` and `"CheatMenu"` to the mod.json dependencies):
+
+```csharp
+using CheatMenu.Dev;
+
+DevMenu.AddSection(this, "My mod", ui =>
+{
+    ui.Label("Things to poke while testing.");
+    ui.Button("Spawn the test crate", SpawnCrate);
+});
+DevMenu.AddWatch(this, "crates spawned", () => _spawned.ToString());
+```
+
+Both go away when the mod unloads; the same owner and title replaces an earlier one. `DevMenu.SaveIsDevModified` tells whether the loaded save was changed from the menu. Sections show under "From mods", watches under "Watches", whether or not the developer menu feature is on (it only decides whether the window can be opened).

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CheatMenu;
 
 /// <summary>Settings in the mod's config.json. Missing values keep these defaults.</summary>
@@ -14,6 +16,9 @@ public sealed class CheatMenuConfig
     /// <summary>The saved teleport spots. Always <see cref="SpotCount"/> entries after <see cref="Normalise"/>.</summary>
     public SavedSpot[] Spots = new SavedSpot[SpotCount];
 
+    /// <summary>The developer menu's watches, each "Type:member.path".</summary>
+    public List<string> Watches = new List<string>();
+
     /// <summary>Makes sure every spot slot exists, whatever the file held.</summary>
     internal void Normalise()
     {
@@ -26,6 +31,8 @@ public sealed class CheatMenuConfig
         }
         for (int i = 0; i < Spots.Length; i++)
             Spots[i] ??= new SavedSpot();
+        Watches ??= new List<string>();
+        Watches.RemoveAll(string.IsNullOrWhiteSpace);
         if (string.IsNullOrWhiteSpace(Key))
             Key = "Insert";
         if (float.IsNaN(MoveSpeed) || float.IsInfinity(MoveSpeed))

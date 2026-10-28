@@ -53,6 +53,9 @@ internal sealed class CheatContext
         Config.Save();
     }
 
+    /// <summary>Logs a failure that has no status line of its own (a menu part that couldn't be built).</summary>
+    public void Fail(string what, Exception e) => _mod.Log.Error($"{what} failed", e);
+
     /// <summary>
     /// Runs a cheat. The framework throws InvalidOperationException with a plain message when
     /// there is nothing to act on (no player, no clock); that message becomes the status.

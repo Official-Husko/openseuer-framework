@@ -1,3 +1,4 @@
+using CheatMenu.Dev;
 using ObenUIKit.Controls;
 
 namespace CheatMenu.Sections;
@@ -15,5 +16,15 @@ internal static class CheatPanel
         ItemsSection.Build(ui, ctx);
         TimeSection.Build(ui, ctx);
         CrimeSection.Build(ui, ctx);
+
+        var dev = DevMenuFeature.Current;
+        if (dev == null)
+            return;
+        ui.Header("Developer");
+        ui.Button("Open the developer menu (F8)", () =>
+        {
+            ui.Window.Close();
+            dev.Open();
+        });
     }
 }

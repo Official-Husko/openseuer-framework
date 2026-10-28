@@ -1,6 +1,8 @@
 using System;
 using CheatMenu.Cheats;
+using CheatMenu.Dev;
 using CheatMenu.Sections;
+using ObenFramework.Features;
 using ObenLoader;
 using ObenLoader.Config;
 using ObenLoader.Runtime;
@@ -38,6 +40,9 @@ public sealed class CheatMenuMod : ObenMod
         // The framework keeps the multiplier across level loads and removes it when this mod unloads.
         MoveSpeed.Init(this, _config.Value.MoveSpeed);
         Track(Disposable.Create(_context.Flush));
+
+        DevMarks.Init(this);
+        ModFeatures.Register(this, new DevMenuFeature(_context));
     }
 
     public override void OnQuit() => _context.Flush();

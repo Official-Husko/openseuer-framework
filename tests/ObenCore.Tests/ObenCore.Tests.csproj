@@ -130,6 +130,8 @@
     <Compile Include="../../src/ObenFramework/NewGames/Tutorial/TutorialSteps.cs" Link="Linked/NewGames/TutorialSteps.cs" />
     <!-- Game Tweaks: factor clamping and the stack, price, hour and duration maths. -->
     <Compile Include="../../mods/GameTweaks/TweakMath.cs" Link="Linked/GameTweaks/TweakMath.cs" />
+    <!-- Cheat Menu developer menu: filters, task owners, watch paths. -->
+    <Compile Include="../../mods/CheatMenu/Dev/DevRules.cs" Link="Linked/CheatMenu/DevRules.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

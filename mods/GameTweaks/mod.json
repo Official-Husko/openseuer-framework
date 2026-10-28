@@ -1,0 +1,9 @@
+{
+  "id": "GameTweaks",
+  "name": "Game Tweaks",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "Optional changes to how the game plays: slower needs, bigger stacks, slower spoilage, faster crafting and renovations, longer days and a third-person camera. Every tweak is off until you switch it on.",
+  "dependencies": { "ObenFramework": "0.1.0", "ObenUIKit": "0.1.0" },
+  "hotReload": true
+}

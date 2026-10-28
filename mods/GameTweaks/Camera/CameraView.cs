@@ -1,0 +1,191 @@
+// Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
+using System.Collections.Generic;
+using HarmonyLib;
+using UnityEngine;
+
+namespace GameTweaks.Camera;
+
+/// <summary>
+/// Switches the player camera between first and third person. The game still has its third-person camera
+/// (<c>ThirdPersonCameraCollision</c>: the camera sits <c>currentDistance</c> behind the head and the body is
+/// shown beyond 0.5 m) but locks it with <c>disableThirdPerson</c> and <c>firstpersonOnly</c>. This unlocks
+/// those while third person or scroll zoom is wanted and puts the game's own values back afterwards. Camera
+/// triggers that force first person (cutscenes, tight spaces) and the game's zoom blockers are respected.
+/// </summary>
+internal static class CameraView
+{
+    private const float MinShownDistance = 0.5f;
+
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraCollision, float> MinDistance =
+        AccessTools.FieldRefAccess<ThirdPersonCameraCollision, float>("minDistance");
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraCollision, float> MaxDistance =
+        AccessTools.FieldRefAccess<ThirdPersonCameraCollision, float>("maxDistance");
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraCollision, List<GameObject>> ZoomBlockers =
+        AccessTools.FieldRefAccess<ThirdPersonCameraCollision, List<GameObject>>("disabledZoomList");
+
+    private static readonly List<PlayerCameraTrigger> Forcing = new List<PlayerCameraTrigger>();
+
+    // The camera whose locks were lifted, and the values they had before.
+    private static ThirdPersonCameraCollision _unlocked;
+    private static bool _hadDisableThirdPerson;
+    private static bool _hadFirstPersonOnly;
+
+    /// <summary>The player asked for third person and hasn't gone back yet.</summary>
+    internal static bool WantThird { get; private set; }
+
+    /// <summary>The scroll wheel may zoom out of first person.</summary>
+    internal static bool ScrollZoom { get; set; }
+
+    internal static float Distance { get; set; } = 2.5f;
+
+    internal static bool IsFirstPerson
+    {
+        get
+        {
+            var view = ThirdPersonCameraCollision.instance;
+            return view == null || view.firstperson;
+        }
+    }
+
+    /// <summary>Third person is possible here: a camera, no trigger forcing first person, no zoom blocker.</summary>
+    internal static bool ThirdPersonAllowed
+    {
+        get
+        {
+            var view = ThirdPersonCameraCollision.instance;
+            return view != null && !Forced() && ZoomBlockers(view).Count == 0;
+        }
+    }
+
+    /// <summary>The hotkey: first person to third, third to first. False when third person isn't allowed here.</summary>
+    internal static bool Toggle() => IsFirstPerson ? ToThird() : ToFirst();
+
+    internal static bool ToThird()
+    {
+        if (!ThirdPersonAllowed)
+            return false;
+        var view = ThirdPersonCameraCollision.instance;
+        WantThird = true;
+        Unlock(view);
+        if (view.firstperson)
+            view.onViewChangeTo1st = false;
+        view.currentDistance = Mathf.Clamp(Distance, Mathf.Max(MinDistance(view), MinShownDistance), MaxDistance(view));
+        return true;
+    }
+
+    internal static bool ToFirst()
+    {
+        WantThird = false;
+        var view = ThirdPersonCameraCollision.instance;
+        if (view != null && !view.firstperson)
+        {
+            view.currentDistance = 0f;
+            view.FirstPerson();
+        }
+        Settle();
+        return true;
+    }
+
+    /// <summary>Per frame while the tweak is on: keeps the locks lifted if something set them again. Allocates nothing.</summary>
+    internal static void Enforce()
+    {
+        if (!WantThird && !ScrollZoom)
+            return;
+        var view = ThirdPersonCameraCollision.instance;
+        if (view == null)
+            return;
+        if (Forced() || ZoomBlockers(view).Count > 0)
+        {
+            // A trigger wants first person: let the game have it and drop the request.
+            if (WantThird)
+                ToFirst();
+            return;
+        }
+        if (view.disableThirdPerson || view.firstpersonOnly)
+            Unlock(view);
+    }
+
+    /// <summary>Whether scroll zoom changed; settles the locks.</summary>
+    internal static void SetScrollZoom(bool on)
+    {
+        ScrollZoom = on;
+        if (!on)
+            Settle();
+    }
+
+    /// <summary>A new level has a new camera: forget the old one and the triggers of the old level.</summary>
+    internal static void SceneChanged()
+    {
+        WantThird = false;
+        _unlocked = null;
+        Forcing.Clear();
+    }
+
+    /// <summary>The tweak was switched off: back to first person with the game's locks.</summary>
+    internal static void Reset()
+    {
+        ScrollZoom = false;
+        ToFirst();
+        _unlocked = null;
+        Forcing.Clear();
+    }
+
+    internal static void TriggerChanged(PlayerCameraTrigger trigger, bool forcesFirstPerson)
+    {
+        Forcing.Remove(trigger);
+        if (forcesFirstPerson)
+            Forcing.Add(trigger);
+    }
+
+    /// <summary>The lock values the game had before they were lifted, for writing into a save.</summary>
+    internal static bool GameLocks(ThirdPersonCameraCollision view, out bool disableThirdPerson, out bool firstPersonOnly)
+    {
+        disableThirdPerson = view.disableThirdPerson;
+        firstPersonOnly = view.firstpersonOnly;
+        if (_unlocked != view)
+            return false;
+        disableThirdPerson = _hadDisableThirdPerson;
+        firstPersonOnly = _hadFirstPersonOnly;
+        return true;
+    }
+
+    private static void Unlock(ThirdPersonCameraCollision view)
+    {
+        if (_unlocked != view)
+        {
+            _unlocked = view;
+            _hadDisableThirdPerson = view.disableThirdPerson;
+            _hadFirstPersonOnly = view.firstpersonOnly;
+        }
+        view.disableThirdPerson = false;
+        view.firstpersonOnly = false;
+    }
+
+    // Gives the locks back once neither third person nor scroll zoom needs them lifted.
+    private static void Settle()
+    {
+        if (WantThird || ScrollZoom)
+            return;
+        var view = _unlocked;
+        _unlocked = null;
+        if (view == null)
+            return;
+        view.disableThirdPerson = _hadDisableThirdPerson;
+        view.firstpersonOnly = _hadFirstPersonOnly || Forced();
+        if (view.firstpersonOnly && !view.firstperson)
+        {
+            view.currentDistance = 0f;
+            view.FirstPerson();
+        }
+    }
+
+    private static bool Forced()
+    {
+        for (int i = Forcing.Count - 1; i >= 0; i--)
+        {
+            if (Forcing[i] == null)
+                Forcing.RemoveAt(i);
+        }
+        return Forcing.Count > 0;
+    }
+}

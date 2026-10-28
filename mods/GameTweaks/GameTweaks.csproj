@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>GameTweaks</RootNamespace>
+    <Description>Optional gameplay tweaks (needs, stacks, spoilage, crafting, renovations, day length, camera), each a switch of its own.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+    <ProjectReference Include="../../src/ObenUIKit/ObenUIKit.csproj" />
+  </ItemGroup>
+</Project>

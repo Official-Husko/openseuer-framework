@@ -67,6 +67,12 @@ Don't create a tag to try something out: the tag is the release. Before 1.0, bre
 
 Run it from inside the repo. `--release` ignores a version that already has a tag.
 
+## How What's New finds the file
+
+`ObenUIKit.csproj` copies `changelog.json` from the repo root into the kit's mod folder (`Mods/ObenUIKit/changelog.json`) when it exists at build time, so run `oben changelog --write` before building a release. The What's New page reads it from there, newest release first, and again whenever the file changes. Without the file the page says "No changelog found." and nothing else breaks.
+
+The newest published release (the first one with `"released": true`; `Unreleased` never counts) is remembered in the kit's `config.json` as `LastSeenVersion`. When a newer one is installed, the mod menu opens on What's New once at the main menu, after the kit has taken the game's look. The "Show What's New after updates" setting turns the popup off; the page stays in the menu either way.
+
 ## Checking before a release
 
 Read the release notes the way a player would, with `oben changelog --release X.Y.Z --notes`. Look for:

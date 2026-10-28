@@ -73,11 +73,62 @@ ModMenu.AddPage(this, new ModPage("My Mod", ui =>
 
 Pages are sorted by `Order`, then title, and chosen with a `< page >` row at the top. A page goes away when its mod unloads. `ModMenu.Open(pageTitle)` opens the menu, on a page if given; `ModMenu.Close()` and `ModMenu.IsOpen` do what they say.
 
-The built-in Mods page lists every installed mod with its version, description and state, whether it loads when the game starts, and an Off/On switch for each of its features (`ModFeatures`).
+The built-in pages:
+
+- **Mods** lists every installed mod with its version, description and state, whether it loads when the game starts, and an Off/On switch for each of its features (`ModFeatures`).
+- **Settings** shows the config files mods registered (below).
+- **What's New** shows the release notes from `changelog.json`, newest release first, grouped by mod and by Added, Changed, Fixed and Removed. See `docs/modding/changelog.md` for where the file comes from.
+- **Errors** lists this session's problems from `ErrorReport`: who reported each one, its title, how often and when it last happened, the scene, and the first lines of its details. Clear empties the report, Copy report puts it on the clipboard. Bug reports should attach `ObenLoader/logs/errors.log`, which holds the same list with the game and mod versions.
+
+## Settings pages
+
+Register a config file and the Settings page builds the controls for it:
+
+```csharp
+using ObenUIKit.Menu.Settings;
+
+public sealed class MyConfig
+{
+    [Setting("Move speed", Description = "How fast the player moves.", Min = 0.5f, Max = 4f, Step = 0.05f)]
+    public float Speed = 1f;
+
+    [Setting(1, 20)]
+    public int MaxMarkers = 5;
+
+    public bool ShowOverlay = true;
+    public Difficulty Level = Difficulty.Normal;
+    public int Retries = 3;
+
+    [Setting(Hidden = true)]
+    public string LastSeenVersion = "";
+}
+
+// In OnLoad:
+var config = LoadConfig<MyConfig>();
+ModSettings.Register(this, config);            // titled with the mod's name
+ModSettings.Register(this, other, "Overlay");  // or with your own title
+```
+
+Every public instance field becomes a control, in declaration order:
+
+| Field | Control |
+| --- | --- |
+| `bool` | Off/On switch |
+| enum (not `[Flags]`) | cycle through the names, written as words ("PauseMenu" shows as "Pause menu") |
+| `int`, `long`, `float`, `double` with bounds in `[Setting]` | slider; whole numbers move by one, decimals are rounded to `Step` (or to a step picked from the size of the range) |
+| `int`, `long`, `float`, `double` without bounds | cycle through round values (0, 1, 2, 5, 10, 20, ...) and the current value if it isn't one of them |
+| `string` | a read-only line for now; edit it in the config file |
+| anything else | a note to edit it in the config file |
+
+`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+
+Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, or when the menu closes. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several registered configs a `Mod` cycle at the top picks the one to edit. A registration goes away when the mod that made it unloads. The kit registers its own config the same way (the option to show What's New after updates).
+
+The list of fields is worked out by reflection once per settings class and cached.
 
 ## Known limitations
 
 - Keyboard and controller navigation inside kit windows isn't there yet; use the mouse. Esc works.
-- No text fields, key binding rows, lists with many rows, tabs, tooltips or confirm dialogs yet (planned, see the design notes).
+- No text fields, key binding rows, lists with many rows, tabs, tooltips or confirm dialogs yet (planned, see the design notes). Until text fields land, string settings are shown but not editable.
 - The window always uses the centred column layout of the pause menu.
 - Notifications still go through the game directly (`Notifications.instance.CreateNotification`); there's no kit wrapper yet.

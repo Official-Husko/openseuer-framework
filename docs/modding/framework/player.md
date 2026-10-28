@@ -1,6 +1,6 @@
 # Player
 
-The `ObenFramework.Player` namespace reads and changes the player: where they are, their stats, health and death. Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.Player;`. The look and survival parts live in `ObenFramework.Player.Look` and `ObenFramework.Player.Survival`.
+The `ObenFramework.Player` namespace reads and changes the player: where they are, their stats, health and death. Movement speed, sleeping and waiting, skills, effects, seats, gear, notes, jobs and achievements are in [player-actions.md](player-actions.md). Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.Player;`. The look and survival parts live in `ObenFramework.Player.Look` and `ObenFramework.Player.Survival`.
 
 Everything is safe to call at the main menu: reads return null, false or empty, and writes throw an `InvalidOperationException` that says there is no player. Nothing is cached across scenes, because the game rebuilds all its player objects on every level load.
 
@@ -111,6 +111,7 @@ What to know:
 - If the target has not run its `Start` yet (a puppet instantiated inactive) the Character is just handed over and the game applies it when the puppet starts. Otherwise the body is rebuilt immediately. A name the game does not know falls back to the slot's empty item; a head that is missing falls back to the first head of that gender.
 - The wearable assets are loaded once per folder (`Resources.LoadAll`) and cached; the game does 14 loads for every `Appearance` it creates. `PlayerLook.Options("hat", male)` lists the valid names of a slot, handy to validate a look received from another machine. `PlayerLook.SlotNames` lists the slots.
 - `Changed` fires when the character editor edits the look (at the main menu too), when `Apply` dresses the player, and when the player's body is rebuilt with a look different from the last one announced. Several edits within a quarter second come as one event, and the handler gets its own copy of the `LookData`.
+- `PlayerLook.Keep(this, look)` dresses the player and keeps them dressed across level loads (the game builds a new body for every level and would otherwise bring back the player's own look). It is put on before the new body starts where it can, so the old look doesn't flash up. If several mods keep a look the newest wins and the previous one returns when it goes; dispose the result (or unload the mod) and the player's own look comes back at once. `PlayerLook.KeptLook` is the look being kept. The game doesn't save the player's look, and neither does this.
 - `LookData.SameAs(other)` compares two looks; `LookCodec` holds the JSON and binary forms. The binary form is versioned and counts its fields, so a build that adds a slider can still be read by an older one.
 
 ## Survival
@@ -167,6 +168,8 @@ DamageHooks.Intercept(this, d =>
 | `player.godmode [enabled=]` | Read or set god mode. |
 | `player.look [bytes=true]` | The player's captured look as JSON, optionally the compact byte form as base64. |
 | `player.drain` | Every drain multiplier mods have set, who set it, and the combined result per need. |
+
+The commands for movement, rest, skills and the rest are listed in [player-actions.md](player-actions.md#dev-bridge-commands).
 
 ```sh
 oben call player.stat name=thirst value=0

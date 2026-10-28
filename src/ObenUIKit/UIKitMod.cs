@@ -20,6 +20,7 @@ public sealed class UIKitMod : ObenMod
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());
         ModMenu.AddPage(this, SettingsPage.Create());
+        ModMenu.AddPage(this, ErrorsPage.Create());
         ModSettings.Register(this, LoadConfig<KitConfig>(), "UI kit");
         MainMenuEntry.Init(this);
         PauseMenuEntry.Init(this);

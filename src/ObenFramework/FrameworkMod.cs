@@ -5,6 +5,7 @@ using ObenFramework.Dialogue;
 using ObenFramework.Economy;
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenFramework.Items;
 using ObenFramework.Npcs;
 using ObenFramework.Player.Look;
 using ObenFramework.Player.Survival;
@@ -44,6 +45,7 @@ public sealed class FrameworkMod : ObenMod
         AssetsModule.Init(this);
         WorldExtrasModule.Init(this);
         SceneLookModule.Init(this);
+        ItemsModule.Init(this);
         Log.Info("Ready.");
     }
 
@@ -51,6 +53,7 @@ public sealed class FrameworkMod : ObenMod
     {
         ModFeatures.Update();
         NpcsModule.Update();
+        ItemsModule.Update();
     }
 
     public override void OnUnload() => Instance = null;

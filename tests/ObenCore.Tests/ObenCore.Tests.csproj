@@ -67,6 +67,9 @@
     <Compile Include="../../src/ObenFramework/SceneLook/SceneLookInfo.cs" Link="Linked/SceneLook/SceneLookInfo.cs" />
     <Compile Include="../../src/ObenFramework/SceneLook/Reading/*.cs" LinkBase="Linked/SceneLook/Reading" />
     <Compile Include="../../src/ObenFramework/SceneLook/Planning/*.cs" LinkBase="Linked/SceneLook/Planning" />
+    <!-- Inventory counting and take checks: plain collections only. -->
+    <Compile Include="../../src/ObenFramework/Items/Inventory/ItemTally.cs" Link="Linked/Items/ItemTally.cs" />
+    <Compile Include="../../src/ObenFramework/Items/Inventory/TakeMath.cs" Link="Linked/Items/TakeMath.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

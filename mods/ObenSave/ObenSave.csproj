@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ObenSave</RootNamespace>
+    <Description>Stores the game's save files compressed, and reads both formats.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
+    <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+  </ItemGroup>
+</Project>

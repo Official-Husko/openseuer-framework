@@ -1,0 +1,10 @@
+{
+  "id": "ObenSave",
+  "name": "ObenSave",
+  "version": "0.1.0",
+  "author": "pawbeans",
+  "description": "Stores save files in a small compressed container with an open, documented format. Plain saves from the game keep loading.",
+  "dependencies": { "ObenFramework": "0.1.0" },
+  "hotReload": true,
+  "enabledByDefault": false
+}

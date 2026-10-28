@@ -103,8 +103,10 @@ public static class PlayerTeleport
 
         if (yaw.HasValue)
         {
-            // The rig's yaw angle is negated by the invert-X option (see its LateUpdate).
-            rig.rotY = rig.InvertX ? -yaw.Value : yaw.Value;
+            // The rig looks back along its own yaw: the game's PlayerLocator adds 180 degrees to face a
+            // location's direction. The angle is also negated by the invert-X option (see its LateUpdate).
+            float rigYaw = yaw.Value + 180f;
+            rig.rotY = rig.InvertX ? -rigYaw : rigYaw;
             rig.rotX = pitch ?? 0f;
         }
         else if (pitch.HasValue)

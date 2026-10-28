@@ -74,7 +74,7 @@ public enum SessionState
 }
 
 /// <summary>A reject reason travels inside the transport's disconnect text, as "code:message".</summary>
-internal static class RejectText
+public static class RejectText
 {
     public static string Encode(RejectReason reason, string message) => (int)reason + ":" + message;
 

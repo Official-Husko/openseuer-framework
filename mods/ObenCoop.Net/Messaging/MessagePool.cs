@@ -1,10 +1,12 @@
+using System;
 using System.Collections.Generic;
 
 namespace ObenCoop.Net.Messaging;
 
 /// <summary>
 /// Reuses writers and readers so steady-state messaging allocates nothing. Rent, use, return in the
-/// same frame. Main thread only (everything the net layer raises is on the main thread).
+/// same frame. Each thread has its own pool, so rent and return on the same thread (everything the
+/// net layer raises is on the thread that calls Poll, which is the main thread in the game).
 /// </summary>
 public static class MessagePool
 {
@@ -12,8 +14,11 @@ public static class MessagePool
     private const int MaxPooledCapacity = 64 * 1024;
     private const int MaxPooled = 32;
 
-    private static readonly Stack<MessageWriter> Writers = new Stack<MessageWriter>();
-    private static readonly Stack<MessageReader> Readers = new Stack<MessageReader>();
+    [ThreadStatic] private static Stack<MessageWriter> _writers;
+    [ThreadStatic] private static Stack<MessageReader> _readers;
+
+    private static Stack<MessageWriter> Writers => _writers ?? (_writers = new Stack<MessageWriter>());
+    private static Stack<MessageReader> Readers => _readers ?? (_readers = new Stack<MessageReader>());
 
     /// <summary>An empty writer.</summary>
     public static MessageWriter RentWriter()

@@ -28,18 +28,30 @@ public readonly struct TutorialStepChange
 /// </summary>
 public static class TutorialGuide
 {
-    private static readonly AccessTools.FieldRef<Tutorial, bool> ActiveFlag = Flag("TutorialActive");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Look = Flag("LookAroundTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Move = Flag("MoveTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Use = Flag("UseTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Menu = Flag("MenuTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Inventory = Flag("InventoryTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Map = Flag("MapTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Task = Flag("TaskTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Tenement = Flag("TenementTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> TenementUsed = Flag("tenementUsed");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Building = Flag("BuildingTutorial");
-    private static readonly AccessTools.FieldRef<Tutorial, bool> Cleaning = Flag("CleaningTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> ActiveFlag =
+        AccessTools.FieldRefAccess<Tutorial, bool>("TutorialActive");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Look =
+        AccessTools.FieldRefAccess<Tutorial, bool>("LookAroundTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Move =
+        AccessTools.FieldRefAccess<Tutorial, bool>("MoveTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Use =
+        AccessTools.FieldRefAccess<Tutorial, bool>("UseTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Menu =
+        AccessTools.FieldRefAccess<Tutorial, bool>("MenuTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Inventory =
+        AccessTools.FieldRefAccess<Tutorial, bool>("InventoryTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Map =
+        AccessTools.FieldRefAccess<Tutorial, bool>("MapTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Task =
+        AccessTools.FieldRefAccess<Tutorial, bool>("TaskTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Tenement =
+        AccessTools.FieldRefAccess<Tutorial, bool>("TenementTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> TenementUsed =
+        AccessTools.FieldRefAccess<Tutorial, bool>("tenementUsed");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Building =
+        AccessTools.FieldRefAccess<Tutorial, bool>("BuildingTutorial");
+    private static readonly AccessTools.FieldRef<Tutorial, bool> Cleaning =
+        AccessTools.FieldRefAccess<Tutorial, bool>("CleaningTutorial");
 
     private static TutorialStep _last;
     private static bool _watching;
@@ -118,6 +130,4 @@ public static class TutorialGuide
         _last = now;
         StepChanged.Raise(change);
     }
-
-    private static AccessTools.FieldRef<Tutorial, bool> Flag(string name) => AccessTools.FieldRefAccess<Tutorial, bool>(name);
 }

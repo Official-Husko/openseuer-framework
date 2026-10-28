@@ -12,6 +12,9 @@ public static class ChannelIds
     /// <summary>Big transfers (<see cref="Blobs.BlobTransfer"/>). Owned by the session; features register blob handlers, not this channel.</summary>
     public const byte Blob = 2;
 
+    /// <summary>Where each player is (<see cref="Presence.CoopPresence"/>): samples at a low rate, unreliable.</summary>
+    public const byte Presence = 3;
+
     /// <summary>First id free for experiments and tests.</summary>
     public const byte FirstFree = 16;
 }

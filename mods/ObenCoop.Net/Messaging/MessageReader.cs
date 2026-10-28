@@ -94,6 +94,21 @@ public sealed class MessageReader
         return value;
     }
 
+    /// <summary>
+    /// The UTF-8 bytes of a string <see cref="MessageWriter.WriteString"/> wrote, as a view into the
+    /// buffer, without making a string. For hot paths that only need a string when it changed.
+    /// </summary>
+    public ArraySegment<byte> ReadStringBytes()
+    {
+        int bytes = ReadUInt16();
+        if (bytes > MessageWriter.MaxStringBytes)
+            throw new MessageFormatException($"String of {bytes} bytes is over the limit.");
+        Need(bytes);
+        var segment = new ArraySegment<byte>(_buffer, _position, bytes);
+        _position += bytes;
+        return segment;
+    }
+
     /// <summary>Copies <paramref name="count"/> bytes into <paramref name="destination"/>.</summary>
     public void ReadBytes(byte[] destination, int offset, int count)
     {

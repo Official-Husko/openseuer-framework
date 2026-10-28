@@ -31,6 +31,9 @@ internal sealed class Node : IDisposable
     public List<(CoopPlayer Player, string Reason)> Left { get; } = new List<(CoopPlayer, string)>();
     public List<SessionEnd> Ends { get; } = new List<SessionEnd>();
 
+    /// <summary>Run after each poll of the session (presence ticks, lobby polls).</summary>
+    public List<Action> Ticks { get; } = new List<Action>();
+
     public void Dispose() => Transport.Stop();
 }
 
@@ -49,13 +52,19 @@ internal static class Rig
         }
     }
 
-    // A pump is a Node (its session is polled) or a bare transport.
+    // A pump is a Node (its session is polled, then its ticks), an Action, or a bare transport.
     private static void Pump(object[] pumps)
     {
         foreach (var pump in pumps)
         {
             if (pump is Node node)
+            {
                 node.Session.Poll();
+                foreach (var tick in node.Ticks)
+                    tick();
+            }
+            else if (pump is Action action)
+                action();
             else
                 ((ITransport)pump).Poll();
         }

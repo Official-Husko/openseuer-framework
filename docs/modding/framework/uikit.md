@@ -211,6 +211,29 @@ Hotkeys.Register(this, "close", "Close the menu", KeyCode.Insert, Close, scope: 
 - **Conflicts.** `Hotkeys.ConflictOf(hotkey)` says what a hotkey shares its key with: another hotkey that fires with it, or a key of the game's (the player's current bindings from `KeyBindings`, so rebinding in the game is noticed, plus the keys the game reads directly: F1, F11, F12, 1 to 4, Esc, Enter). Modifiers are ignored for the game's keys. A clash at registration is logged; nothing is blocked.
 - The **Hotkeys** page of the mod menu lists every mod's hotkeys grouped by mod: a key binding row, a cycle for Ctrl, Shift and Alt (a modifier can't be picked by the key row because pressing it ends the capture), the chord now with its default and any clash, and Reset and Unbind buttons. Reset all asks first. The list updates as mods load and unload.
 
+## Computer apps
+
+Apps for the in-game computers. A registered app gets a tile on the desktop of every computer the player sits down at (a column at the right edge of the desktop picture, in the screen's own font); clicking the tile opens the app in a kit window over the screen. While an app window is open the computer ignores Esc and Interact, so closing the window doesn't make the player get up.
+
+```csharp
+using ObenUIKit.Computer;
+
+ComputerApps.Register(this, "MyMod.Stocks", "Stocks", ui =>
+{
+    ui.Header("Open Sewer Exchange");
+    ui.Live(() => "Rat futures: " + price.ToString("0.00"));
+    ui.Button("Buy", Buy);
+}, icon: ModAssets.Sprite(this, "icons/stocks.png"));
+
+ComputerApps.Open("MyMod.Stocks");          // the same app as a standalone window, anywhere: a hotkey, an item, the main menu
+ComputerApps.Opened.Subscribe(this, id => ...);
+ComputerApps.Closed.Subscribe(this, id => ...);
+```
+
+`Register(owner, id, title, build, icon = null, width, height)` lasts until the owner unloads or the result is disposed; up to 30 apps fit on a desktop. The window is an ordinary kit window owned by the app's mod (`width` and `height` as in `UiKit.Open`). `ComputerApps.IsOpen(id)`, `Close(id)` and `All` round it off.
+
+The computers themselves (which one the player uses, sitting down and getting up, e-mails, recycle bin files, the desktop picture) are in the framework: `ObenFramework.World.Computers` (`Computers.Used`, `Current`, `Emails`, `Files`, `SetWallpaper(owner, computer, sprite)`, `DesktopOf`). Bridge: `computers.list` (`id` for one computer's e-mails and files) and `computer.apps` (`open` to open one).
+
 ## Known limitations
 
 - No lists with many rows, tabs or tooltips yet (planned, see the design notes).

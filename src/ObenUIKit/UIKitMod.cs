@@ -1,4 +1,5 @@
 using ObenLoader;
+using ObenUIKit.Computer;
 using ObenUIKit.Input;
 using ObenUIKit.Menu;
 using ObenUIKit.Menu.Changelog;
@@ -33,6 +34,7 @@ public sealed class UIKitMod : ObenMod
         WhatsNewPrompt.Init(this, config);
         MainMenuEntry.Init(this);
         PauseMenuEntry.Init(this);
+        ComputerApps.Init(this);
         Log.Info("Ready.");
     }
 

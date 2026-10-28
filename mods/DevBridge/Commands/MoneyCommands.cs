@@ -23,7 +23,7 @@ internal static class MoneyCommands
 
     private static JObject Balance() => new JObject { ["oc"] = Wallet.Coins, ["rm"] = Wallet.RealMoney };
 
-    private static Money.Currency ParseCurrency(string text)
+    internal static Money.Currency ParseCurrency(string text)
     {
         switch (text.Trim().ToLowerInvariant())
         {

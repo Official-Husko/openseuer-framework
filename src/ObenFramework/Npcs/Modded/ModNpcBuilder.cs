@@ -54,6 +54,8 @@ internal static class ModNpcBuilder
         clone.resident = null;
         if (plan.Look != null && sliders)
             ModNpcLooks.Write(clone, plan.Look);
+        else if (sliders)
+            ModNpcLooks.EnsureHead(clone);
         if (plan.Shapes != null)
         {
             foreach (var shape in plan.Shapes)

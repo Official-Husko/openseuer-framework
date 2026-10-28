@@ -30,6 +30,22 @@ internal static class ModNpcLooks
         }
     }
 
+    /// <summary>
+    /// Gives a copy without a head the first head of its gender. Most characters without a body of their own
+    /// carry no worn items, and a slider body without a head would show none.
+    /// </summary>
+    public static void EnsureHead(Character copy)
+    {
+        if (copy.Head != null)
+            return;
+        bool male = copy.GenderString != "Female";
+        foreach (var slot in LookSlots.All)
+        {
+            if (slot.Name == "head")
+                slot.Put(copy, WearableTable.First(slot, male));
+        }
+    }
+
     /// <summary>Rebuilds a started slider body from its Character after a change.</summary>
     public static void Rebuild(GameObject body)
     {

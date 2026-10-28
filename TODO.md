@@ -14,7 +14,8 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] Release packaging (`build/package.sh`, `build/release.sh`; dev mods marked `devOnly`)
 - [x] Unit tests (`dotnet test`) and `oben check` for hooks after game updates
 - [x] GPL-3.0 license
-- [ ] A THIRD-PARTY-NOTICES file once the first code from the MIT reference projects is ported
+- [ ] A THIRD-PARTY-NOTICES file once the first code from the MIT reference projects is ported (KitKeyCapture.cs is adapted from it: add the file before the first release)
+- [ ] GitHub URL for the player README.txt and the docs, once the repository is up
 
 ## ObenFramework (core functionality)
 
@@ -89,7 +90,8 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] RobbersSeePolice: NPC sight checks read the NPC's own head
 - [x] ReflectionProbeRefresh (off by default): `"Player)"` tag typo; needs a look in a level before it's turned on
 - [x] EmailMonthNames, DialogueRealMoney, RandomPickSkipsLast, AmbientSoundVariety, DialogueLuaFunctions, NpcSightChance (off by default)
-- [ ] More from playing: check `known-bugs.md`'s "not fixed" list (bank interest, subscription dates) and Player.log errors during real play
+- [x] BankInterest: weekly interest on savings and debts
+- [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
 ## Expansion mods
 

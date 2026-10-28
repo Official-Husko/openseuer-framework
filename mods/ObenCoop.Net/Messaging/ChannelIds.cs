@@ -9,6 +9,9 @@ public static class ChannelIds
     /// <summary>Plain text chat: a string.</summary>
     public const byte Chat = 1;
 
+    /// <summary>Big transfers (<see cref="Blobs.BlobTransfer"/>). Owned by the session; features register blob handlers, not this channel.</summary>
+    public const byte Blob = 2;
+
     /// <summary>First id free for experiments and tests.</summary>
     public const byte FirstFree = 16;
 }

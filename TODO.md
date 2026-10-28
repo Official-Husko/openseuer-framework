@@ -39,6 +39,10 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Player actions: movement multipliers, sleep and waits, skills and custom skills, effects, conditions, medical, seats, interactions, wardrobe, weapons, notes and books, jobs, achievements
 - [x] Items and crafting: inventory events, extra inventory and crafting sources, containers in unloaded scenes, loot, resource nodes, spawners, breakables, stations, speed and quality, recipe filters, recycling, growing, autofarms
 - [x] World props, scene logic, landmarks, signs, visited scenes and scene looks (character looks from scene files)
+- [x] Environment and housing: flags, settings, sky, screen effects, power, hazards, water, weather, fixtures; apartments, tenants, hotels, renovations, mailboxes
+- [x] Economy and gambling: banks, ledger, invoices, legal services, player-run shops, traders, fuel; casino, card games, contests
+- [x] Story and new game: quest and dialogue authoring, law, story queue, sessions, difficulty presets, new game options, tutorial events
+- [x] Transport and furniture: locks, exits and travel, elevators, ladders, trains, drones; custom furniture, blueprints; item icons and models, radios, TVs, guitar, computer apps
 - [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
 - [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
 - [ ] Coverage of the MIT framework: see PROGRESS.md
@@ -103,6 +107,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] EmailMonthNames, DialogueRealMoney, RandomPickSkipsLast, AmbientSoundVariety, DialogueLuaFunctions, NpcSightChance (off by default)
 - [x] BankInterest: weekly interest on savings and debts
 - [ ] TenementRequiredItems: `TenementController.RemoveRequiredItems` passes the full amount to every storage instead of what's still missing, so renovations take the item from every storage that holds it
+- [ ] BankExchangeCoins: changing Real Money into coins uses an integer division (`TotalOCSupply / DailyAverageOcSpending`), so it pays 0 coins whenever the bank's coin supply is below its daily spending; the quote checks the RM supply instead and divides by zero when daily coin spending is 0
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
 ## Expansion mods

@@ -22,6 +22,7 @@ public static class ModAreas
         ["perf"] = "Performance Fixes",
         ["save"] = "ObenSave",
         ["cheats"] = "Cheat Menu",
+        ["tweaks"] = "Game Tweaks",
     };
 
     /// <summary>The display name for a commit scope, or null when the commit has none.</summary>

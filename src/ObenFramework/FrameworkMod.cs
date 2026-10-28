@@ -1,3 +1,4 @@
+using ObenFramework.Animals;
 using ObenFramework.Assets;
 using ObenFramework.Clock;
 using ObenFramework.Dialogue;
@@ -34,6 +35,7 @@ public sealed class FrameworkMod : ObenMod
         QuestWatcher.Attach(this);
         WorldModule.Init(this);
         NpcsModule.Init(this);
+        AnimalsModule.Init(this);
         PlayerLookWatcher.Init(this);
         SurvivalEvents.Init(this);
         ShopsModule.Init(this);

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using ObenFramework.Logging;
 
 namespace ObenFramework.Npcs;
 
@@ -9,24 +9,16 @@ namespace ObenFramework.Npcs;
 /// </summary>
 internal static class NpcsLog
 {
-    private static readonly HashSet<string> Reported = new HashSet<string>();
+    private static readonly AreaLog Area = new AreaLog("npcs");
 
-    public static void Info(string message) => FrameworkMod.Instance?.Log.Info(message);
+    public static void Info(string message) => Area.Info(message);
 
-    public static void Warn(string message) => FrameworkMod.Instance?.Log.Warn(message);
+    public static void Warn(string message) => Area.Warn(message);
 
     /// <summary>A warning logged the first time <paramref name="key"/> comes up, then not again until the framework reloads.</summary>
-    public static void WarnOnce(string key, string message)
-    {
-        if (Reported.Add(key))
-            FrameworkMod.Instance?.Log.Warn(message);
-    }
+    public static void WarnOnce(string key, string message) => Area.WarnOnce(key, message);
 
-    public static void Failed(string where, Exception e)
-    {
-        if (Reported.Add(where))
-            FrameworkMod.Instance?.Log.Error($"{where} failed (further failures of it are not logged)", e);
-    }
+    public static void Failed(string where, Exception e) => Area.Failed(where, e);
 
-    public static void Reset() => Reported.Clear();
+    public static void Reset() => Area.Reset();
 }

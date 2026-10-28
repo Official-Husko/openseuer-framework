@@ -33,6 +33,8 @@ public sealed class FrameworkMod : ObenMod
     public override void OnLoad()
     {
         Instance = this;
+        // Tracked first, so it is undone last: the modules can still log while they clean up.
+        Track(ObenLoader.Runtime.Disposable.Create(() => Instance = null));
         GameEvents.Init(this);
         UiModule.Init(this);
         SaveState.Init(this);
@@ -75,6 +77,4 @@ public sealed class FrameworkMod : ObenMod
         TransportModule.Update();
         MediaModule.Update();
     }
-
-    public override void OnUnload() => Instance = null;
 }

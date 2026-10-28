@@ -88,7 +88,7 @@ public class QuestFollowUpPlanTests
     [InlineData("two", true, false, 0, QuestFollowUpPlan.Exists)]
     [InlineData("two", false, true, 0, QuestFollowUpPlan.Again)]
     [InlineData("two", false, false, 8, QuestFollowUpPlan.Depth)]
-    public void SaysWhyNot(string next, bool exists, bool again, int started, string expected) =>
+    public void SaysWhyNot(string? next, bool exists, bool again, int started, string expected) =>
         Assert.Equal(expected, QuestFollowUpPlan.Skip("one", next, exists, again, started));
 
     [Fact]

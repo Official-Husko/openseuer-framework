@@ -11,7 +11,7 @@ public class QuestIdsTests
     [InlineData("MyMod", "", null)]
     [InlineData("My Mod", "intro", null)]
     [InlineData(".MyMod", "intro", null)]
-    public void BuildsTaskIds(string modId, string key, string expected) => Assert.Equal(expected, QuestIds.TaskId(modId, key));
+    public void BuildsTaskIds(string modId, string key, string? expected) => Assert.Equal(expected, QuestIds.TaskId(modId, key));
 
     [Theory]
     [InlineData("MyMod.intro", "MyMod")]
@@ -20,7 +20,7 @@ public class QuestIdsTests
     [InlineData("MyMod.", null)]
     [InlineData(".intro", null)]
     [InlineData("My Mod.intro", null)]
-    public void ReadsTheOwnerBack(string taskId, string owner) => Assert.Equal(owner, QuestIds.OwnerOf(taskId));
+    public void ReadsTheOwnerBack(string taskId, string? owner) => Assert.Equal(owner, QuestIds.OwnerOf(taskId));
 
     [Fact]
     public void OwnershipNeedsTheWholeModId()
@@ -38,7 +38,7 @@ public class QuestIdsTests
     [InlineData("BazaarBank33", "", false)]
     [InlineData("a..b", "", false)]
     [InlineData("a.b c", "", false)]
-    public void TellsModTasksFromGameTasks(string id, string path, bool expected)
+    public void TellsModTasksFromGameTasks(string id, string? path, bool expected)
     {
         Assert.Equal(expected, QuestIds.IsModTask(id, path));
         if (string.IsNullOrEmpty(path))

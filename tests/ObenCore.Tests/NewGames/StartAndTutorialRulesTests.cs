@@ -24,6 +24,9 @@ public class TutorialStepsTests
     {
         Assert.Equal(TutorialStep.LookAround, TutorialSteps.StepOf(new TutorialFlags { Look = true, Move = true, Building = true }));
         Assert.Equal(TutorialStep.Interact, TutorialSteps.StepOf(new TutorialFlags { Use = true, Tenement = true }));
+        Assert.Equal(TutorialStep.Menu, TutorialSteps.StepOf(new TutorialFlags { Menu = true, Inventory = true, Map = true }));
+        Assert.Equal(TutorialStep.Inventory, TutorialSteps.StepOf(new TutorialFlags { Inventory = true, Map = true, Task = true }));
+        Assert.Equal(TutorialStep.Map, TutorialSteps.StepOf(new TutorialFlags { Map = true, Task = true }));
         Assert.Equal(TutorialStep.Tasks, TutorialSteps.StepOf(new TutorialFlags { Task = true, Reload = true }));
     }
 
@@ -52,7 +55,7 @@ public class OptionIdsTests
     [InlineData(null, false)]
     [InlineData("has space", false)]
     [InlineData("ä", false)]
-    public void ChecksIds(string id, bool valid) => Assert.Equal(valid, OptionIds.IsValid(id));
+    public void ChecksIds(string? id, bool valid) => Assert.Equal(valid, OptionIds.IsValid(id));
 
     [Fact]
     public void KeysHaveNoDots()

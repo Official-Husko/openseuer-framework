@@ -14,16 +14,30 @@ namespace ObenFramework.Items;
 /// <remarks>
 /// Items need ids from <see cref="ReservedIds"/> (use <see cref="ReservedIds.For"/>) and a sprite, or the
 /// inventory draws their slot empty. Saved games keep only the id: if the mod is removed, stacks of its
-/// items show up as Open Sewer Coin until the player drops them.
+/// items show up as a "Missing item" stand-in that keeps the id (<see cref="ItemPlaceholders"/>), and
+/// become the real item again when the mod is back.
 /// </remarks>
 public static class ItemRegistry
 {
     private static readonly Dictionary<int, Item> Entries = new Dictionary<int, Item>();
+    private static readonly Dictionary<int, string> Owners = new Dictionary<int, string>();
 
     /// <summary>All items currently registered by mods.</summary>
     public static IEnumerable<Item> Items => Entries.Values;
 
     public static bool IsModded(int id) => Entries.ContainsKey(id);
+
+    /// <summary>The id of the mod that registered the item, or null.</summary>
+    public static string OwnerOf(int id) => Owners.TryGetValue(id, out string owner) ? owner : null;
+
+    /// <summary>The registered items as save manifest entries (id, mod, title).</summary>
+    internal static List<ItemManifestEntry> ManifestEntries()
+    {
+        var list = new List<ItemManifestEntry>(Entries.Count);
+        foreach (var item in Entries.Values)
+            list.Add(new ItemManifestEntry { Id = item.ID, Mod = OwnerOf(item.ID), Title = item.Title });
+        return list;
+    }
 
     /// <summary>
     /// Registers an item until <paramref name="owner"/> unloads. Throws when the item is invalid or its
@@ -38,6 +52,7 @@ public static class ItemRegistry
     {
         Validate(item);
         Entries[item.ID] = item;
+        Owners[item.ID] = owner.Info.Id;
         owner.Track(Disposable.Create(() => Unregister(item)));
         Apply(item);
         RecipeRegistry.Sync();
@@ -124,6 +139,7 @@ public static class ItemRegistry
 
         database.Add(item);
         ItemIndex.Invalidate();
+        ItemPlaceholders.Returned(item);
         try
         {
             // Only the meta assets: the sprite and prefab were assigned directly, and the game's
@@ -140,6 +156,9 @@ public static class ItemRegistry
     {
         if (!Entries.Remove(item.ID))
             return;
+        // Remembered, so its stand-ins carry its name and the next save still lists it.
+        ItemPlaceholders.Removed(new ItemManifestEntry { Id = item.ID, Mod = OwnerOf(item.ID), Title = item.Title });
+        Owners.Remove(item.ID);
         if (ItemDatabase.database.Remove(item))
             ItemIndex.Invalidate();
         RecipeRegistry.Sync();

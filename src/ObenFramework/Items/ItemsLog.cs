@@ -8,6 +8,8 @@ internal static class ItemsLog
 {
     private static readonly AreaLog Area = new AreaLog("items");
 
+    public static void Info(string message) => Area.Info(message);
+
     public static void Warn(string message) => Area.Warn(message);
 
     /// <summary>Warns once per key, for refusals a mod may repeat every frame.</summary>

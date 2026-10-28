@@ -22,11 +22,12 @@ internal static class ItemRegistryPatches
 
     // A pickup prefab is bound to one item by a reference baked into it, so a mod item that reuses another
     // item's prefab would turn back into that item when picked up. Point the pickup at the right item.
+    // Missing item stand-ins drop as the game's ERROR prefab (bound to item 0) and need the same.
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ItemOperations), nameof(ItemOperations.SetCollectibleItemValues))]
     private static void BeforeSetPickupValues(ItemStack item, UnityEngine.GameObject gameObject)
     {
-        if (!ItemRegistry.IsModded(item.itemId))
+        if (item == null || gameObject == null || !(ItemRegistry.IsModded(item.itemId) || ItemPlaceholders.IsPlaceholder(item.itemId)))
             return;
 
         try

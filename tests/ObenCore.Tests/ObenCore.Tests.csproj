@@ -96,6 +96,9 @@
     <Compile Include="../../src/ObenFramework/Items/Unloaded/UnloadedStorageRules.cs" Link="Linked/Items/UnloadedStorageRules.cs" />
     <Compile Include="../../src/ObenFramework/Items/Unloaded/UnloadedStorageReader.cs" Link="Linked/Items/UnloadedStorageReader.cs" />
     <Compile Include="../../src/ObenFramework/Items/Loot/LootWeights.cs" Link="Linked/Items/LootWeights.cs" />
+    <!-- Mod item ids and the save's list of mod items, for the missing item stand-ins. -->
+    <Compile Include="../../src/ObenFramework/Items/ReservedIds.cs" Link="Linked/Items/ReservedIds.cs" />
+    <Compile Include="../../src/ObenFramework/Items/Placeholders/ItemManifest.cs" Link="Linked/Items/ItemManifest.cs" />
     <!-- Crafting factors, source order and recipe filter rules. -->
     <Compile Include="../../src/ObenFramework/Crafting/FactorTable.cs" Link="Linked/Crafting/FactorTable.cs" />
     <Compile Include="../../src/ObenFramework/Crafting/OwnedFactors.cs" Link="Linked/Crafting/OwnedFactors.cs" />

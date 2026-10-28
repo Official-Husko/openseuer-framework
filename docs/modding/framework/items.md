@@ -67,8 +67,19 @@ public override void OnLoad()
 - **A sprite is required.** The game draws a slot empty when the item has none. Assign `Appearance.Sprite` directly and leave `SpritePath` empty.
 - **Pickup prefab:** assign `Appearance.Prefab` (and `PrefabMany`) to a GameObject with a `CollectibleItem`, for example another item's `Prefab`. Without one the item spawns as the game's ERROR prefab. Items may share a prefab: the framework points the pickup at the right item when it spawns. Pickups of modded items are not restored from saves yet, because the game rebuilds dropped items from a `Resources` path.
 - `ItemRegistry.Derive(template, id, title)` copies an existing item (actions, meta, categories, look) as a starting point.
-- If your mod is removed later, stacks of its items in a save appear as Open Sewer Coin until the player drops them. Tell players, or avoid removing items.
+- If your mod is removed later, its items in a save become a "Missing item" stand-in that keeps the id (see below), and are the real item again once the mod is back.
 - Loot tables and shops don't know your item. Give it to the player in code, or add it to a shop yourself.
+- `ItemRegistry.OwnerOf(id)` is the mod that registered an item.
+
+## Items from removed mods
+
+A save only keeps an item's id. Without the mod that adds it, the game would show such a stack as Open Sewer Coin on the first lookup and lose the id for good. `ItemPlaceholders` stops that: any lookup of a missing id in the mod range (`ReservedIds`) gets a stand-in with the same id.
+
+- It is called "Missing item (Mod: Title)" with a paper bag icon. The mod and title come from `mods/ObenFramework.items.json`, which every save writes: the items mods register now, plus the missing ones the loaded save listed, so the names survive saving without the mod.
+- It can't be used, eaten or sold (shops refuse it), stacks up to any size, keeps the stack's own data (quality, durability) and drops as the game's ERROR model that picks up as the same stand-in.
+- It is saved under its own id. Install the mod again and the stack is the real item on the next load. If the mod comes back while the game runs (a hot reload), stand-ins already handed out turn into the real item right away; a mod unloading mid-game leaves its items as stand-ins named after it.
+- `ItemPlaceholders.IsPlaceholder(id or item)`, `Active()` (stand-ins handed out this session) and `MissingInSave()` (what the loaded save lists without its mod) tell you about them. `IsAvailable` is false if its patches failed (patch area `ItemPlaceholders`).
+- Items in scenes that aren't loaded, and loot that the game rolls from its own tables, aren't touched; they get the stand-in when they're looked at.
 
 ## Adding recipes
 
@@ -192,4 +203,4 @@ StoragePanelButtons.Add(this, "Sort", press => SortInto(press.Container.Storage)
 
 ## Checking in game
 
-Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`. The `*.events` commands start listening on their first call.
+Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items). The `*.events` commands start listening on their first call.

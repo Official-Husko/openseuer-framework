@@ -18,7 +18,10 @@ public static class ModAreas
         ["patches"] = "Unofficial ObenPatches",
         ["tool"] = "Command-line tool",
         ["mcp"] = "Command-line tool",
-        ["coop"] = "Co-op",
+        ["coop"] = "ObenCoop",
+        ["perf"] = "Performance Fixes",
+        ["save"] = "ObenSave",
+        ["cheats"] = "Cheat Menu",
     };
 
     /// <summary>The display name for a commit scope, or null when the commit has none.</summary>

@@ -10,7 +10,7 @@ namespace DevBridge.Commands;
 internal static class PlayerAbilityCommands
 {
     [BridgeCommand("player.speed", "Current and base movement speeds, every mod's multiplier, and set or clear the bridge's own.",
-        Params = new[] { "stat?: Speed, Walk, Run, Swim, Crouch or Jump", "multiplier?: 0-10, sets the bridge's multiplier on stat", "clear?: true removes the bridge's multiplier on stat" })]
+        Params = new[] { "stat?: Speed, Walk, Run, Swim, Crouch or Jump", "multiplier?: 0-10, sets the bridge's multiplier on stat", "clear?: true removes the bridge's multiplier on stat, or all of them without stat" })]
     private static object Speed(JObject p)
     {
         if (p["stat"] != null)
@@ -20,6 +20,11 @@ internal static class PlayerAbilityCommands
                 PlayerMovement.Remove(Owner(), stat);
             else if (p["multiplier"] != null)
                 PlayerMovement.Set(Owner(), stat, p.Float("multiplier"));
+        }
+        else if (p.Bool("clear", false))
+        {
+            foreach (MovementStat stat in Enum.GetValues(typeof(MovementStat)))
+                PlayerMovement.Remove(Owner(), stat);
         }
 
         var multipliers = new JArray();

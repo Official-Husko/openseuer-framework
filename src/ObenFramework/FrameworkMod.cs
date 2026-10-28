@@ -2,6 +2,7 @@ using ObenFramework.Clock;
 using ObenFramework.Dialogue;
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenFramework.Quests;
 using ObenFramework.Saves;
 using ObenLoader;
 
@@ -21,6 +22,7 @@ public sealed class FrameworkMod : ObenMod
         ModSaves.Init(this);
         GameClock.Init(this);
         DialogueModule.Init(this);
+        QuestWatcher.Attach(this);
         Log.Info("Ready.");
     }
 

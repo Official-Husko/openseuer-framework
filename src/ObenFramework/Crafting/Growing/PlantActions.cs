@@ -90,7 +90,7 @@ public static class PlantActions
     /// <summary>Plants a seed or seedling item into an empty spot. The item's pickup must be a growing plant.</summary>
     public static bool Plant(string spotId, int itemId)
     {
-        var spot = SceneIds.Find<GrowingSpot>(spotId);
+        var spot = ObjectIds.Find<GrowingSpot>(spotId);
         var item = ItemLookup.ById(itemId);
         if (spot == null || SaveGate.IsBusy || spot.HasPlant() || item == null || item.Prefab == null || item.Prefab.GetComponent<grow>() == null)
             return false;
@@ -102,7 +102,7 @@ public static class PlantActions
     /// <summary>Picks up what a spot holds when it is a finished pickable rather than a growing plant.</summary>
     public static bool HarvestSpot(string spotId)
     {
-        var spot = SceneIds.Find<GrowingSpot>(spotId);
+        var spot = ObjectIds.Find<GrowingSpot>(spotId);
         if (spot == null || SaveGate.IsBusy || !spot.HasPlant() || spot.Plant.GetComponent<grow>() != null)
             return false;
         var pickup = spot.Plant.GetComponentInChildren<CollectibleItem>();

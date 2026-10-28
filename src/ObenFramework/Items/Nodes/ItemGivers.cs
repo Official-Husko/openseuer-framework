@@ -80,12 +80,12 @@ public static class ItemGivers
     public static List<ItemGiverInfo> All()
     {
         var list = new List<ItemGiverInfo>();
-        foreach (var giver in SceneIds.Active<InteractableItemGiver>())
+        foreach (var giver in ObjectIds.Active<InteractableItemGiver>())
             list.Add(Describe(giver));
         return list;
     }
 
-    public static InteractableItemGiver Find(string id) => SceneIds.Find<InteractableItemGiver>(id);
+    public static InteractableItemGiver Find(string id) => ObjectIds.Find<InteractableItemGiver>(id);
 
     /// <summary>Empties a giver or gives it one more use. Unlimited givers are refused.</summary>
     public static bool SetEmpty(string id, bool empty)
@@ -115,7 +115,7 @@ public static class ItemGivers
     public static ItemGiverInfo Describe(InteractableItemGiver giver)
     {
         bool unlimited = Unlimited(giver);
-        return new ItemGiverInfo(SceneIds.IdOf(giver), giver.title, giver.transform.position, giver.canGive, unlimited, unlimited ? -1 : CurrentAmount(giver));
+        return new ItemGiverInfo(ObjectIds.IdOf(giver), giver.title, giver.transform.position, giver.canGive, unlimited, unlimited ? -1 : CurrentAmount(giver));
     }
 
     // The game's own rule (HasInfiniteAmount): no amount range means no limit.
@@ -131,7 +131,7 @@ internal static class ItemGiversPatches
     {
         if (!success || item == null || !ItemGivers.Gave.HasSubscribers || !WorldChanges.Active)
             return;
-        try { ItemGivers.Gave.Raise(new ItemGiven(SceneIds.IdOf(__instance), item.ID, amount)); }
+        try { ItemGivers.Gave.Raise(new ItemGiven(ObjectIds.IdOf(__instance), item.ID, amount)); }
         catch (Exception e) { ItemsLog.Failed("Item giver hook", e); }
     }
 }

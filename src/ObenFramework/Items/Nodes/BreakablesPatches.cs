@@ -24,7 +24,7 @@ internal static class BreakablesPatches
     {
         if (!__state || onLoadingGame || __instance.strength > 0 || !WorldChanges.Active)
             return;
-        try { Breakables.Broken.Raise(SceneIds.IdOf(__instance)); }
+        try { Breakables.Broken.Raise(ObjectIds.IdOf(__instance)); }
         catch (Exception e) { ItemsLog.Failed("Breakable broken hook", e); }
     }
 
@@ -39,7 +39,7 @@ internal static class BreakablesPatches
     {
         if (!__state || __instance.strength <= 0 || !WorldChanges.Active)
             return;
-        try { Breakables.Repaired.Raise(SceneIds.IdOf(__instance)); }
+        try { Breakables.Repaired.Raise(ObjectIds.IdOf(__instance)); }
         catch (Exception e) { ItemsLog.Failed("Breakable repaired hook", e); }
     }
 
@@ -54,7 +54,7 @@ internal static class BreakablesPatches
     {
         if (!__state || __instance.strength > 0 || !WorldChanges.Active)
             return;
-        try { Breakables.LockBroken.Raise(SceneIds.IdOf(__instance)); }
+        try { Breakables.LockBroken.Raise(ObjectIds.IdOf(__instance)); }
         catch (Exception e) { ItemsLog.Failed("Lock broken hook", e); }
     }
 
@@ -73,7 +73,7 @@ internal static class BreakablesPatches
                 return;
             var spawn = __instance.itemToSpawn;
             int itemId = spawn != null && spawn.Item != null && spawn.Item.ID != 0 ? spawn.Item.ID : -1;
-            __state = new SmashedObject(SceneIds.IdOf(__instance), __instance.transform.position, __instance.objectType == SpawnItemOnBreak.Type.Animal, itemId);
+            __state = new SmashedObject(ObjectIds.IdOf(__instance), __instance.transform.position, __instance.objectType == SpawnItemOnBreak.Type.Animal, itemId);
         }
         catch (Exception e)
         {

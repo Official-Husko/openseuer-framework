@@ -35,25 +35,25 @@ public static class Plants
     public static List<PlantInfo> All()
     {
         var list = new List<PlantInfo>();
-        foreach (var plant in SceneIds.Active<grow>())
+        foreach (var plant in ObjectIds.Active<grow>())
             list.Add(Describe(plant));
         return list;
     }
 
     /// <summary>The plant's id: its save GUID, or its scene id when it has none.</summary>
     public static string IdOf(grow plant) =>
-        plant == null ? null : !string.IsNullOrEmpty(plant.GUID) ? plant.GUID : SceneIds.IdOf(plant);
+        plant == null ? null : !string.IsNullOrEmpty(plant.GUID) ? plant.GUID : ObjectIds.IdOf(plant);
 
     public static grow Find(string id)
     {
         if (string.IsNullOrEmpty(id))
             return null;
-        foreach (var plant in SceneIds.Active<grow>())
+        foreach (var plant in ObjectIds.Active<grow>())
         {
             if (plant.GUID == id)
                 return plant;
         }
-        return SceneIds.Find<grow>(id);
+        return ObjectIds.Find<grow>(id);
     }
 
     public static PlantInfo Describe(grow plant) =>

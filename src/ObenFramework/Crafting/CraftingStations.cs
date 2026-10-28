@@ -30,7 +30,7 @@ public static partial class CraftingStations
     public static List<StationInfo> All()
     {
         var list = new List<StationInfo>();
-        foreach (var station in SceneIds.Active<CraftingBase>())
+        foreach (var station in ObjectIds.Active<CraftingBase>())
             list.Add(Describe(station));
         return list;
     }
@@ -39,10 +39,10 @@ public static partial class CraftingStations
     /// The station's id: the n-th station inside a piece of furniture the player placed is
     /// <c>furniture:{furnitureId}:{n}</c>, any other its game GUID or object address.
     /// </summary>
-    public static string IdOf(CraftingBase station) => SceneIds.IdOf(station);
+    public static string IdOf(CraftingBase station) => ObjectIds.IdOf(station);
 
     /// <summary>The station with this id, or null.</summary>
-    public static CraftingBase Find(string id) => SceneIds.Find<CraftingBase>(id);
+    public static CraftingBase Find(string id) => ObjectIds.Find<CraftingBase>(id);
 
     public static StationInfo Describe(CraftingBase station)
     {

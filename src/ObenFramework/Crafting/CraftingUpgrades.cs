@@ -13,7 +13,7 @@ public sealed class UpgradeInfo
     internal UpgradeInfo(CraftingUpgrade upgrade)
     {
         Upgrade = upgrade;
-        Id = SceneIds.IdOf(upgrade);
+        Id = ObjectIds.IdOf(upgrade);
         Name = upgrade.name;
         On = upgrade.Active;
         Passive = upgrade.Passive;
@@ -63,12 +63,12 @@ public static class CraftingUpgrades
     public static List<UpgradeInfo> All()
     {
         var list = new List<UpgradeInfo>();
-        foreach (var upgrade in SceneIds.Active<CraftingUpgrade>())
+        foreach (var upgrade in ObjectIds.Active<CraftingUpgrade>())
             list.Add(new UpgradeInfo(upgrade));
         return list;
     }
 
-    public static CraftingUpgrade Find(string id) => SceneIds.Find<CraftingUpgrade>(id);
+    public static CraftingUpgrade Find(string id) => ObjectIds.Find<CraftingUpgrade>(id);
 
     public static UpgradeInfo Get(string id)
     {

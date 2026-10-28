@@ -59,10 +59,10 @@ public static partial class Containers
     /// (the n-th container inside that piece), because their prefab GUID is shared by every copy. Every other
     /// container is its game GUID, or its <see cref="ObjectAddress"/> text when it has none.
     /// </summary>
-    public static string IdOf(Storage storage) => SceneIds.IdOf(storage);
+    public static string IdOf(Storage storage) => ObjectIds.IdOf(storage);
 
     /// <summary>The container with this id (or any text <see cref="ObjectResolver.Find{T}"/> understands), or null.</summary>
-    public static Storage Find(string id) => SceneIds.Find<Storage>(id);
+    public static Storage Find(string id) => ObjectIds.Find<Storage>(id);
 
     public static ContainerInfo Describe(Storage storage)
     {

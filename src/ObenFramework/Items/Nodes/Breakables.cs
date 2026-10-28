@@ -95,12 +95,12 @@ public static class Breakables
     public static List<BreakableInfo> All()
     {
         var list = new List<BreakableInfo>();
-        foreach (var breakable in SceneIds.Active<Breakable>())
+        foreach (var breakable in ObjectIds.Active<Breakable>())
             list.Add(Describe(breakable));
         return list;
     }
 
-    public static Breakable Find(string id) => SceneIds.Find<Breakable>(id);
+    public static Breakable Find(string id) => ObjectIds.Find<Breakable>(id);
 
     public static bool IsBroken(string id)
     {
@@ -133,15 +133,15 @@ public static class Breakables
     public static List<BreakableLockInfo> Locks()
     {
         var list = new List<BreakableLockInfo>();
-        foreach (var lck in SceneIds.Active<BreakableLock>())
-            list.Add(new BreakableLockInfo(SceneIds.IdOf(lck), lck.transform.position, lck.Locked, lck.strength));
+        foreach (var lck in ObjectIds.Active<BreakableLock>())
+            list.Add(new BreakableLockInfo(ObjectIds.IdOf(lck), lck.transform.position, lck.Locked, lck.strength));
         return list;
     }
 
     /// <summary>Breaks a lock open. True when it is broken afterwards.</summary>
     public static bool BreakLock(string id)
     {
-        var lck = SceneIds.Find<BreakableLock>(id);
+        var lck = ObjectIds.Find<BreakableLock>(id);
         if (lck == null || lck.strength <= 0 || SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
@@ -150,5 +150,5 @@ public static class Breakables
     }
 
     public static BreakableInfo Describe(Breakable breakable) =>
-        new BreakableInfo(SceneIds.IdOf(breakable), breakable.name, breakable.transform.position, breakable.strength <= 0, breakable.repairAfterTime >= 0);
+        new BreakableInfo(ObjectIds.IdOf(breakable), breakable.name, breakable.transform.position, breakable.strength <= 0, breakable.repairAfterTime >= 0);
 }

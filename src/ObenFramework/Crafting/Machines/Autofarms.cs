@@ -76,12 +76,12 @@ public static class Autofarms
     public static List<AutofarmInfo> All()
     {
         var list = new List<AutofarmInfo>();
-        foreach (var farm in SceneIds.Active<Autofarm>())
+        foreach (var farm in ObjectIds.Active<Autofarm>())
             list.Add(Describe(farm));
         return list;
     }
 
-    public static Autofarm Find(string id) => SceneIds.Find<Autofarm>(id);
+    public static Autofarm Find(string id) => ObjectIds.Find<Autofarm>(id);
 
     /// <summary>Sets how grown new plants start, in percent (0 to 100, min at most max).</summary>
     public static bool SetGrowPercent(string id, int min, int max)
@@ -107,7 +107,7 @@ public static class Autofarms
                     items.Add(reference.ID);
             }
         }
-        return new AutofarmInfo(SceneIds.IdOf(farm), farm.transform.position, farm.plants != null ? farm.plants.Length : 0, CountPlanted(farm), items,
+        return new AutofarmInfo(ObjectIds.IdOf(farm), farm.transform.position, farm.plants != null ? farm.plants.Length : 0, CountPlanted(farm), items,
             farm.plantInOrder, farm.growPercentageMin, farm.growPercentageMax, farm.ownerId != null ? farm.ownerId.ID : 0);
     }
 
@@ -143,7 +143,7 @@ internal static class AutofarmsPatches
         {
             int planted = Autofarms.CountPlanted(__instance) - __state;
             if (planted > 0)
-                Autofarms.Replanted.Raise(new ReplantInfo(SceneIds.IdOf(__instance), planted, !___initDone));
+                Autofarms.Replanted.Raise(new ReplantInfo(ObjectIds.IdOf(__instance), planted, !___initDone));
         }
         catch (Exception e)
         {

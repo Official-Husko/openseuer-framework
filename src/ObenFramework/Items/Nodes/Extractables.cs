@@ -38,12 +38,12 @@ public static class Extractables
     public static List<ExtractableInfo> All()
     {
         var list = new List<ExtractableInfo>();
-        foreach (var extractable in SceneIds.Active<Extractable>())
-            list.Add(new ExtractableInfo(SceneIds.IdOf(extractable), extractable.name, extractable.transform.position, extractable.Health));
+        foreach (var extractable in ObjectIds.Active<Extractable>())
+            list.Add(new ExtractableInfo(ObjectIds.IdOf(extractable), extractable.name, extractable.transform.position, extractable.Health));
         return list;
     }
 
-    public static Extractable Find(string id) => SceneIds.Find<Extractable>(id);
+    public static Extractable Find(string id) => ObjectIds.Find<Extractable>(id);
 
     /// <summary>Works on an extractable once, as the player's action does. True when its health went down.</summary>
     public static bool Work(string id)
@@ -72,7 +72,7 @@ internal static class ExtractablesPatches
     {
         if (!__state || __instance.Health >= 1 || !WorldChanges.Active)
             return;
-        try { Extractables.Extracted.Raise(SceneIds.IdOf(__instance)); }
+        try { Extractables.Extracted.Raise(ObjectIds.IdOf(__instance)); }
         catch (Exception e) { ItemsLog.Failed("Extractable hook", e); }
     }
 }

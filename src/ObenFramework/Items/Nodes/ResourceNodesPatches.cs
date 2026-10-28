@@ -23,7 +23,7 @@ internal static class ResourceNodesPatches
         {
             if (!__instance.CheckDamageType(type))
                 return;
-            string id = SceneIds.IdOf(__instance);
+            string id = ObjectIds.IdOf(__instance);
             ResourceNodes.Hit.Raise(new ResourceHit(id, ___currentStock, ___currentStock < __state));
             if (___currentStock < 1)
                 ResourceNodes.Depleted.Raise(id);

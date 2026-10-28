@@ -12,8 +12,10 @@ namespace ObenFramework.Items;
 /// the player placed is <c>furniture:{furnitureId}:{n}</c> (its prefab GUID is shared by every copy), anything
 /// else is its game GUID or, without one, its <see cref="ObjectAddress"/> text. Used for containers, crafting
 /// stations, plants and the other world objects the item and crafting modules list. Not for per-frame use.
+/// Unlike <see cref="Scenes.SceneIds"/> it knows placed furniture and looks in every loaded scene (the
+/// backpack storages live outside the active one).
 /// </summary>
-internal static class SceneIds
+internal static class ObjectIds
 {
     private const string FurniturePrefix = "furniture:";
 

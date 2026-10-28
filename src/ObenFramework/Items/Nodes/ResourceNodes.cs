@@ -87,7 +87,7 @@ public static class ResourceNodes
     public static List<ResourceNodeInfo> All()
     {
         var list = new List<ResourceNodeInfo>();
-        foreach (var node in SceneIds.Active<WorkableResourceSource>())
+        foreach (var node in ObjectIds.Active<WorkableResourceSource>())
             list.Add(Describe(node));
         return list;
     }
@@ -96,7 +96,7 @@ public static class ResourceNodes
     public static List<ResourceNodeInfo> Near(Vector3 position, float radius)
     {
         var list = new List<ResourceNodeInfo>();
-        foreach (var node in SceneIds.Active<WorkableResourceSource>())
+        foreach (var node in ObjectIds.Active<WorkableResourceSource>())
         {
             if ((node.transform.position - position).sqrMagnitude <= radius * radius)
                 list.Add(Describe(node));
@@ -104,7 +104,7 @@ public static class ResourceNodes
         return list;
     }
 
-    public static WorkableResourceSource Find(string id) => SceneIds.Find<WorkableResourceSource>(id);
+    public static WorkableResourceSource Find(string id) => ObjectIds.Find<WorkableResourceSource>(id);
 
     public static ResourceNodeInfo? Get(string id)
     {
@@ -146,7 +146,7 @@ public static class ResourceNodes
             }
         }
         var spawn = node.spawnSettings;
-        return new ResourceNodeInfo(SceneIds.IdOf(node), node.transform.position, items, CurrentStock(node), MaximumStock(node),
+        return new ResourceNodeInfo(ObjectIds.IdOf(node), node.transform.position, items, CurrentStock(node), MaximumStock(node),
             node.owner != null ? node.owner.ID : 0, node.permissionToTake, spawn != null && spawn.respawnEnabled);
     }
 }

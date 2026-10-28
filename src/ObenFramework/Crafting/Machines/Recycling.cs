@@ -55,12 +55,12 @@ public static class Recycling
     public static List<RecyclerInfo> All()
     {
         var list = new List<RecyclerInfo>();
-        foreach (var machine in SceneIds.Active<BottleRecycling>())
-            list.Add(new RecyclerInfo(SceneIds.IdOf(machine), machine.transform.position, machine.bottleRecyclingMoney));
+        foreach (var machine in ObjectIds.Active<BottleRecycling>())
+            list.Add(new RecyclerInfo(ObjectIds.IdOf(machine), machine.transform.position, machine.bottleRecyclingMoney));
         return list;
     }
 
-    public static BottleRecycling Find(string id) => SceneIds.Find<BottleRecycling>(id);
+    public static BottleRecycling Find(string id) => ObjectIds.Find<BottleRecycling>(id);
 
     /// <summary>The deposit a machine owes, or -1 when there is no such machine.</summary>
     public static int Owed(string id)
@@ -95,7 +95,7 @@ internal static class RecyclingPatches
         var machine = __instance.currentBottleRecycling;
         if (__state == int.MinValue || machine == null || !WorldChanges.Active)
             return;
-        try { Recycling.Recycled.Raise(new RecycledInfo(SceneIds.IdOf(machine), amount, machine.bottleRecyclingMoney - __state)); }
+        try { Recycling.Recycled.Raise(new RecycledInfo(ObjectIds.IdOf(machine), amount, machine.bottleRecyclingMoney - __state)); }
         catch (Exception e) { ItemsLog.Failed("Recycling hook", e); }
     }
 }

@@ -49,7 +49,7 @@ public static class Dishwashers
     public static List<DishwasherInfo> All()
     {
         var list = new List<DishwasherInfo>();
-        foreach (var dishwasher in SceneIds.Active<Dishwasher>())
+        foreach (var dishwasher in ObjectIds.Active<Dishwasher>())
             list.Add(Describe(dishwasher));
         return list;
     }

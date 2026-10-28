@@ -67,12 +67,12 @@ public static class Spawners
     public static List<SpawnerInfo> All()
     {
         var list = new List<SpawnerInfo>();
-        foreach (var spawner in SceneIds.Active<Spawner>())
+        foreach (var spawner in ObjectIds.Active<Spawner>())
             list.Add(Describe(spawner));
         return list;
     }
 
-    public static Spawner Find(string id) => SceneIds.Find<Spawner>(id);
+    public static Spawner Find(string id) => ObjectIds.Find<Spawner>(id);
 
     public static SpawnerInfo? Get(string id)
     {
@@ -122,7 +122,7 @@ public static class Spawners
     public static SpawnerInfo Describe(Spawner spawner)
     {
         var s = spawner.spawnSettings;
-        string id = SceneIds.IdOf(spawner);
+        string id = ObjectIds.IdOf(spawner);
         string kind = spawner.GetType().Name;
         if (s == null)
             return new SpawnerInfo(id, kind, spawner.transform.position, false, 0f, Count(spawner), SpawnSettings.SpawnTime.Default, false, 0, 0, 0);

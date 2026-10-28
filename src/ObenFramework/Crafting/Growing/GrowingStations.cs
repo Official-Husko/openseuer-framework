@@ -12,7 +12,7 @@ public static class GrowingStations
     public static List<GrowingStationInfo> All()
     {
         var list = new List<GrowingStationInfo>();
-        foreach (var station in SceneIds.Active<Growing>())
+        foreach (var station in ObjectIds.Active<Growing>())
             list.Add(Describe(station));
         return list;
     }
@@ -28,7 +28,7 @@ public static class GrowingStations
                 continue;
             var plant = spot.Plant.GetComponent<grow>();
             bool pickable = plant == null && spot.Plant.GetComponentInChildren<CollectibleItem>() != null;
-            planted.Add(new GrowingSpotInfo(SceneIds.IdOf(spot), plant != null ? Plants.IdOf(plant) : null, pickable));
+            planted.Add(new GrowingSpotInfo(ObjectIds.IdOf(spot), plant != null ? Plants.IdOf(plant) : null, pickable));
         }
         return new GrowingStationInfo(CraftingStations.IdOf(station), station.transform.position, station.GrowingSlots.Count, station.paused,
             station.ManualHarvest, planted);

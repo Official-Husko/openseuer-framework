@@ -80,7 +80,8 @@ public static partial class Banks
         int wholeRm = Mathf.FloorToInt(realMoney);
         if (coins == 0 && wholeRm == 0)
             return BankResult.TooSmall;
-        if ((long)bank.TotalOCSupply + coins > int.MaxValue)
+        var account = bank.GetPlayerAccount();
+        if ((long)bank.TotalOCSupply + coins > int.MaxValue || !AccountMath.CoinsFit(account.OC, coins))
             return BankResult.Refused;
         return AtDesk(bank, "Deposit", () => bank.DepositWithdraw(coins, wholeRm));
     }
@@ -98,6 +99,8 @@ public static partial class Banks
             return BankResult.NotOffered;
 
         float rm = Money.RoundRM(realMoney);
+        if (coins == 0 && rm <= 0f)
+            return BankResult.TooSmall;
         var account = bank.GetPlayerAccount();
         if (!AccountMath.Covers(false, account.OC, account.RM, coins) || !AccountMath.Covers(true, account.OC, account.RM, rm))
             return BankResult.Insufficient;

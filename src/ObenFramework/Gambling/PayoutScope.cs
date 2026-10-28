@@ -57,7 +57,7 @@ internal static class PayoutScope
     [HarmonyPriority(Priority.First)]
     private static void ScaleItems(Item item, ref int amount)
     {
-        if (!_armed || _item == null || !ReferenceEquals(item, _item) || amount != _expected)
+        if (!_armed || _item == null || item == null || item.ID != _item.ID || amount != _expected)
             return;
         Disarm();
         amount = _scaled;

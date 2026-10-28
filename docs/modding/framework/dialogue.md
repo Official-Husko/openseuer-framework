@@ -117,6 +117,6 @@ oben call lua.run code="return Variable['Day'] + 1"
 
 `lua.get` returns `exists`, `type` and `value`. `lua.set` accepts `actor`, and `default=true` for set-if-missing; it returns the value now and `result` (`applied` or `deferred`). `lua.run` returns `ok`, `error` and the returned value. See [../dev-tools.md](../dev-tools.md).
 
-## Not covered
+## Adding dialogue
 
-Adding conversations or changing existing ones (the game notes sketch building a `DialogueDatabase` in code), intercepting a conversation start, and adding responses to existing conversations are not part of the module yet. Use Harmony on `DialogueManager.StartConversation` or `InteractableTalk.OnDialogueStart` for interception.
+Mod conversations, extra choices and branches on the game's NPC lines, narration, intercepting a conversation before it starts, and the framework's own Lua functions (`Oben_QuestState` and others) are in [dialogue-authoring.md](dialogue-authoring.md).

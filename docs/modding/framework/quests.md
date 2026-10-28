@@ -50,9 +50,13 @@ All of them go through the game's methods, so notifications, the task panel, the
 
 The game's methods fail without a word when a required task or objective is missing, the task isn't Active, or the objective is already in that state, and some return nothing at all. Each `QuestLog` method therefore reads the state again afterwards and returns a `QuestResult`: `Changed`, and a `Reason` in plain words when nothing happened. It also refuses, with a reason, while a save is loading (the load would overwrite the change) and outside a loaded world.
 
-Known quirks of the game that you inherit: reopening a finished task with `SetTaskStatus(..., Active)` does not take it out of the game's finished list, so `TaskFinished(id)` in Lua stays true; the game's requirement check for task prerequisites is only applied when handing out objectives, not when changing a task's status. Tasks created at runtime (not from game assets) have no Addressables path, and whether they survive a save is untested, so this module does not create them.
+Known quirks of the game that you inherit: reopening a finished task with `SetTaskStatus(..., Active)` does not take it out of the game's finished list, so `TaskFinished(id)` in Lua stays true; the game's requirement check for task prerequisites is only applied when handing out objectives, not when changing a task's status. Mods make their own tasks with `QuestAuthoring`, see [quest-authoring.md](quest-authoring.md).
+
+Edits are also refused when they come from inside one of the game's own task calls (`EditTask`, `EditTaskStatus`, `EditTaskObjective`, `EditTaskCounter`), for example from a Harmony patch on them: the game is walking its lists at that point. Use the events below, or `StoryPump.Defer` ([story.md](story.md)), to act after the call.
 
 ## Events
+
+`QuestLog.Rewound` reports the rewinds of mods' own tasks (see [quest-authoring.md](quest-authoring.md)); the two events below report everything else.
 
 ```csharp
 QuestLog.TaskChanged.Subscribe(this, c =>
@@ -92,4 +96,4 @@ oben call quests.set task=SomeTask start=true
 oben call quests.set task=SomeTask objective=Collect progress=2 add=true
 ```
 
-`quests.list` prints the started tasks with their objectives (and, with `available=true`, the loaded tasks that were not started). `quests.set` returns `changed`, the `reason` when nothing changed, and the task as it is now. See [../dev-tools.md](../dev-tools.md).
+`quests.create`, `quests.edit` and `quests.rewind` are in [quest-authoring.md](quest-authoring.md). `quests.list` prints the started tasks with their objectives (and, with `available=true`, the loaded tasks that were not started). `quests.set` returns `changed`, the `reason` when nothing changed, and the task as it is now. See [../dev-tools.md](../dev-tools.md).

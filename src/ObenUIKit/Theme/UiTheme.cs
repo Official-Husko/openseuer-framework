@@ -54,6 +54,12 @@ public sealed class UiTheme
     public Color SliderTrack = new Color(0.25f, 0.25f, 0.25f, 1f);
     public Color SliderFill = new Color(1f, 0.26f, 0.26f, 0.85f);
 
+    /// <summary>The developer console's input field look: a translucent grey box with a pale blue selection.</summary>
+    public Color FieldBackground = new Color(0.153f, 0.153f, 0.153f, 0.48f);
+    public Color FieldSelection = new Color(0.659f, 0.808f, 1f, 0.75f);
+    public float CaretWidth = 1f;
+    public float CaretBlinkRate = 0.85f;
+
     public AudioClip HoverClip;
     public AudioClip PressClip;
     public AudioMixerGroup Mixer;

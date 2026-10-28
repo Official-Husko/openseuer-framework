@@ -67,6 +67,20 @@ internal static class ThemeReader
         return true;
     }
 
+    /// <summary>A text input field (the developer console's): background, selection colour and caret.</summary>
+    public static bool FromInputField(UiTheme theme, TMP_InputField field)
+    {
+        if (field == null)
+            return false;
+        var image = field.GetComponent<Image>();
+        if (image != null && image.color.a > 0.01f)
+            theme.FieldBackground = image.color;
+        theme.FieldSelection = field.selectionColor;
+        theme.CaretWidth = Mathf.Max(1, field.caretWidth);
+        theme.CaretBlinkRate = field.caretBlinkRate;
+        return true;
+    }
+
     private static void Sound(SoundInfo sound, ref AudioClip clip, ref float volume, UiTheme theme)
     {
         if (sound == null || sound.Clip == null)

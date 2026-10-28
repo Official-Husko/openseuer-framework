@@ -16,6 +16,7 @@ internal static class ThemeProbes
         var options = helper != null ? Native.MenuOptions(helper) : null;
         bool button = options != null && ThemeReader.FromTextButton(theme, options.GetComponent<TextButtonColorEffectTMP>());
         ReadOptions(theme, mainMenu: true);
+        ReadConsole(theme);
         return button;
     }
 
@@ -26,6 +27,7 @@ internal static class ThemeProbes
             return false;
         bool button = ThemeReader.FromTextButton(theme, pause.resumeMenuButton.GetComponent<TextButtonColorEffectTMP>());
         ReadOptions(theme, mainMenu: false);
+        ReadConsole(theme);
         return button;
     }
 
@@ -51,6 +53,14 @@ internal static class ThemeProbes
             ThemeReader.FromSlider(theme, Native.OptionsFov(menu));
             return;
         }
+    }
+
+    // The developer console lives in DontDestroyOnLoad, so it's there in the menu and in levels.
+    private static void ReadConsole(UiTheme theme)
+    {
+        var console = DeveloperConsole.Instance;
+        if (console != null)
+            ThemeReader.FromInputField(theme, console.InputField);
     }
 
     // Includes inactive objects, but only ones in a scene (not prefab assets).

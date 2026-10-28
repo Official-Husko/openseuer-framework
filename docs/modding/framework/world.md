@@ -1,10 +1,10 @@
-# World: doors, interactables, furniture and power
+# World: doors, interactables, furniture, containers and power
 
-`ObenFramework.World` wraps the parts of the game's world that mods and the co-op mod need most: doors, the things the player can use, lights and switches, placed furniture and the power grid. Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.World;`.
+`ObenFramework.World` wraps the parts of the game's world that mods and the co-op mod need most: doors, the things the player can use, lights and switches, placed furniture (and placing, moving and removing it from code), containers, items lying on the floor and the power grid. Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.World;`.
 
 Background on how the game does these things, and why the hooks are where they are, is in [../../game/world-building.md](../../game/world-building.md). The co-op notes in [../../research/coop-reference.md](../../research/coop-reference.md) (section 5) list the same game methods; the events below are the ones a mod that mirrors the world needs.
 
-What is covered: doors, interactables, light fixtures, wall switches, placed furniture, power grids (read only). What is not: elevators, trains, keypads, crafting machines, storage. Those are in the game notes and can get the same treatment later.
+What is covered: doors, interactables, light fixtures, wall switches, placed furniture, containers (storage), floor items, power grids (read only). What is not: elevators, trains, keypads, crafting machines. Those are in the game notes and can get the same treatment later.
 
 ## Reading the rules once
 
@@ -57,7 +57,7 @@ Component back = ObjectAddress.TryParse(text, out var a) ? a.Resolve() : null;
 
 It holds the scene name, the component's class name, the game's `GUID` where the object has one, and the hierarchy path. Resolving tries the GUID first (the game sets GUIDs in the editor for doors, buttons, lights, grids and most other scene objects, and they are stable), then the path. In a path, `#n` after a segment picks between siblings that share a name (`Door#1` is the second "Door" under that parent); characters that would break the text form inside a name are percent-escaped.
 
-Things spawned at runtime (placed furniture, dropped items) have neither a stable GUID nor a stable path. Placed furniture has its own ids (below).
+Things spawned at runtime (placed furniture, dropped items) have neither a stable GUID nor a stable path. Placed furniture has its own ids (below), floor items and containers theirs (`FloorItems`, `Containers`).
 
 `ObjectResolver.Find<T>(text)` is the loose version used by the facades' `Find(id)`: it accepts the full text, a bare GUID, a hierarchy path or `#instanceId`. GUID lookups use an index built once per scene (a scan of all `SavableScript`s), so the first call in a scene costs one scan; later calls are dictionary reads. None of this is for per-frame use.
 
@@ -165,9 +165,91 @@ The hooks are the ones the game notes recommend. `FurniturePlaceable.SetFurnitur
 
 The build menu's move is a take followed by a place of the same piece, possibly seconds apart. The take is held back; if the next place is the same kind of furniture it becomes one `FurnitureMoved` (and the id is kept), otherwise, or when the player closes the menu or leaves the zone, the held take is reported as a `FurnitureRemoved`. Children and attached pieces of a moved piece go to the inventory (that is what the game does) and are reported as removals.
 
-Not covered: loose items on surfaces (not furniture, no stable id), wallpaper, and the player's furniture inventory.
+Not covered: loose items on surfaces (not furniture; see `FloorItems`), wallpaper, and the player's furniture inventory.
 
-Applying a remote placement or removal is not wrapped yet: the game's `BuildingSystem.Take` puts a removed piece into the local inventory, which is wrong for a remote removal. The notes in [../../game/world-building.md](../../game/world-building.md) section 4.5 describe what an apply has to do.
+### Placing, moving and removing from code
+
+`FurnitureBuilder` makes the changes without the build menu, so another player's change can be applied on this machine. (The class is not called `Furniture` because that is the game's own type for a kind of furniture.)
+
+```csharp
+var edit = FurnitureBuilder.Place("Red Metal Chair", new Vector3(103.1f, -99f, 12.4f), Quaternion.Euler(0, 90, 0), zone: zoneGuid);
+if (!edit.Success) Log.Warn(edit.Error);
+string id = edit.Furniture.Id;
+
+FurnitureBuilder.Move(id, newPosition, Quaternion.Euler(0, 180, 0));
+FurnitureBuilder.Remove(id);
+```
+
+| Call | Does |
+|---|---|
+| `Place(kind, position, rotation, zone = null, options = default, source = Mod)` | Instantiates the prefab under the zone and registers it the way the game's `Place()` does (`SetFurnitureInfo`, skin and alternative, parent and attachment links). `zone` is a manager GUID (`Zones()`), null means the zone the local player is building in. `rotation` is the world rotation of the root. |
+| `Move(id, position, rotation = null, modelRotation = null, source = Mod)` | Sets the transform, keeps the id, refreshes window light and the navmesh cut. Refused for a piece that stands on or hangs on another, or carries others (they would stay behind). |
+| `Remove(id, source = Mod, withPieces = false, force = false)` | Does what `FurniturePlaceable.Take` does (stand up a sitter, unlink, the piece's taken relay, janitor actions, destroy) but never calls `BuildingSystem.Take`, so nothing goes into the local player's furniture inventory. Refused for a piece that carries others unless `withPieces` (those are removed first, each with its own event), for one that holds items, liquid or crafting progress unless `force` (the contents are lost), and for pieces the game marks `cantTake`. |
+| `Zones(scene = null)`, `FindZone(guid)` | The building zones: GUID, scene, position, how many placed pieces, which one is active. |
+
+`kind` is what `FurnitureInfo.TypeId` reports, the asset path (`Assets/Content/Prefabs/Building System/Furniture/Chairs/Red Metal Chair.asset`); `FurnitureKinds.Find` also takes the short name (`Red Metal Chair`) and, last, the title, ignoring case. `FurnitureKinds.All` lists the 655 pieces the build menu knows and `FurnitureKinds.Search(text)` filters them. An asset path the list lacks is loaded from the game's assets. Furniture added by other mods' own systems is not covered.
+
+Every call returns a `FurnitureEdit`: `Success`, `Error` (a plain sentence) and `Furniture` (the `FurnitureInfo` after a place or move, as it stood for a remove). `FurniturePlacement` carries the optional parts: `Skin`, `Alternative`, `ModelRotation`, `ParentId`, `AttachedToId` and `Id`, an id to give the piece so a guest can use the host's ids (the id is set before the piece is registered, so the placed event already carries it).
+
+The events come out as with the build menu: `FurniturePlaced`, `FurnitureMoved` and `FurnitureRemoved` with `Source` set to what you passed (default `Mod`). Place runs inside a `WorldChanges.Enter(source)` scope; move and remove raise their events directly with the given source. Nothing checks that the spot is free: that is the build menu's preview and not a game rule. Every call returns an error while a save is loading or when no world is loaded.
+
+Loose items that lie on surfaces inside a build zone get a furniture component from the game (their "furniture" is a made-up asset with the item's title). `FurnitureBuilder` refuses them ("a loose item, not furniture"); use `FloorItems` for those.
+
+## Containers
+
+`Containers` covers the game's `Storage`: drawers, chests, crates, fridges, a machine's item slots, the hidden storage behind the backpacks.
+
+```csharp
+foreach (ContainerInfo c in Containers.List()) ...           // Id, Title, Scene, Position, SlotCount, IsEmpty, GameLocked, NpcOwner, EditOwner
+Storage storage = Containers.Find(id);                       // null when it is not in a loaded scene
+List<ContainerItem> items = Containers.GetItems(storage);    // Slot, ItemId, Title, Amount, Owner
+int count = Containers.Count(storage, itemId);
+
+int notFitted = Containers.Add(storage, item, 5);            // how many did NOT fit, 0 = all in
+int taken = Containers.Remove(storage, itemId, 3);           // how many were taken, nothing goes to the player
+```
+
+**Ids.** `Containers.IdOf(storage)` is the game's GUID (the editor sets one for every scene container; the 126 in the player's tenement had no duplicates), or the `ObjectAddress` text if it has none. Containers inside furniture the player placed are `furniture:{furnitureId}:{n}`, because the GUID in the prefab is the same for every copy of that piece; the n-th container in the piece is stable. `Containers.Find` understands both, a bare GUID and any address text.
+
+**Add and Remove** use the game's own methods (`Storage.AddItemAndReturnRemaining`, `Storage.RemoveItem`), so stacking, the container's category filters and ownership work as in the game and nothing is dropped on the floor. Items 0 and 1 are not money inside a storage, they are ordinary stacks. Removing ignores who the stack belongs to and does not commit a theft. The open window is refreshed (`UpdateSlots`).
+
+**Events** (all `WorldEvent<ContainerEvent>`, with `Container` and `Source`):
+
+- `Containers.Opened` and `Containers.Closed`: patches on `Storage.EnterExternally` and `ExitExternally`, and on `OnDisable` for a container that is switched off or destroyed while open. The local player's interact key runs inside the player scope, so `Source` is `LocalPlayer`.
+- `Containers.Changed`: raised after the public mutators (`AddItem`, `AddItemAndReturnRemaining`, `AddItemToStorage`, `RemoveItem`, `TakeAll`, `MoveToOtherStorage`, `Empty`) when the slots differ afterwards (a fingerprint of the slots is compared, so a refused add raises nothing), and for drags, drops and quick moves in the open inventory window (reported as `LocalPlayer`). Nested calls report once. `Add` and `Remove` above report as the source you pass (default `Mod`). Loot that a container spawns for itself is not reported.
+
+**Locks.** `ContainerLocks` is a small advisory lock so one user edits a container at a time:
+
+```csharp
+if (!ContainerLocks.TryLock(id, "player-2")) return;        // someone else has it
+try { Containers.Add(storage, item, 1, asOwner: "player-2"); }
+finally { ContainerLocks.Unlock(id, "player-2"); }
+```
+
+There are also `OwnerOf`, `IsHeldByOther`, `ReleaseAll(owner)`, `All()` and the `LockChanged` event for when one is taken or released. `Add` and `Remove` take `asOwner` (null means `ContainerLocks.LocalOwner`, default `"local"`) and do nothing when another owner holds the container. The local player cannot open a container that another owner holds (they get the game's "locked" feedback). With `ContainerLocks.LockWhileLocalPlayerHasOpen = true` the local player takes the lock for the container they open and gives it back on closing, so a co-op mod can broadcast `LockChanged` and keep others out. Locks are not saved and are all dropped when the scene changes. They are separate from the game's own key lock (`ContainerInfo.GameLocked`).
+
+## Floor items
+
+`FloorItems` is for pickups lying in the world: `CollectibleItem` and coins (not blueprints or notes).
+
+```csharp
+foreach (FloorItemInfo i in FloorItems.All()) ...            // Id, ItemId, Title, Amount, Position, Scene, GameObject
+Collectible pickup = FloorItems.Find(id);
+FloorItemInfo? spawned = FloorItems.Spawn(item, 3, position, id: hostId);   // a normal pickup the game saves with the level
+bool gone = FloorItems.Remove(id);                           // destroyed and remembered as gone, nobody gets the item
+```
+
+`All()` walks the game's own `Collectible.allCollectibles`, which holds pickups that have started (active objects of loaded scenes); the game re-creates that set on a load, so do not cache it.
+
+**Ids.** A pickup that came with the scene is identified by its game GUID. A spawned one has none, so it gets a random 8-character id the first time anyone asks (`FloorItems.IdOf`) or, while somebody is subscribed, when it appears. They last for the session: the game saves spawned pickups with the level but not our ids, so after a load they are new. `FloorItems.Adopt(pickup, id)` and `Spawn(..., id)` set an id on purpose, for a guest that must use the host's.
+
+**Events** (`WorldEvent<FloorItemEvent>`, with `Item` and `Source`):
+
+- `Spawned`: any pickup that appears through `ItemOperations.SpawnItemToPosition`, which every drop, `FloorItems.Spawn` and `Items.WorldItems.Spawn` end in. Source is `Mod` for spawns made inside a mod scope, `Game` otherwise.
+- `Dropped`: right after `Spawned` for a pickup that came out of `ItemOperations.DropItem(ItemStack, ...)`: the inventory window's drop, a full inventory spilling over, a storage overflowing, an NPC. `LocalPlayer` when the dropper was the player.
+- `PickedUp`: `CollectibleItem.PerformPickup` and `CollectibleCoin.Interact`. `Item.Amount` is how much was taken (a partial pickup leaves the rest on the floor).
+
+`Remove` and `Spawn` do not go through the pickup path, so applying a remote player's pickup with `Remove(id)` raises no `PickedUp` and nothing is echoed. Loose items that sit in a build zone are pickups too (the game gives them a furniture component), so they appear in both lists.
 
 ## Power grids (read only)
 
@@ -188,10 +270,23 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 | `doors.set` | `id` plus `open` and/or `locked`; `swing` (`default`, `opposite`), `respectLock` |
 | `interact.target` | the crosshair target: id, address, title, type, and state for doors and switches |
 | `furniture.list` | placed furniture with ids; filters `type`, `manager`, `preplaced`, `max` |
+| `furniture.place` | `kind`, `x`/`y`/`z` or `pos`, `yaw`, `zone`, `skin`, `alternative`, `modelYaw`, `id`, `parent`, `attachedTo`, `source` |
+| `furniture.move` | `id`, `x`/`y`/`z` or `pos`, `yaw`, `modelYaw`, `source` |
+| `furniture.remove` | `id`, `withPieces`, `force`, `source` (nothing goes into the furniture inventory) |
+| `furniture.kinds` | the kinds the game knows; `text`, `max` |
+| `furniture.zones` | building zones with GUID, placed count and which is active |
+| `containers.list` | containers nearest first; `radius`, `text`, `empty`, `inactive`, `max`; also the edit locks held |
+| `containers.get` | one container by `id` with its stacks |
+| `floor.list` | items lying in the world nearest first; `radius` (default 10), `item`, `text`, `max` |
 
 ```sh
 oben call doors.list radius=5
 oben call doors.set id=<id> open=true
 oben call interact.target
 oben call furniture.list type=shelf
+oben call furniture.kinds text=chair
+oben call furniture.place kind="Red Metal Chair" pos=[103.1,-99,12.4] yaw=90
+oben call containers.list radius=4
+oben call containers.get id=<id>
+oben call floor.list radius=5
 ```

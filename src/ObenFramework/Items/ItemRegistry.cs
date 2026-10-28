@@ -69,6 +69,7 @@ public static class ItemRegistry
             Apply(item);
         RecipeRegistry.ItemsChanged();
         LootPools.Sync();
+        ItemConsumables.Sync();
     }
 
     private static void Validate(Item item)

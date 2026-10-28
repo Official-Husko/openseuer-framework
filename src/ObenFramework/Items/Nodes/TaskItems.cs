@@ -1,6 +1,8 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System.Collections.Generic;
+using ObenFramework.Saves;
 using ObenFramework.World;
+using UnityEngine;
 
 namespace ObenFramework.Items;
 
@@ -93,6 +95,58 @@ public static class TaskItems
                 return entry.amount;
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Gives the player a task item by its id (any task item asset the game has loaded; blueprints excluded).
+    /// True when the amount went up.
+    /// </summary>
+    public static bool Add(string id, int amount = 1)
+    {
+        var manager = TaskItemsManager.instance;
+        if (string.IsNullOrEmpty(id) || amount <= 0 || manager == null || SaveGate.IsBusy)
+            return false;
+        var asset = FindAsset(id);
+        if (asset == null || asset is TaskItemBlueprint)
+            return false;
+        int before = Amount(id);
+        using (WorldChanges.EnterMod())
+            manager.AddTaskItem(asset, amount);
+        return Amount(id) > before;
+    }
+
+    /// <summary>Takes up to <paramref name="amount"/> of a task item from the player. True when anything was taken.</summary>
+    public static bool Remove(string id, int amount = 1)
+    {
+        var manager = TaskItemsManager.instance;
+        if (string.IsNullOrEmpty(id) || amount <= 0 || manager == null || SaveGate.IsBusy)
+            return false;
+        TaskItemsManager.TaskItemInfo entry = null;
+        foreach (var e in manager.taskItems)
+        {
+            if (e != null && e.taskItem != null && e.taskItem.Id == id)
+            {
+                entry = e;
+                break;
+            }
+        }
+        if (entry == null)
+            return false;
+        int before = entry.amount;
+        using (WorldChanges.EnterMod())
+            manager.RemoveItem(entry.taskItem, amount);
+        return !manager.taskItems.Contains(entry) || entry.amount < before;
+    }
+
+    // Task items are assets; the ones the game knows are loaded, so a scan of loaded assets finds them.
+    private static TaskItem FindAsset(string id)
+    {
+        foreach (var asset in Resources.FindObjectsOfTypeAll<TaskItem>())
+        {
+            if (asset != null && asset.Id == id)
+                return asset;
+        }
+        return null;
     }
 
     internal static TaskItemInfo Describe(TaskItem item, int amount) =>

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace ObenFramework.Assets;
 
@@ -22,7 +21,7 @@ public sealed class AssetEntry
     /// <summary>Size, length and so on in one line.</summary>
     public string Detail { get; internal set; }
 
-    /// <summary>Memory the engine reports for it, in bytes.</summary>
+    /// <summary>Memory it takes in bytes: what the engine reports, or worked out from its size in release builds.</summary>
     public long Bytes { get; internal set; }
 }
 
@@ -101,7 +100,7 @@ public static partial class ModAssets
         Name = Path.GetFileName(source),
         Source = source,
         Detail = detail,
-        Bytes = asset != null ? Profiler.GetRuntimeMemorySizeLong(asset) : 0,
+        Bytes = AssetSizes.Of(asset),
     };
 
     // Cache keys are "path|options".

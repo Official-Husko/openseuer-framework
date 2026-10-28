@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ObenCoop.Net.Blobs;
 using ObenCoop.Net.Messaging;
 using ObenCoop.Net.Transport;
 
@@ -35,6 +36,8 @@ public sealed partial class CoopSession
         _transport.PeerConnected += OnPeerConnected;
         _transport.PeerDisconnected += OnPeerDisconnected;
         _transport.PacketReceived += OnPacket;
+        _processQueued = ProcessPacket;
+        Blobs = new BlobTransfer(this);
     }
 
     public SessionOptions Options { get; }
@@ -44,6 +47,9 @@ public sealed partial class CoopSession
     public Roster Roster { get; } = new Roster();
 
     public MessageRouter Router { get; } = new MessageRouter();
+
+    /// <summary>Sends and receives byte arrays of any size, on channels of their own.</summary>
+    public BlobTransfer Blobs { get; }
 
     public bool IsHost => State == SessionState.Hosting;
 
@@ -121,12 +127,17 @@ public sealed partial class CoopSession
     /// <summary>Call once per frame: delivers received packets and checks timeouts.</summary>
     public void Poll()
     {
+        // What the last poll left in the queues goes first, then what the transport has now.
+        _inbound.BeginPoll();
+        _inbound.Drain(Options.MaxMessagesPerPoll, _processQueued);
         _transport.Poll();
         long now = Options.Clock();
         if (State == SessionState.Hosting)
             CheckPendingTimeouts(now);
         else if (State == SessionState.Connecting && _transportConnected && now - _helloSentAt > Options.WelcomeTimeoutMs)
             Abort(new SessionEnd(EndKind.ConnectFailed, RejectReason.None, "The host didn't answer."));
+        if (IsActive)
+            Blobs.Poll(now);
     }
 
     /// <summary>Round trip time to a player in milliseconds, -1 if unknown (clients only know the host).</summary>
@@ -162,6 +173,8 @@ public sealed partial class CoopSession
         _hostPeer = -1;
         _transportConnected = false;
         _pending.Clear();
+        _inbound.Clear();
+        _backedUp.Clear();
         Roster.Clear();
         Log("Session ended: " + end);
         try { Ended?.Invoke(end); }
@@ -175,7 +188,7 @@ public sealed partial class CoopSession
         End(end);
     }
 
-    private void Log(string message) => Options.Log?.Invoke(message);
+    internal void Log(string message) => Options.Log?.Invoke(message);
 
     private static string CleanName(string name)
     {

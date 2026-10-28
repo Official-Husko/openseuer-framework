@@ -16,26 +16,31 @@ public sealed partial class CoopSession
     public bool Broadcast(byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
     {
         if (State == SessionState.Hosting)
-            return SendFromHost(null, channel, payload, mode);
-        return State == SessionState.Joined && SendToHostPeer(Protocol.AllOthers, channel, payload, mode);
+            return SendFromHost(null, channel, payload, mode, true);
+        return State == SessionState.Joined && SendToHostPeer(Protocol.AllOthers, channel, payload, mode, true);
     }
 
     /// <summary>Sends a message to one player. On a client the host passes it on unless the target is the host.</summary>
-    public bool SendTo(CoopPlayer target, byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
+    public bool SendTo(CoopPlayer target, byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered) =>
+        SendTo(target, channel, payload, mode, true);
+
+    // The blob layer sends its small control packets with limited=false: they are bounded by the
+    // number of transfers, and losing an ack to a full queue would stall a transfer for nothing.
+    internal bool SendTo(CoopPlayer target, byte channel, MessageWriter payload, DeliveryMode mode, bool limited)
     {
         if (target == null || target.IsLocal || Roster.Find(target.Slot) != target)
             return false;
         if (State == SessionState.Hosting)
-            return SendFromHost(target, channel, payload, mode);
-        return State == SessionState.Joined && SendToHostPeer(target.Slot, channel, payload, mode);
+            return SendFromHost(target, channel, payload, mode, limited);
+        return State == SessionState.Joined && SendToHostPeer(target.Slot, channel, payload, mode, limited);
     }
 
     /// <summary>Sends a message to the host only. False on the host itself.</summary>
     public bool SendToHost(byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered) =>
-        State == SessionState.Joined && SendToHostPeer(CoopPlayer.HostSlot, channel, payload, mode);
+        State == SessionState.Joined && SendToHostPeer(CoopPlayer.HostSlot, channel, payload, mode, true);
 
     // Host: to one player or, with null, to everyone else. The slot byte says who sent it (the host).
-    private bool SendFromHost(CoopPlayer only, byte channel, MessageWriter payload, DeliveryMode mode)
+    private bool SendFromHost(CoopPlayer only, byte channel, MessageWriter payload, DeliveryMode mode, bool limited)
     {
         var envelope = Envelope(mode, channel, CoopPlayer.HostSlot, payload.Buffer, 0, payload.Length);
         try
@@ -47,7 +52,7 @@ public sealed partial class CoopSession
                 var player = players[i];
                 if (player.IsLocal || (only != null && player != only))
                     continue;
-                sent |= _transport.Send(player.Peer, envelope.Buffer, 0, envelope.Length, mode);
+                sent |= SendPacket(player, envelope, mode, limited);
             }
             return sent;
         }
@@ -57,12 +62,12 @@ public sealed partial class CoopSession
         }
     }
 
-    private bool SendToHostPeer(byte target, byte channel, MessageWriter payload, DeliveryMode mode)
+    private bool SendToHostPeer(byte target, byte channel, MessageWriter payload, DeliveryMode mode, bool limited)
     {
         var envelope = Envelope(mode, channel, target, payload.Buffer, 0, payload.Length);
         try
         {
-            return _transport.Send(_hostPeer, envelope.Buffer, 0, envelope.Length, mode);
+            return SendPacket(Roster.Host, envelope, mode, limited);
         }
         finally
         {
@@ -108,7 +113,7 @@ public sealed partial class CoopSession
                 var player = players[i];
                 if (player.IsLocal || player == sender || (target != Protocol.AllOthers && player.Slot != target))
                     continue;
-                _transport.Send(player.Peer, envelope.Buffer, 0, envelope.Length, mode);
+                SendPacket(player, envelope, mode, true);
             }
         }
         finally

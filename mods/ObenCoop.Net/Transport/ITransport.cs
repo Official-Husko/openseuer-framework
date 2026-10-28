@@ -44,6 +44,13 @@ public interface ITransport
     /// <summary>Closes one connection; the other side sees <paramref name="reason"/>.</summary>
     void DisconnectPeer(int peer, string reason);
 
+    /// <summary>
+    /// Reliable packets handed to the transport that are still waiting to go out (not yet on the
+    /// wire because the peer is slow). Counted in the transport's own packets, so a big message
+    /// that was split counts once per piece. 0 for an unknown peer.
+    /// </summary>
+    int QueuedPackets(int peer);
+
     /// <summary>Round trip in milliseconds, or -1 for an unknown peer.</summary>
     int PingOf(int peer);
 

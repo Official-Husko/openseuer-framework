@@ -101,6 +101,9 @@ public sealed partial class DirectTransport : ITransport
         _manager.DisconnectPeer(target, bytes);
     }
 
+    public int QueuedPackets(int peer) =>
+        _peers.TryGetValue(peer, out var target) ? target.GetPacketsCountInReliableQueue(0, true) : 0;
+
     public int PingOf(int peer) => _peers.TryGetValue(peer, out var target) ? target.RoundTripTime : -1;
 
     public void Stop()

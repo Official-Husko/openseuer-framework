@@ -16,10 +16,34 @@ Both only exist in gameplay scenes. `GameClock.IsAvailable` and `GameWeather.IsA
 | `WeekdayIndex` | the game's numbering, 0 is Monday, 6 is Sunday |
 | `Weekday` | the same as `System.DayOfWeek` |
 | `IsDaytime` | the game's own rule, 06:00 to 20:00 |
-| `TimeSpeed` | speed factor, 1 is normal (24 real minutes per day), 0 stops time |
+| `TimeSpeed` | the game's speed factor, 1 is normal (a day takes `dayLenghtInMinutes` real minutes, 96 in 0.5.13), 0 stops time |
 | `SetTime(float hours)`, `SetTime(int hours, int minutes)` | jump to a time of day, same ranges as the console's `change_time` |
 
-`TimeSpeed` is the game's `timeSpeedOverrideFactor`. Sleeping and waiting set it themselves and put it back to 1 when they end, so a speed set by a mod doesn't survive them.
+`TimeSpeed` is the game's `timeSpeedOverrideFactor`. Sleeping and waiting set it themselves and put it back to 1 when they end, so a speed set by a mod doesn't survive them, and two mods setting it overwrite each other. Use `TimeControl` for anything a mod holds on to.
+
+## TimeControl
+
+Freezing the clock and changing its speed, held per mod:
+
+```csharp
+TimeControl.Freeze(this);          // time stops until Unfreeze(this) or the mod unloads
+TimeControl.Unfreeze(this);
+TimeControl.SetSpeed(this, 2f);    // twice as fast, 0.01 to 100
+TimeControl.ClearSpeed(this);
+```
+
+| Member | Meaning |
+| --- | --- |
+| `IsFrozen`, `IsFrozenBy(owner)` | some mod freezes time / this one does |
+| `Speed` | the speed in force: the newest one set, 1 when none |
+| `IsSuspended` | the game itself is running time fast right now (sleeping, waiting, a crafting wait), so the overrides stand aside |
+| `IsAvailable` | the clock hook is in place (its patch area `Clock` didn't fail) |
+| `Holders()` | who holds a freeze or a speed, for tools |
+
+- Any freeze stops time; it runs again once every freezing mod has let go. Of the speeds the newest wins, and when its mod clears it the one set before applies again.
+- Everything a mod holds goes when it unloads, and all overrides end when the player returns to the main menu. Level changes keep them.
+- It doesn't touch the game's own speed factor (`GameClock.TimeSpeed`). It shortens or stops the day length the game hands the Azure time controller each frame, so while the game speeds time up for sleeping, waiting or a crafting wait the overrides stand aside and those always finish; they apply again afterwards. Slowdowns the game makes (card games run at 0.25) are combined with them.
+- Frozen time means no `MinutePassed`, `HourChanged` or `DayChanged`, and no timers of the game that count in-game time.
 
 Values are read from the Azure time controller, not from the game's `currentTimeAndDay`, which lags a minute behind inside the game's own minute event.
 
@@ -56,9 +80,15 @@ GameClock.SecondPassed.Subscribe(this, seconds => ...);
 
 `clock.get`, `clock.set` (`hours`, `minutes`, optional `speed`), `weather.get`, `weather.list`, `weather.set` (`name` as name or index, optional `transition`). At the main menu or in a scene without the system they return an error saying so.
 
+`time.control` shows the overrides; `time.freeze` (`on`, default true) and `time.speed` (`speed`, or `clear=true`) hold them in the bridge's name.
+
 ```sh
 oben call clock.get
 oben call clock.set hours=6 minutes=30
+oben call time.freeze
+oben call time.freeze on=false
+oben call time.speed speed=10
+oben call time.speed clear=true
 oben call weather.list
 oben call weather.set name=Rain
 ```

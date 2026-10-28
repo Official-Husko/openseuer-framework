@@ -58,6 +58,7 @@ public sealed class FrameworkMod : ObenMod
         Start("feature command", FeatureCommand.Register);
         Start("mod saves", ModSaves.Init);
         Start("clock", GameClock.Init);
+        Start("time control", TimeControl.Init);
         Start("dialogue", DialogueModule.Init);
         Start("quests", QuestWatcher.Attach);
         Start("new games", NewGamesModule.Init);

@@ -117,6 +117,7 @@ The built-in pages:
 
 - **Mods** lists every installed mod with its version, description and state, whether it loads when the game starts, and an Off/On switch for each of its features (`ModFeatures`).
 - **Settings** shows the config files mods registered (below).
+- **Hotkeys** lists every mod's registered hotkeys with controls to rebind them (see Hotkeys below).
 - **What's New** shows the release notes from `changelog.json`, newest release first, grouped by mod and by Added, Changed, Fixed and Removed. See `docs/modding/changelog.md` for where the file comes from.
 - **Errors** lists this session's problems from `ErrorReport`: who reported each one, its title, how often and when it last happened, the scene, and the first lines of its details. Clear empties the report, Copy report puts it on the clipboard. Bug reports should attach `ObenLoader/logs/errors.log`, which holds the same list with the game and mod versions.
 
@@ -166,9 +167,55 @@ Edits are written with `config.Save()` right away, which also raises the config'
 
 The list of fields is worked out by reflection once per settings class and cached.
 
+## HUD hints, subtitles and bars
+
+`Hud` puts short things on the game's HUD. Each belongs to the mod (or feature) that adds it and goes when that unloads.
+
+```csharp
+using ObenUIKit;
+
+Hud.Hint(this, "Press {key:Interact} to open the crate.", seconds: 8f);
+Hud.Hint(this, "Rain is coming.", title: "Weather");
+Hud.Subtitle("Somebody is following you.", seconds: 4f);
+
+HudBar bar = Hud.Bar(this, "Stamina", () => Stamina.Fraction);
+bar.Color = Color.cyan;   // optional; the theme's slider colour otherwise
+bar.Remove();
+```
+
+- **Hints** go through the game's own `HintOverlay` side panel in levels, so they look and animate like its scene hints, and `{key:Action Name}` becomes the player's current key (`HintContent.ResolveKeys`). Our entry goes above the scene's own hints while it shows, and theirs come back after. The player's Hints key and setting still apply: with hints switched off nothing shows unless you pass `force: true`. Where the game has no hint panel (the main menu) the kit draws an equivalent box on the right edge from the theme, and unresolved `{key:...}` shows as the plain action name.
+- Hints show one at a time in the order they were added, each for `seconds` (0.5 to 120, default 6) once it is up. Asking again for a hint with the same owner, title and text extends the one already waiting instead of queueing a copy, so calling `Hud.Hint` from an event that fires often is safe. At most six wait; the oldest waiting one is dropped first. `HudHint.Hide()` removes one early.
+- **Subtitle** is one line near the bottom of the screen on a dark strip, in the game's font. A new line replaces the one showing; it fades during its last half second. It has no owner because it only lives for a few seconds.
+- **Bar** is a small labelled bar at the top left, track and fill in the theme's slider colours. The function returns 0 to 1 and is read five times a second (the bar glides between reads, with no allocations per frame); if it throws, the bar is logged and removed. Up to six bars; `Hud.Bar` returns null beyond that. Bars only show in a level.
+- Nothing shows while a kit window or the pause menu is open, while a save loads, or while the game's own HUD is hidden (the hide-HUD key, inventory and other full menus). Hint and subtitle timers wait until it is back. The HUD pieces sit under the kit's windows.
+
+The code is in `Hud/`: `HintQueue` (plain bookkeeping), `NativeHints` (the `HintOverlay` bridge), `HintPanel`, `SubtitleLine`, `BarStack`, with `HudRuntime` tying them to the kit's lifetime. The per-frame component is only enabled while something is showing.
+
+## Hotkeys
+
+`Hotkeys` is a registry of mod hotkeys the player can rebind, so mods don't each read `Input.GetKeyDown` and each invent a settings screen.
+
+```csharp
+using ObenUIKit;
+
+Hotkeys.Register(this, "open", "Open the cheat menu", KeyCode.Insert, Open);
+Hotkeys.Register(this, "heal", "Heal", KeyCode.H, Heal, KeyModifiers.Ctrl);
+Hotkeys.Register(this, "close", "Close the menu", KeyCode.Insert, Close, scope: HotkeyScope.InGame | HotkeyScope.Windows);
+```
+
+- The owner is a mod or one of its features. The id is stored in `hotkeys.json` in the kit's folder as `mod id/hotkey id`, so keep it stable. Only choices that differ from the default are written. A hotkey goes away when its owner unloads; registering the same id twice is an error.
+- `KeyModifiers` is Ctrl, Shift and Alt (left or right). A chord fires when its key goes down with its modifiers held; extra modifiers don't matter, except that a more specific chord on the same key wins (Ctrl+K held means plain K doesn't fire).
+- `Hotkey` has `Chord`, `Default`, `Rebind(chord)`, `Reset()` and a `Changed` event.
+- One check per frame covers every hotkey. It returns at once unless some key went down, and only then looks at the hotkeys' keys and the gate. It allocates nothing. `onPressed` runs inside a try/catch that logs the mod's id.
+- The gate is what the Cheat Menu uses to open: no firing while a text field or key binding row has the keyboard, while the game waits for a key in its own key bindings page, in the F1 console, with a menu, shop, dialogue, or the pause menu open, or while the game's controls are locked. A kit window blocks it too, unless the hotkey's `HotkeyScope` includes `Windows` (a hotkey that closes its own window). `HotkeyScope.MainMenu` allows it at the main menu. The default is `InGame`.
+- **Conflicts.** `Hotkeys.ConflictOf(hotkey)` says what a hotkey shares its key with: another hotkey that fires with it, or a key of the game's (the player's current bindings from `KeyBindings`, so rebinding in the game is noticed, plus the keys the game reads directly: F1, F11, F12, 1 to 4, Esc, Enter). Modifiers are ignored for the game's keys. A clash at registration is logged; nothing is blocked.
+- The **Hotkeys** page of the mod menu lists every mod's hotkeys grouped by mod: a key binding row, a cycle for Ctrl, Shift and Alt (a modifier can't be picked by the key row because pressing it ends the capture), the chord now with its default and any clash, and Reset and Unbind buttons. Reset all asks first. The list updates as mods load and unload.
+
 ## Known limitations
 
 - No lists with many rows, tabs or tooltips yet (planned, see the design notes).
+- HUD bars and the fallback hint panel have fixed places (top left, right edge); the game's own HUD layout isn't read.
+- A hotkey can only be a keyboard key with Ctrl, Shift or Alt; mouse and pad buttons can't be bound, same as the key binding row.
 - The window always uses the centred column layout of the pause menu, or the small box of a dialog.
 - A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.

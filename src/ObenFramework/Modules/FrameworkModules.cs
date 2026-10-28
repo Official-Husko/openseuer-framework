@@ -68,7 +68,7 @@ public static class FrameworkModules
 
     /// <summary>
     /// Runs every started part's per-frame work, each in its own try/catch so one throwing can't keep the
-    /// others from running. A failure is logged once per part (every one still counts in errors.log).
+    /// others from running. A failure is logged once per part.
     /// </summary>
     internal static void Update()
     {
@@ -83,8 +83,10 @@ public static class FrameworkModules
             }
             catch (Exception e)
             {
+                bool first = module.UpdateError == null;
                 module.UpdateError = e.GetBaseException().Message;
-                _log?.ErrorOnce("update:" + module.Name, $"Framework part '{module.Name}' failed in its update (repeats are not logged)", e);
+                if (first)
+                    _log?.Error($"Framework part '{module.Name}' failed in its update (repeats are not logged)", e);
             }
         }
     }

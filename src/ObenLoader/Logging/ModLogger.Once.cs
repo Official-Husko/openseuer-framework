@@ -5,6 +5,7 @@ namespace ObenLoader.Logging;
 public sealed partial class ModLogger
 {
     private readonly OnceKeys _once = new OnceKeys();
+    private readonly OnceKeys _failed = new OnceKeys();
     private readonly ChangeFilter _changes = new ChangeFilter();
 
     /// <summary>
@@ -39,18 +40,15 @@ public sealed partial class ModLogger
     }
 
     /// <summary>
-    /// An error written the first time <paramref name="key"/> comes up. Repeats aren't written, but they
-    /// still count in errors.log. Returns whether it was written.
+    /// An error written the first time <paramref name="key"/> comes up and never again until the mod
+    /// reloads. A repeat costs one set lookup, so this is safe in a Harmony handler that runs every
+    /// frame. Returns whether it was written.
     /// </summary>
     public bool ErrorOnce(string key, string message, Exception e = null)
     {
-        string text = e == null ? message : message + "\n" + e;
         if (!_once.First(key))
-        {
-            LogHub.CountError(Source, text);
             return false;
-        }
-        Write(LogLevel.Error, text);
+        Write(LogLevel.Error, e == null ? message : message + "\n" + e);
         return true;
     }
 
@@ -58,8 +56,14 @@ public sealed partial class ModLogger
     /// For code running inside the game's own methods (Harmony handlers, game events), which must never
     /// throw: logs "<paramref name="where"/> failed" with the exception the first time that place fails.
     /// </summary>
-    public bool Failed(string where, Exception e) =>
-        ErrorOnce("failed:" + where, $"{where} failed (further failures of it are not logged)", e);
+    public bool Failed(string where, Exception e)
+    {
+        // Own key set, so a repeat needs no string building at all.
+        if (!_failed.First(where))
+            return false;
+        Write(LogLevel.Error, $"{where} failed (further failures of it are not logged)\n{e}");
+        return true;
+    }
 
     /// <summary>
     /// Forgets the once-keys starting with <paramref name="keyPrefix"/> (all of them for null), so they
@@ -68,6 +72,7 @@ public sealed partial class ModLogger
     public void ForgetOnce(string keyPrefix = null)
     {
         _once.Forget(keyPrefix);
+        _failed.Forget(keyPrefix);
         if (keyPrefix == null)
             _changes.Forget();
     }

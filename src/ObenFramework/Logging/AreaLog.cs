@@ -5,18 +5,18 @@ namespace ObenFramework.Logging;
 
 /// <summary>
 /// One area's part of the framework log (items, NPCs, the world...). Refusals and failures that can repeat
-/// every frame are logged once, through the framework logger's log-once keys under the area's own prefix,
-/// so <see cref="Reset"/> only forgets this area's. Everything is forgotten when the framework reloads.
-/// Safe to call while the framework isn't loaded: nothing is logged then.
+/// every frame are logged once per key with the loader's <see cref="OnceKeys"/>, the same helper behind
+/// <see cref="ModLogger.WarnOnce"/>. The keys are the area's own, so <see cref="Reset"/> only forgets this
+/// area's, and a repeat costs one set lookup and no allocation. Everything is forgotten when the framework
+/// reloads. Safe to call while the framework isn't loaded: nothing is logged then.
 /// </summary>
 internal sealed class AreaLog
 {
-    private readonly string _prefix;
+    private readonly OnceKeys _once = new OnceKeys();
 
     public AreaLog(string area)
     {
         Area = area;
-        _prefix = area + ":";
     }
 
     public string Area { get; }
@@ -41,23 +41,35 @@ internal sealed class AreaLog
     public bool WarnOnce(string key, string message)
     {
         var log = Framework;
-        return log != null && log.WarnOnce(_prefix + key, message);
+        if (log == null || !_once.First(key))
+            return false;
+        log.Warn(message);
+        return true;
     }
 
-    /// <summary>An error logged the first time <paramref name="key"/> comes up in this area; repeats still count in errors.log.</summary>
+    /// <summary>An error logged the first time <paramref name="key"/> comes up in this area.</summary>
     public bool ErrorOnce(string key, string message, Exception e = null)
     {
         var log = Framework;
-        return log != null && log.ErrorOnce(_prefix + key, message, e);
+        if (log == null || !_once.First(key))
+            return false;
+        log.Error(message, e);
+        return true;
     }
 
     /// <summary>
     /// For Harmony handlers and game event handlers, which must never throw into the game's code: logs the
-    /// failure the first time <paramref name="where"/> fails.
+    /// failure the first time <paramref name="where"/> fails. The message is only built that first time.
     /// </summary>
-    public bool Failed(string where, Exception e) =>
-        ErrorOnce("failed:" + where, $"{where} failed (further failures of it are not logged)", e);
+    public bool Failed(string where, Exception e)
+    {
+        var log = Framework;
+        if (log == null || !_once.First(where))
+            return false;
+        log.Error($"{where} failed (further failures of it are not logged)", e);
+        return true;
+    }
 
     /// <summary>Forgets what this area already logged, so it's reported again.</summary>
-    public void Reset() => Framework?.ForgetOnce(_prefix);
+    public void Reset() => _once.Forget();
 }

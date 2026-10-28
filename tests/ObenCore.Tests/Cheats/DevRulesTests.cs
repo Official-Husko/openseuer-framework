@@ -11,7 +11,7 @@ public class DevRulesTests
     [InlineData("TenementBasementDone", "  basement ", true)]
     [InlineData("TenementBasementDone", "roof", false)]
     [InlineData(null, "roof", false)]
-    public void MatchesIgnoresCaseAndSpaces(string text, string filter, bool expected) =>
+    public void MatchesIgnoresCaseAndSpaces(string? text, string? filter, bool expected) =>
         Assert.Equal(expected, DevRules.Matches(text, filter));
 
     [Fact]
@@ -33,7 +33,7 @@ public class DevRulesTests
     [InlineData("MyMod.2nd", null)]
     [InlineData("", null)]
     [InlineData(null, null)]
-    public void TaskOwnerIsTheModIdBeforeTheLastDot(string taskId, string expected) =>
+    public void TaskOwnerIsTheModIdBeforeTheLastDot(string? taskId, string? expected) =>
         Assert.Equal(expected, DevRules.TaskOwner(taskId));
 
     [Fact]
@@ -73,12 +73,12 @@ public class DevRulesTests
     [InlineData("TimeOfDayAzure:")]
     [InlineData("TimeOfDayAzure:a b")]
     [InlineData(null)]
-    public void BrokenWatchKeysAreRefused(string key) => Assert.False(DevRules.TrySplitWatch(key, out _, out _));
+    public void BrokenWatchKeysAreRefused(string? key) => Assert.False(DevRules.TrySplitWatch(key, out _, out _));
 
     [Theory]
     [InlineData("short", 10, "short")]
     [InlineData("exactly10!", 10, "exactly10!")]
     [InlineData("a bit too long", 10, "a bit t...")]
     [InlineData(null, 10, "")]
-    public void CutKeepsTheLimit(string text, int max, string expected) => Assert.Equal(expected, DevRules.Cut(text, max));
+    public void CutKeepsTheLimit(string? text, int max, string expected) => Assert.Equal(expected, DevRules.Cut(text, max));
 }

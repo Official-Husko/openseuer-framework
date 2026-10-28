@@ -20,5 +20,6 @@ internal static class PlayerModule
         CustomSkillRows.Init(framework);
         PlayerEffects.Init(framework);
         CustomInteractions.Init(framework);
+        Weapons.Init(framework);
     }
 }

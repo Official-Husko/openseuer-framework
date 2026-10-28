@@ -49,6 +49,7 @@
     <Compile Include="../../src/ObenFramework/Player/Sleep/WaitMath.cs" Link="Linked/Player/WaitMath.cs" />
     <Compile Include="../../src/ObenFramework/Player/Skills/CustomSkillMath.cs" Link="Linked/Player/CustomSkillMath.cs" />
     <Compile Include="../../src/ObenFramework/Player/Skills/SkillBannerQueue.cs" Link="Linked/Player/SkillBannerQueue.cs" />
+    <Compile Include="../../src/ObenFramework/Player/Weapons/DamageMath.cs" Link="Linked/Player/DamageMath.cs" />
     <!-- The asset formats (WAV, OBJ, MTL, mesh layout, image headers) use no Unity types. -->
     <Compile Include="../../src/ObenFramework/Assets/Formats/*.cs" LinkBase="Linked/Assets" />
     <!-- NPC routine tables, walk maths, mod NPC and tame save files, phone digits: plain C#. -->

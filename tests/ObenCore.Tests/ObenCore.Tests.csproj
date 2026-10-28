@@ -50,6 +50,11 @@
     <Compile Include="../../src/ObenFramework/Console/ConsoleTokens.cs" Link="Linked/ConsoleTokens.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveBlobLimits.cs" Link="Linked/SaveBlobLimits.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveGateState.cs" Link="Linked/SaveGateState.cs" />
+    <!-- Patch areas: the bookkeeping, method lookup and exception text use no Unity or Harmony types. -->
+    <Compile Include="../../src/ObenFramework/Patching/PatchAreaBook.cs" Link="Linked/Patching/PatchAreaBook.cs" />
+    <Compile Include="../../src/ObenFramework/Patching/PatchAreaInfo.cs" Link="Linked/Patching/PatchAreaInfo.cs" />
+    <Compile Include="../../src/ObenFramework/Patching/PatchErrors.cs" Link="Linked/Patching/PatchErrors.cs" />
+    <Compile Include="../../src/ObenFramework/Patching/MethodFinder.cs" Link="Linked/Patching/MethodFinder.cs" />
     <!-- Player maths: movement multipliers, wait times, custom skills. -->
     <Compile Include="../../src/ObenFramework/Player/MultiplierTable.cs" Link="Linked/Player/MultiplierTable.cs" />
     <Compile Include="../../src/ObenFramework/Player/Sleep/WaitMath.cs" Link="Linked/Player/WaitMath.cs" />

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using Currency = Money.Currency;
 
@@ -15,6 +16,7 @@ namespace ObenFramework.Economy;
 /// <see cref="Prices"/> modifier.
 /// </summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class TraderDealPatches
 {
     internal struct State
@@ -90,6 +92,7 @@ internal static class TraderDealPatches
 
 /// <summary>Vending machine purchases. The game decrements <c>currentStock</c> only when the payment went through.</summary>
 [HarmonyPatch(typeof(VendingMachine), nameof(VendingMachine.Buy))]
+[PatchArea("Shops")]
 internal static class VendingDealPatches
 {
     internal struct State

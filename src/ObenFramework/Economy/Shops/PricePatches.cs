@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using Currency = Money.Currency;
 
@@ -14,6 +15,7 @@ namespace ObenFramework.Economy;
 /// postfix hands the game's price to <see cref="ShopPricing"/> and returns at once while no modifier exists.
 /// </summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class PricePatches
 {
     internal static void Fail(string ownerId, Exception e) => WorldLog.Failed("Price modifier of " + ownerId, e);
@@ -93,6 +95,7 @@ internal static class PricePatches
 
 /// <summary>The four furniture shop price methods, patched with one postfix that reads which one it is from the method name.</summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class FurniturePricePatches
 {
     [HarmonyTargetMethods]

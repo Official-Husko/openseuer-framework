@@ -1,5 +1,6 @@
 using System;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 
 namespace ObenFramework.Economy;
@@ -10,6 +11,7 @@ namespace ObenFramework.Economy;
 /// through <see cref="ShopStock"/> is topped up first, then <see cref="Shops.Restocked"/> is raised.
 /// </summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class RestockPatches
 {
     [HarmonyPatch(typeof(Storage), nameof(Storage.SpawnItems))]

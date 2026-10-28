@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using Currency = Money.Currency;
 
@@ -14,6 +15,7 @@ namespace ObenFramework.Economy;
 /// can differ from the charged total by the rounding of that total.
 /// </summary>
 [HarmonyPatch(typeof(MarketShop), nameof(MarketShop.Pay))]
+[PatchArea("Shops")]
 internal static class MarketDealPatches
 {
     internal sealed class State
@@ -99,6 +101,7 @@ internal static class MarketDealPatches
 /// a deal counts when the balance moved. A free piece of furniture changes no balance and is not reported.
 /// </summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class FurnitureDealPatches
 {
     internal struct State

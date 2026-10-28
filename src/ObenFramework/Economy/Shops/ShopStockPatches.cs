@@ -1,5 +1,6 @@
 using System;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 
 namespace ObenFramework.Economy;
@@ -10,6 +11,7 @@ namespace ObenFramework.Economy;
 /// vanilla entry list only (see <see cref="ShopStockVending"/>).
 /// </summary>
 [HarmonyPatch]
+[PatchArea("Shops")]
 internal static class ShopStockPatches
 {
     [HarmonyPatch(typeof(Storage), nameof(Storage.OnLoadingGame))]

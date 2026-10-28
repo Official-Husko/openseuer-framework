@@ -1,10 +1,12 @@
 using ObenFramework.Events;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 
 namespace ObenFramework.Economy;
 
 /// <summary>Sets up the shops module: forgets scene-bound caches when a level goes away and undoes everything on unload.</summary>
+[PatchArea("Shops")]
 internal static class ShopsModule
 {
     public static void Init(ObenMod framework)

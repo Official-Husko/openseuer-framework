@@ -19,5 +19,6 @@ internal static class PlayerModule
         SkillBanners.Init(framework);
         CustomSkillRows.Init(framework);
         PlayerEffects.Init(framework);
+        CustomInteractions.Init(framework);
     }
 }

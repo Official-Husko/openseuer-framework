@@ -3,6 +3,7 @@ using System.Linq;
 using ObenLoader;
 using ObenLoader.Runtime;
 using ObenUIKit.Controls;
+using ObenUIKit.Menu.Settings;
 using ObenUIKit.Windows;
 
 namespace ObenUIKit.Menu;
@@ -49,10 +50,20 @@ public static class ModMenu
             return;
         }
         _window = UiKit.Open(_kit, WindowId, "Mods", Build);
-        _window.Closed += () => _window = null;
+        _window.Closed += () =>
+        {
+            _window = null;
+            ModSettings.FlushAll();
+        };
     }
 
     public static void Close() => _window?.Close();
+
+    internal static void Rebuild()
+    {
+        if (IsOpen)
+            _window.Rebuild();
+    }
 
     internal static void Init(ObenMod kit)
     {
@@ -78,6 +89,7 @@ public static class ModMenu
 
     private static void Build(UiBuilder ui)
     {
+        ModSettings.FlushAll();
         var ordered = Pages.OrderBy(p => p.Order).ThenBy(p => p.Title).ToList();
         if (ordered.Count == 0)
         {

@@ -2,6 +2,7 @@ using ObenLoader;
 using ObenUIKit.Input;
 using ObenUIKit.Menu;
 using ObenUIKit.Menu.Pages;
+using ObenUIKit.Menu.Settings;
 using ObenUIKit.Runtime;
 
 namespace ObenUIKit;
@@ -18,6 +19,8 @@ public sealed class UIKitMod : ObenMod
         Track(new KitRuntime(this));
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());
+        ModMenu.AddPage(this, SettingsPage.Create());
+        ModSettings.Register(this, LoadConfig<KitConfig>(), "UI kit");
         MainMenuEntry.Init(this);
         PauseMenuEntry.Init(this);
         Log.Info("Ready.");

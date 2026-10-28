@@ -88,6 +88,8 @@
     <Compile Include="../../src/ObenFramework/Economy/Banking/Ledger/LedgerBook.cs" Link="Linked/Economy/LedgerBook.cs" />
     <Compile Include="../../src/ObenFramework/Economy/PlayerShops/PlayerShopMath.cs" Link="Linked/Economy/PlayerShopMath.cs" />
     <Compile Include="../../src/ObenFramework/Economy/Traders/ShopHoursMath.cs" Link="Linked/Economy/ShopHoursMath.cs" />
+    <Compile Include="../../src/ObenFramework/Gambling/GambleKind.cs" Link="Linked/Gambling/GambleKind.cs" />
+    <Compile Include="../../src/ObenFramework/Gambling/PayoutMath.cs" Link="Linked/Gambling/PayoutMath.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

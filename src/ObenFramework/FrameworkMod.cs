@@ -6,6 +6,7 @@ using ObenFramework.Dialogue;
 using ObenFramework.Economy;
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenFramework.Gambling;
 using ObenFramework.Items;
 using ObenFramework.Npcs;
 using ObenFramework.Player.Look;
@@ -44,6 +45,7 @@ public sealed class FrameworkMod : ObenMod
         Player.PlayerModule.Init(this);
         ShopsModule.Init(this);
         EconomyModule.Init(this);
+        GamblingModule.Init(this);
         AssetsModule.Init(this);
         WorldExtrasModule.Init(this);
         SceneLookModule.Init(this);

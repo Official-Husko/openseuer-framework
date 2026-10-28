@@ -24,7 +24,7 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Player: find the player, stats, safe teleport, damage and healing, died/damaged events
 - [x] Items: give, take, spawn, register new items and recipes at runtime
 - [x] Money: wallet in both currencies
-- [x] Saves: per-mod data in side files next to the save (needs an in-game test with real saves)
+- [x] Saves: per-mod data in side files next to the save, object state capture/apply, save gate, slots and save now (need an in-game test with real saves)
 - [x] Input: input lock, rebindable mod hotkeys with a Hotkeys page
 - [x] Notifications and HUD: toasts, hints in the game's hint panel, subtitles, bars
 - [ ] Settings: typed settings per mod with an in-game page
@@ -32,6 +32,9 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Dialogue and Lua: variables, Lua functions, conversations, started/ended events
 - [x] Quests: quest log, status changes, change events
 - [x] World: doors, interactables with stable addresses, furniture ids and events, lights, switches, power (read-only)
+- [x] Building: place, move and remove furniture from code; containers and floor items with stable ids and events
+- [x] Shops and mail: shop stock and prices for traders and vending machines, letters and parcels
+- [x] Assets: textures, sprites, WAV/OGG/MP3 sounds and OBJ/MTL models from a mod's folder
 - [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
 - [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
 - [ ] Coverage of the MIT framework: see PROGRESS.md
@@ -63,6 +66,7 @@ Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-
 - [x] Session: host, join, leave, roster (tested with two copies on one machine)
 - [ ] Other players' bodies: puppets, pose, sitting, appearance
 - [x] Chat (console command for now)
+- [x] Big payloads (chunked, checked, acknowledged blob transfer) and flood control
 - [ ] Shared clock and weather, sleep vote
 - [ ] Join ticket (send the host's world to a joining player)
 - [ ] Shared world: doors, items, containers, building, stations, shops, quests

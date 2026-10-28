@@ -64,6 +64,11 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `clock.get`, `clock.set`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
 | `lua.get`, `lua.set`, `lua.run`, `quests.list`, `quests.set` | see [framework/dialogue.md](framework/dialogue.md), [framework/quests.md](framework/quests.md) | dialogue variables and the quest log |
 | `doors.list`, `doors.set`, `interact.target`, `furniture.list` | see [framework/world.md](framework/world.md) | doors, what's under the crosshair, placed furniture |
+| `furniture.place`, `furniture.move`, `furniture.remove`, `furniture.kinds`, `furniture.zones` | see [framework/world.md](framework/world.md) | furniture from code, what can be placed, building zones |
+| `containers.list`, `containers.get`, `floor.list` | see [framework/world.md](framework/world.md) | containers and their contents, items lying on the floor |
+| `save.capture`, `save.slots`, `save.busy` | see [framework/save-state.md](framework/save-state.md), [framework/saves.md](framework/saves.md) | an object's saved state, characters and slots, whether the game is saving or loading |
+| `shops.list`, `shops.stock`, `mail.send`, `mail.list` | see [framework/shops.md](framework/shops.md), [framework/mail.md](framework/mail.md) | shops with stock and prices, letters and parcels |
+| `assets.list` | `mod?`, `kind?` | textures, sounds and models mods have loaded, with sizes ([framework/assets.md](framework/assets.md)) |
 | `npcs.list`, `npcs.get`, `npcs.nearest`, `phone.list` | see [framework/npcs.md](framework/npcs.md), [framework/phone.md](framework/phone.md) | NPCs and phone numbers |
 | `player.look`, `player.drain` | see [framework/player.md](framework/player.md) | the player's look, active drain multipliers |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |

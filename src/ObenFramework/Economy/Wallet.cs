@@ -1,0 +1,99 @@
+using System;
+using UnityEngine;
+using Currency = Money.Currency;
+
+namespace ObenFramework.Economy;
+
+/// <summary>
+/// The player's money. The game has two currencies, Open Sewer Coin (<see cref="Currency.OC"/>, whole
+/// numbers) and Real Money (<see cref="Currency.RM"/>, kept in tenths: 12.3 is fine, 12.34 rounds to 12.3).
+/// Every change goes through the game's own <c>Money.AddMoney</c> / <c>RemoveMoney</c>, so the HUD,
+/// dialogue variables and sounds stay in sync. Call these on the main thread.
+/// </summary>
+public static class Wallet
+{
+    /// <summary>True when balances can be read.</summary>
+    public static bool CanRead => Money.instance != null;
+
+    /// <summary>True when money can be added or removed. The game needs its interaction UI for that, which only exists in a world.</summary>
+    public static bool CanChange => Money.instance != null && InteractObjects.instance != null;
+
+    public static int Coins => CanRead ? Money.instance.OCMoneyAmount : 0;
+
+    public static float RealMoney => CanRead ? Money.instance.RMoneyAmount : 0f;
+
+    public static float Get(Currency currency) => currency == Currency.RM ? RealMoney : Coins;
+
+    /// <summary>Real Money as a whole number of tenths, the unit the game stores. Use this to compare amounts without float noise.</summary>
+    public static int ToTenths(float realMoney) => Mathf.RoundToInt(realMoney * 10f);
+
+    public static bool CanAfford(Currency currency, float amount)
+    {
+        if (!CanRead)
+            return false;
+        if (currency == Currency.RM)
+            return ToTenths(RealMoney) >= ToTenths(amount);
+        return Coins >= Mathf.RoundToInt(amount);
+    }
+
+    /// <summary>True when the player has both amounts at once.</summary>
+    public static bool CanAfford(float coins, float realMoney) =>
+        CanAfford(Currency.OC, coins) && CanAfford(Currency.RM, realMoney);
+
+    /// <summary>
+    /// Adds money. A negative amount removes it instead, down to zero at most (the game never lets a
+    /// balance go negative). Returns false when nothing could be changed.
+    /// </summary>
+    public static bool Add(Currency currency, float amount)
+    {
+        if (!CanChange)
+            return false;
+        if (amount < 0f)
+            return RemoveUpTo(currency, -amount);
+
+        float value = Normalize(currency, amount);
+        if (value == 0f)
+            return true;
+        if (WouldOverflow(currency, value))
+            return false;
+        Money.instance.AddMoney(value, currency);
+        return true;
+    }
+
+    /// <summary>Removes exactly this much if the player can afford it. Otherwise nothing changes and it returns false.</summary>
+    public static bool TryRemove(Currency currency, float amount)
+    {
+        if (!CanChange || amount < 0f || !CanAfford(currency, amount))
+            return false;
+
+        float value = Normalize(currency, amount);
+        if (value > 0f)
+            Money.instance.RemoveMoney(value, currency);
+        return true;
+    }
+
+    /// <summary>Removes both amounts, or neither when the player can't afford them together.</summary>
+    public static bool TryRemove(float coins, float realMoney)
+    {
+        if (!CanChange || coins < 0f || realMoney < 0f || !CanAfford(coins, realMoney))
+            return false;
+        return TryRemove(Currency.OC, coins) && TryRemove(Currency.RM, realMoney);
+    }
+
+    private static bool RemoveUpTo(Currency currency, float amount)
+    {
+        float value = Math.Min(Normalize(currency, amount), Get(currency));
+        if (value > 0f)
+            Money.instance.RemoveMoney(value, currency);
+        return true;
+    }
+
+    // OC is whole numbers (the game truncates), RM is rounded to tenths.
+    private static float Normalize(Currency currency, float amount) =>
+        currency == Currency.RM ? ToTenths(amount) / 10f : Mathf.RoundToInt(amount);
+
+    private static bool WouldOverflow(Currency currency, float value) =>
+        currency == Currency.RM
+            ? (long)ToTenths(RealMoney) + ToTenths(value) > int.MaxValue
+            : (long)Coins + (int)value > int.MaxValue;
+}

@@ -16,6 +16,9 @@ internal static class ItemsModule
         GameEvents.LevelChanging.Subscribe(framework, ForgetScene);
         GameEvents.MainMenu.Subscribe(framework, ForgetScene);
         GameEvents.WorldReady.Subscribe(framework, _ => InventoryWatch.Reset());
+        // Loaded into a world that is already running (hot reload): take the starting count on the next
+        // frame, or the first change would become the starting point instead of an event.
+        InventoryWatch.Reset();
         UnloadedStorage.Init(framework);
         framework.Track(Disposable.Create(() =>
         {

@@ -29,6 +29,7 @@ internal static class EnvironmentModule
         SettingOverrides.Reapply();
         ScreenBlur.Reapply();
         WorldSky.Reapply();
+        WeatherZones.Reapply();
     }
 
     private static void OnMainMenu()
@@ -45,6 +46,7 @@ internal static class EnvironmentModule
         ScreenFade.ForgetScene();
         ScreenBlur.ForgetScene();
         WorldSky.SceneChanging();
+        WeatherZones.ForgetScene();
     }
 
     private static void Unload()
@@ -55,6 +57,7 @@ internal static class EnvironmentModule
         ScreenBlur.Unload();
         ScreenVignette.Unload();
         WorldSky.Unload();
+        WeatherZones.Unload();
         ForgetScene();
     }
 }

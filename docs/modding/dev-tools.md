@@ -13,7 +13,9 @@ Build it with the solution (`dotnet build ObenseuerExtended.slnx -c Release`) an
 | `oben status` | Where the game is, whether the loader is installed, how the game will be launched, which mods are there, whether the game and the bridge are up. |
 | `oben launch [--wait 150] [--fullscreen] [--instance 2]` | Starts the game windowed. `--wait` waits until the bridge answers. |
 | `oben stop [--force]` | Asks the game to quit over the bridge, kills it if that doesn't work. |
-| `oben logs [--player \| --runner] [--lines N]` | The loader log, Unity's Player.log, or umu/Proton's output. |
+| `oben logs [--player \| --runner \| --errors] [--lines N]` | The loader log, Unity's Player.log, umu/Proton's output, or this session's error report (`errors.log`). |
+| `oben changelog [--write] [--notes X.Y.Z]` | Builds the player changelog from commit trailers (see [changelog.md](changelog.md)). |
+| `oben save list \| info \| export \| import \| convert` | Saves on disk: list them, inspect a slot, convert between the game's format and ObenSave's (see [save-format.md](save-format.md)). |
 | `oben call <method> [key=value ...]` | Runs a bridge command, e.g. `oben call game.info`. |
 | `oben eval "<code>"` | Runs C# in the game (see Scripts). |
 | `oben run file.cs [--watch]` | Runs a script file, again on every save with `--watch`. |
@@ -54,6 +56,10 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `obj.tree`, `obj.inspect`, `obj.get`, `obj.set`, `obj.call`, `obj.active`, `obj.destroy`, `obj.move` | `target` (`#instanceId` or `Root/Child`), `component`, `member`, ... | poke at live objects |
 | `type.get`, `type.set`, `type.call` | `type`, `member`/`method`, `value`/`args` | static members, e.g. `type=GameController member=instance` |
 | `screenshot` | `scale?`, `format?`, `quality?` | base64 image |
+| `features.list`, `features.set` | `mod`, `id`, `enabled` | switchable features of every mod |
+| `player.get`, `player.stats`, `player.stat`, `player.teleport`, `player.heal`, `player.godmode` | see [framework/player.md](framework/player.md) | the player |
+| `items.find`, `items.give`, `items.count`, `items.spawn`, `money.get`, `money.add` | see [framework/items.md](framework/items.md) | items and money |
+| `clock.get`, `clock.set`, `weather.get`, `weather.list`, `weather.set` | see [framework/clock.md](framework/clock.md) | time and weather |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |
 
 Other mods can add commands: `ModRegistry.Get<DevBridgeMod>().Commands.Add(this, "my.command", "What it does", new[] { "param: meaning" }, p => ...)`. They're removed when that mod unloads.
@@ -80,7 +86,7 @@ oben run --reset console-greeting
 `oben mcp` is a Model Context Protocol server over stdio, for editors and tools that speak it. Point the client at the built `oben` binary with the argument `mcp`. It offers:
 
 - local tools: `game_status`, `game_launch`, `game_stop`, `game_logs`, `build`
-- bridge tools: `game_info`, `log_tail`, `mods_list`, `mods_reload`, `obj_find`, `obj_inspect`, `obj_get`, `obj_set`, `type_get`, `type_call`, `console_exec`, `screenshot`, plus `bridge_call` and `bridge_help` for everything else
+- bridge tools: `game_info`, `log_tail`, `mods_list`, `mods_reload`, `features_list`, `features_set`, `player_get`, `player_teleport`, `player_stat`, `items_find`, `items_give`, `money_add`, `clock_set`, `obj_find`, `obj_inspect`, `obj_get`, `obj_set`, `type_get`, `type_call`, `console_exec`, `screenshot`, plus `bridge_call` and `bridge_help` for everything else
 - script tools: `script_run`, `script_reset`
 
 ## A typical loop

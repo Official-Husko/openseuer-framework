@@ -63,11 +63,16 @@ None of the shipped dialogue entries I searched (the whole dialogue database in 
 
 Fix: a transpiler replaces the roll with `Random.value`. Off by default because it makes NPCs notice you less near the edge of their view, a balance change the game never had. Check: with it on, stand near the edge of a guard's view cone and see that you're not spotted every half second.
 
+### BankInterest: bank interest is never paid or charged
+
+`Money.CurrentTime` (`Money.cs:632-653`) raises each account's savings by `Mathf.Pow(1 + Interest, num / 7)` and its debt by `Mathf.Pow(1 + DebtInterest, num / 7)`, where `num` is the number of days since the last check. The check runs every day, so `num` is 1, and `num / 7` is an integer division: the exponent is 0 and neither the 1.5% savings interest nor the 3% debt interest ever applies (unless seven days pass between two checks). The `/ 7` shows the intent: interest per week.
+
+Fix: a prefix applies the same formulas once per whole week since interest was last applied, and keeps that day in the save (`mods/ObenPatches.bank-interest.json` next to it). It then moves the game's last-check day to today, so the game's own (always zero) step skips itself and everything after it, like loan payments, runs as before. Counting starts the day the fix first runs, so nothing is charged for time that already passed. On by default: savings grow and debts grow, as the banks advertise. Tested on 0.5.13 by driving `CurrentTime` day by day with a test account: with the fix, day 7 brings 1000 OC to 1014 and a 1000 OC debt to 1029 (the game truncates coins); without it nothing ever changes.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.
 
-- Bank interest never accrues. `Money.CurrentTime` (`Money.cs:644-650`) multiplies balances and debts by `Mathf.Pow(1 + interest, num / 7)` where `num` is the number of days since the last check and the division is an int division. The check runs every day with `num` = 1, so the exponent is 0 and neither savings interest (`Interest`, 0.015) nor debt interest (`DebtInterest`, 0.03) ever applies unless 7 or more days pass between two checks. The intended period (weekly? the loan text says "payment time of N months and an interest of 3%") isn't clear, and turning it on makes existing debts start growing, so it's left for a decision.
 - `Money.Account.CanAfford` (`Money.cs:140`) tests `f.RM >= funds.RM && f.OC >= funds.OC`, backwards (it asks whether the price is at least the funds). Nothing calls it.
 - Monthly and biweekly subscriptions use `date.day - daysSinceLastCheck < 0` (`PlayerSubscription.cs:73-130`), written for a 0-based day, but `TimeAndDay.day` starts at 1. On the first of the month the result is 0, not below 0, so a monthly subscription only fires when two or more days pass between checks. `PlayerSubscriptionsController.CheckActiveSubscriptions` (`:106`) also subtracts a day per full week. Weekly ones look right. Not touched because the schedule logic is tangled and no shipped subscription was checked.
 - `PlayerSubscription.HandleBankPayment` (`PlayerSubscription.cs:182`) uses `Money.FindOrCreateBankAccount`, which creates an account object but never adds it to `bankAccounts` (`Money.cs:584`). With no account the payment changes a throwaway object while the notification still says money was taken.

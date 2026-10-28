@@ -1,4 +1,5 @@
 using ObenFramework.Features;
+using ObenFramework.Saves;
 using ObenLoader;
 using ObenPatches.Fixes;
 
@@ -22,5 +23,7 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new AmbientSoundVariety());
         ModFeatures.Register(this, new DialogueLuaFunctions());
         ModFeatures.Register(this, new NpcSightChance());
+        BankInterest.State = ModSaves.Register<BankInterestState>(this, "bank-interest");
+        ModFeatures.Register(this, new BankInterest());
     }
 }

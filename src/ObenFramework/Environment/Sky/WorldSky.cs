@@ -20,7 +20,18 @@ public static class WorldSky
     private static bool _rendering;
 
     /// <summary>What the sky shows now, overrides included. Parts the scene lacks are null.</summary>
-    public static SkyState Current => SkyApply.Read();
+    public static SkyState Current
+    {
+        get
+        {
+            // The game's sky writes its own values every frame and the overrides go back on just before
+            // rendering, so in the middle of a frame the render settings hold the game's values. Put the
+            // overrides on first so this reports what is drawn.
+            if (!Overrides.IsEmpty || SkyApply.Holding)
+                SkyApply.Run();
+            return SkyApply.Read();
+        }
+    }
 
     /// <summary>True while some mod holds an override.</summary>
     public static bool IsOverridden => !Overrides.IsEmpty;

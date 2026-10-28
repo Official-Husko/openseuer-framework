@@ -9,6 +9,11 @@
     <ProjectReference Include="../ObenFramework/ObenFramework.csproj" />
   </ItemGroup>
 
+  <!-- The release changelog (written by "oben changelog" with the write option) ships with the kit; the What's New page reads it from the kit's folder. -->
+  <ItemGroup>
+    <None Include="$(RepoRoot)changelog.json" Link="changelog.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(RepoRoot)changelog.json')" />
+  </ItemGroup>
+
   <!-- Ships as a regular mod folder: <game>/Mods/ObenUIKit. -->
   <Import Project="$(RepoRoot)build/Mod.targets" />
 </Project>

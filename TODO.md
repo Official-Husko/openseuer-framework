@@ -79,7 +79,10 @@ Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-
 - [ ] Shared clock and weather, sleep vote
 - [ ] Join ticket (send the host's world to a joining player)
 - [ ] Shared world: doors, items, containers, building, stations, shops, quests
-- [ ] Steam transport as a second option
+- [x] Steam transport as a second option (tested on a fake Steam; needs a real-Steam check)
+- [x] Lobbies: lists, join codes, invites, version checks
+- [x] Presence data layer (positions with interpolation)
+- [ ] Lobby page in ObenUIKit
 - [ ] Free roam (players in different levels), last
 - [x] Second game instance on one machine (`oben install --multi-instance`, `oben launch --instance 2`)
 

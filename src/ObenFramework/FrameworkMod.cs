@@ -1,5 +1,6 @@
 using ObenFramework.Clock;
 using ObenFramework.Dialogue;
+using ObenFramework.Economy;
 using ObenFramework.Events;
 using ObenFramework.Features;
 using ObenFramework.Npcs;
@@ -34,6 +35,7 @@ public sealed class FrameworkMod : ObenMod
         NpcsModule.Init(this);
         PlayerLookWatcher.Init(this);
         SurvivalEvents.Init(this);
+        ShopsModule.Init(this);
         Log.Info("Ready.");
     }
 

@@ -80,7 +80,9 @@ public static class Surfaces
     /// </summary>
     public static bool SetCovering(string id, int itemId, int skinIndex = 0)
     {
-        var surface = Find(id) ?? throw new ArgumentException($"No surface '{id}'.", nameof(id));
+        var surface = Find(id);
+        if (surface == null)
+            throw new ArgumentException($"No surface '{id}'.", nameof(id));
         if (surface.HasSameWallpaper(itemId, skinIndex))
             return true;
         var item = ItemLookup.ById(itemId) ?? throw new ArgumentException($"No item {itemId}.", nameof(itemId));
@@ -98,7 +100,9 @@ public static class Surfaces
     /// <summary>Scrapes a surface bare, without a scraper. Throws for an unknown surface.</summary>
     public static void Clear(string id)
     {
-        var surface = Find(id) ?? throw new ArgumentException($"No surface '{id}'.", nameof(id));
+        var surface = Find(id);
+        if (surface == null)
+            throw new ArgumentException($"No surface '{id}'.", nameof(id));
         using (WorldChanges.EnterMod())
             surface.RemoveWallpaper();
     }

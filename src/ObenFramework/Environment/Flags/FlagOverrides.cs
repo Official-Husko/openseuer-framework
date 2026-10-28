@@ -119,7 +119,8 @@ internal static class FlagOverrides
         _suspended = false;
         foreach (string key in Forces.Keys())
         {
-            if (Forces.TryGet(key, out bool want))
+            // A force whose value underneath was never read from this store is applied by ReapplyAll instead.
+            if (Forces.TryGet(key, out bool want) && Vanilla.TryGetValue(key, out var under) && under.Store == store)
                 Write(store, key, want);
         }
     }

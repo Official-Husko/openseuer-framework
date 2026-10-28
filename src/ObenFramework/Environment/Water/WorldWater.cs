@@ -109,7 +109,9 @@ public static class WorldWater
     /// <summary>Changes a body of water; parts left null stay as they are. Throws when there is none with that id.</summary>
     public static void SetVolume(string id, float? density = null, float? drag = null, float? drownDamage = null, int? swimHygiene = null)
     {
-        var water = Find(id) ?? throw new ArgumentException($"No water '{id}'.", nameof(id));
+        var water = Find(id);
+        if (water == null)
+            throw new ArgumentException($"No water '{id}'.", nameof(id));
         if (density.HasValue)
             water.density = NotNegative(density.Value, nameof(density));
         if (drag.HasValue)

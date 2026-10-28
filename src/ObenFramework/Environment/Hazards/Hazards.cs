@@ -100,8 +100,14 @@ public static class Hazards
     {
         if (string.IsNullOrEmpty(id))
             return null;
-        return (Component)ObjectIds.Find<TriggerHurt>(id) ?? (Component)ObjectIds.Find<TriggerRadiation>(id)
-            ?? (Component)ObjectIds.Find<point_radiation>(id) ?? ObjectIds.Find<point_radiation_detector>(id);
+        Component found = ObjectIds.Find<TriggerHurt>(id);
+        if (found == null)
+            found = ObjectIds.Find<TriggerRadiation>(id);
+        if (found == null)
+            found = ObjectIds.Find<point_radiation>(id);
+        if (found == null)
+            found = ObjectIds.Find<point_radiation_detector>(id);
+        return found != null ? found : null;
     }
 
     public static string IdOf(Component hazard)
@@ -137,8 +143,13 @@ public static class Hazards
     /// Switches a hazard on or off. A damage zone that adds radiation switches its radiation part with it.
     /// Throws when there is no hazard with that id.
     /// </summary>
-    public static void SetEnabled(string id, bool enabled) =>
-        SetEnabled(Find(id) ?? throw new ArgumentException($"No hazard '{id}'.", nameof(id)), enabled);
+    public static void SetEnabled(string id, bool enabled)
+    {
+        var hazard = Find(id);
+        if (hazard == null)
+            throw new ArgumentException($"No hazard '{id}'.", nameof(id));
+        SetEnabled(hazard, enabled);
+    }
 
     public static void SetEnabled(Component hazard, bool enabled)
     {

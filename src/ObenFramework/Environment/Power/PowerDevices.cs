@@ -122,7 +122,13 @@ public static class PowerDevices
     }
 
     /// <summary>Switches the device with this id. Throws when there is none.</summary>
-    public static bool SetOn(string id, bool on) => SetOn(Find(id) ?? throw new ArgumentException($"No power device '{id}'.", nameof(id)), on);
+    public static bool SetOn(string id, bool on)
+    {
+        var device = Find(id);
+        if (device == null)
+            throw new ArgumentException($"No power device '{id}'.", nameof(id));
+        return SetOn(device, on);
+    }
 
     /// <summary>Stations that are always on and on no grid don't use power in any way a mod can change.</summary>
     internal static bool IsDevice(CraftingBase station) =>

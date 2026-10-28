@@ -1,0 +1,55 @@
+ObenseuerExtended
+=================
+
+A mod loader and a set of mods for Obenseuer: fixes for bugs in the game, performance fixes, a menu
+for your mods, and a framework other mods build on. It doesn't need BepInEx.
+
+Install
+-------
+1. Close the game.
+2. Linux: run install.sh. Windows: run install.bat.
+3. Start the game as usual. The mods show up in the MODS menu.
+
+The installer finds the game in your Heroic and Steam libraries. If it can't, pass the game's
+folder (the one with Obenseuer.exe in it):
+    ./install.sh --game "/path/to/Obenseuer"
+    install.bat --game "D:\Games\Obenseuer"
+You can also set the OBENSEUER_DIR environment variable to that folder.
+
+It copies the mods into the game's Mods folder and adds the loader to the game's Unity files. It
+only changes a few small startup files, and keeps copies of the originals.
+
+Updating
+--------
+Unpack the new version and run the installer again. It replaces the mods and keeps your settings.
+
+Mods
+----
+ObenFramework      what the other mods build on (required)
+ObenUIKit          the menus and windows of the mods (required)
+ObenPatches        fixes for bugs in the game; every fix has its own switch
+PerformanceFixes   cuts work the game does needlessly every frame; every fix has its own switch
+ObenSave           stores saves in a small compressed file (off until you switch it on)
+
+Each mod's page in the MODS menu has its switches and settings. To remove a single mod, delete its
+folder from the game's Mods folder.
+
+Uninstall
+---------
+Run uninstall.sh or uninstall.bat. It removes the loader and puts Unity's startup files back. The
+Mods folder and your settings stay; add --remove-mods to delete them too. Steam's "Verify
+integrity of game files" restores the game as well.
+
+If something goes wrong
+-----------------------
+The loader writes a log to the ObenLoader folder inside the game folder (logs/latest.log, and
+logs/errors.log when something failed). Send those with a bug report.
+
+What's in here
+--------------
+Mods/            the mods, one folder each
+tool/            the installer and command-line tool (oben) for Linux and Windows
+LICENSE          the license (GPL-3.0)
+install.*        installs everything
+uninstall.*      takes it out again
+

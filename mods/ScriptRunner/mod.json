@@ -5,5 +5,6 @@
   "author": "pawbeans",
   "description": "Runs C# scripts sent by the oben tool in the running game, so changes can be tried without restarting.",
   "dependencies": { "ObenFramework": "0.1.0", "DevBridge": "0.1.0" },
-  "hotReload": true
+  "hotReload": true,
+  "devOnly": true
 }

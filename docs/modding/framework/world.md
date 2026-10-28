@@ -253,6 +253,8 @@ bool gone = FloorItems.Remove(id);                           // destroyed and re
 
 `Remove` and `Spawn` do not go through the pickup path, so applying a remote player's pickup with `Remove(id)` raises no `PickedUp` and nothing is echoed. Loose items that sit in a build zone are pickups too (the game gives them a furniture component), so they appear in both lists.
 
+**Expiry.** Dropped items disappear after a random 0.5 to 1.5 times the game's expiry time (`FloorItemExpiry.GameMinutes`, 600 game minutes by default). `FloorItemExpiry.Set(this, minutes)` changes it for items whose timer starts from then on, until your mod unloads; the newest setter wins. Items the game spawns with their own time (never expiring, expiration zones) keep it.
+
 ## Power grids (read only)
 
 ```csharp

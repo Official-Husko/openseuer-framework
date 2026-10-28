@@ -15,7 +15,7 @@ var hits = ItemLookup.Search("bottle", max: 10);   // partial match, exact title
 var food = ItemLookup.ByCategory("Food");
 ```
 
-Titles are not unique, so title lookups return lists. Take the id once you know which item you mean. The lookup tables rebuild themselves when the game reloads its database or a mod adds or removes items.
+`ItemLookup.Icon(id)` gives an item's inventory sprite and `ItemLookup.QualityOf(stack.Quality)` the game's quality grade. Titles are not unique, so title lookups return lists. Take the id once you know which item you mean. The lookup tables rebuild themselves when the game reloads its database or a mod adds or removes items.
 
 ## The player's items
 
@@ -92,6 +92,7 @@ RecipeRegistry.Register(this, recipe);
 InventoryEvents.ItemAdded.Subscribe(this, c => Log.Info($"+{c.Amount} of {c.ItemId}, now {c.Total} ({c.Source})"));
 InventoryEvents.ItemRemoved.Subscribe(this, c => ...);
 InventoryEvents.HeldChanged.Subscribe(this, h => Log.Info($"{(h.LeftHand ? "secondary" : "primary")} hand: {h.ItemId}"));
+InventoryEvents.ItemUsed.Subscribe(this, id => ...);    // ate, drank, read or applied an item from the inventory
 ```
 
 - The events follow what `PlayerItems.Count` counts: the inventory grid, the clothing and hand slots and the equipped bag. They report the **net** change per item, so moving a stack between two inventory slots raises nothing, while moving it into a chest raises `ItemRemoved`. Equipping a bag adds what is in it.

@@ -24,6 +24,12 @@ public static class InventoryEvents
     /// <summary>The player has fewer of an item than before.</summary>
     public static readonly WorldEvent<InventoryChange> ItemRemoved = new WorldEvent<InventoryChange>(nameof(ItemRemoved));
 
+    /// <summary>
+    /// The player used an item from the inventory (ate, drank, read, applied it). The payload is the item id.
+    /// Uses of objects in the world and anything while trading are not reported.
+    /// </summary>
+    public static readonly WorldEvent<int> ItemUsed = new WorldEvent<int>(nameof(ItemUsed));
+
     /// <summary>The item in a hand slot (primary or secondary) changed, including the hand becoming empty.</summary>
     public static readonly WorldEvent<HeldChange> HeldChanged = new WorldEvent<HeldChange>(nameof(HeldChanged));
 

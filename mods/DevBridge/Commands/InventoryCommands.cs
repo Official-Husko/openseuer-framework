@@ -13,6 +13,7 @@ internal static class InventoryCommands
         var owner = DevBridgeMod.Instance;
         InventoryEvents.ItemAdded.Subscribe(owner, c => recorder.Add("ItemAdded", Change(c)));
         InventoryEvents.ItemRemoved.Subscribe(owner, c => recorder.Add("ItemRemoved", Change(c)));
+        InventoryEvents.ItemUsed.Subscribe(owner, id => recorder.Add("ItemUsed", new JObject { ["itemId"] = id, ["title"] = ItemJson.Title(id) }));
         InventoryEvents.HeldChanged.Subscribe(owner, c => recorder.Add("HeldChanged", new JObject
         {
             ["hand"] = c.LeftHand ? "secondary" : "primary",
@@ -48,7 +49,7 @@ internal static class InventoryCommands
         };
     }
 
-    [BridgeCommand("inventory.events", "Inventory events (ItemAdded, ItemRemoved, HeldChanged, TaskItemChanged) since recording started on the first call.",
+    [BridgeCommand("inventory.events", "Inventory events (ItemAdded, ItemRemoved, ItemUsed, HeldChanged, TaskItemChanged) since recording started on the first call.",
         Params = new[] { "clear?: forget what was returned, default true" })]
     private static object EventsList(JObject p) => Events.Read(p.Bool("clear", true));
 

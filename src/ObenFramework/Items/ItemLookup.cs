@@ -24,6 +24,17 @@ public static class ItemLookup
 
     public static bool Exists(int id) => ItemIndex.Get(id) != null;
 
+    /// <summary>The item's inventory icon, or null.</summary>
+    public static UnityEngine.Sprite Icon(int id)
+    {
+        var item = ItemIndex.Get(id);
+        return item != null && item.Appearance != null ? item.Appearance.Sprite : null;
+    }
+
+    /// <summary>The game's quality grade for a quality value (as stacks carry it, 0 to 2).</summary>
+    public static OS.Items.ItemQualityData.Quality QualityOf(float quality) =>
+        OS.Items.ItemQualityData.GetQuality(float.IsNaN(quality) ? 1f : quality);
+
     /// <summary>All items whose title is exactly <paramref name="title"/>, ignoring case.</summary>
     public static IReadOnlyList<Item> ByTitle(string title)
     {

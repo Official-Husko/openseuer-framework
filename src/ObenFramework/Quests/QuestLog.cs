@@ -112,10 +112,12 @@ public static partial class QuestLog
     // Quest changes are only safe when the world is up and no save is being applied over them.
     internal static string EditBlocker()
     {
-        if (WorldState.IsLoadingSave)
-            return "A save is loading; the game would overwrite the change.";
+        if (WorldState.IsLoadingSave || Saves.SaveGate.IsBusy)
+            return "A save is being written or loaded; the game would overwrite the change.";
         if (TaskController.instance == null || TaskPanel.instance == null || Notifications.instance == null)
             return "Quests can only be changed in a loaded world.";
+        if (QuestPatches.InGameCall)
+            return "Called from inside one of the game's own task edits; defer it (StoryPump.Defer) or use the QuestLog events.";
         return null;
     }
 }

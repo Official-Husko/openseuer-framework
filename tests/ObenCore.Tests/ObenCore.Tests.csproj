@@ -107,6 +107,13 @@
     <!-- Story timing and sessions: the retry gate, the deferred queue and the session rules. -->
     <Compile Include="../../src/ObenFramework/Story/RetryGate.cs" Link="Linked/Story/RetryGate.cs" />
     <Compile Include="../../src/ObenFramework/Story/StoryQueue.cs" Link="Linked/Story/StoryQueue.cs" />
+    <!-- Quest authoring rules: ids, definition checks, rewind and follow-up plans, the saved definition book. -->
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestIds.cs" Link="Linked/Quests/QuestIds.cs" />
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestDefinition.cs" Link="Linked/Quests/QuestDefinition.cs" />
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestPlan.cs" Link="Linked/Quests/QuestPlan.cs" />
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestRewindPlan.cs" Link="Linked/Quests/QuestRewindPlan.cs" />
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestFollowUpPlan.cs" Link="Linked/Quests/QuestFollowUpPlan.cs" />
+    <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestBook.cs" Link="Linked/Quests/QuestBook.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionKind.cs" Link="Linked/NewGames/SessionKind.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionRules.cs" Link="Linked/NewGames/SessionRules.cs" />
     <!-- New game options, difficulty preset maths, start choice and tutorial rules. -->

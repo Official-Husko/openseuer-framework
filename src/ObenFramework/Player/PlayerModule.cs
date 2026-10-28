@@ -1,3 +1,4 @@
+using ObenFramework.Player.Look;
 using ObenLoader;
 
 namespace ObenFramework.Player;
@@ -21,5 +22,6 @@ internal static class PlayerModule
         PlayerEffects.Init(framework);
         CustomInteractions.Init(framework);
         Weapons.Init(framework);
+        PlayerLook.InitKeep(framework);
     }
 }

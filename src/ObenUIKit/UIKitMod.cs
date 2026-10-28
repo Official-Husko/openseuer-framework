@@ -1,5 +1,7 @@
 using ObenLoader;
 using ObenUIKit.Input;
+using ObenUIKit.Menu;
+using ObenUIKit.Menu.Pages;
 using ObenUIKit.Runtime;
 
 namespace ObenUIKit;
@@ -14,6 +16,10 @@ public sealed class UIKitMod : ObenMod
         Instance = this;
         InputLock.Init(this);
         Track(new KitRuntime(this));
+        ModMenu.Init(this);
+        ModMenu.AddPage(this, ModsPage.Create());
+        MainMenuEntry.Init(this);
+        PauseMenuEntry.Init(this);
         Log.Info("Ready.");
     }
 

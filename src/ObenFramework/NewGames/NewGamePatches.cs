@@ -18,7 +18,11 @@ internal static class NewGamePatches
     {
         try
         {
-            NewGameEvents.Raise(NewGameInfo.Capture());
+            // The framework's newgame record was reset at the main menu; fill it before anyone hears of the new game.
+            var preset = DifficultySelector.Chosen;
+            NewGameOptions.CaptureNewGame();
+            DifficultyPresets.RecordNewGame(preset);
+            NewGameEvents.Raise(NewGameInfo.Capture(preset));
         }
         catch (Exception e)
         {

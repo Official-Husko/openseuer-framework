@@ -109,6 +109,13 @@
     <Compile Include="../../src/ObenFramework/Story/StoryQueue.cs" Link="Linked/Story/StoryQueue.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionKind.cs" Link="Linked/NewGames/SessionKind.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionRules.cs" Link="Linked/NewGames/SessionRules.cs" />
+    <!-- New game options, difficulty preset maths, start choice and tutorial rules. -->
+    <Compile Include="../../src/ObenFramework/NewGames/OptionIds.cs" Link="Linked/NewGames/OptionIds.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Difficulty/DifficultyPresetMap.cs" Link="Linked/NewGames/DifficultyPresetMap.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOption.cs" Link="Linked/NewGames/NewGameOption.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionRules.cs" Link="Linked/NewGames/NewGameOptionRules.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionStore.cs" Link="Linked/NewGames/NewGameOptionStore.cs" />
+    <Compile Include="../../src/ObenFramework/NewGames/Options/NewGameOptionsFile.cs" Link="Linked/NewGames/NewGameOptionsFile.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

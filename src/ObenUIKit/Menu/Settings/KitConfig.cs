@@ -9,4 +9,11 @@ internal sealed class KitConfig
     /// <summary>Newest changelog version the player has been shown.</summary>
     [Setting(Hidden = true)]
     public string LastSeenVersion = "";
+
+    [SettingAction("Show What's New at the next start", Description = "The release notes open by themselves the next time the main menu comes up.")]
+    public string ForgetSeenVersion()
+    {
+        LastSeenVersion = "";
+        return "What's New opens at the next start.";
+    }
 }

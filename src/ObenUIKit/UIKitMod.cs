@@ -36,6 +36,11 @@ public sealed class UIKitMod : ObenMod
 
         var config = LoadConfig<KitConfig>();
         ModSettings.Register(this, config, "UI kit");
+        ModActions.Register(this, "Read What's New", () =>
+        {
+            ModMenu.Open(WhatsNewPage.Title);
+            return null;
+        }, "Opens the release notes of every mod.");
         ChangelogFeed.Init(this);
         WhatsNewPrompt.Init(this, config);
         MainMenuEntry.Init(this);

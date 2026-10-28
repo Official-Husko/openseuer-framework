@@ -10,6 +10,7 @@ internal sealed class SessionRules
 {
     private SessionKind _pending;
     private bool _levelChange;
+    private SessionKind _beforeLoad;
 
     /// <summary>How the running session began; <see cref="SessionKind.None"/> in the main menu.</summary>
     public SessionKind Current { get; private set; }
@@ -43,7 +44,20 @@ internal sealed class SessionRules
     {
         if (_levelChange)
             return;
+        _beforeLoad = _pending;
         _pending = SessionKind.SaveLoad;
+    }
+
+    /// <summary>
+    /// An announced level change or save load didn't happen (a missing save, or a door to another spot of
+    /// the same level). The running session goes on as if nothing was announced.
+    /// </summary>
+    public void LoadAborted()
+    {
+        if (_pending == SessionKind.SaveLoad)
+            _pending = _beforeLoad;
+        _beforeLoad = SessionKind.None;
+        _levelChange = false;
     }
 
     /// <summary>

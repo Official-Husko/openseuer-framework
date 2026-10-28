@@ -60,6 +60,7 @@ public static class Sessions
         GameEvents.MainMenu.Subscribe(framework, Rules.MainMenu);
         GameEvents.LevelChanging.Subscribe(framework, Rules.LevelChanging);
         GameEvents.WorldReady.Subscribe(framework, OnWorldReady);
+        GameEvents.LoadAborted.Subscribe(framework, _ => Rules.LoadAborted());
 
         // The game announces a load before the old scene goes away; no framework event covers that point.
         SaveController.PlayerWillLoadGame += OnWillLoad;

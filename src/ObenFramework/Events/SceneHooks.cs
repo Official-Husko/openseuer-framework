@@ -24,6 +24,7 @@ internal static class SceneHooks
         if (mode == LoadSceneMode.Additive)
             return;
 
+        LoadAbortWatcher.Proceeding();
         WorldState.IsReady = false;
         GameEvents.SceneLoaded.Raise(scene.name, GameEvents.Log);
         if (scene.buildIndex == WorldState.MainMenuScene)

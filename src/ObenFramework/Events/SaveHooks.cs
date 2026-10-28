@@ -13,7 +13,9 @@ internal static class SaveHooks
 {
     public static void Attach(ObenMod framework)
     {
+        LoadAbortWatcher.Create(framework);
         SaveController.PlayerWillChangeLevel += OnLevelChanging;
+        SaveController.PlayerWillLoadGame += OnWillLoad;
         SaveController.SavingStarted += OnSaving;
         SaveController.SavingDone += OnSaved;
         SaveController.LoadingStarted += OnLoading;
@@ -21,6 +23,7 @@ internal static class SaveHooks
         framework.Track(Disposable.Create(() =>
         {
             SaveController.PlayerWillChangeLevel -= OnLevelChanging;
+            SaveController.PlayerWillLoadGame -= OnWillLoad;
             SaveController.SavingStarted -= OnSaving;
             SaveController.SavingDone -= OnSaved;
             SaveController.LoadingStarted -= OnLoading;
@@ -30,8 +33,16 @@ internal static class SaveHooks
 
     private static void OnLevelChanging()
     {
+        LoadAbortWatcher.Announced(levelChange: true);
         WorldState.IsReady = false;
         GameEvents.LevelChanging.Raise(GameEvents.Log);
+    }
+
+    // The game swallows exceptions from this one, but a failure here would still go unnoticed.
+    private static void OnWillLoad()
+    {
+        try { LoadAbortWatcher.Announced(levelChange: false); }
+        catch (System.Exception e) { GameEvents.Log?.Error("Watching the announced load failed", e); }
     }
 
     private static void OnSaving() => GameEvents.Saving.Raise(GameEvents.Log);
@@ -40,6 +51,7 @@ internal static class SaveHooks
 
     private static void OnLoading()
     {
+        LoadAbortWatcher.Proceeding();
         WorldState.IsReady = false;
         WorldState.IsLoadingSave = true;
         GameEvents.Loading.Raise(GameEvents.Log);

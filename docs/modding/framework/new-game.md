@@ -21,7 +21,7 @@ if (Sessions.IsNewGame) { /* first time this character plays */ }
 | `IsRunning` | a session is running and its world is ready |
 | `IsNewGame` | the running session began as a new game |
 
-How it tells them apart (`SessionRules`, unit tested): a level change announces `PlayerWillChangeLevel` and then a load of the autosave it just wrote; a load from the menu or the pause menu announces only `PlayerWillLoadGame`; a new game announces neither and goes through the "Open Sewer Intro" scene first, which is skipped. The session kind survives a framework hot reload.
+How it tells them apart (`SessionRules`, unit tested): a level change announces `PlayerWillChangeLevel` and then a load of the autosave it just wrote; a load from the menu or the pause menu announces only `PlayerWillLoadGame`; a new game announces neither and goes through the "Open Sewer Intro" scene first, which is skipped. A load or level change that is announced but never happens (a missing or broken save) is forgotten when `GameEvents.LoadAborted` fires, so the running session goes on and the next real load is told apart correctly. The session kind survives a framework hot reload.
 
 ## The new game event
 

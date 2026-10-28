@@ -66,6 +66,7 @@ public static class SaveGate
         GameEvents.LevelChanging.Subscribe(framework, () => BeginLoad(false));
         GameEvents.Loading.Subscribe(framework, () => BeginLoad(true));
         GameEvents.Loaded.Subscribe(framework, State.LoadDone);
+        GameEvents.LoadAborted.Subscribe(framework, _ => State.LoadDone());
         GameEvents.MainMenu.Subscribe(framework, State.Reset);
         GameEvents.Saving.Subscribe(framework, () => State.SavingStarted(Time.frameCount));
         GameEvents.Saved.Subscribe(framework, _ => State.SavingDone());

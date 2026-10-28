@@ -28,8 +28,21 @@ public static class GameEvents
     /// </summary>
     public static readonly GameEvent<string> WorldReady = new GameEvent<string>(nameof(WorldReady));
 
-    /// <summary>The player is about to leave the level (door, fast travel, prison). A save and a reload follow.</summary>
+    /// <summary>
+    /// The player is about to leave the level (door, fast travel, prison). A save and a reload follow,
+    /// unless the door leads to another spot of the same level or the load fails: then
+    /// <see cref="LoadAborted"/> comes instead of <see cref="WorldReady"/>.
+    /// </summary>
     public static readonly GameEvent LevelChanging = new GameEvent(nameof(LevelChanging));
+
+    /// <summary>
+    /// A level change or save load the game announced didn't happen: the save was missing or broken, or
+    /// the level change stayed in the same scene (it only saved and moved the player). The player is
+    /// still in the scene they were in, and <see cref="WorldState.IsReady"/> is back on if it was on
+    /// before. The payload is true when a level change was announced, false for a save load alone.
+    /// <see cref="WorldReady"/> is not raised again.
+    /// </summary>
+    public static readonly GameEvent<bool> LoadAborted = new GameEvent<bool>(nameof(LoadAborted));
 
     /// <summary>The game started writing a save.</summary>
     public static readonly GameEvent Saving = new GameEvent(nameof(Saving));

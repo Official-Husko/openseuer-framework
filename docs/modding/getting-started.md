@@ -163,6 +163,7 @@ Things to know:
 | `SceneLoaded` (scene name) | Any scene loaded. |
 | `WorldReady` (scene name) | A playable level is up: save applied, player in place. Once per level load; doors reload the level too. |
 | `LevelChanging` | The player is leaving the level (a save and reload follow). |
+| `LoadAborted` (true for a level change) | A level change or save load was announced but didn't happen (missing or broken save, or it stayed in the same scene). The player is still where they were; `WorldReady` doesn't fire again. |
 | `Saving`, `Saved` (save folder) | Around a save. Keep mod files in the save folder, written in `Saved`. |
 | `Loading`, `Loaded` | Around a save load. Wait for `WorldReady` before touching the world. |
 

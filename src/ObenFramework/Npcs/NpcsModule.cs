@@ -4,8 +4,8 @@ using ObenLoader.Runtime;
 namespace ObenFramework.Npcs;
 
 /// <summary>
-/// Sets up the NPC module: claims, animations and mod phone numbers are given back when the framework
-/// unloads. The Harmony patches themselves are applied by the loader like the framework's others.
+/// Sets up the NPC module: claims, animations, mod NPCs, routines and mod phone numbers are given back
+/// when the framework unloads. The Harmony patches themselves are applied by the loader like the framework's others.
 /// </summary>
 internal static class NpcsModule
 {
@@ -13,7 +13,10 @@ internal static class NpcsModule
     {
         NpcControl.Init(framework);
         NpcAnimation.Init(framework);
+        ModNpcs.Init(framework);
+        NpcRoutines.Init(framework);
         PhoneNumbers.Init(framework);
+        framework.Track(Disposable.Create(NpcOrders.Clear));
         framework.Track(Disposable.Create(NpcsLog.Reset));
     }
 
@@ -22,5 +25,7 @@ internal static class NpcsModule
     {
         NpcControl.Tick();
         NpcAnimation.Tick();
+        NpcRoutines.Tick();
+        NpcOrders.Tick();
     }
 }

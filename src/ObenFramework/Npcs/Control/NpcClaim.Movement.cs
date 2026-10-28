@@ -30,11 +30,12 @@ public sealed partial class NpcClaim
     /// <see cref="Pause"/>). <paramref name="done"/> gets true when the NPC is within
     /// <paramref name="stopDistance"/> metres, and false when the walk is cancelled, times out after
     /// <paramref name="timeoutSeconds"/> or ends short of the point because it is out of reach. A new walk
-    /// cancels the one before. Returns false when the NPC cannot be paused or has no way to walk.
+    /// cancels the one before. Returns false when the NPC cannot be paused, has no way to walk or is held
+    /// with <see cref="NpcHolds.Freeze"/>.
     /// </summary>
     public bool MoveTo(Vector3 target, Action<bool> done = null, float stopDistance = DefaultStopDistance, float timeoutSeconds = 120f)
     {
-        if (!Pause())
+        if ((_holds & NpcHolds.Freeze) != 0 || !Pause())
             return false;
         var ai = _npc.npcController.ai;
         if (ai == null)

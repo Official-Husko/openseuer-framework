@@ -91,23 +91,30 @@ public sealed partial class NpcClaim : IDisposable
         controller.Data?.scheduler?.ResetNextCheck();
     }
 
-    /// <summary>Gives the NPC back: stops looking, cancels a walk and resumes the schedule.</summary>
+    /// <summary>
+    /// Gives the NPC back: stops an animation, lifts the holds, stops looking, cancels a walk and resumes
+    /// the schedule.
+    /// </summary>
     public void Dispose()
     {
         if (_released)
             return;
+        StopAnimation(0f);
+        ReleaseHolds();
         StopLooking();
         Resume();
         _released = true;
         NpcControl.Remove(this);
     }
 
-    // The NPC object is being destroyed, so there is nothing to put back.
+    // The NPC object is being destroyed or died, so there is nothing to put back.
     internal void Abandon()
     {
         if (_released)
             return;
         _released = true;
+        _holds = NpcHolds.None;
+        StopAnimation(0f);
         FinishMove(false, halt: false);
         NpcControl.Remove(this);
     }
@@ -116,6 +123,7 @@ public sealed partial class NpcClaim : IDisposable
     {
         TickMove();
         TickLook();
+        TickHolds();
     }
 
     private static void Call(Action<bool> callback, bool result)

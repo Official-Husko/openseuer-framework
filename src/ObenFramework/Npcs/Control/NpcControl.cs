@@ -100,7 +100,38 @@ public static class NpcControl
         }
     }
 
-    internal static void Remove(NpcClaim claim) => Claims.Remove(claim);
+    internal static void Remove(NpcClaim claim)
+    {
+        Claims.Remove(claim);
+        CountHolds();
+    }
+
+    // How many claims hold anything. The game hooks behind holds check this first and return at once on 0.
+    internal static int HeldCount { get; private set; }
+
+    internal static void CountHolds()
+    {
+        int count = 0;
+        for (int i = 0; i < Claims.Count; i++)
+        {
+            if (Claims[i].Holds != NpcHolds.None)
+                count++;
+        }
+        HeldCount = count;
+    }
+
+    /// <summary>True when a claim holds <paramref name="hold"/> on this NPC (see <see cref="NpcClaim.Hold"/>).</summary>
+    public static bool Holds(NPCInfo npc, NpcHolds hold)
+    {
+        if (HeldCount == 0 || npc == null)
+            return false;
+        for (int i = 0; i < Claims.Count; i++)
+        {
+            if (Claims[i].Npc == npc && (Claims[i].Holds & hold) != 0)
+                return true;
+        }
+        return false;
+    }
 
     private static NpcClaim Find(int npcId)
     {
@@ -118,5 +149,6 @@ public static class NpcControl
             Claims[i].Dispose();
         Claims.Clear();
         Tracked.Clear();
+        HeldCount = 0;
     }
 }

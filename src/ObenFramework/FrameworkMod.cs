@@ -1,6 +1,7 @@
 using ObenFramework.Animals;
 using ObenFramework.Assets;
 using ObenFramework.Clock;
+using ObenFramework.Crafting;
 using ObenFramework.Dialogue;
 using ObenFramework.Economy;
 using ObenFramework.Events;
@@ -46,6 +47,7 @@ public sealed class FrameworkMod : ObenMod
         WorldExtrasModule.Init(this);
         SceneLookModule.Init(this);
         ItemsModule.Init(this);
+        CraftingModule.Init(this);
         Log.Info("Ready.");
     }
 

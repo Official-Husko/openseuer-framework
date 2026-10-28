@@ -25,7 +25,7 @@ public readonly struct InventorySourceContext
 /// registers a provider that returns the containers to add (for example the ones near the player); while the
 /// game checks or takes resources they count as if the player carried them. The player's own inventory (and,
 /// for renovations, the tenement's resource storages) is used first, the extra containers only for what is
-/// missing. Crafting stations have their own <see cref="Crafting.CraftingSources"/>.
+/// missing. Crafting stations have their own <see cref="ObenFramework.Crafting.CraftingSources"/>.
 /// </summary>
 public static class InventorySources
 {

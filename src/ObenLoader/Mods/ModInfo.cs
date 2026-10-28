@@ -11,6 +11,9 @@ public sealed class ModInfo
     public ModState State { get; internal set; } = ModState.Pending;
     public string Error { get; internal set; }
 
+    /// <summary>A problem that didn't stop the mod from loading (it was made for another game version), or null.</summary>
+    public string Warning { get; internal set; }
+
     /// <summary>The mod's entry object, if it has an <see cref="ObenMod"/> subclass.</summary>
     public ObenMod Instance { get; internal set; }
 

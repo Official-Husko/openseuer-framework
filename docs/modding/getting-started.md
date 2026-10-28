@@ -47,7 +47,7 @@ Mods/
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `id` | folder name | Unique id. Also the mod's Harmony id and log tag. |
+| `id` | folder name | Unique id. Also the mod's Harmony id and log tag. 1 to 64 letters, digits, `.`, `_` or `-` (no spaces, not starting or ending with `.`, not a Windows device name like `CON`); a mod with another id doesn't load and says why. |
 | `name` | `id` | Display name. |
 | `version` | `0.0.0` | Checked against other mods' `dependencies`. |
 | `assemblies` | every DLL in the folder | DLLs that make up the mod. With a list, other DLLs in the folder are libraries: loaded on first use and never reloaded. |
@@ -57,6 +57,10 @@ Mods/
 | `hotReload` | `false` | Load from memory and reload when the DLL is rebuilt. |
 | `essential` | `false` | Can't be switched off or unloaded (the framework). |
 | `enabledByDefault` | `true` | `false` means installed but off until switched on. |
+| `gameVersion` | any | The game versions the mod was made for. On another version it loads with a warning in the log and on the Errors page (`ModInfo.Warning`). |
+| `strictGameVersion` | `false` | `true` refuses to load on a game version outside `gameVersion` instead of warning. |
+
+`gameVersion` takes `0.5.13` (that version), `0.5` or `0.5.x` (anything starting with those numbers), comparisons like `>=0.5.10` and `<0.6`, several of them separated by spaces (all must hold), and alternatives separated by `||`: `">=0.5.10 <0.6 || 0.5.08"`. The game's version is `Application.version` (0.5.13 at the time of writing); `oben call game.info` shows it.
 
 ## The entry class
 

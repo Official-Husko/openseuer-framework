@@ -34,6 +34,9 @@
     <Compile Include="../../src/ObenLoader/Mods/ModInfo.cs" Link="Linked/ModInfo.cs" />
     <Compile Include="../../src/ObenLoader/Mods/ModManifest.cs" Link="Linked/ModManifest.cs" />
     <Compile Include="../../src/ObenLoader/Mods/ModState.cs" Link="Linked/ModState.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/ModIds.cs" Link="Linked/ModIds.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/ModChecks.cs" Link="Linked/ModChecks.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/VersionRange.cs" Link="Linked/VersionRange.cs" />
     <Compile Include="../../src/ObenLoader/Logging/LogBuffer.cs" Link="Linked/LogBuffer.cs" />
     <Compile Include="../../src/ObenLoader/Logging/LogEntry.cs" Link="Linked/LogEntry.cs" />
     <Compile Include="../../src/ObenLoader/Logging/LogLevel.cs" Link="Linked/LogLevel.cs" />

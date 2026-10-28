@@ -80,6 +80,20 @@ internal static partial class ModLifecycle
 
     private static bool TryActivate(ModInfo mod)
     {
+        string refusal = ModChecks.Refusal(mod.Manifest, Loader.GameVersion, out string warning);
+        if (refusal != null)
+        {
+            mod.Fail(refusal);
+            _log.Error($"{mod}: {refusal}");
+            return false;
+        }
+        mod.Warning = warning;
+        if (warning != null && mod.LoadCount == 0)
+        {
+            _log.Warn($"{mod}: {warning}");
+            ErrorReport.Add(mod.Id, warning);
+        }
+
         string missing = mod.Manifest.Dependencies.Keys.FirstOrDefault(id => !ModRegistry.IsLoaded(id));
         if (missing != null)
         {

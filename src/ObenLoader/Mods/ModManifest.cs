@@ -42,5 +42,15 @@ public sealed class ModManifest
     /// </summary>
     [JsonProperty("enabledByDefault")] public bool EnabledByDefault = true;
 
+    /// <summary>
+    /// The game versions the mod was made for, such as ">=0.5.13 &lt;0.6" or "0.5.x" (see
+    /// <see cref="VersionRange"/>). Empty means any. On another version the mod still loads with a
+    /// warning, unless <see cref="StrictGameVersion"/> is set.
+    /// </summary>
+    [JsonProperty("gameVersion")] public string GameVersion;
+
+    /// <summary>Refuse to load on a game version outside <see cref="GameVersion"/> instead of only warning.</summary>
+    [JsonProperty("strictGameVersion")] public bool StrictGameVersion;
+
     public string DisplayName => string.IsNullOrEmpty(Name) ? Id : Name;
 }

@@ -13,8 +13,12 @@ public static class Loader
 
     private static readonly ModLogger Log = new ModLogger("ObenLoader");
 
+    /// <summary>The game's version (Application.version), checked against each mod's gameVersion.</summary>
+    public static string GameVersion { get; private set; }
+
     internal static void Start()
     {
+        GameVersion = Application.version;
         LoaderPaths.Init();
         LogHub.Init(LoaderPaths.LogsDir);
         ModRegistry.Init(Log);

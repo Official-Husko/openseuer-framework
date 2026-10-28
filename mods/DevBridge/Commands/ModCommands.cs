@@ -23,6 +23,7 @@ internal static class ModCommands
             ["hotReload"] = m.CanHotReload,
             ["loadCount"] = m.LoadCount,
             ["error"] = m.Error,
+            ["warning"] = m.Warning,
         }).ToArray());
 
     [BridgeCommand("mods.reload", "Hot reload a mod (or every hot-reload mod when id is omitted).", Params = new[] { "id?" })]

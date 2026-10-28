@@ -54,6 +54,8 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `console.mods` | | console commands added by mods |
 | `mods.list`, `mods.reload`, `mods.load`, `mods.unload`, `mods.rescan`, `mods.enable` | `id` | mod management |
 | `patches.check` | `all?` | every patched method's jump kind, and the ones whose jump points at memory that's gone (see [../research/harmony-jumps.md](../research/harmony-jumps.md)) |
+| `patches.areas` | `mod?`, `failed?` | patch areas with their patch counts, and why a switched-off one failed (see [framework/patching.md](framework/patching.md)) |
+| `framework.modules` | `failed?` | each part of the framework: started, patch area, available, setup and update errors |
 | `obj.find` | `name?`, `component?`, `includeInactive?`, `max?` | GameObjects by name or component type |
 | `obj.tree`, `obj.inspect`, `obj.get`, `obj.set`, `obj.call`, `obj.active`, `obj.destroy`, `obj.move` | `target` (`#instanceId` or `Root/Child`), `component`, `member`, ... | poke at live objects |
 | `type.get`, `type.set`, `type.call` | `type`, `member`/`method`, `value`/`args` | static members, e.g. `type=GameController member=instance` |

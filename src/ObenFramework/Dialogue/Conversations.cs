@@ -13,7 +13,7 @@ namespace ObenFramework.Dialogue;
 /// <see cref="StartRaw"/> only opens a conversation from the database with no NPC behaviour.
 /// Call these on the main thread, in a playable world.
 /// </summary>
-public static class Conversations
+public static partial class Conversations
 {
     private static readonly Action NoOp = () => { };
 

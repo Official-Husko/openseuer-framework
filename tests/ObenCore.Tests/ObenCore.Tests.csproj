@@ -114,6 +114,9 @@
     <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestRewindPlan.cs" Link="Linked/Quests/QuestRewindPlan.cs" />
     <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestFollowUpPlan.cs" Link="Linked/Quests/QuestFollowUpPlan.cs" />
     <Compile Include="../../src/ObenFramework/Quests/Authoring/QuestBook.cs" Link="Linked/Quests/QuestBook.cs" />
+    <!-- Dialogue authoring rules: definitions, ids, anchor matching, link priorities. -->
+    <Compile Include="../../src/ObenFramework/Dialogue/Authoring/ConversationDefinition.cs" Link="Linked/Dialogue/ConversationDefinition.cs" />
+    <Compile Include="../../src/ObenFramework/Dialogue/Authoring/DialoguePlan.cs" Link="Linked/Dialogue/DialoguePlan.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionKind.cs" Link="Linked/NewGames/SessionKind.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionRules.cs" Link="Linked/NewGames/SessionRules.cs" />
     <!-- New game options, difficulty preset maths, start choice and tutorial rules. -->

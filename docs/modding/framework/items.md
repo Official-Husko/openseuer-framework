@@ -172,6 +172,23 @@ Each of these lists the objects of the loaded scenes with ids that work like con
 | `ItemGivers` | taps, flyer boxes, trees: `SetEmpty`, `Refill` | `Gave` |
 | `TaskItems` | the journal's keys, keycards, recipes and quest items | `Changed` (old and new amount) |
 
+## Consumables, fuel and the container window
+
+```csharp
+var soup = ItemConsumables.Get(soupId).Copy();
+soup.Food += 20;
+ItemConsumables.Set(this, soupId, soup);           // every bowl of soup, until your mod unloads
+
+foreach (var fuel in FuelTypes.All()) ...          // burn time and what is left after burning
+
+TaskItems.Add("Key_Basement");                     // journal items by id; TaskItems.Remove takes them
+
+StoragePanelButtons.Add(this, "Sort", press => SortInto(press.Container.Storage));
+```
+
+- Consumable values live on the item definition, so they apply to every copy. Changes from several mods stack (the newest wins; removing it brings back the one under it, or the game's own values). They aren't saved: set them in your mod's load.
+- Container window buttons are copies of the game's "Take all" button, hidden while trading and for containers that belong to someone. A press on a full container shows the game's "storage full" feedback instead of calling your action.
+
 ## Checking in game
 
 Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`. The `*.events` commands start listening on their first call.

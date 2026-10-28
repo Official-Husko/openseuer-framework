@@ -14,7 +14,7 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] Release packaging (`build/package.sh`, `build/release.sh`; dev mods marked `devOnly`)
 - [x] Unit tests (`dotnet test`) and `oben check` for hooks after game updates
 - [x] GPL-3.0 license
-- [ ] A THIRD-PARTY-NOTICES file once the first code from the MIT reference projects is ported (KitKeyCapture.cs is adapted from it: add the file before the first release)
+- [x] THIRD-PARTY-NOTICES.md (NomadsReach MIT code, LiteNetLib)
 - [ ] GitHub URL for the player README.txt and the docs, once the repository is up
 
 ## ObenFramework (core functionality)

@@ -22,7 +22,7 @@ internal static class PricePatches
     [HarmonyPostfix]
     private static void TraderPrice(Trade __instance, ItemData itemData, int amount, Currency currency, ref float __result)
     {
-        if (!Prices.Active || amount <= 0)
+        if (!ShopPricing.Active || amount <= 0)
             return;
         try
         {

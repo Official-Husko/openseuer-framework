@@ -17,6 +17,7 @@ internal static class EconomyModule
         {
             BankLedger.Shutdown();
             PlayerShops.Shutdown();
+            TraderFactors.Reset();
         }));
     }
 }

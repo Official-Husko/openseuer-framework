@@ -70,4 +70,11 @@ public sealed class ShopInfo
     }
 
     public override string ToString() => Kind + " " + Name;
+
+    // Keys of the trader price factors, built once per shop so the price hooks don't concatenate per call.
+    private string _buyKey;
+    private string _sellKey;
+
+    internal string FactorKey(bool playerBuys) =>
+        playerBuys ? _buyKey ??= TraderFactors.KeyOf(Id, true) : _sellKey ??= TraderFactors.KeyOf(Id, false);
 }

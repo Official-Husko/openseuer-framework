@@ -19,17 +19,22 @@ internal static class ShopPricing
     internal static float Apply(ShopInfo shop, Item item, Furniture furniture, bool playerBuys, Currency currency,
         float original, float minimum, bool wholeRealMoney)
     {
-        if (shop == null || !Prices.Active)
+        if (shop == null || !Active)
             return original;
         // A furniture price of 0 means "not charged in this currency"; modifiers must not invent one.
         if (furniture != null && original <= 0f)
             return original;
 
-        float modified = Prices.Run(shop, item, furniture, playerBuys, currency, original);
+        // Trader factors scale the game's price first; the modifiers then see the scaled price.
+        float start = shop.Kind == ShopKind.Trader ? original * TraderFactors.For(shop, playerBuys) : original;
+        float modified = Prices.Active ? Prices.Run(shop, item, furniture, playerBuys, currency, start) : start;
         if (modified == original)
             return original;
         return Settle(modified, currency, minimum, wholeRealMoney);
     }
+
+    /// <summary>True while any mod changes prices, by modifier or trader factor. The price hooks return at once otherwise.</summary>
+    internal static bool Active => Prices.Active || TraderFactors.Any;
 
     internal static float Settle(float value, Currency currency, float minimum, bool wholeRealMoney)
     {

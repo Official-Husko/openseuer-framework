@@ -45,6 +45,40 @@ public static class BridgeTools
             "Reload one hot-reload mod (and its dependents), or all of them.",
             Schema.Object().Str("id", "Mod id; omit to reload every hot-reload mod"));
 
+        yield return Forward("player_get", "player.get",
+            "Where the player is (scene, position, yaw), whether they're dead, seated or in god mode, and every stat.",
+            Schema.Object());
+
+        yield return Forward("player_teleport", "player.teleport",
+            "Move the player safely (stands up first, keeps scale, zeroes velocity).",
+            Schema.Object()
+                .Arr("pos", "[x, y, z]", required: true)
+                .Num("yaw", "Facing in degrees")
+                .Bool("ground", "Snap down onto the ground below"));
+
+        yield return Forward("player_stat", "player.stat",
+            "Set or add to one player stat by its F1 console name (health, hunger, thirst, tiredness, ...).",
+            Schema.Object()
+                .Str("name", "Stat name", required: true)
+                .Num("value", "New value, or the amount with mode=add", required: true)
+                .Str("mode", "set (default) or add"));
+
+        yield return Forward("items_find", "items.find",
+            "Find items by id or by (part of) their title.",
+            Schema.Object().Str("query", "Id or title", required: true).Int("max", "At most this many (default 20)"));
+
+        yield return Forward("items_give", "items.give",
+            "Give the player items; what doesn't fit drops at their feet.",
+            Schema.Object().Int("id", "Item id", required: true).Int("amount", "How many (default 1)"));
+
+        yield return Forward("money_add", "money.add",
+            "Add (or with a negative amount remove) Open Sewer Coins (oc) or Real Money (rm).",
+            Schema.Object().Str("currency", "oc or rm", required: true).Num("amount", "Amount", required: true));
+
+        yield return Forward("clock_set", "clock.set",
+            "Set the time of day.",
+            Schema.Object().Int("hours", "0-23", required: true).Int("minutes", "0-59"));
+
         yield return Forward("features_list", "features.list",
             "Every switchable feature of every loaded mod (bug fixes, cheats, tweaks) with its state.", Schema.Object());
 

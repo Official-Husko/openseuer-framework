@@ -16,6 +16,8 @@ internal static class NpcsModule
         ModNpcs.Init(framework);
         NpcRoutines.Init(framework);
         PhoneNumbers.Init(framework);
+        Pursuit.Init(framework);
+        Surveillance.Init(framework);
         framework.Track(Disposable.Create(NpcOrders.Clear));
         framework.Track(Disposable.Create(NpcsLog.Reset));
     }

@@ -4,6 +4,10 @@ Windows and controls that look like the game's own options pages, and the mod me
 
 Add `"ObenUIKit": "0.1.0"` to your mod.json dependencies and a project reference to `src/ObenUIKit/ObenUIKit.csproj`.
 
+To see every control at once, open the demo window: `oben call ui.demo` (or `ObenUIKit.Dev.KitDemo.Open()` from code). Its tabs show the choices, long lists, a model preview, the window kinds and the HUD pieces; its source in `src/ObenUIKit/Dev/` doubles as example code.
+
+What the player's screen is busy with (pause menu, menus, typing, mod windows) and keeping keys away from the game are in the framework: see [ui-state.md](ui-state.md).
+
 ## How it looks native
 
 The kit doesn't clone the game's widgets (they carry scene references, sound sources and save ids). It reads the game's look off its own menus and builds its controls with those values:
@@ -480,3 +484,6 @@ The computers themselves (which one the player uses, sitting down and getting up
 - Only one list scrolls at a time under the mouse wheel: over a list the wheel scrolls the list, not the window.
 - A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
+- Only one key prompt shows at a time. A prompt's `Capture` goes through `InputCapture`, so keys the game reads straight from Unity (F1, the toolbelt numbers) still reach the game.
+- Main menu buttons go under the sign's grid; with many rows they may run past the bottom of the sign (`oben call menu.buttons` reports whether each sits inside the menu's rectangle).
+- Only one tab row per `Tabs` call and no nested scrolling inside a tab: a tab's page is part of the window's body and scrolls with it.

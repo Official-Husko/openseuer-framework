@@ -14,5 +14,9 @@ internal static class PlayerModule
         PlayerMovement.Init(framework);
         ModWait.Init(framework);
         TimePicker.Init(framework);
+        PlayerSkills.Init(framework);
+        CustomSkills.Init(framework);
+        SkillBanners.Init(framework);
+        CustomSkillRows.Init(framework);
     }
 }

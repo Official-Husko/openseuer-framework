@@ -5,6 +5,7 @@ Parts of this project are adapted from other open-source projects. Their license
 ## Obenseuer Modding Framework (ObenseuerCore) and Obenseuer Co-op, by NomadsReach
 
 https://github.com/NomadsReach/Obenseuer-Modding-Framework
+https://github.com/NomadsReach/Obenseuer-Coop
 
 Files adapted from these projects say so in a comment at the top. Used under the MIT License:
 

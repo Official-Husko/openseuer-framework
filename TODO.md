@@ -70,7 +70,13 @@ A save format replacement as its own mod: open, documented JSON, compressed, wit
 
 ## ObenCoop
 
-Port of the reference co-op mod in `example-mp/`, following `docs/research/coop-reference.md`. Steam lobbies don't work on every install, so networking sits behind a transport interface with direct IP first.
+Built from the reference co-op mod in `example-mp/` (NomadsReach/Obenseuer-Coop, MIT; its author is fine with us building on it): bring it in as it is, make it run on our loader, framework and network layer, then replace it piece by piece. The plan is in `docs/modding/coop.md` ("Plan: start from the reference mod").
+
+- [ ] Import the reference sources unchanged (one commit, MIT headers)
+- [ ] Load on ObenLoader and ObenFramework (no BepInEx, no ObenseuerCore); fill framework gaps it needs
+- [ ] Session.cs sends go through ObenCoop.Net (direct IP and Steam)
+- [ ] `oben check` clean against 0.5.13
+- [ ] Replace subsystems one by one with framework-event versions; fix the reference's own limits (ideas.md, co-op)
 
 - [x] Transport interface, direct IP transport, channels, version handshake, persistent player id
 - [x] Session: host, join, leave, roster (tested with two copies on one machine)

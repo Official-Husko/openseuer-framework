@@ -284,6 +284,26 @@ Both copies share the `Mods` folder, so they share `config.json` (port, name) an
 - Blobs are not resumable and don't survive a hot reload; there is no per-message rate window for features (the reference's `BuildHost` and friends), only the per-peer budget and queue limits.
 - The host is the only authority and there is no host migration (a Steam lobby whose owner leaves ends the session, as in the reference).
 
+## Plan: start from the reference mod, replace it piece by piece
+
+The reference co-op mod (`example-mp/`, [NomadsReach/Obenseuer-Coop](https://github.com/NomadsReach/Obenseuer-Coop), MIT) already shares nearly the whole game. Its author doesn't plan much more work on it and is happy for us to build on it. So instead of porting slice by slice from scratch, ObenCoop starts from that mod and replaces its insides step by step, keeping it playable after every step. Its MIT notice stays with the code (THIRD-PARTY-NOTICES.md, plus the header in each adapted file).
+
+The reference is about 46,800 lines in 176 files. It is a BepInEx plugin on top of ObenseuerCore (98 files call into it), with about 180 manual Harmony targets written for game 0.5.08, and all its networking goes through `Session.cs` (about 140 send sites) over Steam P2P.
+
+1. **Bring it in as it is.** Copy the sources into `mods/ObenCoop/` (a `Legacy/` folder or similar), each file with the adapted-from header, as one commit with nothing changed, so later diffs show our work.
+2. **Make it load on our stack.**
+   - `BaseUnityPlugin` becomes `ObenMod`, `ConfigEntry` becomes `LoadConfig<T>`, `ManualLogSource` becomes `ModLogger`, and `CorePatcher` becomes the mod's own Harmony through patch areas (`ModPatches.ApplyClasses`), so a broken area switches off alone.
+   - Calls into ObenseuerCore go to ObenFramework; `docs/research/framework-reference.md` maps the modules. Where a call has no equivalent yet, add it to the framework (it belongs there) rather than to the mod.
+3. **Put it on our network layer.** `Session.cs` keeps its send methods, but they go through ObenCoop.Net (`CoopSession`, channels, blobs, flood control, lobbies and presence). Direct IP then works too, not only Steam, and the Steam transport is the same code path.
+4. **Check against 0.5.13.** Run `oben check` on the result and fix every hook that moved since 0.5.08.
+5. **Replace subsystems one at a time**, each a self-contained commit tested with two copies:
+   - **Sync on framework events:** doors, containers, floor items, building, crafting, shops, quests and the rest listen to the framework's events (stable ids, `ChangeSource` so nothing echoes) instead of their own hand-written patches.
+   - **Cleanup:** split files over 300 lines, undo everything on unload (hot reload), and remove per-frame allocations and reflection.
+   - **Fix the reference's limits** (see ideas.md, co-op): thunder owned by the host, exhausted guests passing out, the clock after leaving, furniture without a known id, mod furniture, mod recipes.
+6. **Our own additions on top:** the lobby page in ObenUIKit, direct-IP join codes and invites, presence smoothing, and so on.
+
+The old slice plan below is kept for its notes on order and risk; the reference already covers every slice in it.
+
 ## Planned slices
 
 From section 8 of the research, in order:

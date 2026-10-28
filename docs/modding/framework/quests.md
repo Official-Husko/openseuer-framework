@@ -25,6 +25,7 @@ ObjectiveStatus? step = QuestLog.StatusOf("SomeTask", "SomeObjective");
 | `All()` | every started task as a `QuestTask` (`Id`, `Title`, `Description`, `Status`, `Objectives[]`) |
 | `Get(taskId)` | one task or null |
 | `StatusOf(taskId)`, `StatusOf(taskId, objectiveId)` | status or null when not started |
+| `Reached(taskId, objectiveId)` | the objective was ever handed out (the game's Lua `ObjectiveAnyStatus`) |
 | `Available()` | tasks the game has in memory but the player has not started |
 
 `QuestTask` and `QuestObjective` are copies taken when you ask; they do not follow later changes. Statuses are the game's own enums: `CurrentTaskStatus` (`Active, Failed, Finished, Abandoned`; `AnyStatus` is only a filter value) and `ObjectiveStatus` (`Active, Failed, Finished, Abandoned, Hidden`; `AnyStatus` and `NotActive` are filter values). Reading allocates, so call it in reaction to an event, not every frame.

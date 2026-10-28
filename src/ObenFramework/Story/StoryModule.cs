@@ -19,6 +19,7 @@ internal static class StoryModule
         QuestRegistry.Init(framework);
         QuestCheckpoints.Init(framework);
         QuestFollowUp.Init(framework);
+        QuestCommand.Register(framework);
         framework.Track(Disposable.Create(QuestPatches.Reset));
 
         DialogueLuaBridge.Register(framework);

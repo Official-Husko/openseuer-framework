@@ -92,6 +92,10 @@ Set `Next` (and the first time `NextDefinition`) to chain tasks of the same mod.
 - The framework patches `TaskInfo.Compare` so a mod's task is matched by id, never by title (the game falls back to the title). Without the framework the game would match by title, which is why `Create` refuses duplicate titles.
 - If a mod is removed, its tasks stay in the log as they were and can't move any more, and its lines in `ObenFramework.quests.json` are unused. Neither breaks the save. Removing the task first (`Remove`) takes it out completely.
 
+## Console
+
+`modquest list` lists the mod tasks of the save, `modquest reset MyMod.intro` sends a mod's task back to its start (the mod has to be loaded), `modquest skip <taskId> [objectiveId]` finishes a task or one step, game tasks included.
+
 ## Dev bridge
 
 DevBridge owns the tasks it makes (`DevBridge.<key>`):

@@ -60,6 +60,17 @@ public static partial class QuestLog
     public static ObjectiveStatus? StatusOf(string taskId, string objectiveId) => FindObjective(Find(taskId), objectiveId)?.status;
 
     /// <summary>
+    /// The objective was handed out at some point in this save, whatever its status now, as the game's Lua
+    /// <c>ObjectiveAnyStatus</c> answers it (from the game's lists rather than the task log).
+    /// </summary>
+    public static bool Reached(string taskId, string objectiveId)
+    {
+        var controller = TaskController.instance;
+        return controller != null && !string.IsNullOrEmpty(taskId) && !string.IsNullOrEmpty(objectiveId)
+            && controller.ObjectiveAnyStatus(taskId, objectiveId);
+    }
+
+    /// <summary>
     /// Tasks the game has in memory that the player hasn't started, which <see cref="Start"/> can begin.
     /// The game loads task assets on demand (through scene objects), so this is not a complete list.
     /// </summary>

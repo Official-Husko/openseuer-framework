@@ -2,6 +2,7 @@ using ObenFramework.Console;
 using ObenFramework.Features;
 using ObenLoader;
 using ObenLoader.Config;
+using PerformanceFixes.Interaction;
 using PerformanceFixes.Measuring;
 using PerformanceFixes.Slots;
 
@@ -22,6 +23,7 @@ public sealed class PerformanceFixesMod : ObenMod
         Config.Save();
 
         ModFeatures.Register(this, new InventoryRefreshThrottle());
+        ModFeatures.Register(this, new InteractableLookup());
 
         GameConsole.Register(this, "perf", "perf [seconds|reset]", PerfCommand.Run);
     }

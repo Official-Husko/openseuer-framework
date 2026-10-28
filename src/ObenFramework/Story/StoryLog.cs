@@ -38,6 +38,10 @@ internal static class StoryLog
 
     public static void Info(string message) => Log?.Info(message);
 
+    /// <summary>A mod's id, or the type name of another owner (a script scope).</summary>
+    public static string NameOf(ObenLoader.Runtime.ITracker owner) =>
+        owner is ObenLoader.ObenMod mod ? mod.Info.Id : owner?.GetType().Name ?? "?";
+
     private static bool Remember(string key)
     {
         if (Seen.Count >= MaxRemembered)

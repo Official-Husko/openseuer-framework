@@ -11,7 +11,7 @@ public static partial class Law
 {
     private sealed class Interceptor
     {
-        public ObenMod Owner;
+        public ITracker Owner;
         public Action<CrimeAttempt> Handler;
     }
 
@@ -39,7 +39,7 @@ public static partial class Law
     /// cancel it. Handlers run inside the game's call, in the order they were added, each in its own try/catch.
     /// Removed when <paramref name="owner"/> unloads.
     /// </summary>
-    public static void Intercept(ObenMod owner, Action<CrimeAttempt> handler)
+    public static void Intercept(ITracker owner, Action<CrimeAttempt> handler)
     {
         if (owner == null) throw new ArgumentNullException(nameof(owner));
         if (handler == null) throw new ArgumentNullException(nameof(handler));
@@ -67,7 +67,7 @@ public static partial class Law
             foreach (var interceptor in handlers)
             {
                 try { interceptor.Handler(attempt); }
-                catch (Exception e) { StoryLog.Failed("Crime interceptor of " + interceptor.Owner.Info.Id, e); }
+                catch (Exception e) { StoryLog.Failed("Crime interceptor of " + StoryLog.NameOf(interceptor.Owner), e); }
                 cancelled |= attempt.Cancel;
                 attempt.Cancel = cancelled;
             }

@@ -44,7 +44,7 @@ public static partial class Conversations
 {
     private sealed class Interceptor
     {
-        public ObenMod Owner;
+        public ITracker Owner;
         public Action<ConversationStarting> Handler;
     }
 
@@ -58,7 +58,7 @@ public static partial class Conversations
     /// its own try/catch; a redirect to a title the database doesn't have is ignored. Removed when
     /// <paramref name="owner"/> unloads.
     /// </summary>
-    public static void Intercept(ObenMod owner, Action<ConversationStarting> handler)
+    public static void Intercept(ITracker owner, Action<ConversationStarting> handler)
     {
         if (owner == null) throw new ArgumentNullException(nameof(owner));
         if (handler == null) throw new ArgumentNullException(nameof(handler));
@@ -86,7 +86,7 @@ public static partial class Conversations
             foreach (var interceptor in handlers)
             {
                 try { interceptor.Handler(args); }
-                catch (Exception e) { StoryLog.Failed("Conversation interceptor of " + interceptor.Owner.Info.Id, e); }
+                catch (Exception e) { StoryLog.Failed("Conversation interceptor of " + StoryLog.NameOf(interceptor.Owner), e); }
                 cancelled |= args.Cancel;
                 args.Cancel = cancelled;
             }

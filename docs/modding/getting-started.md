@@ -53,7 +53,7 @@ Mods/
 | `assemblies` | every DLL in the folder | DLLs that make up the mod. With a list, other DLLs in the folder are libraries: loaded on first use and never reloaded. |
 | `dependencies` | none | `"id": "minimum version"` (`"*"` for any). Missing, failed or too old dependencies stop the mod from loading. |
 | `loadAfter` | none | Load after these if they're installed, without needing them. |
-| `autoPatch` | `true` | Apply every `[HarmonyPatch]` class in the mod automatically. |
+| `autoPatch` | `true` | Apply every `[HarmonyPatch]` class in the mod automatically; one class that fails stops the mod from loading. With `false`, call `ModPatches.ApplyClasses(this)` in `OnLoad` to apply them area by area instead (see [framework/patching.md](framework/patching.md)). |
 | `hotReload` | `false` | Load from memory and reload when the DLL is rebuilt. |
 | `essential` | `false` | Can't be switched off or unloaded (the framework). |
 | `enabledByDefault` | `true` | `false` means installed but off until switched on. |

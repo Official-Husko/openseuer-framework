@@ -21,7 +21,16 @@ Transform body = PlayerRef.Body;            // null without a player
 
 `PlayerRef.Locator`, `.CameraTransform`, `.Rigidbody`, `.Velocity` and `.LookYaw` are there too, and `PlayerRef.Require()` returns the `PlayerLocator` or throws the standard error.
 
-`PlayerState` holds the flags: `Godmode` (get and set), `IsDead`, `IsSeated`, `IsSleeping`, `IsCrouching`, `IsSwimming`, `IsFirstPerson`, `InputLocked` (something has disabled movement or keys) and `IsTransitioning` (a level change, load or arrest is running).
+`PlayerState` holds the flags: `Godmode` and `NeedsFrozen` (get and set), `IsDead`, `IsSeated`, `IsSleeping`, `IsCrouching`, `IsSwimming`, `IsFirstPerson`, `InputLocked` (something has disabled movement or keys) and `IsTransitioning` (a level change, load or arrest is running), plus the character's `FirstName` and `LastName`.
+
+Setting `Godmode` or `NeedsFrozen` writes the game's switch, which the game saves. A mod that wants one on for a while should hold it instead:
+
+```csharp
+var god = PlayerState.HoldGodmode(this);       // also PlayerState.HoldNeedsFrozen(this)
+god.Dispose();                                 // back to what it was before the first mod held it
+```
+
+A held switch stays on while any mod holds it, comes back after level loads, and is written to saves with its earlier value, so removing the mod never leaves a save stuck in god mode. `GodmodeHeld` and `NeedsFrozenHeld` tell whether a mod holds them.
 
 ## Teleporting
 

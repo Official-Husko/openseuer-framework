@@ -22,6 +22,8 @@ slow.Dispose();                                        // or PlayerMovement.Remo
 
 The cheat menu's move speed slider is one of these multipliers.
 
+**Holding the player still.** `PlayerControls.Lock(this)` stops walking, the camera and the game's keys the way dialogue does (`showCursor: true` for a window the player clicks in); `PlayerControls.LockLook(this)` only stops the camera turning. Both return an `IDisposable`, are held per mod (the player moves again when the last one lets go), come back after a level load while held, and outlast the game's own camera toggles without undoing them. `Locked` and `LookLocked` tell whether a mod holds one.
+
 ## Sleeping and waiting
 
 ```csharp
@@ -120,6 +122,10 @@ The object needs a collider of its own and must not be one of the game's interac
 `Weapons.Held()` and `HeldLeft()` describe the tools in hand (`ItemId`, `Kind` Melee/Explosive/None, ammo loaded and capacity). `Reload()`, `FlashlightOn`, `FlashlightCharge` and `SetFlashlight(on)` do what the keys do. Events: `Fired` (detonator), `MeleeSwung`, `Reloaded`, `Hit` (target kind, receiver, damage before and after). `SetHitMultiplier(this, HitTarget.Mining, 2f)` doubles the damage of the player's swings on rock; the targets are `Mining`, `Chopping`, `Other` (nodes), `Breakable` and `Animal`. Fractions round up by chance so averages stay right, and only hits from the player's own swing are scaled.
 
 `PlayerNotes.Held()` lists the notes and books the player holds (`Id`, `Title`, `IsBook`, pages collected, `Read`). `Has`, `IsRead` and `Give(idOrPath)` take the game's id, which for most notes is the asset path (`Assets/Content/Notes/.../Note.asset`); a note that isn't loaded yet can still be given by its path. `Loaded()` lists the notes the game has in memory (not all of them: the rest load on demand). Events: `Collected` (a note, a new book or a new page) and `Read`.
+
+## Subscriptions
+
+`PlayerSubscriptions.Active()` lists the running subscriptions (electricity, mail and the rest) with name, cost and interval; `IsActive(id)` checks one. `Subscribe(idOrPath)` and `Unsubscribe(id)` work like the game's own offers, notification and first invoice included. Phone plans are listed but left to the phone shop.
 
 ## Jobs and achievements
 

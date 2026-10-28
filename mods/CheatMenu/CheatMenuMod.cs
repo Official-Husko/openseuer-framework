@@ -1,7 +1,6 @@
 using System;
 using CheatMenu.Cheats;
 using CheatMenu.Sections;
-using ObenFramework.Events;
 using ObenLoader;
 using ObenLoader.Config;
 using ObenLoader.Runtime;
@@ -36,10 +35,8 @@ public sealed class CheatMenuMod : ObenMod
         _context = new CheatContext(this, _config);
         ModMenu.AddPage(this, new ModPage("Cheats", ui => CheatPanel.Build(ui, _context)) { Order = 20 });
 
-        // The game builds a new player controller on every level, so a speed setting is put back each time.
-        MoveSpeed.Set(_config.Value.MoveSpeed);
-        GameEvents.WhenWorldReady(this, _ => MoveSpeed.Apply());
-        Track(Disposable.Create(MoveSpeed.Restore));
+        // The framework keeps the multiplier across level loads and removes it when this mod unloads.
+        MoveSpeed.Init(this, _config.Value.MoveSpeed);
         Track(Disposable.Create(_context.Flush));
     }
 

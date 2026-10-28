@@ -15,6 +15,7 @@ using ObenFramework.Player.Survival;
 using ObenFramework.Quests;
 using ObenFramework.Saves;
 using ObenFramework.SceneLook;
+using ObenFramework.Transport;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -53,6 +54,7 @@ public sealed class FrameworkMod : ObenMod
         ItemsModule.Init(this);
         CraftingModule.Init(this);
         EnvironmentModule.Init(this);
+        TransportModule.Init(this);
         Log.Info("Ready.");
     }
 

@@ -1,6 +1,6 @@
 # Phone numbers
 
-`PhoneNumbers` (in `ObenFramework.Npcs`) adds numbers to the game's phone book. The phones in the world (wall and desk phones, `Phone` interactables) dial them like any other number. How the game's phones work is in [../../game/npcs-dialogue-quests.md](../../game/npcs-dialogue-quests.md) section 5.3.
+`PhoneNumbers` (in `ObenFramework.Npcs`) adds numbers to the game's phone book, and `Phones` works with the phones in the scene (ringing them, answering, call events). The phones in the world (wall and desk phones, `Phone` interactables) dial them like any other number. How the game's phones work is in [../../game/npcs-dialogue-quests.md](../../game/npcs-dialogue-quests.md) section 5.3.
 
 Add `"ObenFramework"` to your mod's `dependencies` and `using ObenFramework.Npcs;`.
 
@@ -42,10 +42,34 @@ var mine = PhoneNumbers.Registered();      // lines mods have added
 
 `List()` returns every entry in the game's `PhoneNumberDatabase.database`: the game's numbers, three special entries with no number (not reachable, not answering, outside the network), numbers only scripts call (`Dialable` false) and the mods'. `Owner` is the registering mod's id, or null for the game's own.
 
+## Phones in the scene
+
+`Phones` works with the phone objects in the scene the player is in (wall phones, desk phones, payphones). Each is named by its `ObjectAddress` string (see [world.md](world.md)).
+
+```csharp
+foreach (var phone in Phones.All())
+    Log.Info($"{phone.Name} at {phone.Position}: {phone.Network}, in a call {phone.InCall}, ringing {phone.Ringing} ({phone.Caller})");
+
+// Ring a phone with a call from a number in the book; the player has 60 game seconds to pick up.
+Phones.Ring(phone.Address, "5550199", 60, answered => Log.Info(answered ? "picked up" : "no answer"));
+
+Phones.Answer(phone.Address);            // pick up for the player
+Phones.Decline(phone.Address);           // let it ring out at once
+Phones.Call(phone.Address, "112");       // start a call there, as if dialled
+
+Phones.CallStarted.Subscribe(this, c => Log.Info($"call to {c.Number} on {c.Phone}"));
+Phones.CallEnded.Subscribe(this, c => Log.Info($"hung up {c.Number}"));
+Phones.Ringing.Subscribe(this, c => Log.Info($"{c.Number} is calling {c.Phone}"));
+```
+
+- `Ring` goes through the game's own `Phone.ReceiveCall`: the phone rings, and picking it up starts the calling number's conversation (or a mod line's callback). It is refused while the phone is in use or already ringing, while a menu is open, and for numbers the book does not have. The callback gets true when the player picks up and false when the call rings out or is declined.
+- `Answer` and `Call` are refused while a menu or a conversation is open. A phone owned by an NPC (`OwnerNpc` above 0) cannot be used by the player but can still ring.
+- The events cover every call: the dialing screen, a ringing phone picked up, story calls and your own. `Ringing` fires for story calls too.
+
 ## Things to know
 
 - The game fills its book from `Resources` in `PhoneNumberDatabase.Awake`, but only while the list is empty. Adding a number first would stop that, so `Register` loads the game's numbers itself the same way when it finds the list empty.
-- Only `Phone.StartCall` is patched. Incoming calls (`Phone.ReceiveCall`, the ringing phones scene logic uses) are not covered by this API.
+- The hooks are `Phone.StartCall` (mod lines and the number of the call), `Phone.OnCallStarted`, `Phone.OnCallEnded` and `Phone.ReceiveCall`.
 - The number assets are created with `ScriptableObject.CreateInstance` and hidden from the engine's unused-asset sweep, then destroyed on removal.
 
 ## Dev bridge
@@ -53,6 +77,8 @@ var mine = PhoneNumbers.Registered();      // lines mods have added
 ```sh
 oben call phone.list
 oben call phone.list mods=true
+oben call phone.scene
+oben call phone.scene ring="<address from phone.scene>" number=112 seconds=30
 ```
 
-Each entry shows the number, name, network, answer chance, conversation, whether it is dialable and its owner. See [../dev-tools.md](../dev-tools.md).
+`phone.list` shows each number in the book with its name, network, answer chance, conversation, whether it is dialable and its owner. `phone.scene` lists the phones in the scene with their address, network, whether a call is on or it rings and who calls, and with `ring` rings one. See [../dev-tools.md](../dev-tools.md).

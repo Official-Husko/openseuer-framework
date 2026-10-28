@@ -130,6 +130,18 @@ BehaviorDesigner: the full runtime and task library are in the assembly (`Behavi
 
 Other per-NPC components worth knowing: `NPC_FOV` (sight/witness checks, used by police and `NPCRandomTalk.OnPlayerSpottedFOV`), `NPCRandomTalk` (barks on spotted/witnessed/guitar/soiled pants), `CharacterBarkStarter.TryToComment(string conversation)`, `CharacterHeadController` (look-at), `OpenSewerNPCMovementAnimation` (animator speeds), `NPCStats`.
 
+### 2.6 Character assets and bodies
+
+Read in game 0.5.13 (Open Sewer Bazaar loaded):
+
+- `CharacterDatabase.Characters` holds 294 `Character` assets (index 0 is the player). Only 79 have a prefab (`prefabWithAi ?? prefab`), all of them with an `NPCInfo`. Of those, 2 have a slider body (`Appearance`, the character editor's rig): 126 Lizzy Mopper and 146 Empty Test Map Police. The other 77 are baked: a `CharacterAppearance` that builds the body from `Character.appearance.appearanceMeshes` (mesh name, materials, blend shape names and values per child renderer). 215 characters have no prefab; 40 of those carry worn items (a `Head` wearable) for a slider body.
+- Baked bodies are made of child skinned meshes such as `average_body`, `male_head`, clothing meshes (`karl_trenchcoat_pants`); each has 83 to 85 blend shapes, mostly facial (`_01UpperLidLower`, `_02UpperLidRaise`...). `CharacterAppearance.UpdateAppearance()` shows only the children listed in the mesh list and applies their materials and shapes.
+- `Instantiate` on a `Character` deep-copies the nested `Appearance` lists, so a copy can be edited without touching the asset.
+- `NPCController.Start` takes `NPCDirector.GetNPCDataByID(ID) ?? new NPCData()`, so an NPC with an id the schedule database does not know (a mod NPC) gets an empty `NPCData` with no scheduler and stands still. `NPCData.character` looks the id up in `CharacterDatabase.Characters`, which is why a copy must be in that list before its body wakes up. `NPCInfo.Start` sets the body's `Appearance.createdCharacter` to `NPCInfo.character`.
+- `SaveController.SerializeData` skips any savable script whose `GUID` field is empty, so clearing the GUIDs of a spawned body (`SaveController.SetObjectGUID(part, "")`) keeps it out of the save.
+- `NPCInfo.ChangeState(Dead)` is also how a loaded dead NPC is put back (`NPCInfo.Start` calls it when the saved state is not `Default`), so "was alive before the call" is the test for a real death.
+- Animals: `AnimalStats` saves `animalData` (tame, health, hunger, age) per save id, but nothing copies `animalData.tame` back to `Animal.tame` for an animal of the scene after a load; only `SetAnimalStatsMeta` (an animal spawned from an item) does.
+
 ---
 
 ## 3. Dialogue

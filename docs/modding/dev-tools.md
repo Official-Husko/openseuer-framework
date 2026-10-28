@@ -70,6 +70,10 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `shops.list`, `shops.stock`, `mail.send`, `mail.list` | see [framework/shops.md](framework/shops.md), [framework/mail.md](framework/mail.md) | shops with stock and prices, letters and parcels |
 | `assets.list` | `mod?`, `kind?` | textures, sounds and models mods have loaded, with sizes ([framework/assets.md](framework/assets.md)) |
 | `npcs.list`, `npcs.get`, `npcs.nearest`, `phone.list` | see [framework/npcs.md](framework/npcs.md), [framework/phone.md](framework/phone.md) | NPCs and phone numbers |
+| `npcs.list`, `npcs.get`, `npcs.nearest`, `npcs.act`, `npcs.relationship`, `npcs.crime`, `npcs.characters` | see [framework/npcs.md](framework/npcs.md) | NPCs, one-off actions, relationships, police and surveillance |
+| `npcs.spawn`, `npcs.despawn`, `npcs.mods`, `npcs.order`, `npcs.look` | see [framework/mod-npcs.md](framework/mod-npcs.md) | mod NPCs (owned by DevBridge) |
+| `animals.list`, `animals.act`, `animals.breeders` | see [framework/animals.md](framework/animals.md) | animals, taming, breeding pens |
+| `phone.list`, `phone.scene` | see [framework/phone.md](framework/phone.md) | phone numbers and the phones in the scene |
 | `player.look`, `player.drain` | see [framework/player.md](framework/player.md) | the player's look, active drain multipliers |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |
 

@@ -9,7 +9,7 @@ namespace ObenUIKit;
 /// that adds it and goes when that unloads. Nothing shows while a kit window or the pause menu is
 /// open, while a save loads, or while the game's own HUD is hidden; timers wait until it is back.
 /// </summary>
-public static class Hud
+public static partial class Hud
 {
     public const float DefaultHintSeconds = 6f;
     public const float DefaultSubtitleSeconds = 4f;

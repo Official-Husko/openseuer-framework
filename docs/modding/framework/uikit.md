@@ -326,6 +326,57 @@ bar.Remove();
 
 The code is in `Hud/`: `HintQueue` (plain bookkeeping), `NativeHints` (the `HintOverlay` bridge), `HintPanel`, `SubtitleLine`, `BarStack`, with `HudRuntime` tying them to the kit's lifetime. The per-frame component is only enabled while something is showing.
 
+## Key prompts
+
+A prompt is the "press a key to do something" line under the crosshair: the text with the key below it. The kit draws it in the game's own tutorial prompt (the one that teaches moving and interacting in a new game), so it has the game's font, key boxes, mouse pictures and pad buttons, and its chime.
+
+```csharp
+using ObenUIKit;
+
+// Near a crate: "Open" over the player's Interact key; pressing it opens the crate instead of the game's interaction.
+Hud.Prompt(this, "Open", "Interact", new PromptOptions { Near = crate.transform, Distance = 2.5f, OnPress = OpenCrate });
+
+// A mod key, only while a condition holds.
+Hud.Prompt(this, "Call a taxi", KeyCode.G, new PromptOptions { When = () => Wallet.Coins >= 20, OnPress = CallTaxi });
+
+// A mod hotkey; the text follows the player's rebinding. The hotkey's own action runs on its key.
+Hud.Prompt(this, "Open the cheat menu", _openHotkey, new PromptOptions { Seconds = 6f });
+```
+
+- `Prompt(owner, text, action)` shows one of the game's actions by its key binding name (`"Interact"`, `"Jump"`, `"Inventory"`, see `docs/modding/framework/ui-state.md`), as the player has it bound, keyboard or pad. `Prompt(owner, text, KeyCode)` shows a fixed key, `Prompt(owner, text, hotkey)` a mod hotkey with its modifiers. `{key:Action}` in the text works as in hints.
+- `PromptOptions`: `When` (shown while it returns true, asked five times a second), `Near` and `Distance` (shown while the player is that close to the object; gone for good once the object is destroyed), `Seconds` (hidden for good after that long on screen; 0 keeps it), `OnPress` (runs when the key goes down while the prompt shows), `Capture` (default on: with `OnPress`, the key is kept from the game while the prompt shows, through `InputCapture`), `Once` (hide after the first press) and `Sound` (the chime, on by default).
+- One prompt shows at a time: the newest one whose conditions hold. The others wait and come up when it goes.
+- Prompts show only in a level, and step aside for kit windows, the pause menu, the game's menus and HUD hiding, dialogue, the console and loading. Their timers wait meanwhile, and coming back doesn't chime again.
+- The game's tutorial prompt is the game's while one of its own tutorial steps is up (`TutorialGuide.Active`, a new game's opening and the building, cleaning, head lamp and reload hints). Prompts then show in the kit's own copy a little lower on the screen and move back when the game is done.
+- `HudPrompt` has `Text` (settable), `IsShowing`, `IsActive` and `Hide()`. `Hud.ShownPrompt` is the one on screen. Prompts go when their owner unloads.
+
+## Guides
+
+A guide is a short walk-through in the same tutorial prompt: one step after another, each waiting for its key, a condition or a few seconds, with a pause between steps like the game's own tutorial.
+
+```csharp
+var guide = Hud.Guide(this, "mymod.intro")
+    .Step("Open your inventory", "Inventory")                         // done when the player presses it
+    .Step("Find the lamp in your bag", () => PlayerItems.Count(LampId) > 0)
+    .Step("Wear it with {key:Head Use}", "Head Use", done: () => LampOn())
+    .Step("That's all. Have fun!", null, seconds: 4f);
+guide.Finished += () => _saved.IntroDone = true;
+guide.Start();
+```
+
+- `Step(text, action, done)` and `Step(text, KeyCode, done)` show a key and are done when the player presses it, or, with `done`, when `done` turns true (the key is then only shown). `Step(text, done, seconds)` shows text only. A guide's keys aren't kept from the game: it teaches the game's own keys.
+- `Pause` (default 1.5 s) is the gap between steps. `Start()` begins at the first step (again, if it ran before); starting a guide stops a running one with the same id. `Stop()`, `Skip()` (counts the current step as done), `Current`, `Count`, `IsRunning`, `IsFinished`, and the `StepStarted` and `Finished` events round it off.
+- A guide doesn't remember that it ran; keep that in the mod's save (`ModSaves`) if it should show once per character.
+
+## Hiding the game's HUD pieces
+
+```csharp
+IDisposable noCrosshair = Hud.HideCrosshair(this);   // until disposed or the mod unloads
+IDisposable noHud = Hud.HideGameHud(this);          // the whole HUD, like the hide-HUD key
+```
+
+Several mods can ask at once; the piece comes back when the last one lets go. Both are applied again after a level change. The HUD goes through the game's own per-object hide list, so it stacks with the game's own reasons (the screenshot key, cutscenes). The kit's hints, bars and prompts hide along with the game's HUD.
+
 ## Hotkeys
 
 `Hotkeys` is a registry of mod hotkeys the player can rebind, so mods don't each read `Input.GetKeyDown` and each invent a settings screen.

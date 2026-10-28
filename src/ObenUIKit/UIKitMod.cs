@@ -24,6 +24,8 @@ public sealed class UIKitMod : ObenMod
         UiState.Report(this, UiActivity.Typing, () => InputFocus.Busy);
         Track(new KitRuntime(this));
         Track(new HudRuntime(KitRuntime.Current.Kit));
+        Track(new PromptRuntime(KitRuntime.Current.Kit));
+        Track(new GameHudLeases(this));
         Hotkeys.Init(this);
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());

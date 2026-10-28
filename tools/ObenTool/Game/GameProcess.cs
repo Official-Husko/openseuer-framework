@@ -36,7 +36,12 @@ public static class GameProcess
         foreach (string a in args)
             psi.ArgumentList.Add(a);
         if (instance > 1)
+        {
             psi.Environment["OBEN_INSTANCE"] = instance.ToString();
+            // Proton's default verb waits for whatever already runs in the prefix to exit first,
+            // so a second copy in the same prefix would hang until the first one closes.
+            psi.Environment["PROTON_VERB"] = "run";
+        }
 
         // umu writes a lot; keep it in a file next to the loader logs instead of the terminal.
         Directory.CreateDirectory(game.LogsDir);

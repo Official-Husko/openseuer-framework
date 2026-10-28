@@ -60,6 +60,7 @@ internal sealed class LoadAbortWatcher : MonoBehaviour
         // The level is still there: it is as ready as it was before the announcement.
         if (Rules.WasReady && WorldState.InWorld && PlayerLocator.instance != null)
             WorldState.IsReady = true;
+        GameEvents.Log?.Info($"The {(Rules.LevelChange ? "level change" : "save load")} the game announced didn't happen; still in {WorldState.SceneName} (ready: {WorldState.IsReady})");
         GameEvents.LoadAborted.Raise(Rules.LevelChange, GameEvents.Log);
     }
 

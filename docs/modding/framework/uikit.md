@@ -20,6 +20,16 @@ That gives the font (Erika Ormig) and its material, text colours for normal, hov
 
 The game renders in linear colour space. Colours you set yourself come out brighter than the same numbers in an image editor: a grey meant to look 25% bright is about 0.05.
 
+For uGUI of your own (in an `Area`, or on a handle's `Rect`), the theme has a few more things:
+
+- `UiKit.Theme.MutedSize` (the size of muted text), `Accent`, `AccentHover` and `AccentPressed` (the game's reds for what is picked, hovered and pressed).
+- `UiKit.Theme.Glyph('→', "->")`: the character when the menu font draws it, else the fallback. Characters the font has but draws as something else ("<", ">", "»", "›") count as missing.
+- `UiTheme.Blocks(normal, highlighted, pressed)`: a uGUI `ColorBlock` for a `Selectable` of your own, with the disabled colour half transparent and a short fade.
+- `UiSprites.RoundedRect(radius)`: a white rounded rectangle (corners of 0 to 64 pixels) that slices to any size; put it on an `Image` with `type = Sliced` and tint it with the Image's colour. The kit's own windows keep the game's square look.
+- `UiSprites.Gradient(bottom, top)`: a 1 by 64 texture fading between two colours, for a `RawImage` backdrop.
+
+The sprites and textures are made once, shared, and destroyed when the kit unloads.
+
 ## Opening a window
 
 ```csharp

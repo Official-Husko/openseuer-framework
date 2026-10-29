@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.UI;
 
 namespace ObenUIKit.Theme;
 
@@ -65,6 +66,46 @@ public sealed class UiTheme
     public AudioMixerGroup Mixer;
     public float HoverVolume = 0.5f;
     public float PressVolume = 1f;
+
+    /// <summary>Muted text (hints, descriptions): a little smaller than <see cref="TextSize"/>.</summary>
+    public float MutedSize => TextSize * 0.85f;
+
+    /// <summary>The game's red for what is picked or active: a slider's fill.</summary>
+    public Color Accent => SliderFill;
+
+    /// <summary>The accent under the mouse or the highlight: the red text of a hovered menu button.</summary>
+    public Color AccentHover => TextHover;
+
+    /// <summary>The accent while pressed.</summary>
+    public Color AccentPressed => TextPress;
+
+    /// <summary>
+    /// <paramref name="glyph"/> as text when the theme's font draws it, else <paramref name="fallback"/>. The menu
+    /// font has some characters that come out as something else ("&lt;", "&gt;", "»", "›"); those count as missing.
+    /// </summary>
+    public string Glyph(char glyph, string fallback)
+    {
+        if (glyph == '<' || glyph == '>' || glyph == '\u00BB' || glyph == '\u203A' || glyph == '\u00AB' || glyph == '\u2039')
+            return fallback;
+        return Font != null && Font.HasCharacter(glyph) ? glyph.ToString() : fallback;
+    }
+
+    /// <summary>
+    /// A uGUI colour block for a Selectable of your own in the kit's manner: normal, highlighted (also when
+    /// selected), pressed, and a half-transparent normal when disabled, with a short fade.
+    /// </summary>
+    public static ColorBlock Blocks(Color normal, Color highlighted, Color pressed)
+    {
+        var block = ColorBlock.defaultColorBlock;
+        block.normalColor = normal;
+        block.highlightedColor = highlighted;
+        block.selectedColor = highlighted;
+        block.pressedColor = pressed;
+        block.disabledColor = new Color(normal.r, normal.g, normal.b, normal.a * 0.5f);
+        block.colorMultiplier = 1f;
+        block.fadeDuration = 0.08f;
+        return block;
+    }
 
     public UiTheme Copy() => (UiTheme)MemberwiseClone();
 }

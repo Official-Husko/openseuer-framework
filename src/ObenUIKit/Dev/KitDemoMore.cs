@@ -4,7 +4,10 @@ using UnityEngine.UI;
 
 namespace ObenUIKit.Dev;
 
-/// <summary>The demo window's "More" tab: titles, button looks, title-bar buttons and Resets, chords, scroll areas.</summary>
+/// <summary>
+/// The demo window's "More" tab: titles, button looks, title-bar buttons and Resets, chords, scroll areas, and a
+/// raw area with a rounded sprite and a gradient.
+/// </summary>
 internal static class KitDemoMore
 {
     private static float _volume = 0.5f;
@@ -52,6 +55,17 @@ internal static class KitDemoMore
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.sizeDelta = new Vector2(300f, 60f);
-        image.GetComponent<Image>().color = new Color(0.2f, 0.35f, 0.6f).linear;
+        var box = image.GetComponent<Image>();
+        box.sprite = Theme.UiSprites.RoundedRect(12);
+        box.type = Image.Type.Sliced;
+        box.color = new Color(0.2f, 0.35f, 0.6f).linear;
+
+        var fade = new GameObject("Demo gradient", typeof(RectTransform), typeof(RawImage));
+        fade.transform.SetParent(ui.Area(40f), false);
+        var fadeRect = (RectTransform)fade.transform;
+        fadeRect.anchorMin = Vector2.zero;
+        fadeRect.anchorMax = Vector2.one;
+        fadeRect.offsetMin = fadeRect.offsetMax = Vector2.zero;
+        fade.GetComponent<RawImage>().texture = Theme.UiSprites.Gradient(new Color(0.05f, 0.05f, 0.06f), new Color(0.3f, 0.32f, 0.36f));
     }
 }

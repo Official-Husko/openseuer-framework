@@ -8,6 +8,7 @@ using ObenUIKit.Menu.Changelog;
 using ObenUIKit.Menu.Pages;
 using ObenUIKit.Menu.Settings;
 using ObenUIKit.Runtime;
+using ObenUIKit.Theme;
 
 namespace ObenUIKit;
 
@@ -34,6 +35,7 @@ public sealed class UIKitMod : ObenMod
         // The menu font draws "<" and ">" as stray marks; text the kit shows as it is borrows TextMeshPro's.
         KitText.BracketFont = TMPro.TMP_Settings.defaultFontAsset != null ? TMPro.TMP_Settings.defaultFontAsset.name : null;
         ModSettings.Init(this);
+        Track(ObenLoader.Runtime.Disposable.Create(UiSprites.Clear));
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());
         ModMenu.AddPage(this, SettingsPage.Create());

@@ -28,6 +28,7 @@ internal sealed class FieldView
     public string Label;
     public string Description;
     public string Tooltip;
+    public string Group;
     public bool HasRange;
     public float Min, Max;
 
@@ -52,8 +53,21 @@ internal sealed class FieldView
                 continue;
             views.Add(Make(field, setting));
         }
+        views = Grouped(views);
         Cache[type] = views;
         return views;
+    }
+
+    // Ungrouped fields first, then each group's fields together, groups in the order they first appear.
+    private static List<FieldView> Grouped(List<FieldView> views)
+    {
+        var ordered = views.FindAll(v => v.Group == null);
+        foreach (var view in views)
+        {
+            if (view.Group != null && !ordered.Exists(v => v.Group == view.Group))
+                ordered.AddRange(views.FindAll(v => v.Group == view.Group));
+        }
+        return ordered;
     }
 
     private static FieldView Make(FieldInfo field, SettingAttribute setting)
@@ -65,6 +79,7 @@ internal sealed class FieldView
             Label = setting?.Label ?? Prettify(field.Name),
             Description = setting?.Description ?? field.GetCustomAttribute<DescriptionAttribute>()?.Description,
             Tooltip = setting?.Tooltip,
+            Group = string.IsNullOrEmpty(setting?.Group) ? null : setting.Group,
         };
         if (view.Kind == FieldKind.Choice)
         {

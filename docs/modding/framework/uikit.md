@@ -321,7 +321,11 @@ Every public instance field becomes a control, in declaration order:
 | `Color` | colour swatches: a palette of eleven colours, with the field's own colour first when it isn't one of them |
 | anything else | a note to edit it in the config file |
 
-`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Tooltip` (longer help in a tooltip on the control), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Tooltip` (longer help in a tooltip on the control), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step`, `Group` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+
+- **Groups.** Fields with the same `Group = "Needs"` are shown together in a card with that title, groups in the order they first appear, after the fields without a group.
+- **Ranges.** A number outside its `Min`..`Max` in the config file (a hand edit) is put back in range when the config is registered, with a warning in the mod's log; one that isn't a number ("NaN") gets its default. The file is written back with the fixed values.
+- **Reset to defaults.** Every config gets a button at the bottom that asks first, then puts every shown field back to the value a new `T()` has. Hidden fields keep theirs (they are the mod's bookkeeping). From code, `config.ResetToDefaults()` resets everything, and `config.Defaults` is a fresh object with the defaults.
 
 ### Actions
 
@@ -353,7 +357,7 @@ ModActions.Register(this, "Forget seen hints", () => { _seen.Clear(); return $"F
 - The result of the last run stays under the button. An exception is logged and shown as "Failed: ...".
 - A mod with actions but no registered config still gets its own entry on the Settings page. Registered actions go away when the mod unloads; `ModActions.All` and `ModActions.Of(modId)` list them.
 
-Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, or when the menu closes. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several registered configs a `Mod` cycle at the top picks the one to edit. A registration goes away when the mod that made it unloads. The kit registers its own config the same way (the option to show What's New after updates).
+Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. For one value, `config.Watch(this, c => c.Speed, speed => Apply(speed))` calls back only when that value changed. Every save logs what changed in the mod's log (`config.json: Speed 1.0 -> 2.5`). Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, or when the menu closes. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several registered configs a `Mod` cycle at the top picks the one to edit. A registration goes away when the mod that made it unloads. The kit registers its own config the same way (the option to show What's New after updates).
 
 The list of fields is worked out by reflection once per settings class and cached.
 

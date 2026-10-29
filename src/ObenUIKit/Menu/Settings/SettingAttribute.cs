@@ -30,7 +30,10 @@ public sealed class SettingAttribute : Attribute
     /// <summary>Longer help shown as a tooltip when the mouse rests on the control (or the keyboard highlights it).</summary>
     public string Tooltip { get; set; }
 
-    /// <summary>Lowest value of a slider. A slider needs both <see cref="Min"/> and <see cref="Max"/>.</summary>
+    /// <summary>
+    /// Lowest value of a slider. A slider needs both <see cref="Min"/> and <see cref="Max"/>. A value outside them
+    /// in the config file (or not a number) is put back in range when the config is registered, with a warning.
+    /// </summary>
     public float Min { get; set; } = float.NaN;
 
     /// <summary>Highest value of a slider.</summary>
@@ -44,6 +47,12 @@ public sealed class SettingAttribute : Attribute
 
     /// <summary>Keeps the field off the page (bookkeeping the player shouldn't touch).</summary>
     public bool Hidden { get; set; }
+
+    /// <summary>
+    /// Fields with the same group are shown together in a card with this title, in the order the groups first
+    /// appear; fields without one come first.
+    /// </summary>
+    public string Group { get; set; }
 
     internal bool HasRange => !float.IsNaN(Min) && !float.IsNaN(Max) && Max > Min;
 }

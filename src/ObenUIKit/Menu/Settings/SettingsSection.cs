@@ -7,14 +7,16 @@ public sealed class SettingsSection
 {
     private readonly Func<object> _value;
     private readonly Action _save;
+    private readonly Func<object> _defaults;
     private bool _dirty;
 
-    internal SettingsSection(string title, string ownerId, Func<object> value, Action save)
+    internal SettingsSection(string title, string ownerId, Func<object> value, Action save, Func<object> defaults)
     {
         Title = title;
         OwnerId = ownerId;
         _value = value;
         _save = save;
+        _defaults = defaults;
     }
 
     public string Title { get; }
@@ -42,6 +44,19 @@ public sealed class SettingsSection
     {
         if (_dirty)
             Save();
+    }
+
+    /// <summary>
+    /// Puts every value the page shows back to its default and writes the file. Hidden fields (the mod's own
+    /// bookkeeping) keep theirs.
+    /// </summary>
+    internal void Reset()
+    {
+        object value = Value;
+        object defaults = _defaults();
+        foreach (var view in FieldView.For(value.GetType()))
+            view.Field.SetValue(value, view.Field.GetValue(defaults));
+        Save();
     }
 
     private void Save()

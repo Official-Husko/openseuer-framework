@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ObenUIKit.Controls;
 using UnityEngine;
 
@@ -25,19 +26,51 @@ internal static class ConfigEditor
         bool methods = ActionRows.HasMethods(settings.GetType());
         if (views.Count == 0 && !methods)
             ui.Label("Nothing to change here.", muted: true);
-        foreach (var view in views)
+        // The views come grouped: ungrouped ones first, then a run per group, each in its own card.
+        for (int start = 0, end; start < views.Count; start = end)
         {
-            BuildField(ui, section, settings, view);
-            if (!string.IsNullOrEmpty(view.Tooltip))
-                ui.Tooltip(view.Tooltip);
-            if (!string.IsNullOrEmpty(view.Description))
-                ui.Label(view.Description, muted: true);
+            string group = views[start].Group;
+            for (end = start + 1; end < views.Count && views[end].Group == group; end++) { }
+            int from = start, to = end;
+            if (group == null)
+                BuildFields(ui, section, settings, views, from, to);
+            else
+                ui.Card(group, card => BuildFields(card, section, settings, views, from, to));
         }
         if (methods)
         {
             ui.Space(10f);
             ActionRows.BuildMethods(ui, section, settings);
         }
+        if (views.Count > 0)
+        {
+            ui.Space(10f);
+            BuildReset(ui, section);
+        }
+    }
+
+    private static void BuildFields(UiBuilder ui, SettingsSection section, object settings, List<FieldView> views, int from, int to)
+    {
+        for (int i = from; i < to; i++)
+        {
+            var view = views[i];
+            BuildField(ui, section, settings, view);
+            if (!string.IsNullOrEmpty(view.Tooltip))
+                ui.Tooltip(view.Tooltip);
+            if (!string.IsNullOrEmpty(view.Description))
+                ui.Label(view.Description, muted: true);
+        }
+    }
+
+    private static void BuildReset(UiBuilder ui, SettingsSection section)
+    {
+        ui.Button("Reset to defaults", () => UiKit.Confirm(UIKitMod.Instance, "Reset to defaults",
+            $"Put every setting of {section.Title} back to its default?", () =>
+            {
+                section.Reset();
+                ui.Window.Rebuild();
+            }));
+        ui.Label("Every value on this page goes back to what the mod comes with.", muted: true);
     }
 
     private static void BuildField(UiBuilder ui, SettingsSection section, object settings, FieldView view)

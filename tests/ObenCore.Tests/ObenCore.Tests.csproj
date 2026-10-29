@@ -46,6 +46,7 @@
     <Compile Include="../../src/ObenLoader/Config/JsonFile.cs" Link="Linked/JsonFile.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/Disposable.cs" Link="Linked/Disposable.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/ITracker.cs" Link="Linked/ITracker.cs" />
+    <Compile Include="../../src/ObenLoader/Runtime/SteamBuild.cs" Link="Linked/SteamBuild.cs" />
     <Compile Include="../../src/ObenFramework/Events/HandlerList.cs" Link="Linked/HandlerList.cs" />
     <Compile Include="../../src/ObenFramework/Events/LoadAbortRules.cs" Link="Linked/LoadAbortRules.cs" />
     <Compile Include="../../src/ObenFramework/Clock/TimeOverrides.cs" Link="Linked/TimeOverrides.cs" />

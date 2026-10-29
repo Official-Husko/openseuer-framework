@@ -52,5 +52,11 @@ public sealed class ModManifest
     /// <summary>Refuse to load on a game version outside <see cref="GameVersion"/> instead of only warning.</summary>
     [JsonProperty("strictGameVersion")] public bool StrictGameVersion;
 
+    /// <summary>
+    /// Steam build ids the mod was made for (the "buildid" in Steam's app manifest). Checked like
+    /// <see cref="GameVersion"/>, only when the game was installed through Steam and the build is known.
+    /// </summary>
+    [JsonProperty("gameBuilds")] public List<string> GameBuilds = new List<string>();
+
     public string DisplayName => string.IsNullOrEmpty(Name) ? Id : Name;
 }

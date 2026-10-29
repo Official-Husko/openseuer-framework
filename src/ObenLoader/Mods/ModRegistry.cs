@@ -42,6 +42,9 @@ public static partial class ModRegistry
 
     public static bool IsLoaded(string id) => Find(id)?.State == ModState.Loaded;
 
+    /// <summary>The mod is in the Mods folder, whether it loaded, failed or is switched off.</summary>
+    public static bool IsInstalled(string id) => Find(id) != null;
+
     /// <summary>Gets a loaded mod's entry object, e.g. to call into another mod's API.</summary>
     public static T Get<T>() where T : ObenMod
     {

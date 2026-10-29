@@ -27,6 +27,8 @@ public class ModIdsTests
     [InlineData("com1")]
     [InlineData("LPT9")]
     [InlineData("café")]
+    [InlineData("ObenLoader")]
+    [InlineData("obenloader")]
     public void RefusesUnsafeIds(string? id)
     {
         Assert.False(ModIds.IsValid(id!));
@@ -155,8 +157,8 @@ public class VersionRangeTests
 
 public class ModChecksTests
 {
-    private static ModManifest Manifest(string id = "MyMod", string? game = null, bool strict = false) =>
-        new ModManifest { Id = id, GameVersion = game, StrictGameVersion = strict };
+    private static ModManifest Manifest(string id = "MyMod", string? game = null, bool strict = false, params string[] builds) =>
+        new ModManifest { Id = id, GameVersion = game, StrictGameVersion = strict, Version = "1.0.0", GameBuilds = new List<string>(builds) };
 
     [Fact]
     public void NoRangeNoProblem()
@@ -201,4 +203,95 @@ public class ModChecksTests
         Assert.Null(ModChecks.Refusal(Manifest(game: "soon", strict: true), "0.5.13", out string warning));
         Assert.Contains("can't be read", warning);
     }
+
+    [Fact]
+    public void OtherSteamBuildWarns()
+    {
+        Assert.Null(ModChecks.Refusal(Manifest(builds: "25969064"), "0.5.13", "26000001", false, out string warning));
+        Assert.Contains("25969064", warning);
+        Assert.Contains("26000001", warning);
+    }
+
+    [Fact]
+    public void ListedSteamBuildLoadsQuietly()
+    {
+        Assert.Null(ModChecks.Refusal(Manifest(builds: new[] { "1", "26000001" }), "0.5.13", "26000001", false, out string warning));
+        Assert.Null(warning);
+    }
+
+    [Fact]
+    public void UnknownSteamBuildIsNotChecked()
+    {
+        Assert.Null(ModChecks.Refusal(Manifest(strict: true, builds: "25969064"), "0.5.13", null, true, out string warning));
+        Assert.Null(warning);
+    }
+
+    [Fact]
+    public void StrictModRefusesAnotherBuild()
+    {
+        string refusal = ModChecks.Refusal(Manifest(strict: true, builds: "25969064"), "0.5.13", "26000001", false, out _);
+        Assert.Contains("strictGameVersion", refusal);
+    }
+
+    [Fact]
+    public void LoaderSettingRefusesEveryMismatch()
+    {
+        string refusal = ModChecks.Refusal(Manifest(game: "0.5.08"), "0.5.13", null, true, out string warning);
+        Assert.Contains("RefuseOtherGameVersions", refusal);
+        Assert.Null(warning);
+    }
+
+    [Fact]
+    public void LoaderSettingStillOnlyWarnsForAnUnreadableRange()
+    {
+        Assert.Null(ModChecks.Refusal(Manifest(game: "soon"), "0.5.13", null, true, out string warning));
+        Assert.Contains("can't be read", warning);
+    }
+
+    [Theory]
+    [InlineData("my mod", "1.0")]
+    [InlineData("Other", "latest")]
+    public void BadDependenciesAreRefused(string id, string minimum)
+    {
+        var manifest = Manifest();
+        manifest.Dependencies[id] = minimum;
+        Assert.NotNull(ModChecks.Refusal(manifest, "0.5.13", out _));
+    }
+
+    [Fact]
+    public void UsualDependenciesPass()
+    {
+        var manifest = Manifest();
+        manifest.Dependencies["ObenFramework"] = "0.1.0";
+        manifest.Dependencies["ObenUIKit"] = "*";
+        Assert.Null(ModChecks.Refusal(manifest, "0.5.13", out string warning));
+        Assert.Null(warning);
+    }
+
+    [Fact]
+    public void UnreadableOwnVersionWarns()
+    {
+        var manifest = Manifest();
+        manifest.Version = "first";
+        Assert.Null(ModChecks.Refusal(manifest, "0.5.13", out string warning));
+        Assert.Contains("'first'", warning);
+    }
+}
+
+public class SteamBuildTests
+{
+    private const string Manifest = "\"AppState\"\n{\n\t\"appid\"\t\t\"951240\"\n\t\"name\"\t\t\"Obenseuer\"\n\t\"buildid\"\t\t\"25969064\"\n\t\"installdir\"\t\t\"Obenseuer\"\n}";
+
+    [Fact]
+    public void ReadsTheBuildId() => Assert.Equal("25969064", ObenLoader.Runtime.SteamBuild.Parse(Manifest, null));
+
+    [Fact]
+    public void MatchesTheInstallFolder()
+    {
+        Assert.Equal("25969064", ObenLoader.Runtime.SteamBuild.Parse(Manifest, "obenseuer"));
+        Assert.Null(ObenLoader.Runtime.SteamBuild.Parse(Manifest, "OtherGame"));
+    }
+
+    [Fact]
+    public void NoBuildIdNoAnswer() => Assert.Null(ObenLoader.Runtime.SteamBuild.Parse("\"AppState\" { }", null));
 }

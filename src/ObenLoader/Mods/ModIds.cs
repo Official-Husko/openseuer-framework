@@ -15,6 +15,9 @@ public static class ModIds
     // Windows refuses these in file names, on top of the control characters.
     private const string InvalidFileChars = "<>:\"/\\|?*";
 
+    /// <summary>The loader's own name, which no mod can take.</summary>
+    public const string LoaderId = "ObenLoader";
+
     private static readonly string[] DeviceNames = { "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$" };
 
     /// <summary>True for 1 to 64 letters, digits, '.', '_' or '-', not starting or ending with '.' and not a reserved device name.</summary>
@@ -39,6 +42,9 @@ public static class ModIds
             return "the id can't contain '..'";
         if (IsReservedName(id))
             return $"'{id}' is a name Windows reserves for a device";
+        // The loader logs and reports errors under its own name; a mod using it would be mixed up with it.
+        if (string.Equals(id, LoaderId, StringComparison.OrdinalIgnoreCase))
+            return $"'{LoaderId}' is the loader's own name";
         return null;
     }
 

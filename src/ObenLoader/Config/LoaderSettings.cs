@@ -16,4 +16,10 @@ public sealed class LoaderSettings
 
     /// <summary>Write debug lines to latest.log as well.</summary>
     public bool VerboseLog;
+
+    /// <summary>
+    /// Refuse every mod whose gameVersion or gameBuilds doesn't match the installed game, as if each had
+    /// strictGameVersion: for players who'd rather go without a mod than risk one made for another version.
+    /// </summary>
+    public bool RefuseOtherGameVersions;
 }

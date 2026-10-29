@@ -22,7 +22,7 @@ internal sealed partial class ModelStage : IDisposable
     private const float FaceDrop = 0.11f;
     private const float FaceHalf = 0.165f;
     private static readonly Vector2 CopyStart = new Vector2(10f, 200f);
-    private static readonly Vector2 LiveStart = new Vector2(6f, 0f);
+    private static readonly Vector2 LiveStart = new Vector2(-6f, 0f);
     private const float StageDepth = -12000f;
     private const float StageSpacing = 200f;
 

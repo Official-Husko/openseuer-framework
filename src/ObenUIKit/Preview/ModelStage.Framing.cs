@@ -39,7 +39,9 @@ internal sealed partial class ModelStage
             reach = height * FaceHalf;
         }
         float distance = reach / Mathf.Tan(fit) * zoom;
-        var turn = Quaternion.LookRotation(_live.Forward) * Quaternion.Euler(Rotation.x, Rotation.y + 180f, 0f);
+        // The camera circles the subject instead of the subject turning, so both angles go the other way round:
+        // a drag to the right still moves the side facing the viewer to the right, like a copy turning.
+        var turn = Quaternion.LookRotation(_live.Forward) * Quaternion.Euler(-Rotation.x, 180f - Rotation.y, 0f);
         _camera.transform.SetPositionAndRotation(focus - turn * Vector3.forward * distance, turn);
         _camera.nearClipPlane = Mathf.Max(0.02f, distance - height);
         _camera.farClipPlane = distance + height * 2f + 1f;

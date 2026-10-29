@@ -53,17 +53,22 @@ internal sealed class LiveSubject : IDisposable
 
     /// <summary>
     /// The player's body, or null outside a level. In first person the game switches the two rigs off and the
-    /// body's renderers (which sit beside the rigs) off as well; both come on for the preview.
+    /// body's renderers (which sit beside the rigs) off as well, and some levels switch off the object holding
+    /// them; all of it comes on for the preview.
     /// </summary>
     public static LiveSubject Player(int layer)
     {
         var locator = PlayerLocator.instance;
         if (locator == null || locator.playerRig == null)
             return null;
-        var rigs = locator.playerRigUnrigified != null
-            ? new[] { locator.playerRig, locator.playerRigUnrigified }
-            : new[] { locator.playerRig };
-        return new LiveSubject(locator.gameObject, rigs, layer);
+        // Some levels also switch off the object holding the worn meshes, above the rigs.
+        var switchOn = new List<GameObject>();
+        for (var t = locator.playerRig.transform.parent; t != null && t != locator.transform; t = t.parent)
+            switchOn.Insert(0, t.gameObject);
+        switchOn.Add(locator.playerRig);
+        if (locator.playerRigUnrigified != null)
+            switchOn.Add(locator.playerRigUnrigified);
+        return new LiveSubject(locator.gameObject, switchOn.ToArray(), layer);
     }
 
     /// <summary>Any object in the scene, faced from its own forward.</summary>

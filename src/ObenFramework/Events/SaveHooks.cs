@@ -33,7 +33,9 @@ internal static class SaveHooks
 
     private static void OnLevelChanging()
     {
-        LoadAbortWatcher.Announced(levelChange: true);
+        // The game invokes this without a try/catch, and a throw would leave the level change blocked.
+        try { LoadAbortWatcher.Announced(levelChange: true); }
+        catch (System.Exception e) { GameEvents.Log?.Error("Watching the announced level change failed", e); }
         WorldState.IsReady = false;
         GameEvents.LevelChanging.Raise(GameEvents.Log);
     }

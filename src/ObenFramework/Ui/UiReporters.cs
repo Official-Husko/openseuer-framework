@@ -41,21 +41,26 @@ internal static class UiReporters
     public static bool Any(UiActivity kind)
     {
         var list = ByKind[(int)kind];
-        for (int i = 0; i < list.Count; i++)
+        bool removed = false;
+        bool any = false;
+        for (int i = 0; i < list.Count && !any; i++)
         {
             try
             {
-                if (list[i]())
-                    return true;
+                any = list[i]();
             }
             catch (Exception e)
             {
                 // A broken reporter would throw on every read; drop it.
                 Events.GameEvents.Log?.Error($"A UiState {kind} reporter threw and was removed", e);
                 list.RemoveAt(i--);
+                removed = true;
             }
         }
-        return false;
+        // Dropping one can change the answer, and listeners only hear about changes through here.
+        if (removed)
+            UiState.Changed();
+        return any;
     }
 
     public static void Clear()

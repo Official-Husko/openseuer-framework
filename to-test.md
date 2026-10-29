@@ -180,6 +180,11 @@ New:
   - [x] **Live player preview:** (2026-10-29: first person with Body and Face framing, closing put both rigs and all eleven body renderers back off; third person in the tenement and outside, where the level switches the meshes' holder off, after a fix; dragging turns the player like a copy after a fix: right moves the face right, up moves it up. The idle animation by eye is still open.) In the tenement, demo, Model tab, "Show the player, live". The player shows from the front, breathing (idle animation), in their clothes, and their body is gone from the scene behind; Body and Face switch the framing; dragging circles them. In first person too (the body is switched on for the preview). Closing the window brings the body back as it was (gone again in first person, shown in third person), with no lamp light left off.
   - **Framing a copy:** an item or mod model with Face framing shows its top part.
 
+- [ ] **Co-op in the menus, pause menu buttons, mod version:**
+  - The main menu has Co-op under the grid; the pause menu has Co-op above MODS. Both open the Co-op window (status "Not in a co-op game.", the console commands). Keyboard and pad reach both buttons.
+  - The pause menu shows "ObenseuerExtended v0.1.0" just above "V. 0.5.13", same size and colour.
+  - Hot reload of ObenCoop: its buttons go and come back; the kit's reload keeps MODS and the version line.
+
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 
 Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled=true` in `new_scene Interior Player Tenement`. The guide `docs/modding/game-tweaks.md` has the exact evals.

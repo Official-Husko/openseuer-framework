@@ -333,6 +333,21 @@ join.Label = "Join (2)";
 - A button goes away when its mod unloads (or with `Remove()`); the rest close up. Ids are per mod; adding the same id again replaces the old button. `MainMenuButtons.All` and `Find(modId, id)` list them.
 - MODS itself stays in the grid's unused "???" slot and isn't one of these.
 
+## Pause menu buttons
+
+The pause menu takes mod buttons too:
+
+```csharp
+using ObenUIKit.Menu;
+
+PauseMenuButtons.Add(this, "coop", "Co-op", () => OpenCoopWindow(), order: 10);
+```
+
+- Each is a copy of the pause menu's own Resume button (like MODS): its font, colours, hover and click sounds, without the original's click action and relays. They sit above MODS, which stays just above "Quit to Menu", sorted by `order` and then by when they were added. The pause menu's own keyboard and pad handling reaches them.
+- They are made in every level (the pause menu is part of the level) and go away when their mod unloads or with `Remove()`. `Label` and `Interactable` change them; `IsShown` is true while one is in the menu. Ids are per mod; adding the same id again replaces the old button. `PauseMenuButtons.All` and `Find(modId, id)` list them.
+
+The pause menu also shows "ObenseuerExtended v0.1.0" just above the game's own version at its bottom, in the same small text.
+
 ## Settings pages
 
 Every config a loaded mod opens with `LoadConfig<T>()` shows on the Settings page by itself, titled with the mod's name (and the file name when a mod has several, like "DevBridge (trace)"). Nothing has to be registered, and mods that don't reference the kit get a page too. `[System.ComponentModel.Browsable(false)]` on the settings class keeps a file off the page (the kit's hotkeys.json is one), and `[DisplayName("...")]` on the class changes its title. `ModSettings.Register` gives a file your own title, or shows one loaded some other way:

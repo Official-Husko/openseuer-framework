@@ -1,3 +1,4 @@
+using System;
 using ObenFramework.Events;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -32,22 +33,52 @@ internal static class PauseMenuEntry
             return;
         Detach();
 
-        var template = pause.resumeMenuButton;
-        var parent = template.transform.parent;
-        var clone = Object.Instantiate(template, parent, false);
-        clone.name = ObjectName;
-        Strip(clone);
-
+        var clone = CopyResume(pause, ObjectName, () => ModMenu.Open());
+        var parent = clone.transform.parent;
         var quit = parent.Find("Quit to Menu");
         clone.transform.SetSiblingIndex(quit != null ? quit.GetSiblingIndex() : parent.childCount - 1);
         var text = clone.GetComponentInChildren<TMP_Text>(true);
         if (text != null)
             text.text = "Mods";
+        _entry = clone;
+    }
 
+    /// <summary>A copy of the pause menu's Resume button beside it, stripped of what would act like the original, that runs <paramref name="onClick"/>.</summary>
+    internal static GameObject CopyResume(PauseMenu pause, string name, Action onClick)
+    {
+        var template = pause.resumeMenuButton;
+        var clone = UnityEngine.Object.Instantiate(template, template.transform.parent, false);
+        clone.name = name;
+        Strip(clone);
         var button = clone.GetComponent<UnityEngine.UI.Button>();
         button.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-        button.onClick.AddListener(() => ModMenu.Open());
-        _entry = clone;
+        button.onClick.AddListener(() => onClick());
+        return clone;
+    }
+
+    /// <summary>Greys a copied button out (or back in) the way the game's own buttons show it.</summary>
+    internal static void SetInteractable(GameObject copy, bool interactable)
+    {
+        var button = copy.GetComponent<UnityEngine.UI.Button>();
+        if (button != null)
+            button.interactable = interactable;
+        var effect = copy.GetComponent<TextButtonColorEffectTMP>();
+        if (effect == null)
+            return;
+        effect.interactable = interactable;
+        effect.disableColorEffect = !interactable;
+        var text = copy.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+            text.color = interactable ? Native.ButtonDefault(effect) : effect.DisabledColor;
+    }
+
+    /// <summary>Takes a copy out of the menu at once and destroys it.</summary>
+    internal static void Discard(GameObject copy)
+    {
+        // Destroy waits for the end of the frame; take it out of the menu right away.
+        copy.SetActive(false);
+        copy.transform.SetParent(null, false);
+        UnityEngine.Object.Destroy(copy);
     }
 
     private static void Strip(GameObject clone)
@@ -59,17 +90,14 @@ internal static class PauseMenuEntry
             Native.ButtonOnUnselected(effect) = null;
         }
         foreach (var relay in clone.GetComponentsInChildren<Relay>(true))
-            Object.DestroyImmediate(relay);
+            UnityEngine.Object.DestroyImmediate(relay);
     }
 
     private static void Detach()
     {
         if (_entry == null)
             return;
-        // Destroy waits for the end of the frame; take it out of the menu right away.
-        _entry.SetActive(false);
-        _entry.transform.SetParent(null, false);
-        Object.Destroy(_entry);
+        Discard(_entry);
         _entry = null;
     }
 }

@@ -71,7 +71,17 @@ public sealed partial class UiWindow : ITracker
 
         kit.Root.EnsureEventSystem();
         if (options.LockInput)
-            _inputLease = InputLock.Acquire();
+        {
+            try { _inputLease = InputLock.Acquire(); }
+            catch
+            {
+                // Nothing else knows about this window yet; don't leave its frame over the screen.
+                IsOpen = false;
+                if (_parts.Frame != null)
+                    UnityEngine.Object.Destroy(_parts.Frame.gameObject);
+                throw;
+            }
+        }
         owner.Track(Disposable.Create(() => Close(WindowCloseReason.OwnerUnloaded)));
         kit.Windows.Push(this);
         kit.Tick.enabled = true;
@@ -114,7 +124,9 @@ public sealed partial class UiWindow : ITracker
         IsOpen = false;
         CloseReason = reason;
         _kit.Windows.Remove(this);
-        _inputLease?.Dispose();
+        // The lease count drops before the game is asked to unlock, so a throw there still closes the window.
+        try { _inputLease?.Dispose(); }
+        catch (Exception e) { _kit.Log.Error($"Unlocking input after window '{Id}' failed", e); }
         _inputLease = null;
         DisposeScope();
         if (_parts.Frame != null)

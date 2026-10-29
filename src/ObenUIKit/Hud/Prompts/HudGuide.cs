@@ -56,11 +56,14 @@ public sealed class HudGuide
     /// <summary>The player went through every step.</summary>
     public event Action Finished;
 
-    /// <summary>A step that shows one of the game's actions and is done when the player presses it (or when <paramref name="done"/> turns true).</summary>
+    /// <summary>
+    /// A step that shows one of the game's actions and is done when the player presses it, or, with
+    /// <paramref name="done"/>, when that turns true (the key is then only shown).
+    /// </summary>
     public HudGuide Step(string text, string action, Func<bool> done = null) =>
         Add(text, PromptKey.ForAction(action ?? throw new ArgumentNullException(nameof(action))), done, 0f);
 
-    /// <summary>A step that shows a key and is done when the player presses it (or when <paramref name="done"/> turns true).</summary>
+    /// <summary>A step that shows a key and is done when the player presses it, or, with <paramref name="done"/>, when that turns true.</summary>
     public HudGuide Step(string text, KeyCode key, Func<bool> done = null) => Add(text, PromptKey.ForKey(key), done, 0f);
 
     /// <summary>A step with text only, done when <paramref name="done"/> turns true or after <paramref name="seconds"/> on screen.</summary>

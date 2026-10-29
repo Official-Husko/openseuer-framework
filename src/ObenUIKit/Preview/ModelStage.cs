@@ -101,6 +101,9 @@ internal sealed class ModelStage : IDisposable
     /// <summary>Makes sure the texture matches the size the preview is drawn at. Returns true when it was remade.</summary>
     public bool Resize(int width, int height)
     {
+        // The view can still run its LateUpdate in the frame the window closes; a texture made then would never be released.
+        if (_disposed)
+            return false;
         width = Mathf.Clamp(width, 32, 2048);
         height = Mathf.Clamp(height, 32, 2048);
         if (_texture != null && _texture.width == width && _texture.height == height)
@@ -115,7 +118,7 @@ internal sealed class ModelStage : IDisposable
     /// <summary>Draws one frame of the model into the texture.</summary>
     public void Render()
     {
-        if (_texture == null)
+        if (_disposed || _texture == null)
             return;
         _pivot.localRotation = Quaternion.Euler(Rotation.x, Rotation.y, 0f);
         if (_model != null)

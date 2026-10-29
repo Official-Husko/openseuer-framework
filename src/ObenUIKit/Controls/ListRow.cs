@@ -108,8 +108,8 @@ public sealed class ListHandle
 
     public int Count => _list != null ? _list.Count : 0;
 
-    /// <summary>The highlighted entry (keyboard, controller or the last click).</summary>
-    public int Selected => _list != null ? _list.Selected : -1;
+    /// <summary>The highlighted entry (keyboard, controller or the last click), or -1 when the list is empty.</summary>
+    public int Selected => _list != null && _list.Count > 0 ? _list.Selected : -1;
 
     /// <summary>Changes how many entries there are and fills the visible rows again.</summary>
     public void SetCount(int count)

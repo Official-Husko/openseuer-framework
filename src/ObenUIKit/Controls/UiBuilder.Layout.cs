@@ -80,6 +80,8 @@ public sealed partial class UiBuilder
         if (bind == null)
             throw new ArgumentNullException(nameof(bind));
         string key = _window.NextKey("list");
+        // Read before Init: laying the list out reports scroll position 0, which would overwrite it.
+        int top = _window.Remembered(key, 0);
         var frame = UiParts.Image(_parent, "List", null, Color.clear, raycast: true);
         UiParts.Height(frame, Mathf.Max(1f, rows) * KitList.RowHeight);
         var list = frame.gameObject.AddComponent<KitList>();
@@ -88,7 +90,7 @@ public sealed partial class UiBuilder
         list.Init(_kit, Theme, Mathf.Max(0, count), bind, onPick,
             top => window.Remember(key, top),
             e => window.Fault($"A list in window '{window.Id}' failed", e));
-        list.Restore(_window.Remembered(key, 0));
+        list.Restore(top);
         _window.Nav.Add(list, _inBody, _group);
         list.BindNav(_window.Nav);
         _last = frame.rectTransform;

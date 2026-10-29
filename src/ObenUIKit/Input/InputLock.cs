@@ -31,7 +31,15 @@ public static class InputLock
     public static IDisposable Acquire()
     {
         if (_leases++ == 0)
-            Apply();
+        {
+            // The game's ControlsDisabled reaches camera singletons unguarded; a failed lock must not count.
+            try { Apply(); }
+            catch
+            {
+                _leases--;
+                throw;
+            }
+        }
         return Disposable.Create(Release);
     }
 

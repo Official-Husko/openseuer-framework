@@ -27,6 +27,12 @@ public static partial class GameDifficulty
             RenovationCountdownPatch.Reset();
     });
 
+    /// <summary>
+    /// The hooks that apply the factors are in place. When the game changed under them (a failed patch area),
+    /// <see cref="SetFactor"/> still records factors but they have no effect.
+    /// </summary>
+    public static bool FactorsAvailable => Patching.PatchAreas.IsAvailable(Patching.PatchAreas.Framework, "NewGames");
+
     /// <summary>The difficulty of the running game (or the one selected on the New Game screen), or null.</summary>
     public static DifficultySettings Current()
     {

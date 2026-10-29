@@ -102,9 +102,10 @@ public static partial class Conversations
     /// the NPC keeps walking and its relays are not registered. The game still locks and unlocks the
     /// player's controls by itself. Use this for narration and phone-style conversations. Before it starts,
     /// the game's leftover end-of-talk callback from the last NPC conversation is cleared, because it would
-    /// otherwise run again when this one closes.
+    /// otherwise run again when this one closes. <paramref name="actor"/> replaces the player as the first
+    /// speaker, for a conversation between two NPCs.
     /// </summary>
-    public static ConversationStart StartRaw(string title, Transform conversant = null)
+    public static ConversationStart StartRaw(string title, Transform conversant = null, Transform actor = null)
     {
         if (!CanStart(false, out var blocked))
             return blocked;
@@ -114,7 +115,7 @@ public static partial class Conversations
         var controller = DialogueController.instance;
         controller.onDialogueClosed = NoOp;
         controller.SetCurrentInteractableTalk(null);
-        DialogueManager.StartConversation(title, OpenSewerCharacterController.instance.transform, conversant);
+        DialogueManager.StartConversation(title, actor != null ? actor : OpenSewerCharacterController.instance.transform, conversant);
         return IsActive ? ConversationStart.Started : ConversationStart.NoValidEntry;
     }
 

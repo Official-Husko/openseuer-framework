@@ -55,7 +55,8 @@ public static class ModSaves
     /// <summary>
     /// Reads what a mod (yours or another) stored in the loaded save, without registering: a copy, so
     /// changing it changes nothing. Null at the main menu, in a new game, when there is no such file or it
-    /// can't be read as <typeparamref name="T"/>.
+    /// can't be read as <typeparamref name="T"/>. Missing nested lists and objects are filled in, as for
+    /// registered data.
     /// </summary>
     public static T Peek<T>(string modId, string key = null) where T : class
     {
@@ -67,7 +68,11 @@ public static class ModSaves
         string path = SaveFolders.FileFor(folder, SaveFolders.FileName(modId, key));
         if (!System.IO.File.Exists(path) || new System.IO.FileInfo(path).Length > SaveFolders.MaxModFileBytes)
             return null;
-        return ObenLoader.Config.JsonFile.TryRead<SaveEnvelope<T>>(path, out var envelope, out _) ? envelope.Data : null;
+        if (!ObenLoader.Config.JsonFile.TryRead<SaveEnvelope<T>>(path, out var envelope, out _) || envelope.Data == null)
+            return null;
+        try { SaveBlanks.Fill(envelope.Data); }
+        catch (Exception e) { Log.Warn($"Couldn't fill in the missing parts of {path}: {e.Message}"); }
+        return envelope.Data;
     }
 
     internal static void Init(ObenMod framework)

@@ -472,7 +472,8 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 
 ## 13. Saves, ObenSave and the first real save
 
-- [ ] A first real save with every mod on: ModSaves files appear under `<save>/mods/`, and nothing errors while saving or loading.
+- [x] A first real save with every mod on: ModSaves files appear under `<save>/mods/`, and nothing errors while saving or loading. (2026-10-29: 17 files in Slot1, Slot2, Autosave and Autosave2, no errors from our code over the saves and door changes.)
+- [ ] **Mod data round trip [save]:** the nine steps under "How to test it in the game" in `docs/modding/framework/saves.md` (save, door, main menu, load, cross-slot save, delete, hot reload, corrupt file). Also: a data class with a list field without an initializer has an empty list after a load, and setting `Value = null` throws. (`Peek` with the fill was checked on Slot2 on 2026-10-30: members missing from the bank ledger file came back empty, the saved values intact.)
 - [ ] **Save state:** `save.capture` and SaveState apply on a real object; `save.slots` lists characters and slots; "save now" works.
 - [ ] **ObenSave (off by default):**
   - Switch it on, save, then load: the compressed container is written and read back.
@@ -507,5 +508,5 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 - [ ] **Recipes:** a recipe from `RecipeBuilder.From(Recipes.ById(10016), id, "Test")` with one input and output shows at the template's station with the template's icon.
 - [ ] **Containers:** in the player's tenement, `Containers.IsPlayerOwned(<a placed chest>)` is true; in a rented apartment `IsTenantOwned` is true. `Containers.TakeFromSlot` takes from the right slot.
 - [ ] **Looks:** `PlayerLook.ApplyToPlayer(PlayerLook.Random())` gives a new random look (screenshot); `Random(male: false)` gives a female body.
-- [ ] **Mod data [save]:** `ModSaves.Peek<JObject>("ObenFramework", "items")` reads the placeholder list of the loaded save; `TimeControl.DayLengthMinutes` is 96 in the tenement.
+- [ ] **Day length:** `TimeControl.DayLengthMinutes` is 96 in the tenement. (The `ModSaves.Peek` half of this item passed on Slot2 on 2026-10-30, see area 13.)
 - [ ] **Conversations:** `Conversations.StartRaw(title, conversant, actor)` with two NPC transforms runs a conversation between them.

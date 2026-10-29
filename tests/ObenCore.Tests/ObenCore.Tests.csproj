@@ -62,6 +62,7 @@
     <Compile Include="../../src/ObenFramework/Console/ConsoleTokens.cs" Link="Linked/ConsoleTokens.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveBlobLimits.cs" Link="Linked/SaveBlobLimits.cs" />
     <Compile Include="../../src/ObenFramework/Saves/SaveGateState.cs" Link="Linked/SaveGateState.cs" />
+    <Compile Include="../../src/ObenFramework/Saves/SaveBlanks.cs" Link="Linked/SaveBlanks.cs" />
     <!-- Patch areas: the bookkeeping, method lookup and exception text use no Unity or Harmony types. -->
     <Compile Include="../../src/ObenFramework/Patching/PatchAreaBook.cs" Link="Linked/Patching/PatchAreaBook.cs" />
     <Compile Include="../../src/ObenFramework/Patching/PatchAreaInfo.cs" Link="Linked/Patching/PatchAreaInfo.cs" />

@@ -10,7 +10,8 @@ namespace ObenFramework.Saves;
 /// A mod's own data for the current save, kept in a side file next to the game's files. Get one from
 /// <see cref="ModSaves.Register{T}"/>. <see cref="Value"/> is the live object; the framework writes it
 /// after each game save and replaces it whenever a save loads, so read it through the property each
-/// time and don't keep the reference around.
+/// time and don't keep the reference around. Nested lists and objects the file leaves out are filled in
+/// empty (<see cref="SaveBlanks"/>), so they are never null after a load or a reset.
 /// </summary>
 public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
 {
@@ -29,8 +30,15 @@ public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
     /// <summary>Distinguishes several objects of one mod, or null for the mod's only one.</summary>
     public string Key { get; }
 
-    /// <summary>The data. Never null. Defaults to <c>new T()</c> in a new game and at the main menu.</summary>
-    public T Value => _value;
+    /// <summary>
+    /// The data. Never null. Defaults to <c>new T()</c> in a new game and at the main menu. Setting it replaces
+    /// the whole object (the next save writes the new one, the next load replaces it again); null throws.
+    /// </summary>
+    public T Value
+    {
+        get => _value;
+        set => _value = value ?? throw new ArgumentNullException(nameof(value), $"Save data of {ModId} can't be null; call Reset() for defaults.");
+    }
 
     /// <summary>
     /// Raised after <see cref="Value"/> was replaced by a save's content or reset to defaults, which happens
@@ -46,7 +54,7 @@ public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
     /// <summary>Throws the current data away and starts over with defaults.</summary>
     public void Reset()
     {
-        _value = new T();
+        _value = Filled(new T());
         Announce();
     }
 
@@ -73,7 +81,7 @@ public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
         {
             if (envelope.Format > SaveEnvelope<T>.CurrentFormat)
                 ModSaves.Log.Warn($"{FileName} has file format {envelope.Format}, newer than this framework knows; reading it anyway.");
-            _value = envelope.Data;
+            _value = Filled(envelope.Data);
             Announce();
             return;
         }
@@ -99,8 +107,16 @@ public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
 
     void ISaveSlot.Restore(string json)
     {
-        _value = JsonConvert.DeserializeObject<T>(json, JsonFile.Settings) ?? new T();
+        _value = Filled(JsonConvert.DeserializeObject<T>(json, JsonFile.Settings) ?? new T());
         Announce();
+    }
+
+    // A member that can't be filled (a getter that throws) only costs the fill, never the loaded data.
+    private T Filled(T value)
+    {
+        try { SaveBlanks.Fill(value); }
+        catch (Exception e) { ModSaves.Log.Warn($"Couldn't fill in the missing parts of {FileName}: {e.Message}"); }
+        return value;
     }
 
     private void Announce() => DataLoaded.Raise(_value, ModSaves.Log);

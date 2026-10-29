@@ -29,14 +29,15 @@ public sealed class MyMod : ObenMod
 ```
 
 - `ModSaves.Register<T>(owner, key = null)` returns a `ModSaveData<T>`. `T` is a class with a parameterless constructor; its defaults are what a new game starts with. It must round trip through Newtonsoft.Json (public fields and properties, lists, dictionaries, enums, nested classes).
-- `Value` is never null. Read it through the property every time: the framework **replaces** the object when a save loads, so a reference cached from before is stale afterwards.
+- `Value` is never null. Read it through the property every time: the framework **replaces** the object when a save loads, so a reference cached from before is stale afterwards. You can replace it yourself too (`_save.Value = new MyData { Visits = 1 }`); the next save writes the new object. Setting null throws; `Reset()` is the way back to defaults.
+- Nested objects are never null either. After a load, a reset or a `Peek`, every member that is null and holds an array, a list, a dictionary or a class with a parameterless constructor gets an empty one, at every depth (inside list items and dictionary values too). That covers a field without an initializer, a file written by an older version of the mod and a `null` typed into the file by hand. Strings stay null, as do `object`, interfaces, Unity objects, null items inside a list, and a class that holds its own type (a linked node; filling it would never end). A `null` in the file never overwrites an initializer.
 - Change `Value` whenever you like. Nothing has to be called to save: the framework writes every registered object after each game save. A handler on `GameEvents.Saving` runs before that if you want to update fields right before the write.
 - `Reset()` puts defaults back. `DataLoaded` fires after every replacement (load, reset, main menu).
 - Several objects per mod: pass a `key`, which gives `<modId>.<key>.json`. Registering the same mod and key twice throws.
 - The registration ends when the owner unloads. On a hot reload the current data is parked in the loader's `ReloadState` and handed to the new copy, so unsaved changes survive a reload. This only applies if no save was loaded in between; otherwise the loaded save's file wins.
 - `ModSaves.Peek<T>(modId, key)` reads what any mod stored in the loaded save without registering (a copy; null when there is nothing). Handy for reading another mod's data or your own from before you register.
 - A file over 64 MB isn't read back: it is set aside as `.corrupt` and the data starts from defaults, as for a file that can't be parsed. Newtonsoft's own limit of 64 levels of nesting applies too.
-- Add a version field to `T` yourself if the shape will change. Unknown JSON members are ignored and missing ones keep the constructor's defaults, so adding fields is safe.
+- Add a version field to `T` yourself if the shape will change. Unknown JSON members are ignored, missing ones keep the constructor's defaults and missing nested objects are filled in, so adding fields is safe.
 
 ## What gets written where
 

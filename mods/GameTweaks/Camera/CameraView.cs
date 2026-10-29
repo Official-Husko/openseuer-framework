@@ -93,9 +93,12 @@ internal static class CameraView
             return;
         if (Forced() || ZoomBlockers(view).Count > 0)
         {
-            // A trigger wants first person: let the game have it and drop the request.
+            // A trigger wants first person: let the game have it and drop the request (so this says it once).
             if (WantThird)
+            {
                 ToFirst();
+                ObenUIKit.UiKit.Toast("The camera has to stay in first person here.", "Camera");
+            }
             return;
         }
         if (view.disableThirdPerson || view.firstpersonOnly)

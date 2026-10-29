@@ -37,7 +37,10 @@ public static class LobbyCheck
         message = null;
         if (lobby.Unreadable || lobby.Protocol != Protocol.Version)
         {
-            message = $"That game runs a different ObenCoop network protocol ({lobby.Protocol}, you have {Protocol.Version}). Both players need the same ObenCoop version.";
+            message = lobby.Protocol != Protocol.Version
+                ? $"That game runs a different ObenCoop network protocol ({lobby.Protocol}, you have {Protocol.Version}). Both players need the same ObenCoop version."
+                // Same protocol number but a lobby format this copy can't read.
+                : "That game describes its lobby in a way this ObenCoop can't read. Both players need the same ObenCoop version.";
             return LobbyVerdict.ProtocolVersion;
         }
         if (lobby.GameVersion != local.GameVersion)

@@ -79,6 +79,16 @@ public class HandshakeTests
     }
 
     [Fact]
+    public void NamesLoseTagsAndControlCharacters()
+    {
+        using var host = Rig.StartHost("Host");
+        using var client = Rig.JoinedClient(host, " <size=200>Big</size>\n\u0007");
+        Rig.Until(() => host.Session.Roster.Count == 2, "client in roster", host, client);
+
+        Assert.Equal("(size=200)Big(/size)", host.Session.Roster.Find(1).Name);
+    }
+
+    [Fact]
     public void ModSetsThatMatchAreAccepted()
     {
         var mods = new ModSet(new[] { new ModEntry("ObenCoop", "0.1.0"), new ModEntry("ObenFramework", "0.1.0") });

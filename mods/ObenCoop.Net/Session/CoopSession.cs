@@ -222,9 +222,21 @@ public sealed partial class CoopSession
         transport.PacketReceived -= OnPacket;
     }
 
+    // Names end up in rich text (notifications, the console), so no tags or control characters get through.
     private static string CleanName(string name)
     {
-        name = name?.Trim();
+        if (name != null)
+        {
+            var chars = new System.Text.StringBuilder(name.Length);
+            foreach (char c in name)
+            {
+                if (c == '<' || c == '>')
+                    chars.Append(c == '<' ? '(' : ')');
+                else if (!char.IsControl(c))
+                    chars.Append(c);
+            }
+            name = chars.ToString().Trim();
+        }
         if (string.IsNullOrEmpty(name))
             return "Player";
         return name.Length > Protocol.MaxNameLength ? name.Substring(0, Protocol.MaxNameLength) : name;

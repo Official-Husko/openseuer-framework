@@ -58,6 +58,17 @@ public static class PresenceCodec
 
     public static void WriteWithdrawn(MessageWriter writer) => writer.WriteByte(KindWithdrawn);
 
+    // Scene names have no tags or control characters; areas are shown in the console's rich text.
+    private static bool IsPlain(string area)
+    {
+        foreach (char c in area)
+        {
+            if (c == '<' || c == '>' || char.IsControl(c))
+                return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// Reads the sample after the kind byte. False when a value is out of range. The area name comes
     /// from <paramref name="names"/>, which hands back the same string while the name doesn't change,
@@ -81,7 +92,7 @@ public static class PresenceCodec
         if (!sample.Position.IsWithin(MaxCoordinate))
             return false;
         string area = names.Resolve(areaBytes);
-        if (area.Length == 0 || area.Length > MaxAreaLength)
+        if (area.Length == 0 || area.Length > MaxAreaLength || !IsPlain(area))
             return false;
 
         sample.Area = area;

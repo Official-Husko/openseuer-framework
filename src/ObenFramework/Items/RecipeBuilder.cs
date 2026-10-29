@@ -28,6 +28,56 @@ public sealed class RecipeBuilder
         metaSettings = new Recipe.RecipeMetaSettigns(),
     });
 
+    /// <summary>
+    /// Starts from one of the game's recipes: its station, look in the crafting list, conditions, tags,
+    /// variant and stolen-item rules, skill, time, fail chance and meta are copied, so the recipe behaves
+    /// like its template. Inputs and outputs start empty; give them with <see cref="Input"/> and <see cref="Output"/>.
+    /// </summary>
+    public static RecipeBuilder From(Recipe template, int id, string name)
+    {
+        if (template == null)
+            throw new System.ArgumentNullException(nameof(template));
+        var source = template.Appearance;
+        var appearance = new Recipe.RecipeAppearance();
+        if (source != null)
+        {
+            appearance.SpritePath = source.SpritePath;
+            appearance.Sprite = source.Sprite;
+            appearance.CraftShowModel = source.CraftShowModel;
+            appearance.itemToShow = source.itemToShow != null ? new ItemReference(source.itemToShow.ID) : null;
+        }
+        return new RecipeBuilder(new Recipe
+        {
+            ID = id,
+            Name = name,
+            Type = template.Type,
+            Appearance = appearance,
+            RecipeRequired = template.RecipeRequired,
+            RequiredConditions = new List<RecipeCondition>(template.RequiredConditions ?? new List<RecipeCondition>()),
+            ExcludingConditions = new List<RecipeCondition>(template.ExcludingConditions ?? new List<RecipeCondition>()),
+            RecipeTags = new List<string>(template.RecipeTags ?? new List<string>()),
+            variantItemCategory = template.variantItemCategory,
+            variantItemAmount = template.variantItemAmount,
+            useOnlyStolenItems = template.useOnlyStolenItems,
+            allowedNonStolenItemsIds = new List<int>(template.allowedNonStolenItemsIds ?? new List<int>()),
+            keepItemOwnerOnFail = template.keepItemOwnerOnFail,
+            disableJunkSpawn = template.disableJunkSpawn,
+            input = new Dictionary<ItemReference, float>(),
+            output = new Dictionary<ItemReference, float>(),
+            outputFail = new Dictionary<ItemReference, float>(),
+            // The meta settings can name mail receivers and linked certificates of the template; start clean.
+            metaSettings = new Recipe.RecipeMetaSettigns(),
+            FailChance = template.FailChance,
+            RelevantSkill = template.RelevantSkill,
+            MinimumSkill = template.MinimumSkill,
+            HardMinimumSkill = template.HardMinimumSkill,
+            SkillFactor = template.SkillFactor,
+            SkillGainFactor = template.SkillGainFactor,
+            ProcessTime = template.ProcessTime,
+            Meta = template.Meta != null ? (object[])template.Meta.Clone() : null,
+        });
+    }
+
     public RecipeBuilder Input(Item item, float amount = 1f)
     {
         Put(_recipe.input, item, amount);
@@ -65,6 +115,28 @@ public sealed class RecipeBuilder
     {
         _recipe.RelevantSkill = skill;
         _recipe.MinimumSkill = minimum;
+        return this;
+    }
+
+    /// <summary>With <paramref name="hard"/>, players below the minimum skill can't craft it at all (otherwise they can, with a worse chance).</summary>
+    public RecipeBuilder HardMinimumSkill(bool hard = true)
+    {
+        _recipe.HardMinimumSkill = hard;
+        return this;
+    }
+
+    /// <summary>How much the skill level changes the fail chance, and how much skill a craft teaches (1 is the game's usual).</summary>
+    public RecipeBuilder SkillFactors(float skill = 1f, float gain = 1f)
+    {
+        _recipe.SkillFactor = skill;
+        _recipe.SkillGainFactor = gain;
+        return this;
+    }
+
+    /// <summary>Recipe tags, which stations and recipe filters can look for.</summary>
+    public RecipeBuilder Tags(params string[] tags)
+    {
+        _recipe.RecipeTags = new List<string>(tags ?? new string[0]);
         return this;
     }
 

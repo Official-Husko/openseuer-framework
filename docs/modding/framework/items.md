@@ -97,6 +97,7 @@ RecipeRegistry.Register(this, recipe);
 - Use an existing `RecipeType`: stations only show the types they were built for. `Basic` is the hand-crafting list.
 - The recipe is added once the game's recipes and every item it uses exist, so it can mention your own items. Crafting stations that are already running are refreshed.
 - `RequiresLearning()` hides the recipe until the player has learned it (`RecipeController.AddRecipe`).
+- `RecipeBuilder.From(Recipes.ById(templateId), id, name)` starts from one of the game's recipes: its station, look, conditions, tags, variant and stolen-item rules, skill and time come along, and you add inputs and outputs. `HardMinimumSkill()`, `SkillFactors()` and `Tags()` cover the rest; anything else can be set on the `Recipe` from `Build()`.
 - The framework only touches the in-memory list. It never calls `RecipeDatabase.AddRecipe` and friends, which would rewrite the game's `Recipes.json`.
 
 ## Inventory events

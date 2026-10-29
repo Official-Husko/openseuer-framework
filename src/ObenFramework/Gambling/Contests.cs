@@ -68,6 +68,46 @@ public static class Contests
         return true;
     }
 
+    /// <summary>
+    /// How the last contest this session ended (a drinking or sauna contest, or a rat fight the player bet on),
+    /// or null before the first. The same result <see cref="Finished"/> raised.
+    /// </summary>
+    public static ContestResult? LastResult { get; private set; }
+
+    /// <summary>
+    /// Who takes part: the opponent of the drinking or sauna contest going on, or the rats of a rat fight, in
+    /// the arena's order (the order bets and <see cref="RatFightMoney.Fighter"/> use). Empty for a contest
+    /// that is over or unknown.
+    /// </summary>
+    public static List<string> Participants(ContestInfo contest)
+    {
+        var names = new List<string>();
+        if (contest == null)
+            return names;
+        if (contest.Kind == ContestKind.RatFight)
+        {
+            foreach (var arena in Object.FindObjectsByType<RatFightArena>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                if (Describe(arena).Id != contest.Id || arena.combatants == null)
+                    continue;
+                foreach (var combatant in arena.combatants)
+                    names.Add(combatant != null ? combatant.name ?? "" : "");
+                break;
+            }
+            return names;
+        }
+        var current = Current();
+        if (current != null && current.Id == contest.Id && !string.IsNullOrEmpty(current.Opponent))
+            names.Add(current.Opponent);
+        return names;
+    }
+
+    internal static void RaiseFinished(ContestResult result)
+    {
+        LastResult = result;
+        Finished.Raise(result);
+    }
+
     /// <summary>The drinking or sauna contest going on, or null.</summary>
     public static ContestInfo Current()
     {

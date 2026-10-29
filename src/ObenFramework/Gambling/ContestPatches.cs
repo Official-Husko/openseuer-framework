@@ -25,7 +25,7 @@ internal static class ContestPatches
     private static void BeforeStop(ContestController __instance, ContestController.IContestParticipant ___activeParticipant, out ContestInfo __state)
     {
         __state = null;
-        if (!Contests.Finished.HasSubscribers || __instance.ActiveContest == null)
+        if (__instance.ActiveContest == null)
             return;
         try { __state = Contests.Describe(__instance.ActiveContest, ___activeParticipant); }
         catch (Exception e) { WorldLog.Failed("Contest stop hook (before)", e); }
@@ -36,7 +36,7 @@ internal static class ContestPatches
     {
         if (__state == null)
             return;
-        try { Contests.Finished.Raise(new ContestResult(__state, playerWon, null, 0, 0f)); }
+        try { Contests.RaiseFinished(new ContestResult(__state, playerWon, null, 0, 0f)); }
         catch (Exception e) { WorldLog.Failed("Contest stop hook", e); }
     }
 }

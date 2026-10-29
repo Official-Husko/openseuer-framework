@@ -53,13 +53,11 @@ internal static class RatFightPatches
             bool won = __state == 2;
             if (won)
                 Scale(__instance);
-            if (!Contests.Finished.HasSubscribers)
-                return;
             var combatants = __instance.combatants;
             string winner = combatants != null && winningCombatant >= 0 && winningCombatant < combatants.Count && combatants[winningCombatant] != null
                 ? combatants[winningCombatant].name : null;
             var win = __instance.winAmount;
-            Contests.Finished.Raise(new ContestResult(Contests.Describe(__instance), won, winner, won ? win.OC : 0, won ? win.RM : 0f));
+            Contests.RaiseFinished(new ContestResult(Contests.Describe(__instance), won, winner, won ? win.OC : 0, won ? win.RM : 0f));
         }
         catch (Exception e)
         {

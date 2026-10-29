@@ -126,6 +126,27 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [ ] BankExchangeCoins: changing Real Money into coins uses an integer division (`TotalOCSupply / DailyAverageOcSpending`), so it pays 0 coins whenever the bank's coin supply is below its daily spending; the quote checks the RM supply instead and divides by zero when daily coin spending is 0
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
+## Review follow-ups
+
+Smaller problems found in the code review of the third round (2026-10-29), left for later. The ones that mattered were fixed then.
+
+- [ ] Loader: a failed mod logs its error twice (ModLifecycle, then the start-up pass in Loader); `InfoOnce`/`WarnOnce` spend their key even when the rate limiter drops the line
+- [ ] Framework: a part whose setup throws keeps its `[HarmonyPatch]` classes applied (they go on up front, per patch area)
+- [ ] Framework: `ItemRegistry.Unregister` leaves stacks picked up this session holding the old `Item` (sellable, actions from the unloaded assembly) until the next load
+- [ ] Framework: a checkout line a modifier prices at 0 is reported with Oc 0, though MarketShop charges at least 1
+- [ ] Kit: every window adds a close entry to its owner's tracker and never takes it out (dialogs open one per question)
+- [ ] Kit: a list's hover and Enter target stay on the old index when the wheel scrolls under a resting pointer (store the row, not its index)
+- [ ] Kit: handles from an earlier build (`ButtonHandle.Text`, `CycleHandle.Set`, `SliderHandle.Set`, `UiWindow.Title`) throw after a rebuild; `LabelHandle` guards, the rest should too
+- [ ] Kit: main menu mod buttons are copied active, so the copy's localization components run before they are stripped (check the label in game)
+- [ ] Kit: a guide waits forever when another mod hides its prompt
+- [ ] Kit: float settings miss the number ladder (`NumberSteps` compares the widened float with 1e-9, so 0.15f adds a second "0.15")
+- [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but story upgrades and orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Remember each order's total at `AddUpgrade` and work progress out from that
+- [ ] Game Tweaks: switching scroll zoom on inside a first-person trigger lifts that trigger's lock (triggers already active aren't registered)
+- [ ] Tracer: failed calls skip the per-window line cap
+- [ ] Cheat Menu: watches call any property getter four times a second; a watch whose type is gone searches every assembly on each rebuild; stat sliders without a maximum stop at 100
+- [ ] Co-op, direct IP: idle connections with the public key hold the transport's slots for up to 5 s each (handshake timeout); limit unfinished handshakes per address
+- [ ] Co-op: lobby list results never expire (joining a stale one ends in a lookup timeout); a failed `Connect` leaves LiteNetLib running until the next Stop; restoring a session when Steam never started doesn't leave the Steam lobby
+
 ## Expansion mods
 
 Ideas welcome; each is its own mod on top of ObenFramework.

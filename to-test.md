@@ -53,6 +53,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 - [ ] **Time speed:** `oben call time.speed speed=10` gives about 25 in-game minutes per 10 real seconds. `time.speed clear=true` puts it back.
 - [ ] **Freeze and sleep [save]:** freeze the clock, then sleep in a bed. Time passes while sleeping (`time.control` shows `suspended: true`) and is frozen again afterwards.
 - [ ] **`clock.after`:** `oben call clock.after minutes=2` logs "clock.after: 2 in-game minutes passed" about 8 s later.
+- [ ] **`clock.after` while sleeping [save]:** note `clock.get`, run `clock.after minutes=60`, then sleep. The log line comes about one in-game hour after the noted time, not two or three (fixed: it counted minute ticks, and a sleeping frame covers several minutes).
 - [ ] **Load aborted:**
   - `oben eval 'SaveController.ChangeLevel("", "")'`. A few seconds later the log says "The level change the game announced didn't happen ... (ready: True)".
   - `oben eval "ObenFramework.Game.WorldState.IsReady"` is true.
@@ -89,7 +90,8 @@ New:
   - a list of 1240 items with a thin red scrollbar, and a second list of 100,000 rows;
   - Top, Middle and End jump the long list (row 50000 and 99999 are highlighted);
   - up and down move inside a list and leave it at its ends;
-  - scrolling doesn't stutter.
+  - scrolling doesn't stutter;
+  - scroll the long list down, then make the window rebuild (switch tab and back): it stays where it was (fixed: it jumped to the top).
 - [ ] **Model tab:**
   - a lit, spinning coin on dark grey; drag turns it, the wheel zooms, Enter resets it;
   - the "Item id" stepper swaps the model;
@@ -149,6 +151,8 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - **Session and story:** the values read live.
   - **Player and world:** stats, entrypoints, item search.
 - [ ] **Developer menu [save]:** any change made from the menu marks the save in `mods/CheatMenu.dev.json`.
+- [ ] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true).
+- [ ] **Third person in a tight spot:** in third person, walk into a first-person camera trigger. The camera goes in and a "has to stay in first person" toast shows once.
 - [ ] **Tracer:**
   - `trace.start filter=Quest,GlobalFlags`: `patched` about 58, `refused` 0.
   - Use the dev menu's quest and flag parts; `trace.list` shows records with `from: "CheatMenu"`.
@@ -173,6 +177,7 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
    - Both copies keep 2 players and the lobby.
    - The log says "Carried the session over a reload" and "Carried the lobby over a reload".
    - `coop lobby list` from copy 2 still finds 2/4.
+   - With presence on in both, rebuild ObenCoop on copy 1 only: copy 2's `coop.presence` keeps copy 1 in its remotes, with no 5 s gap (fixed: restarted sample numbers were dropped as late).
 7. [ ] Copy 2: `coop leave`, then `coop join 127.0.0.1:27999`. A failure notice appears within 10 s, and `coop.status` lobby.error is set.
 8. [ ] `coop status` says "Steam: ready, signed in as ..." with no errors. A Steam join between two copies doesn't count here, because they share the emulator's id; that needs two real Steam accounts.
 9. [ ] Blob transfer: send a big payload (over 1 MB) from host to guest through a script. It arrives intact and flood control doesn't drop the connection.

@@ -104,6 +104,20 @@ public static partial class NpcActions
     }
 
     /// <summary>
+    /// Ends whatever the NPC is doing (a chase, a conversation walk, a follow, sitting, working), even an
+    /// activity a claim's <c>Pause</c> won't interrupt. Its timetable picks the next activity as usual.
+    /// False when it isn't doing anything or isn't in the scene.
+    /// </summary>
+    public static bool StopActivity(int npcId)
+    {
+        var npc = Steerable(npcId);
+        var controller = npc != null ? npc.npcController : null;
+        if (controller == null || controller.Data == null || controller.Data.state == null || controller.Data.state.CurrentActivity == null)
+            return false;
+        return Run("StopActivity", controller.ForceStopActivity);
+    }
+
+    /// <summary>
     /// Sends an NPC that is not in the scene you are in to another scene, the way the game's off-scene
     /// simulation moves NPCs. Refused for NPCs in your scene, NPCs on the way somewhere, NPCs following
     /// someone, NPCs whose timetable wants them elsewhere, and scenes that do not exist. The NPC turns up at

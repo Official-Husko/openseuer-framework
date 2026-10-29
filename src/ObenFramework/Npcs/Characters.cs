@@ -11,6 +11,11 @@ public sealed class CharacterRecord
     public string Name { get; }
     public string FullName { get; }
     public string Job { get; }
+
+    public string LastName { get; }
+
+    /// <summary>How the character database describes them in relation to others ("Wife of ..."), often empty.</summary>
+    public string Relationship { get; }
     public string Gender { get; }
     public int Age { get; }
 
@@ -38,6 +43,8 @@ public sealed class CharacterRecord
         Name = character.Name ?? string.Empty;
         FullName = character.FullName ?? string.Empty;
         Job = character.Job ?? string.Empty;
+        LastName = character.LastName ?? string.Empty;
+        Relationship = character.Relationship ?? string.Empty;
         Gender = character.GenderString ?? string.Empty;
         Age = character.Age;
         IsPlayer = player;

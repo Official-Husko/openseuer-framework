@@ -85,6 +85,24 @@ public sealed partial class NpcClaim
     }
 
     /// <summary>
+    /// <see cref="SetMaterials(string, Material[])"/> with materials the game has loaded, by name
+    /// (<see cref="Npcs.MaterialNames"/>). False when a name isn't loaded.
+    /// </summary>
+    public bool SetMaterials(string mesh, params string[] names)
+    {
+        if (names == null || names.Length == 0)
+            return false;
+        var materials = new Material[names.Length];
+        for (int i = 0; i < names.Length; i++)
+        {
+            materials[i] = Npcs.LoadedMaterial(names[i]);
+            if (materials[i] == null)
+                return false;
+        }
+        return SetMaterials(mesh, materials);
+    }
+
+    /// <summary>
     /// Gives the NPC's meshes named <paramref name="mesh"/> other materials until the claim ends. The count
     /// must match the mesh's material slots. Materials can come from the game or from a mod's assets.
     /// </summary>

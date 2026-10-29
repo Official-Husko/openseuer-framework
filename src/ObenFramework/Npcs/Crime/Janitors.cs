@@ -5,6 +5,7 @@ using HarmonyLib;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenFramework.World.Addressing;
+using UnityEngine;
 
 namespace ObenFramework.Npcs;
 
@@ -85,6 +86,21 @@ public static class Janitors
             tags[tag] = count + 1;
         }
         return tags;
+    }
+
+    /// <summary>The scene objects carrying janitor actions here, all of them or those with one tag.</summary>
+    public static List<GameObject> Objects(string tag = null)
+    {
+        var objects = new List<GameObject>();
+        var controller = JanitorController.instance;
+        if (controller == null)
+            return objects;
+        foreach (var janitor in Janitorables(controller))
+        {
+            if (janitor is Component component && component != null && (tag == null || janitor.janitorTag == tag))
+                objects.Add(component.gameObject);
+        }
+        return objects;
     }
 
     /// <summary>Some level the player has visited has actions with this tag (the game's Lua <c>HasJanitorAction</c>).</summary>

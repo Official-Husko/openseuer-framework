@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using ObenLoader.Config;
 
 namespace ObenLoader.Runtime;
 
@@ -27,6 +29,37 @@ internal static class GameFiles
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// <see cref="Hash"/>, reused from <paramref name="keptFile"/> while the file's size and write time are the
+    /// same as when it was hashed, so an unchanged game isn't read again at every start.
+    /// </summary>
+    public static string HashKept(string path, string keptFile)
+    {
+        var kept = JsonFile.TryRead(keptFile, out Dictionary<string, KeptHash> read, out _) && read != null
+            ? read : new Dictionary<string, KeptHash>();
+        var file = new FileInfo(path);
+        if (!file.Exists)
+            return null;
+        string name = file.Name;
+        if (kept.TryGetValue(name, out var entry) && entry.Length == file.Length && entry.WriteTicks == file.LastWriteTimeUtc.Ticks && entry.Sha256 != null)
+            return entry.Sha256;
+
+        string hash = Hash(path);
+        if (hash == null)
+            return null;
+        kept[name] = new KeptHash { Length = file.Length, WriteTicks = file.LastWriteTimeUtc.Ticks, Sha256 = hash };
+        try { JsonFile.Write(keptFile, kept); }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException) { }
+        return hash;
+    }
+
+    internal sealed class KeptHash
+    {
+        public long Length;
+        public long WriteTicks;
+        public string Sha256;
     }
 
     public static string Short(string hash) => hash == null ? null : hash.Substring(0, Math.Min(ShortLength, hash.Length));

@@ -46,8 +46,9 @@ public static class Loader
         GameVersion = Application.version;
         LoaderPaths.Init();
         GameBuildId = SteamBuild.Read(LoaderPaths.GameDir);
-        GameCodeHash = GameFiles.Hash(System.IO.Path.Combine(Application.dataPath, "Managed", "Assembly-CSharp.dll"));
-        GameExeHash = GameFiles.Hash(LoaderPaths.GameExe);
+        string kept = System.IO.Path.Combine(LoaderPaths.DataDir, "game-files.json");
+        GameCodeHash = GameFiles.HashKept(System.IO.Path.Combine(Application.dataPath, "Managed", "Assembly-CSharp.dll"), kept);
+        GameExeHash = GameFiles.HashKept(LoaderPaths.GameExe, kept);
         LogHub.Init(LoaderPaths.LogsDir);
         ModRegistry.Init(Log);
         if (ModRegistry.Settings.VerboseLog)

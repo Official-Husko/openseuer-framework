@@ -105,6 +105,17 @@ public sealed class MyMod : ObenMod
 
 Framework APIs that take the mod as an owner (`GameEvents.X.Subscribe(this, ...)`, `GameConsole.Register(this, ...)`) clean up after themselves, so most mods don't need `OnUnload` at all.
 
+The most used per-mod services are also calls on the mod itself, with `using ObenFramework;` and `using ObenUIKit;` (inside the class, write `this.` in front):
+
+```csharp
+var data = this.SaveData<MyData>();                    // ModSaves.Register: per-save data
+this.Postfix(typeof(MarketShop), "Pay", typeof(Hooks), nameof(Hooks.AfterPay));   // ModPatches, also Prefix, Finalizer, Transpiler
+this.Hotkey("toggle", "Toggle the panel", KeyCode.F7, Toggle);                 // Hotkeys.Register
+this.SettingsPage(LoadConfig<MyConfig>(), "My mod");                          // ModSettings.Register
+```
+
+`ModRegistry.IsInstalled(id)` and `IsLoaded(id)` tell whether another mod is there, for optional features that use it.
+
 ## Logging
 
 `Log` writes to `ObenLoader/logs/latest.log`, the in-game log buffer (`oben logs`) and Unity's Player.log, tagged with the mod id. Errors also land in `errors.log` and on the Errors page of the Mods menu.

@@ -21,6 +21,7 @@ internal static class MainMenuEntry
     private static TMP_Text _text;
     private static string _originalText;
     private static bool _originalInteractable;
+    private static bool _originalGreyed;
 
     public static void Init(ObenMod kit)
     {
@@ -48,10 +49,12 @@ internal static class MainMenuEntry
         _text = button.GetComponentInChildren<TMP_Text>(true);
         _originalText = _text != null ? _text.text : null;
         _originalInteractable = button.interactable;
+        var effect = button.GetComponent<TextButtonColorEffectTMP>();
+        _originalGreyed = effect != null && effect.disableColorEffect;
 
         if (_text != null)
             _text.text = Label;
-        SetInteractable(true);
+        SetInteractable(true, greyed: false);
         button.onClick.AddListener(Open);
     }
 
@@ -60,19 +63,24 @@ internal static class MainMenuEntry
         if (_button == null)
             return;
         _button.onClick.RemoveListener(Open);
-        SetInteractable(_originalInteractable);
+        SetInteractable(_originalInteractable, _originalGreyed);
         if (_text != null && _originalText != null)
             _text.text = _originalText;
         _button = null;
         _text = null;
     }
 
-    private static void SetInteractable(bool value)
+    // The game shows "???" in its grey "not available" colors (disableColorEffect), which MODS mustn't keep.
+    private static void SetInteractable(bool value, bool greyed)
     {
         _button.interactable = value;
         var effect = _button.GetComponent<TextButtonColorEffectTMP>();
-        if (effect != null)
-            effect.interactable = value;
+        if (effect == null)
+            return;
+        effect.interactable = value;
+        effect.disableColorEffect = greyed;
+        if (_text != null)
+            _text.color = greyed ? effect.DisabledColor : Native.ButtonDefaultColor(effect);
     }
 
     private static void Open() => ModMenu.Open();

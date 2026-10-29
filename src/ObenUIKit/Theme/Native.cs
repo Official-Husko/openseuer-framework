@@ -13,7 +13,6 @@ internal static class Native
     public static readonly AccessTools.FieldRef<TextButtonColorEffectTMP, Color> ButtonDisabled = Ref<TextButtonColorEffectTMP, Color>("disabledColor");
     public static readonly AccessTools.FieldRef<TextButtonColorEffectTMP, Relay> ButtonOnSelected = Ref<TextButtonColorEffectTMP, Relay>("onSelected");
     public static readonly AccessTools.FieldRef<TextButtonColorEffectTMP, Relay> ButtonOnUnselected = Ref<TextButtonColorEffectTMP, Relay>("onUnselected");
-    public static readonly AccessTools.FieldRef<TextButtonColorEffectTMP, Color> ButtonDefaultColor = Ref<TextButtonColorEffectTMP, Color>("defaultColor");
 
     public static readonly AccessTools.FieldRef<OptionsButton, Image> RowImage = Ref<OptionsButton, Image>("image");
     public static readonly AccessTools.FieldRef<OptionsButton, Color> RowDefault = Ref<OptionsButton, Color>("defaultColor");

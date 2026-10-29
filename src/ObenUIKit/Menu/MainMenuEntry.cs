@@ -80,7 +80,7 @@ internal static class MainMenuEntry
         effect.interactable = value;
         effect.disableColorEffect = greyed;
         if (_text != null)
-            _text.color = greyed ? effect.DisabledColor : Native.ButtonDefaultColor(effect);
+            _text.color = greyed ? effect.DisabledColor : Native.ButtonDefault(effect);
     }
 
     private static void Open() => ModMenu.Open();

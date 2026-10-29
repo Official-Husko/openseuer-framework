@@ -63,7 +63,7 @@ public class CycleHandle
     internal CycleHandle(TMP_Text value, string[] options, int index, Action<int> onChange)
     {
         _value = value;
-        _options = options;
+        _options = options ?? Array.Empty<string>();
         _onChange = onChange;
         Set(index);
     }
@@ -76,9 +76,10 @@ public class CycleHandle
         _value.text = _options.Length == 0 ? "" : _options[Index];
     }
 
+    /// <summary>Replaces the options (null is none) and shows <paramref name="index"/>, without calling the mod back.</summary>
     public void SetOptions(string[] options, int index)
     {
-        _options = options;
+        _options = options ?? Array.Empty<string>();
         Set(index);
     }
 
@@ -108,13 +109,22 @@ public sealed class ToggleHandle
 public sealed class SliderHandle
 {
     private readonly Slider _slider;
+    private readonly TMP_Text _readout;
+    private readonly string _format;
 
-    internal SliderHandle(Slider slider)
+    internal SliderHandle(Slider slider, TMP_Text readout, string format)
     {
         _slider = slider;
+        _readout = readout;
+        _format = format;
     }
 
     public float Value => _slider.value;
 
-    public void Set(float value) => _slider.SetValueWithoutNotify(value);
+    /// <summary>Moves the slider and its readout without calling the mod back.</summary>
+    public void Set(float value)
+    {
+        _slider.SetValueWithoutNotify(value);
+        _readout.text = KitText.Number(_slider.value, _format);
+    }
 }

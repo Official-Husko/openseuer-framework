@@ -38,4 +38,25 @@ public class KitTextTests
         Assert.Equal("", KitText.Paint("#FFFFFF", ""));
         Assert.Equal("<color=#FFFFFF>hi</color>", KitText.Paint("#FFFFFF", "hi"));
     }
+
+    [Theory]
+    [InlineData(2.5f, "0.00", "2.50")]
+    [InlineData(1234.5f, "0.0", "1234.5")]
+    [InlineData(-0.001f, "0.00", "0.00")]
+    [InlineData(-0.5f, "0.0", "-0.5")]
+    [InlineData(float.NaN, "0", "-")]
+    [InlineData(float.PositiveInfinity, "0", "-")]
+    public void NumbersReadTheSameEverywhere(float value, string format, string expected)
+    {
+        var before = System.Threading.Thread.CurrentThread.CurrentCulture;
+        System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
+        try
+        {
+            Assert.Equal(expected, KitText.Number(value, format));
+        }
+        finally
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = before;
+        }
+    }
 }

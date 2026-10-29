@@ -24,8 +24,8 @@ public sealed partial class UiBuilder
         handle = new CycleHandle(value, options, index, i => Guard(label, () => onChange?.Invoke(i)));
         Arrow(row, "<", left: true, () => handle.Step(-1));
         Arrow(row, ">", left: false, () => handle.Step(1));
-        Register(kitRow, d => { _kit.Sounds.Press(); handle.Step(d); return true; },
-            () => { _kit.Sounds.Press(); handle.Step(1); });
+        Action next = () => { _kit.Sounds.Press(); handle.Step(1); };
+        Register(kitRow, d => { _kit.Sounds.Press(); handle.Step(d); return true; }, next, next);
         return handle;
     }
 
@@ -40,7 +40,7 @@ public sealed partial class UiBuilder
         Header(label);
         var kitRow = OptionRow(label);
         var row = kitRow.Rect;
-        var readout = UiParts.Text(row, Theme, value.ToString(format), Theme.TextSize, Theme.Text, TextAlignmentOptions.MidlineLeft);
+        var readout = UiParts.Text(row, Theme, KitText.Number(value, format), Theme.TextSize, Theme.Text, TextAlignmentOptions.MidlineLeft);
         readout.rectTransform.anchorMin = new Vector2(0f, 0f);
         readout.rectTransform.anchorMax = new Vector2(0.22f, 1f);
         readout.rectTransform.offsetMin = new Vector2(24f, 0f);
@@ -53,12 +53,12 @@ public sealed partial class UiBuilder
         slider.SetValueWithoutNotify(value);
         slider.onValueChanged.AddListener(v =>
         {
-            readout.text = v.ToString(format);
+            readout.text = KitText.Number(v, format);
             Guard(label, () => onChange?.Invoke(v));
         });
         float step = wholeNumbers ? Mathf.Max(1f, Mathf.Round((max - min) / 50f)) : (max - min) / 20f;
         Register(kitRow, d => { slider.value += d * step; return true; }, null);
-        return new SliderHandle(slider);
+        return new SliderHandle(slider, readout, format);
     }
 
     private KitRow OptionRow(string name)

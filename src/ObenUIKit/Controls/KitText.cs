@@ -39,6 +39,18 @@ internal static class KitText
         return escaped.ToString();
     }
 
+    /// <summary>
+    /// A number the way the kit shows it (a slider's readout): the same in every language (a point for
+    /// decimals), "-" for a value that isn't a number, and no "-0".
+    /// </summary>
+    public static string Number(float value, string format)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value))
+            return "-";
+        string text = value.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
+        return text.StartsWith("-", System.StringComparison.Ordinal) && text.Trim('-', '0', '.').Length == 0 ? text.Substring(1) : text;
+    }
+
     /// <summary>Text in a color ("#RRGGBB"), escaped.</summary>
     public static string Paint(string color, string text) =>
         string.IsNullOrEmpty(text) ? "" : $"<color={color}>{Escape(text)}</color>";

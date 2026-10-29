@@ -15,6 +15,7 @@ public static class JsonFile
         Formatting = Formatting.Indented,
         NullValueHandling = NullValueHandling.Ignore,
         ObjectCreationHandling = ObjectCreationHandling.Replace,
+        Converters = { new UnityStructJson() },
     };
 
     // Another copy of the game running from the same folder can be writing a file right then.

@@ -115,7 +115,7 @@ internal sealed partial class PromptRuntime : IDisposable
                 _prompts[i].Wanted = Wanted(_prompts[i]);
         }
 
-        Present(blocked ? null : Pick());
+        Present(blocked || !Hud.ModPromptsShown ? null : Pick());
         if (_shown != null)
         {
             _shown.Shown += delta;

@@ -15,6 +15,9 @@ public sealed class UIKitMod : ObenMod
 {
     internal static UIKitMod Instance { get; private set; }
 
+    /// <summary>The kit's own settings (defaults while it isn't loaded).</summary>
+    internal static KitConfig Settings { get; private set; } = new KitConfig();
+
     public override void OnLoad()
     {
         Instance = this;
@@ -35,6 +38,8 @@ public sealed class UIKitMod : ObenMod
         ModMenu.AddPage(this, ErrorsPage.Create());
 
         var config = LoadConfig<KitConfig>();
+        Settings = config.Value;
+        config.Changed += value => Settings = value;
         ModSettings.Register(this, config, "UI kit");
         ModActions.Register(this, "Read What's New", () =>
         {
@@ -54,5 +59,9 @@ public sealed class UIKitMod : ObenMod
 
     public override void OnUpdate() => Hotkeys.Tick();
 
-    public override void OnUnload() => Instance = null;
+    public override void OnUnload()
+    {
+        Instance = null;
+        Settings = new KitConfig();
+    }
 }

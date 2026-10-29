@@ -25,7 +25,11 @@ public static partial class Hud
     /// <param name="text">The hint, which may have several lines.</param>
     /// <param name="seconds">How long it shows once it is up, from 0.5 to 120.</param>
     /// <param name="title">The panel's title; the mod's name when left out.</param>
-    /// <param name="force">Show it even if the player switched the game's hints off with the Hints key.</param>
+    /// <param name="force">
+    /// Show it even if the player switched the game's hints off with the Hints key, or mod hints off in the
+    /// UI kit's settings. Keep it for hints the player can't do without.
+    /// </param>
+    /// <returns>The hint; one the player switched off comes back with <see cref="HudHint.IsActive"/> false.</returns>
     public static HudHint Hint(ITracker owner, string text, float seconds = DefaultHintSeconds,
         string title = null, bool force = false)
     {
@@ -33,8 +37,18 @@ public static partial class Hud
             throw new ArgumentNullException(nameof(owner));
         if (string.IsNullOrEmpty(text))
             throw new ArgumentException("A hint needs some text.", nameof(text));
-        return Live.AddHint(owner, title ?? HudRuntime.NameOf(owner), text, Seconds(seconds, DefaultHintSeconds), force);
+        title = title ?? HudRuntime.NameOf(owner);
+        seconds = Seconds(seconds, DefaultHintSeconds);
+        if (!force && !ModHintsShown)
+            return new HudHint(owner, title, text, seconds, force) { IsActive = false };
+        return Live.AddHint(owner, title, text, seconds, force);
     }
+
+    /// <summary>The player lets mod hints show (the UI kit's "Show mod hints" setting).</summary>
+    public static bool ModHintsShown => UIKitMod.Settings.ShowModHints;
+
+    /// <summary>The player lets mod key prompts show (the UI kit's "Show mod key prompts" setting).</summary>
+    public static bool ModPromptsShown => UIKitMod.Settings.ShowModPrompts;
 
     /// <summary>
     /// Shows one line of text at the bottom of the screen for <paramref name="seconds"/> and then fades

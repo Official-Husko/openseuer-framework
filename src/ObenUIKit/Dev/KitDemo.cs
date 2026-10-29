@@ -114,6 +114,14 @@ public static class KitDemo
                 UiKit.Toast("That item has no world model.");
         });
         ui.Segmented("Spin", new[] { "Still", "Slow", "Fast" }, 1, i => preview.Spin = i == 0 ? 0f : i == 1 ? 25f : 90f);
+        ui.Button("Show the player, live", () =>
+        {
+            preview.Spin = 0f;
+            preview.ShowFramingSwitch = true;
+            if (!preview.ShowPlayer())
+                UiKit.Toast("Only in a level.");
+        });
+        ui.Tooltip("The game keeps animating them; Body and Face in the corner switch the framing.");
         if (models.Count > 0)
         {
             var names = new string[models.Count];

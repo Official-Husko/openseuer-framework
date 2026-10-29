@@ -177,6 +177,8 @@ New:
   - **Top inset:** a Right window with `Top = 110` starts 110 units below the top.
   - **More tab of the demo:** the title, the green smaller label, Plain/Quiet/Box buttons (the boxes light up red), the Volume slider's Reset (shown while it isn't 0.50, on hover "Default: 0.50", Backspace on the row) and Max on its title bar side by side, the Ctrl+F7 key binding (hold Ctrl, Shift or Alt and press a key; a modifier alone doesn't finish it), twelve swatches in two rows without a header, the scroll area with its own bar (the wheel scrolls it, the keyboard highlight scrolls it), and the blue box drawn in a raw `Area`.
   - **Slider once a frame:** dragging a slider whose callback logs prints at most one line a frame, the last value.
+  - **Live player preview:** in the tenement, demo, Model tab, "Show the player, live". The player shows from the front, breathing (idle animation), in their clothes, and their body is gone from the scene behind; Body and Face switch the framing; dragging circles them. In first person too (the body is switched on for the preview). Closing the window brings the body back as it was (gone again in first person, shown in third person), with no lamp light left off.
+  - **Framing a copy:** an item or mod model with Face framing shows its top part.
 
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 

@@ -8,11 +8,21 @@ namespace ObenUIKit.Preview;
 /// A tiny photo studio far below the world for one model preview: a pivot the model hangs on, a camera
 /// and three lamps that only see the preview layer, and the render texture they draw into. The camera is
 /// never enabled; <see cref="Render"/> draws one frame on demand, with the lamps switched on just for
-/// that, so several previews never light each other and nothing renders while nothing changes.
+/// that, so several previews never light each other and nothing renders while nothing changes. A live
+/// subject (<see cref="LiveSubject"/>) stays where it is in the world; the camera and lamps go to it.
 /// </summary>
-internal sealed class ModelStage : IDisposable
+internal sealed partial class ModelStage : IDisposable
 {
+    public const string RootName = "ObenUIKit model preview";
+
     private const float Fov = 30f;
+    // The reference's framing: a body fills 85% of the height; a face is centred 11% of the height below the
+    // top, with 16.5% of the height above and below.
+    private const float BodyFill = 0.85f;
+    private const float FaceDrop = 0.11f;
+    private const float FaceHalf = 0.165f;
+    private static readonly Vector2 CopyStart = new Vector2(10f, 200f);
+    private static readonly Vector2 LiveStart = new Vector2(6f, 0f);
     private const float StageDepth = -12000f;
     private const float StageSpacing = 200f;
 
@@ -28,14 +38,19 @@ internal sealed class ModelStage : IDisposable
     private readonly int _layer;
     private RenderTexture _texture;
     private GameObject _model;
+    private GameObject _source;
+    private LiveSubject _live;
     private Vector3 _centre;
+    private Vector3 _size;
+    private float _top;
     private float _radius = 0.5f;
+    private int _count;
     private bool _disposed;
 
     public ModelStage()
     {
         _layer = PreviewLayer.Get();
-        _root = new GameObject("ObenUIKit model preview");
+        _root = new GameObject(RootName);
         UnityEngine.Object.DontDestroyOnLoad(_root);
         _root.transform.position = new Vector3(_slots++ % 64 * StageSpacing, StageDepth, 0f);
 
@@ -73,10 +88,24 @@ internal sealed class ModelStage : IDisposable
 
     public RenderTexture Texture => _texture;
 
-    public bool HasModel => _model != null;
+    public bool HasModel => _model != null || _live != null && _live.Alive;
 
-    /// <summary>How the model is turned, in degrees: x tilts, y spins.</summary>
-    public Vector2 Rotation { get; set; } = new Vector2(10f, 200f);
+    /// <summary>A live subject is on show: it moves, so it is drawn every frame.</summary>
+    public bool IsLive => _live != null && _live.Alive;
+
+    /// <summary>How many renderers are on show.</summary>
+    public int Renderers => _live != null ? _live.Count : _model != null ? _count : 0;
+
+    /// <summary>The preview layer, for <see cref="LiveSubject"/>.</summary>
+    public int Layer => _layer;
+
+    public PreviewFraming Framing { get; set; }
+
+    /// <summary>How the model is turned, in degrees: x tilts, y spins (for a live subject, from its front).</summary>
+    public Vector2 Rotation { get; set; } = CopyStart;
+
+    /// <summary>The turn a model starts at (and Enter on the preview goes back to).</summary>
+    public Vector2 StartRotation => _live != null ? LiveStart : CopyStart;
 
     /// <summary>1 frames the whole model; below 1 is closer.</summary>
     public float Zoom { get; set; } = 1f;
@@ -87,8 +116,32 @@ internal sealed class ModelStage : IDisposable
         Clear();
         if (source == null)
             return;
+        _source = source;
         _model = PreviewCopy.Make(source, _pivot, _layer);
         Measure();
+    }
+
+    /// <summary>Shows a live subject where it stands, replacing what was there; the stage owns it from now on.</summary>
+    public void ShowLive(LiveSubject subject)
+    {
+        Clear();
+        _live = subject;
+        Rotation = LiveStart;
+    }
+
+    /// <summary>Copies the shown object again, or picks up a live subject's new parts (after an outfit change).</summary>
+    public void Refresh()
+    {
+        if (_live != null)
+        {
+            _live.Refresh();
+            return;
+        }
+        if (_source == null)
+            return;
+        var rotation = Rotation;
+        Show(_source);
+        Rotation = rotation;
     }
 
     public void Clear()
@@ -96,6 +149,9 @@ internal sealed class ModelStage : IDisposable
         if (_model != null)
             UnityEngine.Object.Destroy(_model);
         _model = null;
+        _source = null;
+        _live?.Dispose();
+        _live = null;
     }
 
     /// <summary>Makes sure the texture matches the size the preview is drawn at. Returns true when it was remade.</summary>
@@ -120,19 +176,20 @@ internal sealed class ModelStage : IDisposable
     {
         if (_disposed || _texture == null)
             return;
-        _pivot.localRotation = Quaternion.Euler(Rotation.x, Rotation.y, 0f);
-        if (_model != null)
-            _model.transform.localPosition = -_centre;
-
         float aspect = (float)_texture.width / _texture.height;
         float half = Fov * 0.5f * Mathf.Deg2Rad;
-        // Fit the model's bounding sphere in the narrower of the two directions.
+        // What has to fit goes in the narrower of the two directions.
         float fit = aspect < 1f ? Mathf.Atan(Mathf.Tan(half) * aspect) : half;
-        float distance = _radius / Mathf.Sin(fit) * Mathf.Clamp(Zoom, 0.2f, 4f);
-        _camera.transform.localPosition = new Vector3(0f, 0f, -distance);
-        _camera.transform.localRotation = Quaternion.identity;
-        _camera.farClipPlane = distance + _radius * 2f + 1f;
-        _camera.nearClipPlane = Mathf.Max(0.01f, (distance - _radius) * 0.5f);
+        float zoom = Mathf.Clamp(Zoom, 0.2f, 4f);
+        if (_live != null)
+        {
+            if (!PlaceLive(fit, zoom))
+                return;
+        }
+        else
+        {
+            PlaceCopy(fit, zoom);
+        }
         _camera.aspect = aspect;
 
         for (int i = 0; i < _lamps.Length; i++)
@@ -159,25 +216,6 @@ internal sealed class ModelStage : IDisposable
         if (_root != null)
             UnityEngine.Object.Destroy(_root);
         PreviewLayer.Release();
-    }
-
-    // Centre and size of the model with no rotation, so it turns about its middle.
-    private void Measure()
-    {
-        _pivot.localRotation = Quaternion.identity;
-        _model.transform.localPosition = Vector3.zero;
-        var renderers = _model.GetComponentsInChildren<Renderer>(true);
-        if (renderers.Length == 0)
-        {
-            _centre = Vector3.zero;
-            _radius = 0.5f;
-            return;
-        }
-        var bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++)
-            bounds.Encapsulate(renderers[i].bounds);
-        _centre = _pivot.InverseTransformPoint(bounds.center);
-        _radius = Mathf.Max(0.05f, bounds.extents.magnitude);
     }
 
     private void Release()

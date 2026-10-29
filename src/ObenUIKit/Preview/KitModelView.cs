@@ -55,7 +55,8 @@ internal sealed class KitModelView : MonoBehaviour, IDragHandler, IScrollHandler
 
     private void LateUpdate()
     {
-        if (_stage == null || (!_dirty && Spin == 0f))
+        // A live subject moves by itself (the game animates it), so it is drawn every frame.
+        if (_stage == null || (!_dirty && Spin == 0f && !_stage.IsLive))
             return;
         if (Spin != 0f)
         {
@@ -115,7 +116,7 @@ internal sealed class KitModelView : MonoBehaviour, IDragHandler, IScrollHandler
     /// <summary>Enter puts the model back the way it started.</summary>
     public void Activate()
     {
-        _stage.Rotation = new Vector2(10f, 200f);
+        _stage.Rotation = _stage.StartRotation;
         _stage.Zoom = 1f;
         _dirty = true;
     }

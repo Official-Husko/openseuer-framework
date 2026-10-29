@@ -126,7 +126,7 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | `Stepper(label, value, min, max, step, onChange, format)` | a header and a `< 5 >` row that counts in steps and stops at the ends | `StepperHandle` (`Value`, `Set`, `SetRange`) |
 | `Card(title, c => ...)` | a framed grey box with its own controls and a small title | `CardHandle` (`Title`, `Visible`) |
 | `List(count, (i, row) => ..., onPick, rows)` | a long list that only builds the rows on screen | `ListHandle` (`Count`, `SetCount`, `Refresh`, `ScrollTo`, `Selected`) |
-| `ModelPreview(model or object, height)` | a box showing a 3D model, turned by dragging | `ModelPreviewHandle` (`Show`, `ShowItem`, `Clear`, `Spin`, `Rotation`, `Zoom`) |
+| `ModelPreview(model or object, height)` | a box showing a 3D model, turned by dragging, or the player live | `ModelPreviewHandle` (`Show`, `ShowItem`, `ShowPlayer`, `ShowLive`, `Refresh`, `Clear`, `Framing`, `ShowFramingSwitch`, `Spin`, `Rotation`, `Zoom`, `Renderers`, `Texture`) |
 | `Tooltip(text)` | gives the control built just before it a tooltip | the builder, so calls chain |
 | `HeaderButton(text, onClick, tooltip)` | a small underlined button at the right end of the title bar of the control built just before it | `ButtonHandle` |
 | `Resettable(changed, reset, tooltip)` | gives the control built just before it a Reset like the Settings page's: shown on its title bar while `changed()` is true, and Backspace, Delete or the pad's X on its row | |
@@ -226,6 +226,21 @@ ui.ModelPreview(somePrefab);        // any object: only its meshes and materials
 The model is copied onto a small stage of its own far below the world, on a layer the game's cameras don't draw, with its own camera and three lamps, and drawn into a texture the window shows. Drag to turn it, scroll to zoom, Enter (or the pad's A) puts it back, left and right turn it from the keyboard. It draws a frame only when something changed or while it spins, and only while it is visible (a hidden tab draws nothing). The copy is look-only: the original's scripts, colliders, animators and sounds are removed before it is switched on, so a game prefab can't register itself with saves or the HUD. The stage, texture and copy are destroyed when the window closes.
 
 The scene's sun lights every layer, so while a preview is open its light is kept off the preview layer (the game doesn't use that layer, so nothing in the world changes) and handed back when the last preview closes.
+
+#### Live and posed characters
+
+```csharp
+var preview = ui.ModelPreview(520f);
+preview.ShowPlayer();                       // false outside a level
+preview.Framing = PreviewFraming.Face;      // or Body (the default)
+preview.ShowFramingSwitch = true;           // "Body" and "Face" in the corner for the player
+// after changing the outfit:
+preview.Refresh();
+```
+
+`ShowPlayer()` shows the player as they are, not a copy: the game keeps posing and animating them, and whatever they wear shows. `ShowLive(gameObject)` does the same for another object in the scene, an NPC say. The object's renderers move to the preview layer while it is shown, so it leaves the game's own view (also the player's body in first person, which is switched on for the preview) and comes back exactly as it was when the preview shows something else, is cleared or its window closes. The camera and lamps go to the object, start in front of it (its forward) and circle it as you drag; the framing is measured again every frame. The scene's other lights are kept off the preview layer for as long as it is live. One live preview at a time: a second one takes the object over from the first.
+
+`Framing` fits the whole model (`Body`) or its top (`Face`: a character's head and shoulders) for copies and live objects alike. `Refresh()` copies the shown object again after it changed, or picks up a live object's new parts after an outfit change, keeping the turn and zoom. `Renderers` counts what is on show, and `Texture` is the picture the preview draws into.
 
 ### Text fields and key bindings
 

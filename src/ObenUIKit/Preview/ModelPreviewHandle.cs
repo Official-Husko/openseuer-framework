@@ -6,7 +6,8 @@ namespace ObenUIKit.Preview;
 
 /// <summary>
 /// A 3D model preview in a window. Show a mod's model (<see cref="ModelTemplate"/> from
-/// <see cref="ModelRegistry"/>), any object or prefab (only its look is copied), or a game item.
+/// <see cref="ModelRegistry"/>), any object or prefab (only its look is copied), a game item, or the player (or
+/// another object in the scene) live, posed and animated by the game, framed whole or by the face.
 /// It goes away with its window.
 /// </summary>
 public sealed class ModelPreviewHandle
@@ -15,16 +16,50 @@ public sealed class ModelPreviewHandle
     public RectTransform Rect { get; internal set; }
 
     private readonly KitModelView _view;
+    private readonly FramingSwitch _switch;
 
-    internal ModelPreviewHandle(KitModelView view)
+    internal ModelPreviewHandle(KitModelView view, FramingSwitch framingSwitch)
     {
         _view = view;
+        _switch = framingSwitch;
+        _switch?.Show(PreviewFraming.Body);
     }
 
     private ModelStage Stage => _view != null ? _view.Stage : null;
 
     /// <summary>Something is on show.</summary>
     public bool HasModel => Stage != null && Stage.HasModel;
+
+    /// <summary>How many renderers are on show (0 when nothing is): a quick check that a model or outfit has parts.</summary>
+    public int Renderers => Stage != null ? Stage.Renderers : 0;
+
+    /// <summary>The picture the preview draws into, to show it somewhere else too. Null until it has been drawn once.</summary>
+    public Texture Texture => Stage != null ? Stage.Texture : null;
+
+    /// <summary>The whole model, or a character's head and shoulders.</summary>
+    public PreviewFraming Framing
+    {
+        get => Stage != null ? Stage.Framing : PreviewFraming.Body;
+        set
+        {
+            if (Stage == null)
+                return;
+            Stage.Framing = value;
+            _switch?.Show(value);
+            _view.Redraw();
+        }
+    }
+
+    /// <summary>"Body" and "Face" in the preview's corner for the player to switch the framing. Off by default.</summary>
+    public bool ShowFramingSwitch
+    {
+        get => _switch != null && _switch.Visible;
+        set
+        {
+            if (_switch != null)
+                _switch.Visible = value;
+        }
+    }
 
     /// <summary>Degrees per second the model turns by itself (try 30); 0 keeps it still. It only draws every frame while it spins.</summary>
     public float Spin
@@ -94,6 +129,53 @@ public sealed class ModelPreviewHandle
         }
         Show(prefab);
         return true;
+    }
+
+    /// <summary>
+    /// Shows the player as they are, live: the game keeps animating them and whatever they wear shows. Their body
+    /// leaves the game's view while the preview shows it (also in first person) and comes back after. Returns
+    /// false outside a level. One live preview at a time: a second takes the player over.
+    /// </summary>
+    public bool ShowPlayer()
+    {
+        if (Stage == null)
+            return false;
+        var subject = LiveSubject.Player(Stage.Layer);
+        if (subject == null)
+        {
+            Clear();
+            return false;
+        }
+        Stage.ShowLive(subject);
+        _view.Redraw();
+        return true;
+    }
+
+    /// <summary>Shows an object in the scene live, where it stands (an NPC, say), turned from its own front.</summary>
+    public void ShowLive(GameObject subject)
+    {
+        if (Stage == null)
+            return;
+        var live = LiveSubject.Of(subject, Stage.Layer);
+        if (live == null)
+        {
+            Clear();
+            return;
+        }
+        Stage.ShowLive(live);
+        _view.Redraw();
+    }
+
+    /// <summary>
+    /// Copies the shown object again (after you changed it), or picks up a live subject's new parts (after an
+    /// outfit change), keeping the turn and zoom.
+    /// </summary>
+    public void Refresh()
+    {
+        if (Stage == null)
+            return;
+        Stage.Refresh();
+        _view.Redraw();
     }
 
     public void Clear()

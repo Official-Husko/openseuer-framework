@@ -4,8 +4,9 @@
 #   build/experimental.sh [--dry-run] [--local]
 #
 # The version is the last stable release (the newest vX.Y.Z tag, or <Version> in Directory.Build.props before the
-# first one) and the commit: "0.1.0 (57a4977)", tagged v0.1.0+57a4977. The pause menu shows the same string, so a
-# player can tell which build is installed. Checks that the tree is clean and that something is new since the last
+# first one) and the commit: "0.1.0 (57a4977)", tagged v0.1.0+57a4977 and titled "ObenseuerExtended v0.1.0 (57a4977)",
+# the zip named ObenseuerExtended-0.1.0-57a4977_pre-release.zip. The pause menu shows the same string, so a player
+# can tell which build is installed. Checks that the tree is clean and that something is new since the last
 # release of either kind, runs the tests, writes changelog.json, builds the package from HEAD, tags it, pushes the
 # branch and the tag and creates the pre-release. The notes are the player lines since the previous release and
 # every commit since then.
@@ -61,7 +62,7 @@ fi
 commit=$(git describe --always --abbrev=7 --exclude='*')
 version="$base ($commit)"
 tag="v$base+$commit"
-name="ObenseuerExtended-$base-experimental-$commit"
+name="ObenseuerExtended-$base-${commit}_pre-release"
 
 released=$(git tag --points-at HEAD --list 'v*' | head -n 1)
 [ -z "$released" ] || problem "this commit is already released as $released"
@@ -82,7 +83,7 @@ oben() { "$repo/tools/ObenTool/bin/Release/net10.0/oben" "$@"; }
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 {
-    echo "An experimental build: the newest changes, each checked by itself but not tried together as a release yet. Back up your saves before playing with it. The pause menu shows \`ObenseuerExtended v$version\` when this build is installed."
+    echo "A pre-release: the newest changes, each checked by itself but not tried together as a release yet. Back up your saves before playing with it. The pause menu shows \`ObenseuerExtended v$version\` when this build is installed."
     echo
     echo "## What's new $since_text"
     echo
@@ -105,7 +106,7 @@ trap 'rm -f "$notes"' EXIT
     echo "**Installing:** download \`$name.zip\`, unpack it, close the game and run \`install.bat\` (Windows) or \`install.sh\` (Linux)."
 } > "$notes"
 
-echo "Experimental build $version from ${branch:-a detached head}, $count commits $since_text"
+echo "Pre-release $version from ${branch:-a detached head}, $count commits $since_text"
 echo "----- notes -----"
 cat "$notes"
 echo "-----------------"
@@ -137,12 +138,12 @@ if $local_only; then
 fi
 
 # Verbatim, or git drops the notes' "## What's new" heading as a comment.
-git tag -a --cleanup=verbatim "$tag" -m "ObenseuerExtended $version, experimental" -m "$(cat "$notes")"
+git tag -a --cleanup=verbatim "$tag" -m "ObenseuerExtended $version, pre-release" -m "$(cat "$notes")"
 if ! git push origin "$branch" "$tag"; then
     git tag -d "$tag" > /dev/null
     die "pushing failed; the tag was taken back and nothing was published"
 fi
-if ! gh release create "$tag" "$zip" --prerelease --title "ObenseuerExtended v$version, experimental" --notes-file "$notes"; then
-    die "the tag is pushed but the release wasn't made; run: gh release create '$tag' '$zip' --prerelease --title 'ObenseuerExtended v$version, experimental' --notes-file <notes>"
+if ! gh release create "$tag" "$zip" --prerelease --title "ObenseuerExtended v$version" --notes-file "$notes"; then
+    die "the tag is pushed but the release wasn't made; run: gh release create '$tag' '$zip' --prerelease --title 'ObenseuerExtended v$version' --notes-file <notes>"
 fi
-echo "Published the experimental build $version ($tag)."
+echo "Published the pre-release $version ($tag)."

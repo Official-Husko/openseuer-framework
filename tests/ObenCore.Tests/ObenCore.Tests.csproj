@@ -47,6 +47,7 @@
     <Compile Include="../../src/ObenLoader/Logging/LogWriter.cs" Link="Linked/LogWriter.cs" />
     <Compile Include="../../src/ObenLoader/Logging/ModLogFiles.cs" Link="Linked/ModLogFiles.cs" />
     <Compile Include="../../src/ObenLoader/Config/JsonFile.cs" Link="Linked/JsonFile.cs" />
+    <Compile Include="../../src/ObenLoader/Config/ConfigValues.cs" Link="Linked/ConfigValues.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/Disposable.cs" Link="Linked/Disposable.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/ITracker.cs" Link="Linked/ITracker.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/SteamBuild.cs" Link="Linked/SteamBuild.cs" />

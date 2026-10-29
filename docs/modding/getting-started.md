@@ -117,7 +117,7 @@ public sealed class MyMod : ObenMod
 | `Track(disposable)` | Anything passed here is disposed when the mod unloads. |
 | `CreateObject(name)` | A `DontDestroyOnLoad` GameObject that goes away with the mod. |
 | `StartCoroutine(routine)` | A coroutine that's stopped when the mod unloads. |
-| `LoadConfig<T>()` | Typed settings in the mod folder's `config.json`. |
+| `LoadConfig<T>()` | Typed settings in the mod folder's `config.json`: `Value`, `Save()`, `Reload()`, `Changed`, `Watch(owner, read, changed)` for one value, `Defaults` and `ResetToDefaults()`. Every save logs the values that changed. |
 
 Framework APIs that take the mod as an owner (`GameEvents.X.Subscribe(this, ...)`, `GameConsole.Register(this, ...)`) clean up after themselves, so most mods don't need `OnUnload` at all.
 

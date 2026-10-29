@@ -41,6 +41,66 @@ public static partial class ModPatches
         return failed;
     }
 
+    /// <summary>
+    /// Applies the [HarmonyPatchCategory(<paramref name="category"/>)] classes of <paramref name="assembly"/> like
+    /// Harmony's <c>PatchCategory</c>, reporting each class to <see cref="PatchEvents"/>. When a class fails, the
+    /// classes already applied come off again and the exception goes on to the caller.
+    /// </summary>
+    internal static void ApplyCategory(ObenMod mod, Assembly assembly, string category)
+    {
+        var harmony = mod.Harmony;
+        var applied = new List<Type>();
+        foreach (var type in AccessTools.GetTypesFromAssembly(assembly))
+        {
+            if (!InCategory(type, category))
+                continue;
+            try
+            {
+                applied.Add(type);
+                PatchEvents.ReportClass(mod.Info.Id, type, harmony.CreateClassProcessor(type).Patch());
+            }
+            catch (Exception e)
+            {
+                PatchEvents.Report(PatchReport.Failed(mod.Info.Id, type.FullName, PatchErrors.Describe(e)));
+                RemoveClasses(mod, harmony, applied);
+                throw;
+            }
+        }
+    }
+
+    /// <summary>Takes off what the category's classes put on, leaving methods they never patched alone.</summary>
+    internal static void RemoveCategory(ObenMod mod, Assembly assembly, string category)
+    {
+        var classes = new List<Type>();
+        foreach (var type in AccessTools.GetTypesFromAssembly(assembly))
+        {
+            if (InCategory(type, category))
+                classes.Add(type);
+        }
+        RemoveClasses(mod, mod.Harmony, classes);
+    }
+
+    private static void RemoveClasses(ObenMod mod, Harmony harmony, List<Type> classes)
+    {
+        foreach (var type in classes)
+        {
+            try { TakeOff(harmony, type); }
+            catch (Exception undo) { mod.Log.Warn($"Taking {type.FullName}'s patches off failed: {undo.Message}"); }
+        }
+    }
+
+    private static bool InCategory(Type type, string category)
+    {
+        try
+        {
+            return type != null && HarmonyMethod.Merge(HarmonyMethodExtensions.GetFromType(type)).category == category;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     private static bool IsPatchClass(Type type)
     {
         if (type == null || type.IsDefined(typeof(HarmonyPatchCategory), true))

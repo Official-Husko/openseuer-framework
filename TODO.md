@@ -133,7 +133,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 Smaller problems found in the code review of the third round (2026-10-29), left for later. The ones that mattered were fixed then.
 
 - [ ] Loader: a failed mod logs its error twice (ModLifecycle, then the start-up pass in Loader); `InfoOnce`/`WarnOnce` spend their key even when the rate limiter drops the line
-- [ ] Framework: a part whose setup throws keeps its `[HarmonyPatch]` classes applied (they go on up front, per patch area)
+- [x] Framework: a part whose setup throws keeps its `[HarmonyPatch]` classes applied (they go on up front, per patch area). Fixed: its area is switched off; the same for a feature whose class or `OnEnable` fails
 - [ ] Framework: `ItemRegistry.Unregister` leaves stacks picked up this session holding the old `Item` (sellable, actions from the unloaded assembly) until the next load
 - [ ] Framework: a checkout line a modifier prices at 0 is reported with Oc 0, though MarketShop charges at least 1
 - [ ] Kit: every window adds a close entry to its owner's tracker and never takes it out (dialogs open one per question)

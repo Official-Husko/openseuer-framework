@@ -9,8 +9,8 @@ namespace ObenFramework.Modules;
 
 /// <summary>
 /// The parts of the framework and whether each came up. Every part starts on its own: one whose setup
-/// throws is logged (and shows on the Errors page) while the others still start, and one whose patches
-/// failed reports <see cref="FrameworkModule.IsAvailable"/> false. Mods can check a part before relying
+/// throws is logged (and shows on the Errors page) and its patch area is switched off, while the others
+/// still start; one whose patches failed reports <see cref="FrameworkModule.IsAvailable"/> false. Mods can check a part before relying
 /// on it, e.g. <c>FrameworkModules.IsAvailable("shops")</c>.
 /// </summary>
 public static class FrameworkModules
@@ -59,6 +59,8 @@ public static class FrameworkModules
         {
             module.Error = e.GetBaseException().Message;
             framework.Log.Error($"Framework part '{name}' failed to start; the other parts still run, but what it offers may not work", e);
+            // Its [HarmonyPatch] classes went on before the setup ran; hooks of a part that isn't there come off.
+            ModPatches.DisableArea(framework, area, $"the '{name}' part failed to start");
         }
         module.StartMs = clock.Elapsed.TotalMilliseconds;
         if (module.Started && !module.PatchesOk)

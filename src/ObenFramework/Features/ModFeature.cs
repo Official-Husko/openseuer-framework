@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 
@@ -49,8 +50,19 @@ public abstract class ModFeature : ITracker
 
     internal void Enable()
     {
-        Owner.Harmony.PatchCategory(GetType().Assembly, Id);
-        OnEnable();
+        // Takes its own patches off again and throws when a class fails.
+        ModPatches.ApplyCategory(Owner, GetType().Assembly, Id);
+        try
+        {
+            OnEnable();
+        }
+        catch
+        {
+            // A feature that didn't come up is never switched off, so nothing of it may keep running.
+            DisposeTracked();
+            ModPatches.RemoveCategory(Owner, GetType().Assembly, Id);
+            throw;
+        }
         Enabled = true;
     }
 
@@ -63,14 +75,19 @@ public abstract class ModFeature : ITracker
         }
         finally
         {
-            for (int i = _tracked.Count - 1; i >= 0; i--)
-            {
-                try { _tracked[i].Dispose(); }
-                catch (Exception e) { Owner.Log.Error($"Cleaning up feature {Id} failed", e); }
-            }
-            _tracked.Clear();
+            DisposeTracked();
             Owner.Harmony.UnpatchCategory(GetType().Assembly, Id);
         }
+    }
+
+    private void DisposeTracked()
+    {
+        for (int i = _tracked.Count - 1; i >= 0; i--)
+        {
+            try { _tracked[i].Dispose(); }
+            catch (Exception e) { Owner.Log.Error($"Cleaning up feature {Id} failed", e); }
+        }
+        _tracked.Clear();
     }
 
     internal bool OverridesUpdate =>

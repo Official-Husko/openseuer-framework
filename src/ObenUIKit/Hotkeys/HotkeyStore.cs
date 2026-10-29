@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using ObenLoader.Config;
 using ObenLoader.Logging;
 
 namespace ObenUIKit;
 
 /// <summary>The shape of hotkeys.json: "mod id/hotkey id" to a chord such as "Ctrl+F5" ("" is unbound).</summary>
+[Browsable(false)]
 internal sealed class HotkeyFile
 {
     public Dictionary<string, string> Bindings = new Dictionary<string, string>();

@@ -45,6 +45,7 @@ public sealed partial class UiBuilder
     {
         var bar = Built(UiParts.Image(_parent, "Header", Theme.HeaderSprite, Theme.Header));
         UiParts.Height(bar, HeaderHeight);
+        _lastHeader = bar.rectTransform;
         var label = UiParts.Text(bar.transform, Theme, text, Theme.HeaderSize, Theme.Text);
         UiParts.Stretch(label.rectTransform, 12f, 0f, 12f, 0f);
         return new LabelHandle(label);

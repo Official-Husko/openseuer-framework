@@ -4,7 +4,9 @@ namespace ObenUIKit.Menu.Settings;
 
 /// <summary>
 /// Describes a public field of a settings class for the Settings page. Every part is optional: a field
-/// without the attribute still gets a control, labelled with its name.
+/// without the attribute still gets a control, labelled with its name. Mods that don't reference the kit can
+/// use the System.ComponentModel attributes instead: <c>[DisplayName]</c> for the label, <c>[Description]</c>,
+/// <c>[Category]</c> for the group and <c>[Browsable(false)]</c> to hide a field (or, on the class, the whole file).
 /// </summary>
 [AttributeUsage(AttributeTargets.Field)]
 public sealed class SettingAttribute : Attribute
@@ -47,6 +49,12 @@ public sealed class SettingAttribute : Attribute
 
     /// <summary>Keeps the field off the page (bookkeeping the player shouldn't touch).</summary>
     public bool Hidden { get; set; }
+
+    /// <summary>
+    /// For a string field: the values it can take, picked with a cycle instead of typed. A value in the file
+    /// that isn't one of them is kept and offered first.
+    /// </summary>
+    public string[] Choices { get; set; }
 
     /// <summary>
     /// Fields with the same group are shown together in a card with this title, in the order the groups first

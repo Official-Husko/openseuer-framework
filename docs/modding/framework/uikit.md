@@ -217,6 +217,7 @@ Every kit window can be used without the mouse. Controls register themselves as 
 | Up / Down, W / S, d-pad or left stick | moves the highlight to the previous or next control, wrapping around; held, it repeats after 0.3 s and then every 0.15 s like the game's menus |
 | Left / Right, A / D, d-pad or left stick | steps a cycle or toggle, moves a slider by a twentieth of its range (a whole number for whole-number sliders), or moves along a row of buttons (a `Row` or the footer) |
 | Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
+| Backspace, Delete, pad X | puts the highlighted setting back to its default (Settings page rows with a Reset) |
 | Esc, pad B | closes the top window |
 
 The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
@@ -255,7 +256,7 @@ Pages are sorted by `Order`, then title, and chosen with a `< page >` row at the
 The built-in pages:
 
 - **Mods** lists every installed mod with its version, description and state, whether it loads when the game starts, and an Off/On switch for each of its features (`ModFeatures`).
-- **Settings** shows the config files mods registered (below).
+- **Settings** shows every mod's config files, with a search over all of them (below).
 - **Hotkeys** lists every mod's registered hotkeys with controls to rebind them (see Hotkeys below).
 - **What's New** shows the release notes from `changelog.json`, newest release first, grouped by mod and by Added, Changed, Fixed and Removed. See `docs/modding/changelog.md` for where the file comes from.
 - **Errors** lists this session's problems from `ErrorReport`: who reported each one, its title, how often and when it last happened, the scene, and the first lines of its details. Clear empties the report, Copy report puts it on the clipboard. Bug reports should attach `ObenLoader/logs/errors.log`, which holds the same list with the game and mod versions.
@@ -281,7 +282,7 @@ join.Label = "Join (2)";
 
 ## Settings pages
 
-Register a config file and the Settings page builds the controls for it:
+Every config a loaded mod opens with `LoadConfig<T>()` shows on the Settings page by itself, titled with the mod's name (and the file name when a mod has several, like "DevBridge (trace)"). Nothing has to be registered, and mods that don't reference the kit get a page too. `[System.ComponentModel.Browsable(false)]` on the settings class keeps a file off the page (the kit's hotkeys.json is one), and `[DisplayName("...")]` on the class changes its title. `ModSettings.Register` gives a file your own title, or shows one loaded some other way:
 
 ```csharp
 using ObenUIKit.Menu.Settings;
@@ -317,15 +318,23 @@ Every public instance field becomes a control, in declaration order:
 | `int`, `long`, `float`, `double` with bounds in `[Setting]` | slider; whole numbers move by one, decimals are rounded to `Step` (or to a step picked from the size of the range) |
 | `int`, `long`, `float`, `double` without bounds | cycle through round values (0, 1, 2, 5, 10, 20, ...) and the current value if it isn't one of them |
 | `string` | a text field; typing is written once it settles, leaving the field writes it at once |
+| `string` with `Choices` in `[Setting]` | cycle through the choices; a value in the file that isn't one of them is kept and offered first |
+| `List<string>`, `string[]` | a text field with the items separated by commas, written when the player leaves the field |
 | `KeyCode` | a key binding row |
 | `Color` | colour swatches: a palette of eleven colours, with the field's own colour first when it isn't one of them |
-| anything else | a note to edit it in the config file |
+| `[Flags]` enum | a card with an Off/On switch per single flag (combinations like `All` are left out) |
+| `Vector2`, `Vector3`, `Vector4` | a text field with the numbers separated by commas; text that isn't the right count of numbers puts the old value back |
+| anything else | a note to change it in the config file |
 
-`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control; `System.ComponentModel.DescriptionAttribute` works too), `Tooltip` (longer help in a tooltip on the control), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step`, `Group` and `Hidden`. Fields that are `readonly` or `const` are skipped.
+`[Setting]` is optional. It carries `label` (default: the field name with spaces), `Description` (a muted line under the control), `Tooltip` (longer help in a tooltip on the control), `Min` and `Max` (both are needed for a slider; `[Setting(min, max)]` is the short form), `Step`, `Group`, `Choices` and `Hidden`. A mod that doesn't reference the kit can use the System.ComponentModel attributes: `[DisplayName]` for the label, `[Description]`, `[Category]` for the group and `[Browsable(false)]` to hide a field. Fields that are `readonly` or `const` are skipped.
 
 - **Groups.** Fields with the same `Group = "Needs"` are shown together in a card with that title, groups in the order they first appear, after the fields without a group.
-- **Ranges.** A number outside its `Min`..`Max` in the config file (a hand edit) is put back in range when the config is registered, with a warning in the mod's log; one that isn't a number ("NaN") gets its default. The file is written back with the fixed values.
+- **Ranges.** A number outside its `Min`..`Max` in the config file (a hand edit) is put back in range when the page first lists the config (or it is registered), with a warning in the mod's log; one that isn't a number ("NaN") gets its default. The file is written back with the fixed values.
+- **Reset per setting.** A setting that differs from its default has a small Reset at the right end of its title bar; hovering it shows the default. Backspace, Delete or the pad's X does the same on the highlighted row. Flags have no Reset of their own.
 - **Reset to defaults.** Every config gets a button at the bottom that asks first, then puts every shown field back to the value a new `T()` has. Hidden fields keep theirs (they are the mod's bookkeeping). From code, `config.ResetToDefaults()` resets everything, and `config.Defaults` is a fresh object with the defaults.
+- **Search.** The search box at the top of the page finds settings and actions of every mod: type a few words and press Enter (or leave the field). Every word has to appear in a setting's label, description, tooltip or group, ignoring case; words that match a mod's title find all of that mod's settings. The results are grouped in a card per mod and can be changed right there. "Clear the search" (or an empty search) goes back to one mod at a time.
+- **A setting that fails to build** (a broken value, a bug in a control) is logged and shown as a line saying so; the rest of the page is built as usual.
+- **Outside the Settings page.** `ModSettings.Draw(ui, config, title)` draws the same controls (groups, ranges, Reset, action buttons) into any kit window, for a mod that wants its settings in its own window too. Pass `showReset: false` to leave out the "Reset to defaults" button.
 
 ### Actions
 
@@ -349,15 +358,17 @@ or register one from the mod:
 
 ```csharp
 ModActions.Register(this, "Forget seen hints", () => { _seen.Clear(); return $"Forgot {count} hints."; },
-    description: "Every hint shows again.", confirm: true);
+    description: "Every hint shows again.", confirm: true, group: "Hints");
 ```
 
 - The method takes no arguments and returns nothing or a string. After it runs the config is saved and the page is built again (the method may have changed fields shown above).
 - A registered action's function returns the text to show as its result, or null for "Done.". With `confirm` the player is asked first in a small window.
 - The result of the last run stays under the button. An exception is logged and shown as "Failed: ...".
-- A mod with actions but no registered config still gets its own entry on the Settings page. Registered actions go away when the mod unloads; `ModActions.All` and `ModActions.Of(modId)` list them.
+- Actions with the same `group` (or `Group` in `[SettingAction]`) share a card with that title, after the actions without one.
+- Registering a title the mod already used replaces that action in its place. Disposing the handle `Register` returns removes the action.
+- A mod with actions but no config still gets its own entry on the Settings page. Registered actions go away when the mod unloads; `ModActions.All`, `ModActions.Of(modId)` and `ModActions.Find(modId, title)` look them up. The page's search finds actions by title and description.
 
-Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. For one value, `config.Watch(this, c => c.Speed, speed => Apply(speed))` calls back only when that value changed. Every save logs what changed in the mod's log (`config.json: Speed 1.0 -> 2.5`). Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, or when the menu closes. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several registered configs a `Mod` cycle at the top picks the one to edit. A registration goes away when the mod that made it unloads. The kit registers its own config the same way (What's New after updates, and the "Show mod hints" and "Show mod key prompts" switches below).
+Edits are written with `config.Save()` right away, which also raises the config's `Changed` event, so a mod can apply values as they change. For one value, `config.Watch(this, c => c.Speed, speed => Apply(speed))` calls back only when that value changed. Every save logs what changed in the mod's log (`config.json: Speed 1.0 -> 2.5`). Slider drags are written once they settle (about a quarter of a second), when the player switches page or mod, when the menu closes, or when the game quits. The page reads the config's current `Value` each time it is built, so `config.Reload()` is picked up the next time the page is shown. With several configs a `Mod` cycle under the search box picks the one to edit. A config leaves the page when the mod it belongs to (or the mod that registered it) unloads; one that reloads shows its new copy. The kit registers its own config the same way (What's New after updates, and the "Show mod hints" and "Show mod key prompts" switches below).
 
 The list of fields is worked out by reflection once per settings class and cached.
 

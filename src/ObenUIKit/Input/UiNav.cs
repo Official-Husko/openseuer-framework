@@ -101,6 +101,22 @@ internal sealed class UiNav
 
         if (NavKeys.Confirm() && _focus >= 0 && _focus < _items.Count && _items[_focus].Target.Focusable)
             Run(_items[_focus].Target, 0);
+        else if (NavKeys.Reset() && _focus >= 0 && _focus < _items.Count && _items[_focus].Target is Controls.KitRow row)
+            Reset(row);
+    }
+
+    // A setting row with a Reset mark goes back to its default.
+    private void Reset(Controls.KitRow row)
+    {
+        try
+        {
+            if (row.Focusable && row.Reset())
+                _kit.Sounds.Press();
+        }
+        catch (Exception e)
+        {
+            _kit.Log.Error("Resetting a setting from the keyboard failed", e);
+        }
     }
 
     private void Move(int direction)

@@ -67,6 +67,7 @@ public sealed partial class UiBuilder
         UiParts.Height(background, RowHeight);
         var row = background.gameObject.AddComponent<KitRow>();
         row.Init(background, Theme);
+        _lastRow = row;
         return row;
     }
 

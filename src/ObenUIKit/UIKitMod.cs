@@ -30,6 +30,7 @@ public sealed class UIKitMod : ObenMod
         Track(new PromptRuntime(KitRuntime.Current.Kit));
         Track(new GameHudLeases(this));
         Hotkeys.Init(this);
+        ModSettings.Init(this);
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());
         ModMenu.AddPage(this, SettingsPage.Create());
@@ -58,6 +59,9 @@ public sealed class UIKitMod : ObenMod
     }
 
     public override void OnUpdate() => Hotkeys.Tick();
+
+    // A slider dragged just before the game closes still gets written.
+    public override void OnQuit() => ModSettings.FlushAll();
 
     public override void OnUnload()
     {

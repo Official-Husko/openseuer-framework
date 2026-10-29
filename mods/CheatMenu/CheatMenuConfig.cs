@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace CheatMenu;
 
@@ -8,15 +9,22 @@ public sealed class CheatMenuConfig
     public const int SpotCount = 3;
 
     /// <summary>The key that opens and closes the cheat window (a Unity key name such as Insert, Home or F2).</summary>
+    [Description("The key that opens and closes the cheat window, as a Unity key name such as Insert, Home or F2.")]
     public string Key = "Insert";
 
-    /// <summary>Move speed multiplier, kept between sessions (1 is the game's own speed).</summary>
+    /// <summary>
+    /// Move speed multiplier, kept between sessions (1 is the game's own speed). The cheat window sets it, so it
+    /// stays off the Settings page.
+    /// </summary>
+    [Browsable(false)]
     public float MoveSpeed = 1f;
 
     /// <summary>The saved teleport spots. Always <see cref="SpotCount"/> entries after <see cref="Normalise"/>.</summary>
+    [Browsable(false)]
     public SavedSpot[] Spots = new SavedSpot[SpotCount];
 
     /// <summary>The developer menu's watches, each "Type:member.path".</summary>
+    [Browsable(false)]
     public List<string> Watches = new List<string>();
 
     /// <summary>Makes sure every spot slot exists, whatever the file held.</summary>

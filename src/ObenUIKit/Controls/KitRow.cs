@@ -20,6 +20,7 @@ internal sealed class KitRow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private Func<int, bool> _step;
     private Action _activate;
     private Action _click;
+    private Func<bool> _reset;
     private bool _hover;
     private bool _focus;
 
@@ -52,6 +53,11 @@ internal sealed class KitRow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void Activate() => _activate?.Invoke();
 
     public bool Step(int delta) => _step != null && _step(delta);
+
+    /// <summary>What the reset key does on this row (a setting going back to its default). True when it did something.</summary>
+    internal void SetReset(Func<bool> reset) => _reset = reset;
+
+    public bool Reset() => _reset != null && _reset();
 
     public void OnPointerEnter(PointerEventData data)
     {

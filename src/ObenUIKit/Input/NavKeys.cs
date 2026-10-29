@@ -45,6 +45,10 @@ internal static class NavKeys
     /// <summary>Esc or the pad's B button.</summary>
     public static bool Back() => UInput.GetKeyDown(KeyCode.Escape) || UInput.GetKeyDown(KeyCode.Joystick1Button1);
 
+    /// <summary>Backspace, Delete or the pad's X: put the highlighted setting back to its default.</summary>
+    public static bool Reset() =>
+        UInput.GetKeyDown(KeyCode.Backspace) || UInput.GetKeyDown(KeyCode.Delete) || UInput.GetKeyDown(KeyCode.Joystick1Button2);
+
     // An axis the project's input settings don't define throws; give up on the pad once instead of every frame.
     private static float Axis(string name)
     {

@@ -8,9 +8,9 @@ using UInput = UnityEngine.Input;
 namespace ObenUIKit.Controls;
 
 /// <summary>
-/// Waits for the next key press for a key bind row. Esc, the pad's B or a click anywhere cancels. Mouse buttons,
-/// pad buttons and Esc can't be bound; modifiers can, since the game binds Walk and Crouch to them.
-/// Only enabled while waiting.
+/// Waits for the next key press for a key bind row. Esc, the pad's B or a click anywhere cancels. Pad buttons are
+/// kept as "any pad" (<c>JoystickButton3</c>). Mouse buttons, Esc and the pad's B can't be bound; modifiers can,
+/// since the game binds Walk and Crouch to them. Only enabled while waiting.
 /// </summary>
 internal sealed class KitKeyCapture : MonoBehaviour
 {
@@ -56,7 +56,8 @@ internal sealed class KitKeyCapture : MonoBehaviour
         for (int i = 0; i < codes.Length; i++)
         {
             var key = codes[i];
-            if (key == KeyCode.None || key == KeyCode.Escape || key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6 || key >= KeyCode.JoystickButton0)
+            // The any-pad buttons come before the numbered pads' in KeyCode, so a pad press lands there.
+            if (key == KeyCode.None || key == KeyCode.Escape || key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6 || key > KeyCode.JoystickButton19)
                 continue;
             if (!UInput.GetKeyDown(key))
                 continue;

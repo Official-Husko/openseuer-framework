@@ -52,7 +52,7 @@ internal static class HotkeyConflicts
     {
         for (int i = 0; i < Fixed.Length; i++)
         {
-            if (Fixed[i].Key == key)
+            if (KeyChord.SameKey(Fixed[i].Key, key))
                 Add(ref text, "the game (" + Fixed[i].Value + ")");
         }
 
@@ -64,7 +64,7 @@ internal static class HotkeyConflicts
         var fields = _bindingFields ??= FindBindingFields();
         for (int i = 0; i < fields.Length; i++)
         {
-            if ((KeyCode)fields[i].GetValue(bindings) == key)
+            if (KeyChord.SameKey((KeyCode)fields[i].GetValue(bindings), key))
                 Add(ref text, "the game (" + Pretty(fields[i].Name) + ")");
         }
     }

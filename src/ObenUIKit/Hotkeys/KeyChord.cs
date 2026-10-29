@@ -7,16 +7,6 @@ using UInput = UnityEngine.Input;
 
 namespace ObenUIKit;
 
-/// <summary>The modifier keys a hotkey can need held. Left and right keys count the same.</summary>
-[Flags]
-public enum KeyModifiers
-{
-    None = 0,
-    Ctrl = 1,
-    Shift = 2,
-    Alt = 4,
-}
-
 /// <summary>A main key with the modifiers that must be held with it, for example Ctrl + F5.</summary>
 public readonly struct KeyChord : IEquatable<KeyChord>
 {
@@ -39,10 +29,21 @@ public readonly struct KeyChord : IEquatable<KeyChord>
     /// </summary>
     public bool Overlaps(KeyChord other)
     {
-        if (!IsSet || Key != other.Key)
-            return false;
-        var shared = Modifiers & other.Modifiers;
-        return shared == Modifiers || shared == other.Modifiers;
+        return IsSet && SameKey(Key, other.Key) && ChordRules.Overlap(Modifiers, other.Modifiers);
+    }
+
+    /// <summary>
+    /// True for the same key, counting a numbered pad's button (<c>Joystick1Button3</c>, as the game binds them) as
+    /// the any-pad button the Hotkeys page stores (<c>JoystickButton3</c>).
+    /// </summary>
+    public static bool SameKey(KeyCode a, KeyCode b) => AnyPad(a) == AnyPad(b);
+
+    /// <summary>A numbered pad's button as the any-pad button with the same number; other keys stay as they are.</summary>
+    public static KeyCode AnyPad(KeyCode key)
+    {
+        if (key >= KeyCode.Joystick1Button0 && key <= KeyCode.Joystick8Button19)
+            return KeyCode.JoystickButton0 + (key - KeyCode.Joystick1Button0) % 20;
+        return key;
     }
 
     /// <summary>The modifiers held right now, leaving out the group <paramref name="key"/> belongs to.</summary>

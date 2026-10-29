@@ -166,6 +166,7 @@
     <!-- ObenUIKit: where mod buttons go on the main menu and how the keyboard moves between them. -->
     <Compile Include="../../src/ObenUIKit/Menu/MainMenu/MainMenuSlots.cs" Link="Linked/Kit/MainMenuSlots.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Settings/RangeFix.cs" Link="Linked/Kit/RangeFix.cs" />
+    <Compile Include="../../src/ObenUIKit/Hotkeys/ChordRules.cs" Link="Linked/Kit/ChordRules.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />
     <Compile Include="../../tools/ObenTool/Bridge/BridgeClient.cs" Link="Linked/BridgeClient.cs" />

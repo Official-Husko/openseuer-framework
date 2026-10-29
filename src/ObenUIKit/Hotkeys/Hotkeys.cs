@@ -19,6 +19,8 @@ namespace ObenUIKit;
 public static class Hotkeys
 {
     private static readonly List<Hotkey> Registered = new List<Hotkey>();
+    private static readonly Func<KeyCode, bool> KeyDown = UInput.GetKeyDown;
+    private static bool _anyPressed;
     private static HotkeyStore _store;
     private static ModLogger _log;
 
@@ -54,6 +56,7 @@ public static class Hotkeys
         owner.Track(Disposable.Create(() =>
         {
             Registered.Remove(hotkey);
+            hotkey.Active = false;
             ModMenu.Rebuild();
         }));
 
@@ -92,38 +95,58 @@ public static class Hotkeys
 
     internal static void Persist(Hotkey hotkey) => _store?.Save(hotkey);
 
-    /// <summary>The per-frame check. Reads nothing but the keyboard state until a key goes down.</summary>
+    /// <summary>
+    /// The per-frame check. Reads nothing but the keyboard state until a key goes down, and while a hotkey is
+    /// pressed, its main key until it comes up.
+    /// </summary>
     internal static void Tick()
     {
-        if (Registered.Count == 0 || !UInput.anyKeyDown)
+        bool anyDown = UInput.anyKeyDown;
+        if (Registered.Count == 0 || !anyDown && !_anyPressed)
             return;
 
-        // The gate is only asked for a hotkey whose key went down this frame.
+        bool pressed = false;
         for (int i = 0; i < Registered.Count; i++)
         {
             var hotkey = Registered[i];
-            if (Matches(hotkey) && HotkeyGate.CanFire(hotkey.Scope))
+            // Forgotten the frame after the main key came up, so Up() still sees it on that frame.
+            if (hotkey.WasPressed && !UInput.GetKey(hotkey.Chord.Key) && !UInput.GetKeyUp(hotkey.Chord.Key))
+                hotkey.WasPressed = false;
+            // The gate is only asked for a hotkey whose key went down this frame.
+            if (anyDown && Matches(hotkey, KeyDown) && HotkeyGate.CanFire(hotkey.Scope))
+            {
+                hotkey.WasPressed = true;
                 Fire(hotkey);
+            }
+            pressed |= hotkey.WasPressed;
         }
+        _anyPressed = pressed;
     }
 
-    private static bool Matches(Hotkey hotkey)
+    internal static bool IsDown(Hotkey hotkey) => hotkey.Active && Matches(hotkey, KeyDown) && HotkeyGate.CanFire(hotkey.Scope);
+
+    // Held and up follow the press that went down as this hotkey, whatever the modifiers do after it: letting go
+    // of Ctrl before K ends Ctrl+K, it doesn't turn into a plain K.
+    internal static bool IsHeld(Hotkey hotkey) =>
+        hotkey.Active && UInput.GetKey(hotkey.Chord.Key) && (hotkey.WasPressed || IsDown(hotkey));
+
+    internal static bool IsUp(Hotkey hotkey) => hotkey.Active && hotkey.WasPressed && UInput.GetKeyUp(hotkey.Chord.Key);
+
+    private static bool Matches(Hotkey hotkey, Func<KeyCode, bool> edge)
     {
         var chord = hotkey.Chord;
-        if (!chord.IsSet || !UInput.GetKeyDown(chord.Key))
+        if (!chord.IsSet || !edge(chord.Key))
             return false;
 
         var held = KeyChord.HeldExcluding(chord.Key);
-        if ((chord.Modifiers & ~held) != 0)
+        if (!ChordRules.Matches(true, chord.Modifiers, held))
             return false;
 
         // Ctrl+K beats plain K when Ctrl is down: the more specific chord wins.
         for (int i = 0; i < Registered.Count; i++)
         {
             var other = Registered[i].Chord;
-            if (other.Key != chord.Key || other.Modifiers == chord.Modifiers)
-                continue;
-            if ((other.Modifiers & chord.Modifiers) == chord.Modifiers && (other.Modifiers & ~held) == 0)
+            if (other.Key == chord.Key && ChordRules.Outranked(chord.Modifiers, other.Modifiers, held))
                 return false;
         }
         return true;

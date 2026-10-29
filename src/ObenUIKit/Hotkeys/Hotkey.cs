@@ -59,6 +59,27 @@ public sealed class Hotkey
 
     internal Action Pressed { get; }
 
+    /// <summary>Still registered: false once its owner unloaded.</summary>
+    public bool Active { get; internal set; } = true;
+
+    /// <summary>
+    /// The chord went down this frame, where the hotkey's scope lets it fire: for a mod that polls in its own
+    /// update instead of (or as well as) using the action given to <see cref="Hotkeys.Register"/>.
+    /// </summary>
+    public bool Down() => Hotkeys.IsDown(this);
+
+    /// <summary>
+    /// The chord went down (as for <see cref="Down"/>) and its main key is still held, even if a modifier was let
+    /// go since.
+    /// </summary>
+    public bool Held() => Hotkeys.IsHeld(this);
+
+    /// <summary>The main key came up this frame after the chord went down.</summary>
+    public bool Up() => Hotkeys.IsUp(this);
+
+    /// <summary>Went down as this hotkey and its main key hasn't come up yet; kept by the per-frame check.</summary>
+    internal bool WasPressed { get; set; }
+
     internal string StoreKey => OwnerId + "/" + Id;
 
     /// <summary>Changes the chord and keeps it for the next session. A chord that isn't set turns the hotkey off.</summary>

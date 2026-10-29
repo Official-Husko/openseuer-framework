@@ -55,6 +55,9 @@ internal static class HotkeyGate
         if (events == null)
             return false;
         var selected = events.currentSelectedGameObject;
-        return selected != null && selected.TryGetComponent(out TMP_InputField field) && field.isFocused;
+        if (selected == null)
+            return false;
+        var field = selected.GetComponentInParent<TMP_InputField>();
+        return field != null && field.isFocused;
     }
 }

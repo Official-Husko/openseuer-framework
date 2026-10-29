@@ -62,8 +62,8 @@ public sealed partial class UiBuilder
     }
 
     /// <summary>
-    /// A key binding row: click it (or press Enter on it) and then press the new key. Esc cancels.
-    /// Mouse buttons and pad buttons can't be bound.
+    /// A key binding row: click it (or press Enter on it) and then press the new key or pad button. Esc or the
+    /// pad's B cancels. Mouse buttons can't be bound.
     /// </summary>
     public KeyBindHandle KeyBind(string label, KeyCode key, Action<KeyCode> onChange)
     {

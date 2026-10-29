@@ -184,8 +184,19 @@ public sealed partial class DirectTransport : ITransport
         PeerDisconnected?.Invoke(peer.Id, Describe(info));
     }
 
-    private void OnReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod method) =>
+    private void OnReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod method)
+    {
+        // Nothing ObenCoop sends is larger. LiteNetLib has already put the message together, but a peer
+        // that sends one is broken or hostile, and the message goes no further.
+        var mode = method == DeliveryMethod.Unreliable ? DeliveryMode.Unreliable : DeliveryMode.ReliableOrdered;
+        if (!FitsMode(reader.UserDataSize, mode))
+        {
+            Log?.Invoke($"Dropped peer {peer.Id}: it sent a message of {reader.UserDataSize} bytes, over the limit.");
+            DisconnectPeer(peer.Id, "Sent a message larger than ObenCoop allows.");
+            return;
+        }
         PacketReceived?.Invoke(peer.Id, new ArraySegment<byte>(reader.RawData, reader.UserDataOffset, reader.UserDataSize));
+    }
 
     private void OnError(System.Net.IPEndPoint endPoint, System.Net.Sockets.SocketError error) =>
         Log?.Invoke($"Network error from {endPoint}: {error}");

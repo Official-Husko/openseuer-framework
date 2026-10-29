@@ -18,6 +18,37 @@ public class RejectionTests
     }
 
     [Fact]
+    public void APeerSendingAnOversizedMessageIsDropped()
+    {
+        var host = new DirectTransport();
+        host.Host(0, 4);
+        int received = 0;
+        host.PacketReceived += (peer, data) => received++;
+
+        // A bare LiteNetLib client, so ObenCoop's own send limit doesn't stop it.
+        var listener = new LiteNetLib.EventBasedNetListener();
+        bool dropped = false;
+        listener.PeerDisconnectedEvent += (peer, info) => dropped = true;
+        var raw = new LiteNetLib.NetManager(listener) { IPv6Enabled = false };
+        try
+        {
+            raw.Start();
+            var server = raw.Connect("127.0.0.1", host.Port, DirectTransport.ConnectionKey);
+            Action pumpRaw = () => raw.PollEvents();
+            Rig.Until(() => server.ConnectionState == LiteNetLib.ConnectionState.Connected, "raw client connected", host, pumpRaw);
+
+            server.Send(new byte[TransportLimits.MaxReliableBytes + 1], LiteNetLib.DeliveryMethod.ReliableOrdered);
+            Rig.Until(() => dropped, "raw client dropped", host, pumpRaw);
+            Assert.Equal(0, received);
+        }
+        finally
+        {
+            raw.Stop();
+            host.Stop();
+        }
+    }
+
+    [Fact]
     public void DifferentGameVersionIsRejectedWithTheReason()
     {
         using var host = Rig.StartHost();

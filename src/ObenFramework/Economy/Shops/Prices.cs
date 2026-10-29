@@ -82,6 +82,14 @@ public static class Prices
     /// </summary>
     public static float? Of(ShopInfo shop, Item item) => ShopPricing.UnitPrice(shop, item, out _);
 
+    /// <summary>
+    /// What a trader pays the player for one <paramref name="item"/> right now, modifiers included, and in
+    /// which currency; null for shops that don't buy (vending machines, checkouts). An item the player
+    /// stole sells for less at the counter than this (the game's stolen price factor applies to owned stacks).
+    /// </summary>
+    public static float? OfSale(ShopInfo shop, Item item, out Currency currency) =>
+        ShopPricing.UnitPrice(shop, item, out currency, playerBuys: false);
+
     private static IDisposable Add(ObenMod owner, Func<PriceQuery, float> modifier)
     {
         var entry = new Entry(owner.Info.Id, modifier);

@@ -13,6 +13,7 @@ internal static class EconomyModule
     {
         BankLedger.Init(framework);
         PlayerShops.Init(framework);
+        PlayerMail.Init(framework);
         framework.Track(Disposable.Create(() =>
         {
             BankLedger.Shutdown();

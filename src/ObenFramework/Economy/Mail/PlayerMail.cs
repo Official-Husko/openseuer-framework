@@ -162,4 +162,59 @@ public static class PlayerMail
         if (Received.HasSubscribers)
             Received.Raise(MailDescriber.Describe(mail, kind));
     }
+
+    /// <summary>
+    /// Mail from the player reached someone in the world (a delivery a quest asked for, a paid invoice), at
+    /// once or after its delay. The game's own mail listeners hear the same moment.
+    /// </summary>
+    public static readonly WorldEvent<SentMail> Sent = new WorldEvent<SentMail>(nameof(Sent));
+
+    internal static void Init(ObenLoader.ObenMod framework)
+    {
+        MailController.MailSent += OnSent;
+        framework.Track(ObenLoader.Runtime.Disposable.Create(() => MailController.MailSent -= OnSent));
+    }
+
+    // The game invokes this without a try/catch, from its mail timer and from SendMail.
+    private static void OnSent(string name, NPC.NPCReference receiver, MailController.Mail mail)
+    {
+        if (!Sent.HasSubscribers)
+            return;
+        try
+        {
+            var items = mail as MailController.ItemMail;
+            Sent.Raise(new SentMail(name ?? "", receiver != null ? receiver.ID : -1, receiver != null ? receiver.name ?? "" : "",
+                items != null && items.item != null ? items.item.ID : 0, items != null ? items.amount : 0));
+        }
+        catch (Exception e)
+        {
+            WorldLog.Failed("Mail hook (sent)", e);
+        }
+    }
+}
+
+/// <summary>Mail the player sent arrived, from <see cref="PlayerMail.Sent"/>.</summary>
+public readonly struct SentMail
+{
+    public SentMail(string name, int receiverId, string receiverName, int itemId, int amount)
+    {
+        Name = name;
+        ReceiverId = receiverId;
+        ReceiverName = receiverName;
+        ItemId = itemId;
+        Amount = amount;
+    }
+
+    /// <summary>The mail's name, which the game's listeners match on.</summary>
+    public string Name { get; }
+
+    /// <summary>The character it was addressed to (the character database id), or -1.</summary>
+    public int ReceiverId { get; }
+
+    public string ReceiverName { get; }
+
+    /// <summary>The item it carried, or 0 for a letter without one.</summary>
+    public int ItemId { get; }
+
+    public int Amount { get; }
 }

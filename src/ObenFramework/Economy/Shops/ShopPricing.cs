@@ -52,18 +52,23 @@ internal static class ShopPricing
     /// Traders sell from storage, so the price is worked out the way the game does; vending machines and
     /// checkouts already carry the modifiers because their own price method is hooked.
     /// </summary>
-    internal static float? UnitPrice(ShopInfo shop, Item item, out Currency currency)
+    internal static float? UnitPrice(ShopInfo shop, Item item, out Currency currency, bool playerBuys = true)
     {
         currency = Currency.OC;
         if (shop == null || item == null || !shop.IsAlive)
             return null;
 
+        // Only traders buy from the player; vending machines and checkouts only sell.
+        if (!playerBuys && !(shop.Component is Trade))
+            return null;
+
         switch (shop.Component)
         {
             case Trade trade:
-                currency = trade.purchasePriceMode == Trade.PriceMode.OnlyRM ? Currency.RM : Currency.OC;
-                float basePrice = Trade.GetItemPrice(item, 0, null, currency, trade.basePurchasePrice, trade.stolenPriceFactor);
-                return Apply(shop, item, null, true, currency, basePrice, TraderMinimum(currency), false);
+                var mode = playerBuys ? trade.purchasePriceMode : trade.sellPriceMode;
+                currency = mode == Trade.PriceMode.OnlyRM ? Currency.RM : Currency.OC;
+                float basePrice = Trade.GetItemPrice(item, 0, null, currency, playerBuys ? trade.basePurchasePrice : trade.baseSellPrice, trade.stolenPriceFactor);
+                return Apply(shop, item, null, playerBuys, currency, basePrice, TraderMinimum(currency), false);
             case VendingMachine machine:
                 foreach (var entry in machine.sellableItems)
                 {

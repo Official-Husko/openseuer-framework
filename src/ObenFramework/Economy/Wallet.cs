@@ -34,6 +34,15 @@ public static class Wallet
     /// <summary>Real Money as a whole number of tenths, the unit the game stores. Use this to compare amounts without float noise.</summary>
     public static int ToTenths(float realMoney) => Mathf.RoundToInt(realMoney * 10f);
 
+    /// <summary>
+    /// Real Money in coins at the game's fixed rate (the one prices and shops use, cut down to whole coins).
+    /// Banks exchange at their own, supply-dependent rate: see <c>Banks.Quote</c>. 0 without a game.
+    /// </summary>
+    public static int RmToOc(float realMoney) => CanRead ? Money.instance.RmToOcConvert(realMoney) : 0;
+
+    /// <summary>Coins in Real Money at the game's fixed rate, rounded the way the game rounds RM. 0 without a game.</summary>
+    public static float OcToRm(float coins) => CanRead ? Money.instance.OcToRmConvert(coins) : 0f;
+
     public static bool CanAfford(Currency currency, float amount)
     {
         if (!CanRead)

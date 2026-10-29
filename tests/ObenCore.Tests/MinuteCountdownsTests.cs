@@ -95,6 +95,30 @@ public class MinuteCountdownsTests
     }
 
     [Fact]
+    public void ATickCanCoverSeveralMinutes()
+    {
+        var countdowns = new MinuteCountdowns();
+        int ran = 0;
+        countdowns.Add(_owner, 60, () => ran++);
+        countdowns.Tick(25, null);
+        countdowns.Tick(25, null);
+        Assert.Equal(0, ran);
+        countdowns.Tick(25, null);
+        Assert.Equal(1, ran);
+    }
+
+    [Theory]
+    [InlineData(-1, 600, 1)]       // first tick: nothing to compare with
+    [InlineData(600, 601, 1)]
+    [InlineData(600, 603, 3)]      // sleeping: a frame spans several minutes
+    [InlineData(1438, 1, 3)]       // over midnight
+    [InlineData(600, 600, 1)]
+    [InlineData(600, 900, 1)]      // a jump of hours is the clock being set, not time passing
+    [InlineData(600, 540, 1)]      // set back an hour
+    public void MinutesBetweenTicks(int last, int now, int expected) =>
+        Assert.Equal(expected, MinuteCountdowns.MinutesBetween(last, now));
+
+    [Fact]
     public void ZeroMinutesIsRefused() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => new MinuteCountdowns().Add(_owner, 0, () => { }));
 }

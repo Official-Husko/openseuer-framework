@@ -44,8 +44,8 @@ public static partial class GameClock
     }
 
     /// <summary>Called by the minute hook.</summary>
-    internal static void TickCountdowns() =>
-        Countdowns.Tick(e => GameEvents.Log?.Error("A GameClock.After action threw", e));
+    internal static void TickCountdowns(int minutes) =>
+        Countdowns.Tick(minutes, e => GameEvents.Log?.Error("A GameClock.After action threw", e));
 
     /// <summary>Drops every waiting action: the game they belonged to is gone.</summary>
     internal static void ClearCountdowns()

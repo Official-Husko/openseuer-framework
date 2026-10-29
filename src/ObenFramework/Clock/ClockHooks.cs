@@ -14,6 +14,7 @@ internal static class ClockHooks
 {
     private static bool _secondHooked, _minuteHooked, _dayHooked;
     private static int _lastHour = -1;
+    private static int _lastMinuteOfDay = -1;
 
     public static void Init(ObenMod framework)
     {
@@ -35,7 +36,10 @@ internal static class ClockHooks
 
         bool wantMinute = GameClock.MinutePassed.HasSubscribers || GameClock.HourChanged.HasSubscribers || GameClock.Countdowns.Count > 0;
         if (wantMinute && !_minuteHooked)
+        {
             _lastHour = GameClock.IsAvailable ? GameClock.Hour : -1;
+            _lastMinuteOfDay = GameClock.IsAvailable ? GameClock.Hour * 60 + GameClock.Minute : -1;
+        }
         Sync(ref _minuteHooked, wantMinute, () => TimeOfDayAzure.MinutePassed += OnMinute, () => TimeOfDayAzure.MinutePassed -= OnMinute);
     }
 
@@ -65,6 +69,9 @@ internal static class ClockHooks
 
             // The game's own currentTimeAndDay is a minute behind in here; the controller is current.
             int hour = GameClock.Hour;
+            int minuteOfDay = hour * 60 + GameClock.Minute;
+            int passed = MinuteCountdowns.MinutesBetween(_lastMinuteOfDay, minuteOfDay);
+            _lastMinuteOfDay = minuteOfDay;
             GameClock.MinutePassed.Raise(GameClock.Minute, GameEvents.Log);
             if (hour != _lastHour)
             {
@@ -75,7 +82,7 @@ internal static class ClockHooks
             }
             if (GameClock.Countdowns.Count > 0)
             {
-                GameClock.TickCountdowns();
+                GameClock.TickCountdowns(passed);
                 if (GameClock.Countdowns.Count == 0)
                     Refresh();
             }

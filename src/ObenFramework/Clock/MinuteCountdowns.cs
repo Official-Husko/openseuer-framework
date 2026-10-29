@@ -64,17 +64,37 @@ internal sealed class MinuteCountdowns
         _entries.Clear();
     }
 
+    /// <summary>The largest step one minute tick counts; a bigger jump is someone setting the clock.</summary>
+    internal const int MaxStep = 180;
+
     /// <summary>
-    /// A minute passed: counts every entry down and runs the ones that reached zero, oldest first, each
-    /// in its own try/catch. An action may schedule or cancel others; new ones wait for the next minute.
+    /// How many minutes a minute tick stands for. The game raises its minute event at most once a frame,
+    /// so while sleeping or waiting one tick can cover several minutes. Works on the minute of the day
+    /// (0 to 1439), because the game moves its day counter only after the event. -1 means unknown.
     /// </summary>
-    public void Tick(Action<Exception> onError)
+    internal static int MinutesBetween(int lastMinuteOfDay, int nowMinuteOfDay)
+    {
+        if (lastMinuteOfDay < 0 || nowMinuteOfDay < 0)
+            return 1;
+        int step = ((nowMinuteOfDay - lastMinuteOfDay) % 1440 + 1440) % 1440;
+        return step == 0 || step > MaxStep ? 1 : step;
+    }
+
+    public void Tick(Action<Exception> onError) => Tick(1, onError);
+
+    /// <summary>
+    /// <paramref name="minutes"/> passed: counts every entry down and runs the ones that reached zero,
+    /// oldest first, each in its own try/catch. An action may schedule or cancel others; new ones wait for
+    /// the next tick.
+    /// </summary>
+    public void Tick(int minutes, Action<Exception> onError)
     {
         _due.Clear();
         for (int i = _entries.Count - 1; i >= 0; i--)
         {
             var entry = _entries[i];
-            if (--entry.Left > 0)
+            entry.Left -= Math.Max(1, minutes);
+            if (entry.Left > 0)
                 continue;
             entry.Done = true;
             _entries.RemoveAt(i);

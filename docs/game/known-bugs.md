@@ -75,6 +75,18 @@ Fix: a prefix applies the same formulas once per whole week since interest was l
 
 Fix: a prefix (last, after the framework's extra inventory sources have lowered the amount) walks the storages with the amount still missing and takes only the rest from the inventory. With fewer than two storages it leaves the game's code to run. Ported from the reference framework's renovation tweak (`TakeRemainingOnly`). Check: build two resource storages, put 10 planks in each, order a renovation needing 10 planks: without the fix both storages end at 0, with it one keeps its 10. The tenement level loaded with `new_scene` had no resource storage, so this hasn't been watched in game yet.
 
+### StrayLightControllers: lamps without a light log an error when their level loads
+
+`LightController.Awake` (`LightController.cs:77-78`) takes `GetComponent<Light>()` and reads its `shadowResolution` on the next line. Three objects in 0.5.13 have the script on a lamp's mesh with no `Light` on the same object (found by scanning every level file for a `LightController` without a `Light`):
+
+- Open Sewer Tenement: `_Environment/Lights/Tenement Bg Timed lights/Timed_light_001`. There is no light at all, and its four copies next to it have no controller, so the script is a leftover.
+- Interior Bazaar Pontikka Roof: `Scene/_Stuff/GameObject/Bazaar_Back_Alleys/exterior_light_002`. Its child "Volumetric Spot Light (1)" has the light and a controller of its own.
+- Interior Bazaar Mallment: `Stuff/_Karaoke/room4/paper_ceiling_lamp_001_gradient`. Its child "Point Light" has the light and two controllers of its own; the `GradientLamp` beside the stray one colours the light directly.
+
+So every load of those levels logs a `NullReferenceException` from `LightController.Awake` (seen twice in Open Sewer Tenement on 2026-10-29). Nothing else goes wrong: Unity switches off a behaviour whose `Awake` throws, so `Start` never adds it to the light lists and its `Update`, which reads the light without a null check, never runs. Pointing it at the child's light would be wrong, since both children already have a controller.
+
+Fix: a prefix switches a controller with no `Light` next to it off before `Awake` runs, the same end state without the error. Tested on 0.5.13 with a controller added to an empty object in Interior Tenement Kolhola: with the fix off, one `NullReferenceException` in Player.log; with it on, none. Either way the controller ends switched off and outside `LightsController.controllersAll`. A controller with a light is untouched (on, distances set as before). Check in the level: Open Sewer Tenement loads without a `LightController.Awake` error.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

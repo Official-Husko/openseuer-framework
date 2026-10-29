@@ -486,6 +486,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [ ] Each Performance Fixes feature on and off, with frame time and allocations compared (see `docs/modding/performance-fixes.md`).
 - [ ] **ReflectionProbeRefresh** (off by default): check it in a level before turning it on.
 - [ ] **NpcSightChance** (off by default): an NPC's sight check before and after.
+- [ ] **StrayLightControllers:** load Open Sewer Tenement: Player.log has no `LightController.Awake` NullReferenceException (before the fix: one per load). The fix itself passed with a stray controller added in Interior Tenement Kolhola (2026-10-30).
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

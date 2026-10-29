@@ -62,6 +62,8 @@ public static class Loader
         }
         if (ModRegistry.Settings.VerboseLog)
             LogHub.MinFileLevel = LogLevel.Debug;
+        if (!ModRegistry.Settings.ModLogFiles)
+            LogHub.StopModFiles();
 
         Log.Info($"ObenLoader {Version} on Unity {Application.unityVersion}, game {GameBuild}, instance {Instance.Number}");
         if (ModRegistry.Settings.RefuseOtherGameVersions)

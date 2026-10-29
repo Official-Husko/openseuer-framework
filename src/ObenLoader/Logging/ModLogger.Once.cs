@@ -29,11 +29,12 @@ public sealed partial class ModLogger
 
     /// <summary>
     /// A warning written the first time <paramref name="key"/> comes up and never again until the mod
-    /// reloads: for refusals a mod may repeat every frame. Returns whether it was written.
+    /// reloads: for refusals a mod may repeat every frame. With verbose logging on it is written every
+    /// time. Returns whether it was written.
     /// </summary>
     public bool WarnOnce(string key, string message)
     {
-        if (!_once.First(key))
+        if (!_once.First(key) && !LogHub.Verbose)
             return false;
         Write(LogLevel.Warning, message);
         return true;
@@ -41,27 +42,28 @@ public sealed partial class ModLogger
 
     /// <summary>
     /// An error written the first time <paramref name="key"/> comes up and never again until the mod
-    /// reloads. A repeat costs one set lookup, so this is safe in a Harmony handler that runs every
-    /// frame. Returns whether it was written.
+    /// reloads (every time with verbose logging on). A repeat costs one set lookup, so this is safe in a
+    /// Harmony handler that runs every frame. Returns whether it was written.
     /// </summary>
     public bool ErrorOnce(string key, string message, Exception e = null)
     {
-        if (!_once.First(key))
+        if (!_once.First(key) && !LogHub.Verbose)
             return false;
-        Write(LogLevel.Error, e == null ? message : message + "\n" + e);
+        Write(LogLevel.Error, e == null ? message : message + "\n" + e, "once " + key);
         return true;
     }
 
     /// <summary>
     /// For code running inside the game's own methods (Harmony handlers, game events), which must never
-    /// throw: logs "<paramref name="where"/> failed" with the exception the first time that place fails.
+    /// throw: logs "<paramref name="where"/> failed" with the exception the first time that place fails
+    /// (every time with verbose logging on).
     /// </summary>
     public bool Failed(string where, Exception e)
     {
         // Own key set, so a repeat needs no string building at all.
-        if (!_failed.First(where))
+        if (!_failed.First(where) && !LogHub.Verbose)
             return false;
-        Write(LogLevel.Error, $"{where} failed (further failures of it are not logged)\n{e}");
+        Write(LogLevel.Error, $"{where} failed{(LogHub.Verbose ? "" : " (further failures of it are not logged)")}\n{e}", "failed " + where);
         return true;
     }
 

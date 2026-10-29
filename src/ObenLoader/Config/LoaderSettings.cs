@@ -14,8 +14,14 @@ public sealed class LoaderSettings
     /// <summary>Reload hot-reload mods automatically when their DLLs change.</summary>
     public bool AutoReload = true;
 
-    /// <summary>Write debug lines to latest.log as well.</summary>
+    /// <summary>
+    /// Write debug lines to latest.log as well, and every error and once-only warning each time instead of
+    /// holding repeats back. For tracking a problem down; leave it off for normal play.
+    /// </summary>
     public bool VerboseLog;
+
+    /// <summary>Also write each mod's lines to its own file, logs/mods/&lt;id&gt;.log (latest.log has them all either way).</summary>
+    public bool ModLogFiles = true;
 
     /// <summary>
     /// Refuse every mod whose gameVersion or gameBuilds doesn't match the installed game, as if each had

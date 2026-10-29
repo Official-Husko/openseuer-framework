@@ -43,6 +43,9 @@
     <Compile Include="../../src/ObenLoader/Logging/LineLimiter.cs" Link="Linked/LineLimiter.cs" />
     <Compile Include="../../src/ObenLoader/Logging/OnceKeys.cs" Link="Linked/OnceKeys.cs" />
     <Compile Include="../../src/ObenLoader/Logging/ChangeFilter.cs" Link="Linked/ChangeFilter.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/ErrorThrottle.cs" Link="Linked/ErrorThrottle.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/LogWriter.cs" Link="Linked/LogWriter.cs" />
+    <Compile Include="../../src/ObenLoader/Logging/ModLogFiles.cs" Link="Linked/ModLogFiles.cs" />
     <Compile Include="../../src/ObenLoader/Config/JsonFile.cs" Link="Linked/JsonFile.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/Disposable.cs" Link="Linked/Disposable.cs" />
     <Compile Include="../../src/ObenLoader/Runtime/ITracker.cs" Link="Linked/ITracker.cs" />

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using ObenLoader.Runtime;
 
 namespace ObenLoader.Logging;
@@ -15,29 +14,14 @@ internal sealed class LogFile : IDisposable
     // Characters, roughly bytes: the lines are almost all ASCII.
     private const long MaxChars = 64L * 1024 * 1024;
 
-    private readonly StreamWriter _writer;
+    private readonly LogWriter _writer;
     private readonly object _lock = new object();
-    private long _written;
     private bool _full;
 
     public LogFile(string path)
     {
-        string previous = Path.Combine(Path.GetDirectoryName(path), "previous" + Instance.Suffix + ".log");
-        try
-        {
-            if (File.Exists(path))
-            {
-                if (File.Exists(previous))
-                    File.Delete(previous);
-                File.Move(path, previous);
-            }
-        }
-        catch (IOException)
-        {
-            // Another process may have it open; just overwrite.
-        }
-
-        _writer = new StreamWriter(path, false, new UTF8Encoding(false)) { AutoFlush = false };
+        LogWriter.Rotate(path, Path.Combine(Path.GetDirectoryName(path), "previous" + Instance.Suffix + ".log"));
+        _writer = new LogWriter(path, append: false);
     }
 
     public void Write(in LogEntry entry)
@@ -47,38 +31,28 @@ internal sealed class LogFile : IDisposable
             if (_full)
                 return;
             string line = entry.ToString();
-            _written += line.Length + 1;
-            try
+            if (_writer.Length + line.Length + 1 > MaxChars)
             {
-                if (_written > MaxChars)
-                {
-                    // A runaway session would otherwise fill the disk. The in-game buffer and errors.log go on.
-                    _full = true;
-                    _writer.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [Warning] [ObenLoader] This log reached its size limit ({MaxChars / (1024 * 1024)} MB); nothing more is written to it this session. Recent lines are still in the game (oben logs) and errors in errors.log.");
-                    _writer.Flush();
-                    return;
-                }
-                _writer.WriteLine(line);
-                if (entry.Level >= LogLevel.Error)
-                    _writer.Flush();
-            }
-            catch (IOException)
-            {
-                // Disk full or the file went away: a log call must never throw into a mod.
+                // A runaway session would otherwise fill the disk. The in-game buffer and errors.log go on.
                 _full = true;
+                _writer.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [Warning] [ObenLoader] This log reached its size limit ({MaxChars / (1024 * 1024)} MB); nothing more is written to it this session. Recent lines are still in the game (oben logs) and errors in errors.log.", flush: true);
+                return;
             }
+            _writer.WriteLine(line, entry.Level >= LogLevel.Error);
         }
     }
 
     public void Flush()
     {
         lock (_lock)
-        {
-            if (_full)
-                return;
-            try { _writer.Flush(); }
-            catch (IOException) { _full = true; }
-        }
+            _writer.Flush();
+    }
+
+    /// <summary>The first write failure, once, for the hub to report.</summary>
+    public string TakeFailure()
+    {
+        lock (_lock)
+            return _writer.TakeFailure();
     }
 
     public void Dispose()

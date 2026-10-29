@@ -65,6 +65,7 @@ internal sealed class ModHost : MonoBehaviour
 
     private void Update()
     {
+        LogHub.Frame = Time.frameCount;
         MainThread.Drain(_log);
         Mods.ModRegistry.Watcher.Tick();
         _update.Invoke(UpdateCall, _log);

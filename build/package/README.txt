@@ -52,7 +52,8 @@ integrity of game files" restores the game as well.
 If something goes wrong
 -----------------------
 The loader writes a log to the ObenLoader folder inside the game folder (logs/latest.log, and
-logs/errors.log when something failed). Send those with a bug report.
+logs/errors.log when something failed). Send those with a bug report. Each mod also has its own
+file in logs/mods, if its author only asks for that one.
 
 To rule out a broken game install, check the game's files against the lists in game-files/hashes
 (the right list is picked from the game's version; it takes a minute or two):

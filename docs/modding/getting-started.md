@@ -134,7 +134,7 @@ this.SettingsPage(LoadConfig<MyConfig>(), "My mod");                          //
 
 ## Logging
 
-`Log` writes to `ObenLoader/logs/latest.log`, the in-game log buffer (`oben logs`) and Unity's Player.log, tagged with the mod id. Errors also land in `errors.log` and on the Errors page of the Mods menu.
+`Log` writes to `ObenLoader/logs/latest.log`, the in-game log buffer (`oben logs`) and Unity's Player.log, tagged with the mod id, and to the mod's own file `ObenLoader/logs/mods/<mod id>.log` (with frame numbers; `<mod id>.previous.log` keeps the last session's, or the earlier part once a file passes 4 MB; `"ModLogFiles": false` in `ObenLoader/settings.json` turns these off). Errors also land in `errors.log` and on the Errors page of the Mods menu.
 
 | Call | Use |
 | --- | --- |
@@ -145,6 +145,12 @@ this.SettingsPage(LoadConfig<MyConfig>(), "My mod");                          //
 | `Log.Failed(where, e)` | For Harmony handlers and game event handlers, which must never throw: "where failed" once per place. |
 | `Log.ForgetOnce(prefix)` | Lets the once-keys starting with `prefix` (all with null) log again, e.g. after a level change. |
 | `Log.LineLimit` | Lines per second before the logger starts dropping them (default 100). Dropped lines are counted in one note when the second is over. |
+
+Errors are kept readable when something fails over and over: the same error (the same message, or the same exception type thrown at the same place) is written once in 10 seconds, and at most 20 errors in 10 seconds; a note says how many were held back. Every one of them still counts in `errors.log`. `Log.DroppedLines` and `Log.HeldBackErrors` count what this logger left out; `LogHub.DroppedLines` and `LogHub.HeldBackErrors` the whole session's (`oben call log.stats`, and the developer menu's session page). Pending notes are written when the game closes.
+
+`"VerboseLog": true` is for tracking a problem down: debug lines reach the files, and errors and the once-only warnings and failures are written every time (the line limit still holds). `LogHub.Verbose` tells whether it is on. If a log file can't be written (disk full, file locked), the loader says so once and tries again every 5 seconds.
+
+`LogHub.LineWritten` is raised for every line a mod or the loader writes; the API tracer mirrors the log into its trace with it.
 
 A new logger comes with every load, so the once-keys and the change-only memory start over after a hot reload.
 

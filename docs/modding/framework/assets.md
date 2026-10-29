@@ -73,6 +73,20 @@ The game routes everything through one mixer (`Sounds/MainMixer`). `SoundGroup` 
 
 `ModSounds.Group("Name")` gives any group by name and `ModSounds.GroupNames()` lists all of them (Soundscape, Muffled, Underwater and so on), if you want a sound to be muffled with the rest. Playing goes through the game's own `AudioSourceMaker`, so the output group is resolved the way the game does it, and sources pause with the game. `Play` and `PlayAt` return the `AudioSource` (null if the audio system isn't up yet) and the object is destroyed when the clip ends.
 
+`ModAssets.Clip(owner, name, samples, channels, sampleRate)` makes a clip from samples you generate, as floats from -1 to 1 or as 16-bit `short`s.
+
+### The game's own sounds
+
+```csharp
+GameSounds.PlayPickup("Bottle");                     // the sound an item makes when picked up (GameSounds.PickupNames())
+GameSounds.PlayLibrary("harvest");                   // a random clip of a library set, heard everywhere
+GameSounds.PlayLibraryAt("scarySounds", door.position);
+var ids = GameSounds.SoundscapeIds();                // the level's soundscapes
+GameSounds.SetSoundscape(ids[0]);                    // ResetSoundscape() goes back to the level's general one
+```
+
+The library sets are the fields of the game's `RandomAudioLibrary` (`GameSounds.LibraryNames()`: foley, harvest, plant, arrest, steal, prank, scary and crazy neighbour sounds). A soundscape set from code lasts until the player walks into one of the level's soundscape zones, which switch it as usual. `GameSounds.Soundscape` is the id playing now.
+
 ## Models
 
 ```csharp

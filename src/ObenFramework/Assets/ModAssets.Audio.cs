@@ -90,6 +90,17 @@ public static partial class ModAssets
         return AssetSets.For(owner).Adopt(MakeClip(name, wav));
     }
 
+    /// <summary>The same from 16-bit samples, as most encoders and network voice codecs hand them out.</summary>
+    public static AudioClip Clip(ObenMod owner, string name, short[] samples, int channels, int sampleRate)
+    {
+        if (samples == null)
+            throw new ArgumentNullException(nameof(samples));
+        var wide = new float[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+            wide[i] = samples[i] / 32768f;
+        return Clip(owner, name, wide, channels, sampleRate);
+    }
+
     private static bool UsesBuiltInDecoder(string full) =>
         string.Equals(Path.GetExtension(full), ".wav", StringComparison.OrdinalIgnoreCase) && new FileInfo(full).Length <= WavParser.MaxBytes;
 

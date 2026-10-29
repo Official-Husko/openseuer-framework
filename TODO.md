@@ -130,6 +130,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] RenovationMaterialsOnce: `TenementController.RemoveRequiredItems` passed the full amount to every storage instead of what's still missing, so renovations took the item from every storage that held it
 - [ ] BankExchangeCoins: changing Real Money into coins uses an integer division (`TotalOCSupply / DailyAverageOcSpending`), so it pays 0 coins whenever the bank's coin supply is below its daily spending; the quote checks the RM supply instead and divides by zero when daily coin spending is 0
 - [ ] ScreenshotFolder: F11 and F12 never save a screenshot. `TakeScreenshot` makes `Obenseuer/Screenshots` but hands Unity the relative path `Screenshots/...`, which the player resolves inside `Obenseuer_Data`, so every shot ends in "Failed to store screen shot" (seen 2026-10-29). Pass the full path, or create the folder Unity writes to
+- [ ] LightControllerNoLight: `LightController.Awake` throws a NullReferenceException each time Open Sewer Tenement loads (twice on 2026-10-29, IL offset 0x000c). Some `LightController` there sits on an object without a `Light`: `cullLight = GetComponent<Light>()` is null and the next line reads `cullLight.shadowResolution`, so the rest of Awake never runs. Find the object in that level (a `LightController` whose `GetComponent<Light>()` is null), check what else of it breaks, then skip or guard it
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
 ## Review follow-ups

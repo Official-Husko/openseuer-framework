@@ -109,6 +109,18 @@ public static class Keypads
             }
         }
     }
+
+    /// <summary>
+    /// Plays the keypad's wrong-code reaction (its failure relay: a buzz, a light, an alarm in some places),
+    /// as if a wrong code was entered. Raises <c>WrongCode</c> like a real attempt does.
+    /// </summary>
+    public static void Refuse(Keypad keypad)
+    {
+        if (keypad == null)
+            throw new ArgumentNullException(nameof(keypad));
+        using (WorldChanges.EnterMod())
+            keypad.TriggerFailure();
+    }
 }
 
 [HarmonyPatch(typeof(Keypad))]

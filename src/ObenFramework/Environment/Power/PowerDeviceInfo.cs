@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -106,6 +107,27 @@ public sealed class PowerDeviceInfo
 
     /// <summary>Fuel is burning right now.</summary>
     public bool Burning { get; internal set; }
+
+    /// <summary>The item categories its fuel slot takes ("Fuel", "Wood" ...); empty without fuel.</summary>
+    public IReadOnlyList<string> FuelCategories { get; internal set; } = System.Array.Empty<string>();
+
+    /// <summary>What the burn time of each fuel item is multiplied by in this device (1 for most).</summary>
+    public float BurnTimeFactor { get; internal set; } = 1f;
+
+    /// <summary>The ids of every item that fits its fuel slot, worked out from <see cref="FuelCategories"/>.</summary>
+    public List<int> FuelItemIds()
+    {
+        var ids = new List<int>();
+        foreach (string category in FuelCategories)
+        {
+            foreach (var item in Items.ItemLookup.ByCategory(category))
+            {
+                if (item != null && !ids.Contains(item.ID))
+                    ids.Add(item.ID);
+            }
+        }
+        return ids;
+    }
 
     /// <summary>A battery's charge (ammo or liquid units in its storage) and the most it holds.</summary>
     public float Charge { get; internal set; }

@@ -117,6 +117,9 @@ public static class Trains
     public static MinitrainSwitch FindSwitch(string id) => ObjectIds.Find<MinitrainSwitch>(id);
 
     /// <summary>How many branches a switch has.</summary>
+    /// <summary>The branch the switch is set to, or -1 without a switch.</summary>
+    public static int Branch(MinitrainSwitch trackSwitch) => trackSwitch != null ? trackSwitch.currentBranchIndex : -1;
+
     public static int BranchCount(MinitrainSwitch trackSwitch)
     {
         var rotations = trackSwitch != null ? BranchRotations(trackSwitch) : null;

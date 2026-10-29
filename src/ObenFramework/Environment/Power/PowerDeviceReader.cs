@@ -40,6 +40,9 @@ internal static class PowerDeviceReader
             info.FuelSeconds = fuel.BurnTimeRemaining;
             info.MaxFuelSeconds = fuel.MaxBurnTime;
             info.Burning = fuel.active;
+            info.BurnTimeFactor = fuel.BurnTimeFactor;
+            if (fuel.FuelCategories != null)
+                info.FuelCategories = (string[])fuel.FuelCategories.Clone();
         }
         return info;
     }

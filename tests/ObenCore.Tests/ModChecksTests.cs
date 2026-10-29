@@ -268,6 +268,37 @@ public class ModChecksTests
         Assert.Null(warning);
     }
 
+    [Theory]
+    [InlineData(true, null)]
+    [InlineData(false, "*")]
+    [InlineData(false, " * ")]
+    public void AnyGameVersionLoadsEverywhereWithALogNote(bool flag, string? range)
+    {
+        var manifest = Manifest(game: range, strict: true, builds: "25969064");
+        manifest.AnyGameVersion = flag;
+        Assert.Null(ModChecks.Refusal(manifest, "0.6.0", "26000001", true, out string warning, out string note));
+        Assert.Null(warning);
+        Assert.Contains("every game version", note);
+        Assert.Contains("0.6.0", note);
+    }
+
+    [Fact]
+    public void AnyGameVersionOverridesARange()
+    {
+        var manifest = Manifest(game: "0.5.08");
+        manifest.AnyGameVersion = true;
+        Assert.Null(ModChecks.Refusal(manifest, "0.5.13", null, false, out string warning, out string note));
+        Assert.Null(warning);
+        Assert.Contains("overrides", note);
+    }
+
+    [Fact]
+    public void ANormalModHasNoNote()
+    {
+        Assert.Null(ModChecks.Refusal(Manifest(game: "0.5.x"), "0.5.13", null, false, out _, out string note));
+        Assert.Null(note);
+    }
+
     [Fact]
     public void UnreadableOwnVersionWarns()
     {

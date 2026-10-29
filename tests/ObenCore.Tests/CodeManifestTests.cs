@@ -4,7 +4,7 @@ using ObenLoader.Mods;
 namespace ObenCore.Tests;
 
 // A mod declared in code, read back from this test assembly.
-[ObenModInfo("CodeMod", "Code Mod", "1.4.2", Author = "Someone", GameVersion = "0.5.x", HotReload = true)]
+[ObenModInfo("CodeMod", "Code Mod", "1.4.2", Author = "Someone", GameVersion = "0.5.x", HotReload = true, AnyGameVersion = true)]
 [ObenModDependency("ObenFramework", "0.1.0")]
 [ObenModDependency("ObenUIKit")]
 internal sealed class DeclaredInCode
@@ -42,6 +42,9 @@ public class CodeManifestTests
         var manifest = Read();
         Assert.Equal(new[] { Path.GetFileName(typeof(DeclaredInCode).Assembly.Location) }, manifest.Assemblies);
     }
+
+    [Fact]
+    public void TheAnyGameVersionFlagIsRead() => Assert.True(Read().AnyGameVersion);
 
     [Fact]
     public void ADllWithoutTheAttributeIsNoMod() =>

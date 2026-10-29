@@ -52,6 +52,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 - [ ] **RefuseOtherGameVersions:** with `"RefuseOtherGameVersions": true` in `ObenLoader/settings.json`, the test mod with `"gameVersion": "0.4.x"` (no `strictGameVersion`) doesn't load, and the log line names the setting. Take it out again afterwards.
 - [ ] **mod.json checks:** a test mod needing `"ObenFramework": "latest"` is refused with a message about the version; one with `"version": "first"` loads with a warning.
 - [ ] **Mod declared in code:** a folder with only a DLL whose `ObenMod` class has `[ObenModInfo("CodeTest", "Code Test", "1.0.0")]` and `[ObenModDependency("ObenFramework")]` shows in `mods.list` as Code Test 1.0.0 and loads after the framework.
+- [ ] **anyGameVersion:** a test mod with `"anyGameVersion": true` (or `"gameVersion": "*"`) loads without an Errors page entry, even with `RefuseOtherGameVersions` on, and the log has its "isn't checked" line.
 - [ ] **Handle shortcuts:** from a script, `this.SaveData<...>()`, `this.Postfix(...)` and `this.Hotkey(...)` behave like the static calls (the hotkey shows on the Hotkeys page).
 - [ ] **Log rate limit:** a script logging 1000 lines in one frame. About 100 lines appear, then one "dropped" note. Errors still count in `errors.log`.
 - [ ] **Time freeze:** `oben call time.freeze`, then `clock.get` twice 10 s apart gives the same time. `time.freeze on=false` lets the clock run again.

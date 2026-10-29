@@ -24,6 +24,7 @@ internal static class ModCommands
             ["loadCount"] = m.LoadCount,
             ["error"] = m.Error,
             ["warning"] = m.Warning,
+            ["anyGameVersion"] = m.AnyGameVersion,
         }).ToArray());
 
     [BridgeCommand("mods.reload", "Hot reload a mod (or every hot-reload mod when id is omitted).", Params = new[] { "id?" })]

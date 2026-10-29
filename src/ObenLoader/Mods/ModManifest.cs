@@ -53,6 +53,13 @@ public sealed class ModManifest
     [JsonProperty("strictGameVersion")] public bool StrictGameVersion;
 
     /// <summary>
+    /// The mod works with every game version (or says so): no version or build check, and the player's
+    /// RefuseOtherGameVersions doesn't refuse it, but the log notes that it wasn't checked. Same as a
+    /// gameVersion of "*".
+    /// </summary>
+    [JsonProperty("anyGameVersion")] public bool AnyGameVersion;
+
+    /// <summary>
     /// Steam build ids the mod was made for (the "buildid" in Steam's app manifest). Checked like
     /// <see cref="GameVersion"/>, only when the game was installed through Steam and the build is known.
     /// </summary>

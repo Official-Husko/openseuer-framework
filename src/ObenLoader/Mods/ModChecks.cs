@@ -9,19 +9,26 @@ namespace ObenLoader.Mods;
 /// </summary>
 internal static class ModChecks
 {
-    /// <inheritdoc cref="Refusal(ModManifest, string, string, bool, out string)"/>
+    /// <inheritdoc cref="Refusal(ModManifest, string, string, bool, out string, out string)"/>
     public static string Refusal(ModManifest manifest, string gameVersion, out string warning) =>
-        Refusal(manifest, gameVersion, null, false, out warning);
+        Refusal(manifest, gameVersion, null, false, out warning, out _);
+
+    /// <inheritdoc cref="Refusal(ModManifest, string, string, bool, out string, out string)"/>
+    public static string Refusal(ModManifest manifest, string gameVersion, string buildId, bool strictAll, out string warning) =>
+        Refusal(manifest, gameVersion, buildId, strictAll, out warning, out _);
 
     /// <summary>
     /// Why the mod must not load, or null. <paramref name="warning"/> is set for problems that don't stop it
-    /// (made for another game version or build without <c>strictGameVersion</c>, an unreadable version).
+    /// (made for another game version or build without <c>strictGameVersion</c>, an unreadable version) and
+    /// belongs on the Errors page; <paramref name="note"/> is only for the log (a mod that says it works with
+    /// every game version, which can't be checked).
     /// </summary>
     /// <param name="buildId">The installed game's Steam build id, or null when it isn't known (no Steam manifest).</param>
     /// <param name="strictAll">The player's loader setting that refuses every mod made for another game version.</param>
-    public static string Refusal(ModManifest manifest, string gameVersion, string buildId, bool strictAll, out string warning)
+    public static string Refusal(ModManifest manifest, string gameVersion, string buildId, bool strictAll, out string warning, out string note)
     {
         warning = null;
+        note = null;
         string idProblem = ModIds.Problem(manifest.Id);
         if (idProblem != null)
             return $"Invalid id '{manifest.Id}': {idProblem}. Set a valid \"id\" in its mod.json.";
@@ -32,6 +39,15 @@ internal static class ModChecks
         var notes = new List<string>();
         if (!SemVer.IsReadable(manifest.Version))
             notes.Add($"Its version '{manifest.Version}' can't be read (use numbers like 1.2.0), so it counts as 0.0 for mods that need it.");
+
+        if (IsAnyGameVersion(manifest))
+        {
+            // Taken at its word, so neither strictGameVersion nor the player's setting refuses it, but the log says so.
+            note = $"It says it works with every game version, so it isn't checked against {(string.IsNullOrEmpty(gameVersion) ? "this one" : gameVersion)}."
+                + (manifest.AnyGameVersion && !string.IsNullOrWhiteSpace(manifest.GameVersion) && manifest.GameVersion.Trim() != "*" ? $" (anyGameVersion overrides its gameVersion \"{manifest.GameVersion}\".)" : "");
+            warning = notes.Count > 0 ? string.Join(" ", notes) : null;
+            return null;
+        }
 
         string game = GameProblem(manifest, gameVersion) ?? BuildProblem(manifest, buildId);
         if (game != null)
@@ -46,6 +62,10 @@ internal static class ModChecks
         warning = notes.Count > 0 ? string.Join(" ", notes) : null;
         return null;
     }
+
+    /// <summary>The mod says it works with every game version: <c>anyGameVersion</c>, or a gameVersion of "*".</summary>
+    public static bool IsAnyGameVersion(ModManifest manifest) =>
+        manifest.AnyGameVersion || (manifest.GameVersion != null && manifest.GameVersion.Trim() == "*");
 
     /// <summary>A sentence saying the game version doesn't match the mod's range, or null when it does (or there is none).</summary>
     public static string GameProblem(ModManifest manifest, string gameVersion)

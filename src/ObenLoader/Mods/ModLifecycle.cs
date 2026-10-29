@@ -80,7 +80,8 @@ internal static partial class ModLifecycle
 
     private static bool TryActivate(ModInfo mod)
     {
-        string refusal = ModChecks.Refusal(mod.Manifest, Loader.GameVersion, Loader.GameBuildId, ModRegistry.Settings.RefuseOtherGameVersions, out string warning);
+        string refusal = ModChecks.Refusal(mod.Manifest, Loader.GameVersion, Loader.GameBuildId, ModRegistry.Settings.RefuseOtherGameVersions,
+            out string warning, out string note);
         if (refusal != null)
         {
             mod.Fail(refusal);
@@ -93,6 +94,9 @@ internal static partial class ModLifecycle
             _log.Warn($"{mod}: {warning}");
             ErrorReport.Add(mod.Id, warning);
         }
+        // Log only: the player chose (or the mod claims) this, it isn't a problem to show on the Errors page.
+        if (note != null && mod.LoadCount == 0)
+            _log.Warn($"{mod}: {note}");
 
         string missing = mod.Manifest.Dependencies.Keys.FirstOrDefault(id => !ModRegistry.IsLoaded(id));
         if (missing != null)

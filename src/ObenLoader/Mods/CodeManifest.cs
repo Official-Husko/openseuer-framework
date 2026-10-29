@@ -65,6 +65,7 @@ internal static class CodeManifest
                 case nameof(ObenModInfoAttribute.Author): manifest.Author = value as string; break;
                 case nameof(ObenModInfoAttribute.Description): manifest.Description = value as string; break;
                 case nameof(ObenModInfoAttribute.GameVersion): manifest.GameVersion = value as string; break;
+                case nameof(ObenModInfoAttribute.AnyGameVersion): manifest.AnyGameVersion = value is bool any && any; break;
                 case nameof(ObenModInfoAttribute.HotReload): manifest.HotReload = value is bool reload && reload; break;
             }
         }

@@ -7,7 +7,11 @@ namespace ObenLoader.Mods;
 public sealed class ModInfo
 {
     public ModManifest Manifest { get; internal set; }
+
     public string Directory { get; }
+
+    /// <summary>The mod says it works with every game version (anyGameVersion, or a gameVersion of "*").</summary>
+    public bool AnyGameVersion => ModChecks.IsAnyGameVersion(Manifest);
     public ModState State { get; internal set; } = ModState.Pending;
     public string Error { get; internal set; }
 

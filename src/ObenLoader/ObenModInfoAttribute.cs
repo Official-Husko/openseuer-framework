@@ -28,6 +28,9 @@ public sealed class ObenModInfoAttribute : Attribute
     /// <summary>The game versions the mod was made for, as mod.json's gameVersion.</summary>
     public string GameVersion { get; set; }
 
+    /// <summary>As mod.json's anyGameVersion: works with every game version (the log still notes it isn't checked).</summary>
+    public bool AnyGameVersion { get; set; }
+
     /// <summary>As mod.json's hotReload.</summary>
     public bool HotReload { get; set; }
 }

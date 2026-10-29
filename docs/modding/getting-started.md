@@ -61,6 +61,7 @@ Mods/
 | `enabledByDefault` | `true` | `false` means installed but off until switched on. |
 | `gameVersion` | any | The game versions the mod was made for. On another version it loads with a warning in the log and on the Errors page (`ModInfo.Warning`). |
 | `strictGameVersion` | `false` | `true` refuses to load on a game version outside `gameVersion` (or a build outside `gameBuilds`) instead of warning. |
+| `anyGameVersion` | `false` | `true` says the mod works with every game version (same as `"gameVersion": "*"`): no version or build check and no warning on the Errors page, and `RefuseOtherGameVersions` doesn't refuse it, but the log notes on every start that it wasn't checked. |
 | `gameBuilds` | none | Steam build ids the mod was made for (`["25969064"]`), checked like `gameVersion`. Only checked when the game came from Steam: the build id is read from Steam's `appmanifest_951240.acf`, so a sideloaded or DRM-free copy skips it. |
 
 `gameVersion` takes `0.5.13` (that version), `0.5` or `0.5.x` (anything starting with those numbers), comparisons like `>=0.5.10` and `<0.6`, several of them separated by spaces (all must hold), and alternatives separated by `||`: `">=0.5.10 <0.6 || 0.5.08"`. The game's version is `Application.version` (0.5.13 at the time of writing); `oben call game.info` shows it, and the first line of `latest.log` names the Steam build too when it is known (`Loader.GameBuildId`).
@@ -77,7 +78,7 @@ A folder without a mod.json is a mod too when one of its DLLs declares itself on
 public sealed class MyMod : ObenMod { ... }
 ```
 
-The loader reads the attributes without loading the DLL. That DLL is the mod; other DLLs in the folder are its libraries, as with an `assemblies` list. `Author`, `Description`, `GameVersion` and `HotReload` can be set; everything else keeps the mod.json defaults, so use a mod.json for `essential`, `loadAfter`, `gameBuilds` and the rest. A mod.json in the folder always wins over the attributes.
+The loader reads the attributes without loading the DLL. That DLL is the mod; other DLLs in the folder are its libraries, as with an `assemblies` list. `Author`, `Description`, `GameVersion`, `AnyGameVersion` and `HotReload` can be set; everything else keeps the mod.json defaults, so use a mod.json for `essential`, `loadAfter`, `gameBuilds` and the rest. A mod.json in the folder always wins over the attributes.
 
 ## The entry class
 

@@ -28,12 +28,12 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 ## 0. Start-up and stability
 
 - [x] `oben logs` shows `[ObenFramework] Ready: 34 parts.` with nothing listed as not working. (2026-10-29: 34 parts, game check passed: 728 hooks of 9 mods.)
-- [ ] `oben call framework.modules failed=true` gives `notWorking: 0`.
-- [ ] `oben call patches.areas mod=ObenFramework` lists every area as available, including `Shops` (8), `Clock` (1) and `ItemPlaceholders` (2).
-- [ ] `oben call mods.list` shows no `warning` on any mod.
-- [ ] `oben call patches.check`: 0 broken. The count should be about 730 patched methods.
-- [ ] **Hot reload stress.** In a level, run 12 cascade reloads, each followed by a forced full GC:
-  - repeat: `touch Mods/ObenFramework/ObenFramework.dll`, wait 7 s, `oben eval 'System.GC.Collect(); System.GC.WaitForPendingFinalizers(); return 1;'`, then `patches.check`;
+- [x] `oben call framework.modules failed=true` gives `notWorking: 0`. (2026-10-29.)
+- [x] `oben call patches.areas mod=ObenFramework` lists every area as available, including `Shops` (8), `Clock` (1) and `ItemPlaceholders` (2). (2026-10-29: 25 areas, all on.)
+- [x] `oben call mods.list` shows no `warning` on any mod. (2026-10-29.)
+- [x] `oben call patches.check`: 0 broken. (2026-10-29: 473 patched methods with 708 handlers at the main menu; the 730 written here before was a guess.)
+- [x] **Hot reload stress.** In a level, run 12 cascade reloads, each followed by a forced full GC: (2026-10-29: 24 cascades in Interior Player Tenement, `indirect: 0` and `broken: []` in every round the bridge answered and at the end, no NullReferenceException in Player.log. A cascade of all 9 mods took 5.2 s at first and 15.2 s by the 24th, see TODO.md.)
+  - repeat: `touch Mods/ObenFramework/ObenFramework.dll`, wait until `latest.log` has the next "Reloaded ObenFramework, ..." line (a fixed 7 s wait is too short now that every mod reloads with the framework), `oben eval 'System.GC.Collect(); System.GC.WaitForPendingFinalizers(); return 1;'`, then `patches.check`;
   - every round must show `indirect: 0` and `broken: 0`;
   - the game must still respond at the end.
   - This is the crash fixed by the loader's InlineJumps; re-run it whenever Harmony or the loader changes.
@@ -41,7 +41,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 
 ## 1. Loader and core (M01, M02, M03, M10, M18)
 
-- [ ] **Patch areas:**
+- [x] **Patch areas:** (2026-10-29: all as expected; the error was in `ErrorReport`, which the Errors page lists, and the reload cleared the area.)
   - `oben run scripts/examples/patch-areas.cs` returns `first patch True, area on True; missing method patch False, area on False`.
   - `oben call console.exec command=help` has no "Patched through a patch area." line.
   - `oben call patches.areas mod=ScriptRunner` shows `demo` off, and the error is on the MODS Errors page.

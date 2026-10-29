@@ -16,6 +16,7 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] GPL-3.0 license
 - [x] THIRD-PARTY-NOTICES.md (NomadsReach MIT code, LiteNetLib)
 - [ ] GitHub URL for the player README.txt and the docs, once the repository is up
+- [ ] Hot reload gets slower the longer the game runs: a cascade of all 9 mods took 5.2 s on the first rebuild and 15.2 s on the 24th (2026-10-29), while the mods' own loading is under 1 s of it. Each reload leaves the old assemblies loaded (449 after 24 rounds), so something that walks every loaded assembly or type (Harmony's `AccessTools.TypeByName`, our own scans) is the likely cause. Time the reload's steps first
 
 ## ObenFramework (core functionality)
 

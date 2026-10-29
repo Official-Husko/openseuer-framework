@@ -62,6 +62,14 @@ public sealed class PresenceTrack
                 Clear();
                 time = sample.Time;
             }
+            else if ((short)(sample.Sequence - _lastSequence) <= 0 && time > _lastTime)
+            {
+                // A sender's numbers and clock go up together, so a newer time with an older number is the
+                // sender counting from 1 again (its mod reloaded), not a late packet.
+                Restarts++;
+                Clear();
+                time = sample.Time;
+            }
             else if ((short)(sample.Sequence - _lastSequence) <= 0 || time < _lastTime)
             {
                 Late++;

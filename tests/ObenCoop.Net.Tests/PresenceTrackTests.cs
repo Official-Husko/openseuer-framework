@@ -100,6 +100,21 @@ public class PresenceTrackTests
     }
 
     [Fact]
+    public void ASenderWhoseCounterStartsOverOnTheSameClockIsFollowed()
+    {
+        var track = new PresenceTrack();
+        track.Add(At(500, 10000, 1f), 0);
+        track.Add(At(501, 10100, 1.1f), 100);
+        // Only the counter starts again (the clock carried over the reload).
+        Assert.True(track.Add(At(1, 10300, 2f), 300));
+        Assert.True(track.Add(At(2, 10400, 2.1f), 400));
+
+        Assert.Equal(1, track.Restarts);
+        Assert.Equal(0, track.Late);
+        Assert.Equal(2.1f, track.Latest.Position.X);
+    }
+
+    [Fact]
     public void KeepsOnlyTheNewestSamples()
     {
         var track = new PresenceTrack();

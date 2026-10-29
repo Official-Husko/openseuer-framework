@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using HarmonyLib;
+using ObenLoader;
 
 namespace DevBridge.Tracing;
 
@@ -52,6 +53,7 @@ internal static class TraceHooks
     private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
     private static Dictionary<MethodBase, TraceTarget> _targets;
+    private static Action<MethodInfo> _patch;
     private static HashSet<Assembly> _traced = new HashSet<Assembly>();
     private static int _mainThread;
     private static bool _warned;
@@ -96,30 +98,53 @@ internal static class TraceHooks
         FirstRefusal = null;
 
         var watch = Stopwatch.StartNew();
-        var harmony = new Harmony(HarmonyId);
-        patch ??= method => harmony.Patch(method, PrefixHook, method.ReturnType == typeof(void) ? null : ResultHook, null, FinalizerHook);
+        _patch = patch ?? PatchWithHarmony;
         var map = new Dictionary<MethodBase, TraceTarget>(methods.Count);
+        PatchInto(map, methods);
+        PatchMs = watch.ElapsedMilliseconds;
+        _targets = map;
+    }
+
+    /// <summary>
+    /// Adds methods to the running trace, e.g. patch handlers that went on after it started. Returns how
+    /// many were new. Does nothing while the trace is off.
+    /// </summary>
+    public static int Add(IEnumerable<MethodInfo> methods)
+    {
+        var current = _targets;
+        if (current == null)
+            return 0;
+        // The hooks read the map without a lock, so the new set goes into a copy that replaces it.
+        var map = new Dictionary<MethodBase, TraceTarget>(current);
+        PatchInto(map, methods);
+        _targets = map;
+        return map.Count - current.Count;
+    }
+
+    private static void PatchInto(Dictionary<MethodBase, TraceTarget> map, IEnumerable<MethodInfo> methods)
+    {
         foreach (var method in methods)
         {
-            if (map.ContainsKey(method))
+            if (method == null || map.ContainsKey(method))
                 continue;
-            var target = new TraceTarget(method, book.StatsFor(TraceFormat.Method(method), Now));
+            var target = new TraceTarget(method, Book.StatsFor(TraceFormat.Method(method), Now));
             try
             {
-                patch(method);
+                _patch(method);
                 map[method] = target;
             }
             catch (Exception e)
             {
                 Refused.Add(target.Name);
                 FirstRefusal ??= target.Name + ": " + e.GetType().Name + ": " + e.Message;
-                try { harmony.Unpatch(method, HarmonyPatchType.All, HarmonyId); }
+                try { new Harmony(HarmonyId).Unpatch(method, HarmonyPatchType.All, HarmonyId); }
                 catch (Exception) { }
             }
         }
-        PatchMs = watch.ElapsedMilliseconds;
-        _targets = map;
     }
+
+    private static void PatchWithHarmony(MethodInfo method) =>
+        new Harmony(HarmonyId).Patch(method, PrefixHook, method.ReturnType == typeof(void) ? null : ResultHook, null, FinalizerHook);
 
     /// <summary>Takes every trace patch off. The book stays readable until the next start.</summary>
     public static void Stop()
@@ -129,7 +154,7 @@ internal static class TraceHooks
         _targets = null;
         try
         {
-            new Harmony(HarmonyId).UnpatchAll(HarmonyId);
+            Unpatching.RemoveAll(HarmonyId);
         }
         catch (Exception e)
         {

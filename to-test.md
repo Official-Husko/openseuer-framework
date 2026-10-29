@@ -165,6 +165,13 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - Use the dev menu's quest and flag parts; `trace.list` shows records with `from: "CheatMenu"`.
   - `trace.stop`, then `trace.start` with no filter: `patched` about 1618. Note `patchMs`.
   - `trace.stop` says `active: false`, and the earlier records are still readable.
+- [x] **Tracer, patches:** (2026-10-29: all as expected.)
+  - `trace.start filter=ObenFramework.Clock handlers=true` picks one more method than `handlers=false` (42 and 41), and `trace.list` shows `TimeControlPatches.Prefix` called every frame.
+  - With a trace running, `features.set mod=PerformanceFixes id=TimerSnapshot enabled=false`, then `enabled=true`: `trace.list` has the mark `patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`.
+  - `trace.stop`, then `patches.list` has no `DevBridge.trace` owner.
+- [x] **patches.list:** lists the owners (ObenFramework 442, ObenPatches 15, ...); `mod=PerformanceFixes` gives its 8 methods with their handlers. (2026-10-29.)
+- [x] **Failed feature and framework part leave no patches:** `oben run scripts/examples/broken-feature.cs` returns `enabled False, patched False` and `help` has no extra line. A framework part started from a script with a throwing setup in its own `[PatchArea("DemoPart")]` leaves `DemoPart` switched off with "the 'demo part' part failed to start". Reload the framework afterwards. (2026-10-29.)
+- [x] **Unloading restores the game's methods:** `mods.unload id=PerformanceFixes` drops its 8 methods from `patches.list` and the game keeps running on the original code (`Inventory.AllSlots` answers); `mods.load` puts them back with `broken: []`. (2026-10-29.)
 - [ ] **RenovationMaterialsOnce [save]:** build two tenement resource storages with 10 planks each, then order a renovation needing 10 planks. One storage keeps its 10, and the inventory isn't touched.
 - [ ] **Cheat Menu:** all its earlier checks (god mode, needs, heal, noclip, move speed through the framework, teleport spots, money, items, time, weather, crime).
   - Move speed survives a door and is back to normal after unloading the Cheat Menu.

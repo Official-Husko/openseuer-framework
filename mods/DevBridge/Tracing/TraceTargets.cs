@@ -38,6 +38,27 @@ public static class TraceTargets
         return found;
     }
 
+    /// <summary>
+    /// The patch handlers (prefixes, postfixes and so on) among <paramref name="handlers"/> that one of the
+    /// <paramref name="traced"/> assemblies declares and whose type matches <paramref name="filter"/>: the
+    /// traced mods' hooks into the game, private ones included. The tracer's own hooks are never picked.
+    /// </summary>
+    public static List<MethodInfo> Handlers(IEnumerable<MethodInfo> handlers, ICollection<Assembly> traced, string filter)
+    {
+        var found = new List<MethodInfo>();
+        var parts = Filter(filter);
+        foreach (var handler in handlers)
+        {
+            var type = handler?.DeclaringType;
+            if (type == null || !traced.Contains(type.Assembly) || type.Namespace == typeof(TraceTargets).Namespace || !Matches(type, parts))
+                continue;
+            if (handler.IsAbstract || handler.ContainsGenericParameters || handler.ReturnType.IsByRef)
+                continue;
+            found.Add(handler);
+        }
+        return found;
+    }
+
     /// <summary>The types an assembly could load, skipping the ones that fail.</summary>
     public static Type[] TypesOf(Assembly assembly)
     {

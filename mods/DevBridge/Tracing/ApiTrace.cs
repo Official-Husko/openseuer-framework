@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using ObenFramework.Events;
 using ObenFramework.Features;
+using ObenLoader;
 using ObenLoader.Config;
 using ObenLoader.Mods;
+using ObenLoader.Runtime;
 using UnityEngine;
 
 namespace DevBridge.Tracing;
@@ -12,7 +14,8 @@ namespace DevBridge.Tracing;
 /// <summary>
 /// The API call tracer: while this feature is on, every call into the public API of the chosen mods (the
 /// framework by default) is recorded with its arguments, result or exception, time taken, nesting depth,
-/// thread and the mod that made it, and scene loads, saves and loads are marked in between. trace.start,
+/// thread and the mod that made it, and scene loads, saves, loads and every patch that goes on or fails are
+/// marked in between. With PatchHandlers on, the mods' patch handlers are traced too. trace.start,
 /// trace.stop and trace.list drive and read it over the bridge. Off by default: patching the whole framework
 /// takes a few seconds, and every traced call costs a little while it is on. Off, nothing is patched.
 /// </summary>
@@ -23,6 +26,7 @@ internal sealed class ApiTrace : ModFeature
 
     private readonly ConfigFile<TraceSettings> _settings;
     private double _nextSweep;
+    private List<Assembly> _assemblies;
 
     public ApiTrace(ConfigFile<TraceSettings> settings) => _settings = settings;
 
@@ -49,9 +53,12 @@ internal sealed class ApiTrace : ModFeature
     {
         var settings = _settings.Value;
         var assemblies = Assemblies(settings);
+        _assemblies = assemblies;
         var methods = new List<MethodInfo>();
         foreach (var assembly in assemblies)
             methods.AddRange(TraceTargets.Select(TraceTargets.TypesOf(assembly), settings.Filter));
+        if (settings.PatchHandlers)
+            methods.AddRange(TraceTargets.Handlers(PatchEvents.InstalledHandlers(), assemblies, settings.Filter));
         Selected = methods.Count;
         if (methods.Count > settings.MaxMethods)
         {
@@ -64,6 +71,7 @@ internal sealed class ApiTrace : ModFeature
         var book = new TraceBook(settings.Capacity, settings.LinesPerWindow, settings.WindowSeconds);
         TraceHooks.Start(methods, assemblies, book, Owner.Log.Warn);
         string summary = $"tracing {TraceHooks.Patched} methods of {string.Join(", ", settings.Mods)}"
+            + (settings.PatchHandlers ? " with their patch handlers" : "")
             + (string.IsNullOrWhiteSpace(settings.Filter) ? "" : $" matching '{settings.Filter}'")
             + $", patched in {TraceHooks.PatchMs} ms, {TraceHooks.Refused.Count} refused";
         book.AddMark(summary, TraceHooks.Now, Time.frameCount);
@@ -72,7 +80,21 @@ internal sealed class ApiTrace : ModFeature
         GameEvents.SceneLoaded.Subscribe(this, scene => Mark("scene loaded: " + scene));
         GameEvents.Saved.Subscribe(this, folder => Mark("game saved"));
         GameEvents.Loaded.Subscribe(this, () => Mark("save loaded"));
+        PatchEvents.Installed += OnPatch;
+        Track(Disposable.Create(() => PatchEvents.Installed -= OnPatch));
         _nextSweep = TraceHooks.Now + SweepSeconds;
+    }
+
+    // Every patch that goes on or fails while the trace runs is marked; with PatchHandlers on, a traced
+    // mod's new handlers join the trace. May come from another thread, so no Unity calls.
+    private void OnPatch(PatchReport report)
+    {
+        if (!TraceHooks.Active || report.Owner == TraceHooks.HarmonyId)
+            return;
+        TraceHooks.Book?.AddMark(report.Ok ? $"patch on: {report.Owner} {report.Target} ({report.Kinds})"
+            : $"patch failed: {report.Owner} {report.Target}: {report.Error}", TraceHooks.Now, TraceHooks.Frame);
+        if (report.Ok && _settings.Value.PatchHandlers && _assemblies != null)
+            TraceHooks.Add(TraceTargets.Handlers(report.Handlers, _assemblies, _settings.Value.Filter));
     }
 
     public override void OnUpdate()

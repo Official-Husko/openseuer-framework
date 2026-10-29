@@ -123,5 +123,27 @@ namespace ObenCore.Tests.Tracing
             Assert.Null(Enter(Add, 1, 1));
             Assert.Empty(Calls());
         }
+
+        [Fact]
+        public void AddPatchesOnlyNewMethodsIntoTheRunningTrace()
+        {
+            var late = typeof(Math).GetMethod("Abs", new[] { typeof(int) })!;
+
+            Assert.Equal(1, TraceHooks.Add(new[] { late, Add, late }));
+            Assert.Equal(4, TraceHooks.Patched);
+            Assert.Equal(4, _patched.Count);
+
+            Leave(Enter(late, -4), 4);
+            Assert.Equal("Math.Abs", Calls().Single().Method);
+        }
+
+        [Fact]
+        public void AddDoesNothingWhileStopped()
+        {
+            TraceHooks.Stop();
+            var late = typeof(Math).GetMethod("Abs", new[] { typeof(int) })!;
+            Assert.Equal(0, TraceHooks.Add(new[] { late }));
+            Assert.False(TraceHooks.Active);
+        }
     }
 }

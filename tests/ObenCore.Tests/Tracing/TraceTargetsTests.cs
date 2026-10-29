@@ -1,3 +1,4 @@
+using System.Reflection;
 using DevBridge.Tracing;
 using ObenCore.Tests.Tracing.Samples;
 
@@ -99,6 +100,24 @@ namespace ObenCore.Tests.Tracing
         [Fact]
         public void TypesOfAnAssemblyIncludesTheSamples() =>
             Assert.Contains(typeof(SampleClock), TraceTargets.TypesOf(typeof(SampleClock).Assembly));
+
+        [Fact]
+        public void HandlersOfTracedAssembliesOnlyIncludingPrivateOnes()
+        {
+            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+            var hidden = typeof(SampleClock).GetMethod("Hidden", flags)!;
+            var add = typeof(SampleClock).GetMethod(nameof(SampleClock.Add))!;
+            var echo = typeof(SampleClock).GetMethod(nameof(SampleClock.Echo))!;
+            var start = typeof(SampleTask).GetMethod(nameof(SampleTask.Start))!;
+            var foreign = typeof(Math).GetMethod("Abs", new[] { typeof(int) })!;
+            var tracer = typeof(TraceTargets).GetMethod(nameof(TraceTargets.Filter))!;
+            var traced = new[] { typeof(SampleClock).Assembly };
+            var handlers = new[] { hidden, add, echo, start, foreign, tracer };
+
+            Assert.Equal(new[] { hidden, add, start }, TraceTargets.Handlers(handlers, traced, ""));
+            Assert.Equal(new[] { start }, TraceTargets.Handlers(handlers, traced, "SampleTask"));
+            Assert.Empty(TraceTargets.Handlers(handlers, Array.Empty<Assembly>(), ""));
+        }
 
         [Fact]
         public void NoAccessorOfAnInstanceTypeButItsSetters()

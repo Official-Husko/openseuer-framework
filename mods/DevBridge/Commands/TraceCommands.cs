@@ -17,7 +17,7 @@ internal static class TraceCommands
     private const int RefusedShown = 30;
 
     [BridgeCommand("trace.start", "Start (or restart) the framework API call tracer, optionally with a new filter or set of mods.",
-        Params = new[] { "filter?: comma-separated type name or namespace prefixes, e.g. Quest,GlobalFlags; empty traces everything", "mods?: comma-separated mod ids whose API is traced, default ObenFramework" })]
+        Params = new[] { "filter?: comma-separated type name or namespace prefixes, e.g. Quest,GlobalFlags; empty traces everything", "mods?: comma-separated mod ids whose API is traced, default ObenFramework", "handlers?: also trace those mods' patch handlers (true/false, kept until changed)" })]
     private static object Start(JObject p)
     {
         var trace = Feature();
@@ -26,6 +26,8 @@ internal static class TraceCommands
             settings.Filter = p.Str("filter", "");
         if (p["mods"] != null)
             settings.Mods = Split(p.Str("mods", ""));
+        if (p["handlers"] != null)
+            settings.PatchHandlers = p.Bool("handlers", false);
         trace.SaveSettings();
 
         if (trace.Enabled)
@@ -85,6 +87,7 @@ internal static class TraceCommands
             ["filter"] = trace.Settings.Filter ?? "",
             ["mods"] = new JArray(trace.Settings.Mods?.ToArray() ?? new string[0]),
             ["missingMods"] = new JArray(trace.Missing.ToArray()),
+            ["handlers"] = trace.Settings.PatchHandlers,
             ["selected"] = trace.Selected,
             ["patched"] = TraceHooks.Patched,
             ["patchMs"] = TraceHooks.PatchMs,

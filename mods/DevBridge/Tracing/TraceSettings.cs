@@ -14,6 +14,13 @@ public sealed class TraceSettings
     /// <summary>The mods whose public API is traced, by mod id.</summary>
     public List<string> Mods = new List<string> { "ObenFramework" };
 
+    /// <summary>
+    /// Also trace those mods' patch handlers (their prefixes and postfixes on game methods), the filter
+    /// applying to the handler's class, including handlers that go on while the trace runs. Handlers on
+    /// per-frame methods add a lot of calls.
+    /// </summary>
+    public bool PatchHandlers;
+
     /// <summary>How many records are kept; older ones go first.</summary>
     public int Capacity = 2000;
 

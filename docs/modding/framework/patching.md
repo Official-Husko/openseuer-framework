@@ -54,9 +54,23 @@ ModPatches.Patch(this, target, postfix: MethodFinder.Handler(typeof(MyHooks), "A
 - `MethodFinder.Find(type, name, args)` searches the type's own methods, public or not: `.ctor` and `.cctor` for constructors, `get_X`/`set_X` for properties. Without argument types an overloaded name is refused, so an overload added by an update is noticed instead of patching the wrong one.
 - `ModPatches.DisableArea(this, area, reason)` switches an area off on purpose, for example when a check of your own shows the game changed.
 
+### Features
+
+A `ModFeature`'s `[HarmonyPatchCategory(Id)]` classes go on when it is switched on and come off when it is switched off. When one of its classes fails, or its `OnEnable` throws, the feature stays off and nothing of it is left behind: the classes already applied come off again and what it tracked is disposed. `scripts/examples/broken-feature.cs` shows it.
+
+### Following patches
+
+`ObenLoader.PatchEvents.Installed` is raised after every patch that goes on or fails: the loader's patching of a mod's classes, `ModPatches` and feature switches. The `PatchReport` says who patched (`Owner`, the mod id), what (`Target`, `Original`), with which `Prefix`, `Postfix`, `Transpiler` and `Finalizer`, and the `Error` when it failed. `PatchEvents.InstalledHandlers(modId)` lists the handlers on right now (all mods without an id). The API tracer uses both; a mod that patches through Harmony itself can report its patches with `PatchEvents.Report`.
+
+```csharp
+PatchEvents.Installed += report => { if (!report.Ok) Log.Warn(report.ToString()); };
+```
+
+`ObenLoader.Unpatching.RemoveAll(harmonyId)` takes all of one Harmony id's patches off, giving a method its own code back when no other id patches it. The loader unloads mods with it; it is much faster than Harmony's `UnpatchAll(id)`, which rebuilds and recompiles the method once per handler it removes.
+
 ## The framework's parts
 
-`FrameworkMod.OnLoad` starts about 30 parts (events, saves, clock, shops, NPCs...) one by one. A part whose setup throws is logged and listed on the Errors page; the others still start. Each part's per-frame update runs in its own try/catch too, logged once per part.
+`FrameworkMod.OnLoad` starts about 30 parts (events, saves, clock, shops, NPCs...) one by one. A part whose setup throws is logged and listed on the Errors page, and its patch area is switched off, so the hooks of a part that isn't there don't keep running; the others still start. Each part's per-frame update runs in its own try/catch too, logged once per part.
 
 ```csharp
 if (!FrameworkModules.IsAvailable("shops"))
@@ -72,5 +86,7 @@ oben call framework.modules            # every part
 oben call framework.modules failed=true
 oben call patches.areas mod=ObenFramework
 oben call patches.areas failed=true    # what got switched off, and why
+oben call patches.list                 # how many methods each mod patches
+oben call patches.list mod=ObenPatches # each of its patched methods with the handlers
 oben call mods.list                    # "warning" shows a mod made for another game version
 ```

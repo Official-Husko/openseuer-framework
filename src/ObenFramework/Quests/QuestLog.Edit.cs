@@ -36,8 +36,8 @@ public static partial class QuestLog
 
     /// <summary>
     /// Sets a started task to Active, Finished, Failed or Abandoned. Moving a task out of Active abandons its
-    /// active objectives, like the game does. Reopening a finished task does not remove it from the game's
-    /// "finished" list, so the Lua function <c>TaskFinished</c> keeps answering true for it.
+    /// active objectives, like the game does. The game's status lists (what the Lua functions
+    /// <c>TaskActive</c>, <c>TaskFinished</c> ... read) follow the new status, also when a finished task is reopened.
     /// </summary>
     public static QuestResult SetTaskStatus(string taskId, CurrentTaskStatus status)
     {
@@ -55,6 +55,10 @@ public static partial class QuestLog
             return QuestResult.Unchanged($"The task is already {status}.");
 
         TaskController.instance.EditTaskStatus(entry, status);
+        // In play a task only ever leaves Active, so the game's lists keep a reopened task under its old
+        // status too (TaskFinished and TaskActive both true). Put it in the lists of its new status only.
+        if (entry.status == status)
+            QuestRewind.TaskLists(TaskController.instance, entry.Id, (int)status);
         return Finish(entry.status == status, "The game did not change the task.");
     }
 
@@ -86,6 +90,9 @@ public static partial class QuestLog
         if (status == ObjectiveStatus.Active)
         {
             TaskController.instance.EditTaskObjective(task, objective, status);
+            // Same as for tasks: a reopened objective would still count as completed for the game's Lua.
+            if (objective.status == ObjectiveStatus.Active)
+                QuestRewind.ObjectiveLists(TaskController.instance, task.Id, objective.objective.Id, (int)ObjectiveStatus.Active);
             TaskPanel.instance.UpdateCurrentTaskInfo();
         }
         else if (objective.status != ObjectiveStatus.Active)

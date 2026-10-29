@@ -68,7 +68,9 @@ public static partial class GameClock
 
     /// <summary>
     /// How fast in-game time runs relative to normal (1 is normal, 0 stops it). Sleeping and waiting set this
-    /// and put it back to 1 afterwards, so a value set here doesn't survive them.
+    /// and put it back to 1 afterwards, so a value set here doesn't survive them. This is the game's raw
+    /// value: mods should use <see cref="TimeControl"/>, which shares the clock with other mods. A value
+    /// above 1 set here looks like sleeping to TimeControl, so its freezes and speeds stand aside meanwhile.
     /// </summary>
     public static float TimeSpeed
     {

@@ -22,6 +22,8 @@ The log is `ObenLoader/logs/latest.log` (`previous.log` is the last session's). 
 
 ## A mod folder
 
+Every mod lives in a folder of its own under `Mods/` (a DLL dropped straight into `Mods/` isn't loaded).
+
 ```
 Mods/
   MyMod/
@@ -64,6 +66,18 @@ Mods/
 `gameVersion` takes `0.5.13` (that version), `0.5` or `0.5.x` (anything starting with those numbers), comparisons like `>=0.5.10` and `<0.6`, several of them separated by spaces (all must hold), and alternatives separated by `||`: `">=0.5.10 <0.6 || 0.5.08"`. The game's version is `Application.version` (0.5.13 at the time of writing); `oben call game.info` shows it, and the first line of `latest.log` names the Steam build too when it is known (`Loader.GameBuildId`).
 
 A player who would rather go without a mod than run one made for another game version sets `"RefuseOtherGameVersions": true` in `ObenLoader/settings.json`: every version or build mismatch then refuses the mod, as if each had `strictGameVersion`.
+
+### Declaring the mod in code instead
+
+A folder without a mod.json is a mod too when one of its DLLs declares itself on its `ObenMod` class:
+
+```csharp
+[ObenModInfo("MyMod", "My Mod", "1.0.0", Author = "Me", GameVersion = "0.5.x")]
+[ObenModDependency("ObenFramework", "0.1.0")]
+public sealed class MyMod : ObenMod { ... }
+```
+
+The loader reads the attributes without loading the DLL. That DLL is the mod; other DLLs in the folder are its libraries, as with an `assemblies` list. `Author`, `Description`, `GameVersion` and `HotReload` can be set; everything else keeps the mod.json defaults, so use a mod.json for `essential`, `loadAfter`, `gameBuilds` and the rest. A mod.json in the folder always wins over the attributes.
 
 ## The entry class
 

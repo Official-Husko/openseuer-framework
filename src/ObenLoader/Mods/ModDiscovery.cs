@@ -6,7 +6,10 @@ using ObenLoader.Logging;
 
 namespace ObenLoader.Mods;
 
-/// <summary>Finds mod folders under &lt;game&gt;/Mods. A mod folder is any folder with a mod.json.</summary>
+/// <summary>
+/// Finds mod folders under &lt;game&gt;/Mods: any folder with a mod.json, or without one, a folder whose DLL
+/// declares the mod in code (<see cref="ObenModInfoAttribute"/>).
+/// </summary>
 internal static class ModDiscovery
 {
     public const string ManifestFile = "mod.json";
@@ -19,10 +22,14 @@ internal static class ModDiscovery
         foreach (string dir in Directory.GetDirectories(modsDir))
         {
             string manifestPath = Path.Combine(dir, ManifestFile);
+            ModManifest manifest;
             if (!File.Exists(manifestPath))
-                continue;
-
-            if (!JsonFile.TryRead(manifestPath, out ModManifest manifest, out var error))
+            {
+                manifest = CodeManifest.Read(dir, log.Warn);
+                if (manifest == null)
+                    continue;
+            }
+            else if (!JsonFile.TryRead(manifestPath, out manifest, out var error))
             {
                 log.Error($"Skipping {Path.GetFileName(dir)}: bad mod.json ({error?.Message})");
                 continue;

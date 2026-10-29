@@ -8,7 +8,14 @@ public sealed class ModInfo
 {
     public ModManifest Manifest { get; internal set; }
 
+    /// <summary>
+    /// The mod's own folder: where its files, config and assets are. For a loose DLL it is Mods/&lt;id&gt;,
+    /// which only exists once the mod writes something there.
+    /// </summary>
     public string Directory { get; }
+
+    /// <summary>The mod is a DLL lying directly in the Mods folder rather than in a folder of its own.</summary>
+    public bool IsLoose { get; internal set; }
 
     /// <summary>The mod says it works with every game version (anyGameVersion, or a gameVersion of "*").</summary>
     public bool AnyGameVersion => ModChecks.IsAnyGameVersion(Manifest);

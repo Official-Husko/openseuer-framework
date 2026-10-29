@@ -42,6 +42,22 @@ public class ModIdsTests
         Assert.False(ModIds.IsValid(new string('a', ModIds.MaxLength + 1)));
     }
 
+    [Theory]
+    [InlineData("MyMod", "MyMod")]
+    [InlineData("My Mod v2", "My_Mod_v2")]
+    [InlineData("mod..dll", "mod_dll")]
+    [InlineData(".hidden", "hidden")]
+    [InlineData("CON", "CON_mod")]
+    [InlineData("ObenLoader", "ObenLoader_mod")]
+    [InlineData("", "mod")]
+    [InlineData("café", "caf_")]
+    public void IdsFromFileNamesAreValid(string name, string expected)
+    {
+        string id = ModIds.FromFileName(name);
+        Assert.Equal(expected, id);
+        Assert.True(ModIds.IsValid(id));
+    }
+
     [Fact]
     public void RequireNamesTheParameter()
     {

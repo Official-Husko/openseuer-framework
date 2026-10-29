@@ -44,6 +44,19 @@ public class CodeManifestTests
     }
 
     [Fact]
+    public void ALooseDllIsListedByItsFullPath()
+    {
+        string path = typeof(DeclaredInCode).Assembly.Location;
+        var manifest = CodeManifest.ReadLoose(path, null)!;
+        Assert.Equal("CodeMod", manifest.Id);
+        Assert.Equal(new[] { Path.GetFullPath(path) }, manifest.Assemblies);
+    }
+
+    [Fact]
+    public void ALooseLibraryIsNoMod() =>
+        Assert.Null(CodeManifest.ReadLoose(typeof(Xunit.FactAttribute).Assembly.Location, null));
+
+    [Fact]
     public void TheAnyGameVersionFlagIsRead() => Assert.True(Read().AnyGameVersion);
 
     [Fact]

@@ -22,7 +22,7 @@ The log is `ObenLoader/logs/latest.log` (`previous.log` is the last session's). 
 
 ## A mod folder
 
-Every mod lives in a folder of its own under `Mods/` (a DLL dropped straight into `Mods/` isn't loaded).
+Every mod should live in a folder of its own under `Mods/`. A DLL dropped straight into `Mods/` still loads if it is a mod (it declares itself with `[ObenModInfo]`, or uses the loader and gets an id from its file name), with a warning in the log; its settings and files go in `Mods/<id>/`. Loose DLLs that aren't mods are skipped with a log line.
 
 ```
 Mods/

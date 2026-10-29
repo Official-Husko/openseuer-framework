@@ -48,6 +48,30 @@ public static class ModIds
         return null;
     }
 
+    /// <summary>
+    /// A valid id made from a file name ("My Mod.v2" becomes "My_Mod.v2"): characters ids don't allow become
+    /// '_', and a reserved name gets "_mod" added. For mods that don't give an id of their own.
+    /// </summary>
+    public static string FromFileName(string name)
+    {
+        var chars = (name ?? "").ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+        {
+            char c = chars[i];
+            bool ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-';
+            if (!ok)
+                chars[i] = '_';
+        }
+        string id = new string(chars).Replace("..", "_").Trim('.');
+        if (id.Length > MaxLength)
+            id = id.Substring(0, MaxLength).TrimEnd('.');
+        if (id.Length == 0)
+            id = "mod";
+        if (IsReservedName(id) || string.Equals(id, LoaderId, StringComparison.OrdinalIgnoreCase))
+            id += "_mod";
+        return id;
+    }
+
     /// <summary>Throws an <see cref="ArgumentException"/> naming <paramref name="param"/> when the id isn't valid.</summary>
     public static void Require(string id, string param)
     {

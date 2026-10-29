@@ -24,6 +24,7 @@ internal static class ModCommands
             ["loadCount"] = m.LoadCount,
             ["error"] = m.Error,
             ["warning"] = m.Warning,
+            ["loose"] = m.IsLoose,
             ["anyGameVersion"] = m.AnyGameVersion,
         }).ToArray());
 

@@ -7,8 +7,9 @@ using ObenLoader.Logging;
 namespace ObenLoader.Mods;
 
 /// <summary>
-/// Finds mod folders under &lt;game&gt;/Mods: any folder with a mod.json, or without one, a folder whose DLL
-/// declares the mod in code (<see cref="ObenModInfoAttribute"/>).
+/// Finds mods under &lt;game&gt;/Mods: any folder with a mod.json, or without one, a folder whose DLL
+/// declares the mod in code (<see cref="ObenModInfoAttribute"/>). DLLs lying loose in the Mods folder load
+/// too, with a warning in the log.
 /// </summary>
 internal static class ModDiscovery
 {
@@ -47,6 +48,25 @@ internal static class ModDiscovery
             mods.Add(new ModInfo(manifest, dir));
         }
 
+        // After the folders, so a mod with a folder of its own wins over a stray copy of its DLL.
+        foreach (string dll in Directory.GetFiles(modsDir, "*.dll", SearchOption.TopDirectoryOnly))
+        {
+            string file = Path.GetFileName(dll);
+            var manifest = CodeManifest.ReadLoose(dll, log.Warn);
+            if (manifest == null)
+            {
+                log.Warn($"{file} lies loose in the Mods folder and isn't a mod (it doesn't use the loader); it isn't loaded.");
+                continue;
+            }
+            if (!seen.Add(manifest.Id))
+            {
+                log.Error($"Skipping {file}: another mod already uses the id '{manifest.Id}'");
+                continue;
+            }
+            log.Warn($"{file} lies loose in the Mods folder. It loads as '{manifest.Id}', but give it a folder of its own (Mods/{manifest.Id}/) with a mod.json; its settings and files go in that folder.");
+            mods.Add(new ModInfo(manifest, Path.Combine(modsDir, manifest.Id)) { IsLoose = true });
+        }
+
         return mods;
     }
 
@@ -76,6 +96,9 @@ internal static class ModDiscovery
         foreach (string path in AssemblyPaths(mod))
             listed.Add(Path.GetFullPath(path));
 
+        // A loose mod's folder may not exist, and the DLLs next to a loose DLL belong to other mods.
+        if (mod.IsLoose || !Directory.Exists(mod.Directory))
+            yield break;
         foreach (string path in Directory.GetFiles(mod.Directory, "*.dll", SearchOption.TopDirectoryOnly))
         {
             if (!listed.Contains(Path.GetFullPath(path)))

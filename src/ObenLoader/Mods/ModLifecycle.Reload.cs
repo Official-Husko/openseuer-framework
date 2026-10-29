@@ -81,7 +81,16 @@ internal static partial class ModLifecycle
     private static void RefreshManifest(ModInfo mod)
     {
         string path = Path.Combine(mod.Directory, ModDiscovery.ManifestFile);
-        if (JsonFile.TryRead(path, out ModManifest manifest, out _))
+        ModManifest manifest = null;
+        if (!mod.IsLoose && File.Exists(path))
+            JsonFile.TryRead(path, out manifest, out _);
+        else if (mod.Manifest.Assemblies.Count > 0)
+        {
+            // Declared in code: the attribute may have changed with the rebuild.
+            string dll = Path.Combine(mod.Directory, mod.Manifest.Assemblies[0]);
+            manifest = mod.IsLoose ? CodeManifest.ReadLoose(dll, null) : CodeManifest.ReadAssembly(dll, null);
+        }
+        if (manifest != null)
         {
             manifest.Id = mod.Id; // The id can't change while running.
             mod.Manifest = manifest;

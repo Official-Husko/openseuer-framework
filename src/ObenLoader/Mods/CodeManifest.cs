@@ -27,6 +27,42 @@ internal static class CodeManifest
         return null;
     }
 
+    /// <summary>
+    /// The manifest of a DLL lying loose in the Mods folder: from its attribute, or, when it uses the loader
+    /// (references ObenLoader), one named after the file. Null for anything else (a stray library). The DLL
+    /// is listed by its full path, since the mod's folder is elsewhere.
+    /// </summary>
+    public static ModManifest ReadLoose(string path, Action<string> warn)
+    {
+        var manifest = ReadAssembly(path, warn);
+        if (manifest == null)
+        {
+            if (!UsesLoader(path))
+                return null;
+            manifest = new ModManifest { Id = ModIds.FromFileName(Path.GetFileNameWithoutExtension(path)) };
+        }
+        manifest.Assemblies.Clear();
+        manifest.Assemblies.Add(Path.GetFullPath(path));
+        return manifest;
+    }
+
+    private static bool UsesLoader(string path)
+    {
+        try
+        {
+            using var assembly = AssemblyDefinition.ReadAssembly(path, new ReaderParameters { ReadingMode = ReadingMode.Deferred });
+            foreach (var reference in assembly.MainModule.AssemblyReferences)
+            {
+                if (reference.Name == ModIds.LoaderId)
+                    return true;
+            }
+        }
+        catch (Exception e) when (e is BadImageFormatException || e is IOException || e is UnauthorizedAccessException)
+        {
+        }
+        return false;
+    }
+
     /// <summary>The manifest from one DLL, or null when no class in it carries the attribute.</summary>
     public static ModManifest ReadAssembly(string path, Action<string> warn)
     {

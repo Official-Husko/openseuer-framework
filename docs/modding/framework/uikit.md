@@ -221,7 +221,9 @@ Every kit window can be used without the mouse. Controls register themselves as 
 | Page Up / Page Down, the game's tab keys (Q by default), pad LB / RB | turns the page in a window that has pages (the mod menu), wrapping around |
 | Esc, pad B | closes the top window |
 
-The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
+The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. When the next control is out of view (a long description, the release notes, an error's stack trace), Up and Down first scroll the text a step at a time and move the highlight once that control shows, so pages that are mostly text can be read from the keyboard or pad. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
+
+The mouse wheel scrolls the body anywhere over it, over text and the gaps between controls too. A thin bar in the right margin shows where you are on a long page and can be dragged; it hides when everything fits.
 
 Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings. The page keys do: the keys bound to the game's "Switch Tab Left" and "Switch Tab Right" turn pages too, unless one of them is a key that already moves around the window.
 

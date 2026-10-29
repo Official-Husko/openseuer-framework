@@ -138,6 +138,16 @@ internal sealed class UiNav
             }
         }
 
+        // Text between controls (a long description, the release notes) is scrolled through first; the focus
+        // moves on once the next control is in view.
+        if (_scroll != null)
+        {
+            int next = Following(direction);
+            var rect = next >= 0 && _items[next].InBody ? _items[next].Target.Rect : null;
+            if (NavScroll.StepToward(_scroll, rect, direction))
+                return;
+        }
+
         int n = _items.Count;
         int i = _focus;
         for (int k = 0; k < n; k++)
@@ -216,6 +226,18 @@ internal sealed class UiNav
         entry.Target.SetFocus(true);
         if (scroll && entry.InBody && _scroll != null)
             NavScroll.Reveal(_scroll, entry.Target.Rect);
+    }
+
+    // The next control that can take the focus in a direction, without wrapping around; -1 when there is none.
+    private int Following(int direction)
+    {
+        int i = _focus < 0 ? (direction > 0 ? -1 : _items.Count) : _focus;
+        for (i += direction; i >= 0 && i < _items.Count; i += direction)
+        {
+            if (_items[i].Target.Focusable)
+                return i;
+        }
+        return -1;
     }
 
     private int IndexOf(INavTarget target)

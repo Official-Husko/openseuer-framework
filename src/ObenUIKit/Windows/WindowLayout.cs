@@ -78,7 +78,7 @@ internal static class WindowLayout
         row.childControlWidth = true;
         row.childControlHeight = true;
 
-        var (scroll, content) = Body(column);
+        var (scroll, content) = Body(column, theme);
         return new Parts { Frame = frame, Column = column, Title = title, Scroll = scroll, Content = content, Footer = footer, Drag = drag };
     }
 
@@ -110,14 +110,19 @@ internal static class WindowLayout
         }
     }
 
-    private static (ScrollRect, RectTransform) Body(RectTransform column)
+    private static (ScrollRect, RectTransform) Body(RectTransform column, UiTheme theme)
     {
         var body = UiParts.Stretch(UiParts.Child(column, "Body"), 24f, TitleHeight, 24f, FooterHeight);
         body.gameObject.AddComponent<RectMask2D>();
+        // An invisible background, so the mouse wheel scrolls over text and the gaps between controls too,
+        // not only over the controls that take clicks.
+        body.gameObject.AddComponent<Image>().color = Color.clear;
         var scroll = body.gameObject.AddComponent<ScrollRect>();
         scroll.horizontal = false;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = 40f;
+        scroll.verticalScrollbar = Bar(column, theme);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
         var content = UiParts.Child(body, "Content");
         content.anchorMin = new Vector2(0f, 1f);
@@ -135,6 +140,31 @@ internal static class WindowLayout
         scroll.viewport = body;
         scroll.content = content;
         return (scroll, content);
+    }
+
+    // A thin bar in the body's right margin that shows how far down the page is and can be dragged. Hidden
+    // while everything fits.
+    private static Scrollbar Bar(RectTransform column, UiTheme theme)
+    {
+        var track = UiParts.Image(column, "Scrollbar", null, theme.SliderTrack, raycast: true).rectTransform;
+        track.anchorMin = new Vector2(1f, 0f);
+        track.anchorMax = new Vector2(1f, 1f);
+        track.pivot = new Vector2(1f, 0.5f);
+        track.offsetMin = new Vector2(-16f, FooterHeight);
+        track.offsetMax = new Vector2(-10f, -TitleHeight);
+
+        var area = UiParts.Stretch(UiParts.Child(track, "Area"));
+        var handle = UiParts.Image(area, "Handle", null, theme.TextMuted, raycast: true);
+        UiParts.Stretch(handle.rectTransform);
+
+        var bar = track.gameObject.AddComponent<Scrollbar>();
+        bar.direction = Scrollbar.Direction.BottomToTop;
+        bar.handleRect = handle.rectTransform;
+        bar.targetGraphic = handle;
+        bar.transition = Selectable.Transition.None;
+        // The kit moves the focus itself; the game's event system shouldn't select the bar.
+        bar.navigation = new Navigation { mode = Navigation.Mode.None };
+        return bar;
     }
 
     private static void Cap(RectTransform column, UiTheme theme, bool top)

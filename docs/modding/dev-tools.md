@@ -169,7 +169,7 @@ Every start, ObenFramework checks the loaded mods against the running game the w
 
 - `GameCheck.Last`, `GameCheck.Finished` and `GameCheck.Start()` (check again, ignoring the kept result) are the API; `oben call game.check` shows the result and `game.check run=true` runs it again.
 - At the title screen and in the main menu, a line in the bottom-left corner says how many mods are loaded and how the check went; once past the title screen a notice says the same in words.
-- While the loader works and Unity loads the first scene, the game window is still black; its title says what is going on ("Obenseuer - loading mods (3/9): ObenFramework", then "loading the main menu..."). Most of that black phase is Proton and Unity starting up before the loader runs.
+- While the loader works and Unity loads the first scene, the game window is still black and Unity draws nothing. A small native panel over it says what is going on ("loading mods (3/9): ObenFramework", a progress bar, then "loading the main menu...") and so does the window title. The panel is its own window (Win32 and GDI on a thread of its own, owned by the game window and never focused), so it shows in fullscreen too, scales with the window from 1080p up, and closes when the first scene is up. `"LoadingPanel": false` in `ObenLoader/settings.json` turns it off. Most of the black phase is Proton and Unity starting up before the loader runs, which nothing of ours can cover.
 - The game's code and exe hashes are kept in `ObenLoader/game-files.json` by size and write time, so they are only read again after the game changes.
 
 ## After a game update

@@ -45,13 +45,19 @@ public static class Loader
     {
         GameVersion = Application.version;
         LoaderPaths.Init();
-        WindowTitle.Show("ObenseuerExtended is starting...");
+        StartupStatus.Show("starting...");
         GameBuildId = SteamBuild.Read(LoaderPaths.GameDir);
         string kept = System.IO.Path.Combine(LoaderPaths.DataDir, "game-files.json");
         GameCodeHash = GameFiles.HashKept(System.IO.Path.Combine(Application.dataPath, "Managed", "Assembly-CSharp.dll"), kept);
         GameExeHash = GameFiles.HashKept(LoaderPaths.GameExe, kept);
         LogHub.Init(LoaderPaths.LogsDir);
         ModRegistry.Init(Log);
+        // The panel can only be switched off once the settings are read; it opened with the first status.
+        if (!ModRegistry.Settings.LoadingPanel)
+        {
+            StartupStatus.PanelEnabled = false;
+            LoadingOverlay.Close();
+        }
         if (ModRegistry.Settings.VerboseLog)
             LogHub.MinFileLevel = LogLevel.Debug;
 
@@ -75,7 +81,7 @@ public static class Loader
 
         ModLifecycle.LoadBatch(found.Where(m => m.State == ModState.Pending).ToList(), atRuntime: false);
         // Unity loads the first scene next, still without drawing anything.
-        WindowTitle.Show("loading the main menu...");
+        StartupStatus.Show("loading the main menu...", 1, 1);
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += FirstScene;
 
         foreach (var mod in found.Where(m => m.State == ModState.Failed))
@@ -88,6 +94,6 @@ public static class Loader
     private static void FirstScene(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= FirstScene;
-        WindowTitle.Restore();
+        StartupStatus.Done();
     }
 }

@@ -60,6 +60,13 @@ internal static class WindowTitle
         _window = IntPtr.Zero;
     }
 
+    /// <summary>The window Unity made for this process, or zero when there is none (yet) or the calls don't work.</summary>
+    public static IntPtr GameWindow()
+    {
+        try { return Find(); }
+        catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException || e is MarshalDirectiveException) { return IntPtr.Zero; }
+    }
+
     // The window Unity made for this process (it can exist before it is the active one).
     private static IntPtr Find()
     {

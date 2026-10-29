@@ -14,7 +14,7 @@ Both files are backed up once as `*.obenbak` and put back by `oben uninstall`.
 On startup the loader:
 
 1. creates `Mods/` and `ObenLoader/logs/` next to the game's exe,
-2. reads `ObenLoader/settings.json` (switched-off mods, auto reload, verbose log, refusing mods made for other game versions),
+2. reads `ObenLoader/settings.json` (switched-off mods, auto reload, verbose log, refusing mods made for other game versions, the loading panel),
 3. finds every folder in `Mods/` that has a `mod.json`,
 4. orders them by their dependencies and loads them.
 

@@ -36,7 +36,7 @@ internal static partial class ModLifecycle
             var mod = ordered[i];
             // At start the window is black until the first scene; its title shows how far loading got.
             if (!atRuntime)
-                WindowTitle.Show($"loading mods ({i + 1}/{ordered.Count}): {mod.Manifest.DisplayName}");
+                StartupStatus.Show($"loading mods ({i + 1}/{ordered.Count}): {mod.Manifest.DisplayName}", i, ordered.Count);
             if (TryActivate(mod))
                 loaded.Add(mod);
         }

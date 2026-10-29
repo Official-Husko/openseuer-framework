@@ -22,4 +22,7 @@ public sealed class LoaderSettings
     /// strictGameVersion: for players who'd rather go without a mod than risk one made for another version.
     /// </summary>
     public bool RefuseOtherGameVersions;
+
+    /// <summary>Show the small loading panel over the game window while it is black at start.</summary>
+    public bool LoadingPanel = true;
 }

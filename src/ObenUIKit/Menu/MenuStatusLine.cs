@@ -28,8 +28,12 @@ internal static class MenuStatusLine
         GameCheck.Finished.Subscribe(kit, _ => Refresh());
         GameEvents.MainMenu.Subscribe(kit, Refresh);
         GameEvents.SceneLoaded.Subscribe(kit, _ => Refresh());
+        // A reload of the kit runs this before the mods that depend on it are back; count them as they come.
+        System.Action<ModInfo> modLoaded = _ => Refresh();
+        ModRegistry.ModLoaded += modLoaded;
         kit.Track(Disposable.Create(() =>
         {
+            ModRegistry.ModLoaded -= modLoaded;
             if (_text != null)
                 Object.Destroy(_text.gameObject);
             _text = null;

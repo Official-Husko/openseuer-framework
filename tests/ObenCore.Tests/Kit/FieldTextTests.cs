@@ -62,7 +62,7 @@ public class FieldTextTests
     [InlineData("", "anything", true)]
     [InlineData("  ", null, true)]
     [InlineData("x", null, false)]
-    public void SearchNeedsEveryWord(string query, string text, bool expected) =>
+    public void SearchNeedsEveryWord(string query, string? text, bool expected) =>
         Assert.Equal(expected, FieldText.Matches(query, text));
 
     [Fact]

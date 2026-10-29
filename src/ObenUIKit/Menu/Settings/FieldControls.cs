@@ -78,9 +78,12 @@ internal static class FieldControls
                 ui.TextField(view.Label, (string)value ?? "", v => set(v, true), v => set(v, false));
                 return true;
             case FieldKind.TextList:
-                ui.TextField(view.Label, FieldText.JoinList((IEnumerable<string>)value), null, v =>
+                FieldHandle list = null;
+                list = ui.TextField(view.Label, FieldText.JoinList((IEnumerable<string>)value), null, v =>
                 {
                     var items = FieldText.SplitList(v);
+                    // The field shows what was saved: no stray spaces or empty entries.
+                    list.Set(FieldText.JoinList(items));
                     set(type == typeof(string[]) ? items.ToArray() : (object)items, false);
                 });
                 return true;

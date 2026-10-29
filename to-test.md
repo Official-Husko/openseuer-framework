@@ -27,7 +27,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 
 ## 0. Start-up and stability
 
-- [ ] `oben logs` shows `[ObenFramework] Ready: 33 parts.` with nothing listed as not working.
+- [ ] `oben logs` shows `[ObenFramework] Ready: 34 parts.` with nothing listed as not working.
 - [ ] `oben call framework.modules failed=true` gives `notWorking: 0`.
 - [ ] `oben call patches.areas mod=ObenFramework` lists every area as available, including `Shops` (8), `Clock` (1) and `ItemPlaceholders` (2).
 - [ ] `oben call mods.list` shows no `warning` on any mod.

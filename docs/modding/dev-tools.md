@@ -163,6 +163,15 @@ oben run --reset console-greeting
 3. Move it into a mod with `"hotReload": true` and rebuild; the game picks it up by itself.
 4. `oben logs` or `oben call log.tail level=Warning` when something looks off.
 
+## Game check at start
+
+Every start, ObenFramework checks the loaded mods against the running game the way `oben check` does from outside: every Harmony target and every private member a mod looks up through `AccessTools` must still be in the game's code. It reads the DLLs with Cecil on a worker thread, and keeps the result in `ObenLoader/game-check.json` with a fingerprint of the game's code hash and every checked DLL's size and write time, so the next start reuses it until the game or a mod changes. Hooks that don't fit go in the log and on the MODS Errors page.
+
+- `GameCheck.Last`, `GameCheck.Finished` and `GameCheck.Start()` (check again, ignoring the kept result) are the API; `oben call game.check` shows the result and `game.check run=true` runs it again.
+- At the title screen and in the main menu, a line in the bottom-left corner says how many mods are loaded and how the check went; once past the title screen a notice says the same in words.
+- While the loader works and Unity loads the first scene, the game window is still black; its title says what is going on ("Obenseuer - loading mods (3/9): ObenFramework", then "loading the main menu..."). Most of that black phase is Proton and Unity starting up before the loader runs.
+- The game's code and exe hashes are kept in `ObenLoader/game-files.json` by size and write time, so they are only read again after the game changes.
+
 ## After a game update
 
 1. `oben check` lists every hook and private member lookup the update broke.

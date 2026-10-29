@@ -82,8 +82,11 @@ public sealed class FrameworkMod : ObenMod
         Start("transport", TransportModule.Init, TransportModule.Update);
         Start("custom furniture", CustomFurniture.Init);
         Start("media", MediaModule.Init, MediaModule.Update);
+        Start("game check", Diagnostics.GameCheck.Init);
         Log.Info(FrameworkModules.Summary());
     }
+
+    public override void OnAllLoaded() => Diagnostics.GameCheck.StartOnce();
 
     public override void OnUpdate() => FrameworkModules.Update();
 

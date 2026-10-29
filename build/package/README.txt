@@ -34,6 +34,13 @@ ObenSave           stores saves in a small compressed file (off until you switch
 Each mod's page in the MODS menu has its switches and settings. To remove a single mod, delete its
 folder from the game's Mods folder.
 
+Is it working?
+--------------
+The window stays black for a while at start: the game starts up under the hood, then the loader
+loads the mods (the window title says how far it got). On the title screen, the bottom-left corner
+says how many mods are loaded and whether they fit your game version. If something doesn't fit, the
+MODS menu's Errors page says what.
+
 Uninstall
 ---------
 Run uninstall.sh or uninstall.bat. It removes the loader and puts Unity's startup files back. The

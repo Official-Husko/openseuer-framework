@@ -47,6 +47,8 @@ public sealed class UIKitMod : ObenMod
         MainMenuButtons.Init(this);
         PauseMenuEntry.Init(this);
         ComputerApps.Init(this);
+        GameCheckNotice.Init(this);
+        MenuStatusLine.Init(this);
         Log.Info("Ready.");
     }
 

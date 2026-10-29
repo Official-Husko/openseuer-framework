@@ -104,6 +104,7 @@ Built from the reference co-op mod in `example-mp/` (NomadsReach/Obenseuer-Coop,
 
 - [x] Needs, stack size, spoilage, crafting and dishwasher speed, no minimum skill, renovation cost/money-only/time, day length, third-person camera; each its own switch, off by default (needs its in-game checks, see docs/modding/game-tweaks.md)
 - [ ] Third-person camera, a complete rewrite: a camera of our own instead of the game's leftover mode (today the tweak only lifts the game's locks and points its dolly behind the head, see `CameraLocks`). A free orbit around the player, the body turning to where you walk instead of with the mouse, a shoulder offset, smooth collision and zoom, and interacting and aiming that still work from behind.
+  - Idea for the same rewrite: better player animations. The body moves with what look like Unity's default animations; try a physics-based (active ragdoll or procedural) layer on top, or reuse a better set the game already has (NPC walk and idle clips, say). Co-op puppets would want the same.
 - [ ] Bug: in third person NPCs look at the camera, not at the player. The game's `CharacterHeadController` sets `eyes.lookTarget = ThirdPersonCameraCollision.instance.transform` (the camera) when the player comes near; while the camera is out, point them at the player's head instead (a patch there, or a target that follows the head bone).
 
 ## Performance Fixes

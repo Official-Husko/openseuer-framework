@@ -20,7 +20,9 @@ stale.
 | `IsModWindowOpen` | a mod window that takes input is open (ObenUIKit's windows, and anything another UI mod reports) |
 | `IsTyping` | a text field has the keyboard (the game's, the console's or a mod's), the game's write lock is on (notes), a mod key capture waits, or the game's key bindings page waits for a key |
 | `IsRebindingKey` | the game's key bindings page waits for a key |
-| `IsInputLocked` | the game holds the player's keys (`GameController.keysDisabled`: menus, cutscenes, a computer, a kit window in a level) |
+| `IsInputLocked` | the game holds the player's keys or camera (`GameController.keysDisabled`, or the camera's `controlsDisabled`: menus, cutscenes, a computer, a kit window in a level) |
+| `CursorVisible` | the game shows the mouse cursor (`GameController.cursorVisible`; Unity's own cursor outside levels) |
+| `InventoryDisabled` | the game won't open the inventory and the other full menus (`GameController.inventoryDisabled`) |
 | `IsHudHidden` | the game's HUD is hidden (the hide-HUD key, a full menu) |
 | `IsLoading` | a save is loading |
 | `IsMenuOpen` | any of: pause menu, game menu, shop, console, mod window, or a menu a mod reported |
@@ -42,6 +44,8 @@ UiState.ModWindowChanged.Subscribe(this, open => Log.Info(open ? "a mod window o
 - `PauseOpened` (payload: true for the death screen) and `PauseClosed` come from the pause menu's own open and close
   methods. A close is only reported when the menu was really open.
 - `ModWindowChanged` fires when the first mod window opens and when the last one closes.
+- `PauseEventsAvailable` is false when a game update broke the hooks behind the pause events.
+- `IsTyping` also counts a text field whose child (its text area) is the selected object.
 
 ### Reporting your own UI
 

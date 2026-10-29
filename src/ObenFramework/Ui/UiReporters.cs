@@ -86,6 +86,8 @@ public struct UiSnapshot
     public bool Typing;
     public bool RebindingKey;
     public bool InputLocked;
+    public bool CursorVisible;
+    public bool InventoryDisabled;
     public bool HudHidden;
     public bool Menu;
     public bool Busy;

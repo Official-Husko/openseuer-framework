@@ -3,6 +3,7 @@ using System;
 using ObenFramework.Console;
 using ObenFramework.Events;
 using ObenFramework.Game;
+using ObenFramework.Patching;
 using ObenLoader.Runtime;
 using TMPro;
 using UnityEngine.EventSystems;
@@ -112,15 +113,44 @@ public static class UiState
         }
     }
 
-    /// <summary>The game holds the player's keys (a menu, a cutscene, sitting at a computer, a mod window in a level).</summary>
+    /// <summary>
+    /// The game holds the player's keys or camera (a menu, a cutscene, sitting at a computer, a mod window in a
+    /// level). Some of the game's locks hold only the camera, so its controls count too.
+    /// </summary>
     public static bool IsInputLocked
     {
         get
         {
             var game = GameController.instance;
-            return game != null && game.keysDisabled;
+            if (game != null && game.keysDisabled)
+                return true;
+            var camera = ThirdPersonCameraCollision.instance;
+            return camera != null && camera.controlsDisabled;
         }
     }
+
+    /// <summary>The game shows the mouse cursor (a menu or a mod window wants it). Outside levels, Unity's own cursor state.</summary>
+    public static bool CursorVisible
+    {
+        get
+        {
+            var game = GameController.instance;
+            return game != null ? game.cursorVisible : UnityEngine.Cursor.visible;
+        }
+    }
+
+    /// <summary>The game won't open the inventory, map and the other full menus right now (a cutscene, a mini game).</summary>
+    public static bool InventoryDisabled
+    {
+        get
+        {
+            var game = GameController.instance;
+            return game != null && game.inventoryDisabled;
+        }
+    }
+
+    /// <summary>The hooks behind <see cref="PauseOpened"/> and <see cref="PauseClosed"/> are in place (false when a game update broke them).</summary>
+    public static bool PauseEventsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Ui");
 
     /// <summary>The game's HUD is hidden (the hide-HUD key, a full menu).</summary>
     public static bool IsHudHidden
@@ -162,6 +192,8 @@ public static class UiState
         Typing = IsTyping,
         RebindingKey = IsRebindingKey,
         InputLocked = IsInputLocked,
+        CursorVisible = CursorVisible,
+        InventoryDisabled = InventoryDisabled,
         HudHidden = IsHudHidden,
         Menu = IsMenuOpen,
         Busy = IsBusy,
@@ -209,8 +241,12 @@ public static class UiState
         var events = EventSystem.current;
         if (events == null)
             return false;
+        // The selected object can be a child of the field (its text area), so look up the parents too.
         var selected = events.currentSelectedGameObject;
-        return selected != null && selected.TryGetComponent(out TMP_InputField field) && field.isFocused;
+        if (selected == null)
+            return false;
+        var field = selected.GetComponentInParent<TMP_InputField>();
+        return field != null && field.isFocused;
     }
 
     private static bool ConsoleFocused()

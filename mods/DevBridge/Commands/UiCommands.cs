@@ -23,6 +23,9 @@ internal static class UiCommands
         state["allCaptured"] = InputCapture.AllCaptured;
         state["jumpCaptured"] = InputCapture.IsCaptured("Jump");
         state["interactCaptured"] = InputCapture.IsCaptured("Interact");
+        state["captureHooks"] = InputCapture.IsAvailable;
+        state["rawKeyHooks"] = InputCapture.RawKeysAvailable;
+        state["pauseHooks"] = UiState.PauseEventsAvailable;
         state["windows"] = Kit("KitDev", "Windows") is object windows ? JToken.FromObject(windows) : new JArray();
         return state;
     }

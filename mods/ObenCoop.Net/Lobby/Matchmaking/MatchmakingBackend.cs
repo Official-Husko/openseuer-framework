@@ -29,6 +29,10 @@ public sealed partial class MatchmakingBackend : ILobbyBackend
     private readonly Func<long> _clock;
     private readonly List<ulong> _members = new List<ulong>();
 
+    // While Steam makes the lobby there is no member list yet. Without this the transport would take anyone
+    // who knows this player's Steam id; requests are deferred instead and let in once the lobby exists.
+    private static readonly Func<ulong, bool> NobodyYet = _ => false;
+
     private ulong _lobby;
     private bool _hosting;
     private bool _creating;
@@ -70,6 +74,7 @@ public sealed partial class MatchmakingBackend : ILobbyBackend
         _creating = true;
         _openDone = done;
         _openInfo = info;
+        _transport.Admit = NobodyYet;
         _matchmaking.CreateLobby(Visibility, Math.Max(1, info.MaxPlayers), OnCreated);
     }
 

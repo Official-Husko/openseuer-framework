@@ -141,6 +141,33 @@ public class SteamLobbyTests
     }
 
     [Fact]
+    public void NobodyGetsInWhileTheLobbyIsMade()
+    {
+        var steam = new FakeSteam();
+        var host = new SteamNode(steam, "Host");
+        Assert.True(host.Lobby.Host(LobbyKind.Steam, "Steam game", 0), host.Lobby.Error);
+        var outsider = new SteamNode(steam, "Outsider");
+        outsider.Session.Join(host.Id);
+
+        // Steam hasn't made the lobby yet: run both games without its callbacks.
+        for (int step = 0; step < 100; step++)
+        {
+            foreach (var node in new[] { host, outsider })
+            {
+                node.Session.Poll();
+                node.Lobby.Poll();
+            }
+            steam.Now += 10;
+        }
+        Assert.Equal(1, host.Session.Roster.Count);
+
+        SteamRig.Until(steam, () => outsider.Ends.Count == 1, "turned away", host, outsider);
+        Assert.Equal(EndKind.ConnectFailed, outsider.Ends[0].Kind);
+        Assert.Equal(LobbyStatus.Hosting, host.Lobby.Status);
+        Assert.Equal(1, host.Session.Roster.Count);
+    }
+
+    [Fact]
     public void LeavingTheSteamLobbyDropsThePlayer()
     {
         var steam = new FakeSteam();

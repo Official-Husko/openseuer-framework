@@ -8,7 +8,8 @@ namespace ObenLoader.Config;
 
 /// <summary>
 /// A typed settings object backed by a JSON file. Missing files and missing fields fall back
-/// to the defaults set in <typeparamref name="T"/>'s constructor or field initialisers. Every value that
+/// to the defaults set in <typeparamref name="T"/>'s constructor or field initialisers, and so does a value
+/// that doesn't fit its field (logged as a warning). Every value that
 /// changes on a save or reload is written to the mod's log ("StackSize 2 -> 3").
 /// </summary>
 public sealed class ConfigFile<T> : IConfigFile where T : class, new()
@@ -40,15 +41,20 @@ public sealed class ConfigFile<T> : IConfigFile where T : class, new()
 
     public void Reload()
     {
+        // A value that doesn't fit (a misspelt choice) keeps its own default; only a file that can't be read at
+        // all falls back to the defaults as a whole.
+        var skipped = new List<string>();
         try
         {
-            Value = JsonFile.Read<T>(Path);
+            Value = JsonFile.Read<T>(Path, skipped);
         }
         catch (Exception e)
         {
             _log?.Warn($"Couldn't read {Path}, using defaults. {e.Message}");
             Value = new T();
         }
+        foreach (string problem in skipped)
+            _log?.Warn($"{System.IO.Path.GetFileName(Path)}: {problem} That setting keeps its default.");
         LogChanges();
         Raise();
     }

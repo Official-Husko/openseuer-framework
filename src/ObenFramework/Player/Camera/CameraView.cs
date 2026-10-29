@@ -237,7 +237,22 @@ public static class CameraView
         CameraLocks.Forget();
     }
 
-    private static void Forward(bool firstPerson) => ModeChanged.Raise(firstPerson, _log);
+    private static void Forward(bool firstPerson)
+    {
+        // The game shows or hides the body before it says so; make sure there is a body to show.
+        try
+        {
+            if (!firstPerson)
+                BodyHolders.Open(ThirdPersonCameraCollision.instance);
+            else if (!FirstPersonBodyShown)
+                BodyHolders.Close();
+        }
+        catch (Exception e)
+        {
+            _log?.Error("Showing the player's body for the camera failed", e);
+        }
+        ModeChanged.Raise(firstPerson, _log);
+    }
 
     private static void Guard(string what, Action action)
     {

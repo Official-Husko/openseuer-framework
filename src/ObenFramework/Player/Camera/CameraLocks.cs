@@ -8,7 +8,7 @@ namespace ObenFramework.Player;
 /// <summary>
 /// The game camera's side of <see cref="CameraView"/>: lifting and restoring its <c>disableThirdPerson</c> and
 /// <c>firstpersonOnly</c> locks, the camera triggers that force first person, building mode's zoom blockers, and
-/// moving the camera in and out.
+/// moving the camera in and out (behind the head, not where the game's leftover direction points).
 /// </summary>
 internal static class CameraLocks
 {
@@ -21,6 +21,13 @@ internal static class CameraLocks
         AccessTools.FieldRefAccess<ThirdPersonCameraCollision, float>("maxDistance");
     private static readonly AccessTools.FieldRef<ThirdPersonCameraCollision, List<GameObject>> ZoomBlockers =
         AccessTools.FieldRefAccess<ThirdPersonCameraCollision, List<GameObject>>("disabledZoomList");
+    private static readonly AccessTools.FieldRef<ThirdPersonCameraCollision, Vector3> DollyDir =
+        AccessTools.FieldRefAccess<ThirdPersonCameraCollision, Vector3>("dollyDir");
+
+    // Which way the camera goes out from the head: behind the view and a little above, in the camera's own terms.
+    // The game takes the direction from where the camera sat when the level loaded, and its first-person camera
+    // sits on the head, which left it pointing almost straight up: the camera rose above the player.
+    private static readonly Vector3 BehindView = new Vector3(0f, 0.25f, -1f).normalized;
 
     private static readonly List<PlayerCameraTrigger> Forcing = new List<PlayerCameraTrigger>();
 
@@ -28,6 +35,7 @@ internal static class CameraLocks
     private static ThirdPersonCameraCollision _unlocked;
     private static bool _hadDisableThirdPerson;
     private static bool _hadFirstPersonOnly;
+    private static Vector3 _hadDolly;
 
     /// <summary>A third-person request waits because the game needs first person here.</summary>
     internal static bool HeldBack { get; private set; }
@@ -90,6 +98,7 @@ internal static class CameraLocks
             return;
         view.disableThirdPerson = _hadDisableThirdPerson;
         view.firstpersonOnly = _hadFirstPersonOnly || Forced();
+        DollyDir(view) = _hadDolly;
         if (view.firstpersonOnly || view.disableThirdPerson)
             PullIn(view);
     }
@@ -100,6 +109,7 @@ internal static class CameraLocks
         _unlocked = null;
         HeldBack = false;
         Forcing.Clear();
+        BodyHolders.Forget();
     }
 
     internal static void TriggerChanged(PlayerCameraTrigger trigger, bool forcesFirstPerson)
@@ -125,14 +135,20 @@ internal static class CameraLocks
     {
         var view = ThirdPersonCameraCollision.instance;
         if (view != null && view.firstperson)
+        {
             view.ShowPlayerModel();
+            BodyHolders.Open(view);
+        }
     }
 
     internal static void HideBody()
     {
         var view = ThirdPersonCameraCollision.instance;
         if (view != null && view.firstperson)
+        {
             view.HidePlayerModel();
+            BodyHolders.Close();
+        }
     }
 
     private static void Unlock(ThirdPersonCameraCollision view)
@@ -142,9 +158,12 @@ internal static class CameraLocks
             _unlocked = view;
             _hadDisableThirdPerson = view.disableThirdPerson;
             _hadFirstPersonOnly = view.firstpersonOnly;
+            _hadDolly = DollyDir(view);
         }
         view.disableThirdPerson = false;
         view.firstpersonOnly = false;
+        // The dolly direction is in the camera's parent's terms, and the camera sits in it turned round.
+        DollyDir(view) = view.transform.localRotation * BehindView;
     }
 
     // Back to the head. The distance matters as much as the mode: near a wall the game shows first person

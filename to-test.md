@@ -405,3 +405,26 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [ ] **ReflectionProbeRefresh** (off by default): check it in a level before turning it on.
 - [ ] **NpcSightChance** (off by default): an NPC's sight check before and after.
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
+
+## 15. Parity additions (2026-10-29)
+
+Small APIs added after the parity audit. Most are one eval each; run them in a level (`new_scene` is enough unless marked).
+
+- [ ] **Game keys:** `oben eval 'return ObenFramework.Ui.GameKeys.Key("Interact") + " " + ObenFramework.Ui.GameKeys.Label("Interact");'` gives `E E`. With `input.capture action=Jump seconds=10`, `GameKeys.Held("Jump")` stays false while Space is held.
+- [ ] **Console:** `oben eval 'return ObenFramework.Console.GameConsole.Open();'` opens the F1 console (screenshot); `Close()` shuts it a frame later and the player can move again.
+- [ ] **Tooltip:** `oben eval 'return ObenUIKit.Hud.ShowTooltip("Test", "Some <b>details</b>");'` shows the game's tooltip box (screenshot); `HideTooltip()` removes it.
+- [ ] **Notes [save]:** with a note held, `PlayerNotes.Open(<id from player.notes>)` opens the menu's notes page at it; for a book, at the page it was left on.
+- [ ] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires.
+- [ ] **Power devices:** `PowerDevices.Describe(<a stove>).FuelItemIds()` lists wood and other fuels; `BurnTimeFactor` is 1 for most.
+- [ ] **Sounds:** `GameSounds.PlayPickup("Bottle")`, `PlayLibrary("harvest")` and `PlayLibraryAt("scarySounds", <position>)` are heard; `SoundscapeIds()` lists the level's soundscapes and `SetSoundscape(id)` / `ResetSoundscape()` switch the ambience.
+- [ ] **Economy:** `Wallet.RmToOc(1)` gives 10; `Prices.OfSale(<trader>, <item>, out _)` is lower than `Prices.Of` for the same item (base sell price 0.9 against 1.2).
+- [ ] **Mail sent [save]:** send a quest delivery or pay an invoice by mail; `PlayerMail.Sent` fires with the receiver and item.
+- [ ] **Police [save]:** with something on the record, `Law.BribePrice` is a price; `Law.TryBribe()` either clears the record and takes the coins, or fails once and `CanBribe` turns false. `Law.Confiscate(<a container>)` moves the inventory into it and destroys stolen items.
+- [ ] **Contests:** during a rat fight, `Contests.Participants(Contests.Active()[0])` lists the rats; after a contest ends, `Contests.LastResult` is set.
+- [ ] **NPCs:** `Npcs.Meshes(<id>)` and, on a slider body (146), `Npcs.LookOf(<id>)` read without a claim; `NpcActions.StopActivity(<id>)` ends what an NPC is doing; `Characters.All()` shows `LastName` and `Relationship`; `Janitors.Objects()` lists the janitor objects of the scene.
+- [ ] **Missing items [save]:** see area 1 (`registry.missing`, `registry.removemissing` needs `mod` or `all=true`).
+- [ ] **Recipes:** a recipe from `RecipeBuilder.From(Recipes.ById(10016), id, "Test")` with one input and output shows at the template's station with the template's icon.
+- [ ] **Containers:** in the player's tenement, `Containers.IsPlayerOwned(<a placed chest>)` is true; in a rented apartment `IsTenantOwned` is true. `Containers.TakeFromSlot` takes from the right slot.
+- [ ] **Looks:** `PlayerLook.ApplyToPlayer(PlayerLook.Random())` gives a new random look (screenshot); `Random(male: false)` gives a female body.
+- [ ] **Mod data [save]:** `ModSaves.Peek<JObject>("ObenFramework", "items")` reads the placeholder list of the loaded save; `TimeControl.DayLengthMinutes` is 96 in the tenement.
+- [ ] **Conversations:** `Conversations.StartRaw(title, conversant, actor)` with two NPC transforms runs a conversation between them.

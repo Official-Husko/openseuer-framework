@@ -159,6 +159,7 @@ The object needs a collider of its own and must not be one of the game's interac
 | Command | Does |
 | --- | --- |
 | `player.speed [stat=] [multiplier=] [clear=true]` | Current and base speeds, every multiplier; set or clear the bridge's own on a stat. |
+| `player.camera [mode=first\|third] [distance=] [body=true\|false]` | The camera view, what mods ask of it and the game's lock values; switch it or keep the body drawn for the bridge. |
 | `player.skills [skill=] [value=] [add=] [learning=]` | Game and custom skills (`modId:skillId`); set, raise, or scale learning. |
 | `player.effects [wasteland=true\|false]` | Every effect with its strength. |
 | `player.conditions [add=] [remove=]` | Conditions by asset name. |

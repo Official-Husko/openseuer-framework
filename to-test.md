@@ -152,6 +152,13 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - F6 again, or switching the tweak off, gives first person with both locks True.
   - Walking into a wall and pressing F6 keeps first person.
 - [ ] **ThirdPerson [save]:** save while in third person. The save holds `disableThirdPerson:true` and `firstperson:true`.
+- [x] **CameraView (framework):** passed 2026-10-29 in the tenement through `player.camera`:
+  - `mode=third distance=3` unlocks both locks and goes to third person (`firstPerson` False a frame later).
+  - A zoom blocker (`DisableZoom`) and a `PlayerCameraTrigger.FirstPersonOnly(true)` each pull the camera in with `heldBack` True; when they let go, it goes back out to 3 m.
+  - `mode=first` gives first person with both locks True again.
+  - `body=true` keeps `playerRig` active in first person; `body=false` hides it.
+  - `ModeChanged` fired False, then True.
+  - While `OnSavingGame` serialises the camera, it reads first person, locked, saved distance 0; right after, it is back in third person. Still to do: a real save.
 - [ ] **Developer menu:** switch on `CheatMenu/DevMenu`, press F8, and check each part:
   - **Quests:** `DevBridge.test` shows the rewind buttons; `Abandoned2` only offers state changes.
   - **Flags:** filter and switch flags.
@@ -160,7 +167,7 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - **Player and world:** stats, entrypoints, item search.
 - [ ] **Developer menu [save]:** any change made from the menu marks the save in `mods/CheatMenu.dev.json`.
 - [ ] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true).
-- [ ] **Third person in a tight spot:** in third person, walk into a first-person camera trigger. The camera goes in and a "has to stay in first person" toast shows once.
+- [ ] **Third person in a tight spot:** in third person, walk into a real first-person camera trigger. The camera goes in, a "has to stay in first person" toast shows once, and the camera goes back out after the trigger.
 - [ ] **Tracer:**
   - `trace.start filter=Quest,GlobalFlags`: `patched` about 58, `refused` 0.
   - Use the dev menu's quest and flag parts; `trace.list` shows records with `from: "CheatMenu"`.

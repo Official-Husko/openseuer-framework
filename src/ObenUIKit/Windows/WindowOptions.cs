@@ -80,7 +80,7 @@ public sealed class WindowOptions
 
     /// <summary>
     /// Full-height <see cref="WindowDock.Left"/> and <see cref="WindowDock.Right"/> columns: room kept free above
-    /// the column, in the kit's units (say 110 to stay clear of the game's top-right corner). Default 0.
+    /// the column, in the kit's units (150 clears the game's two money counters in the top-right corner). Default 0.
     /// </summary>
     public float Top { get; set; }
 

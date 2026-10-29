@@ -174,10 +174,10 @@ New:
   - **Full window:** Docked and floating, then Full. The window covers the screen less a margin, the scene is dimmed, the side panel lists 25 items with its own scrollbar, the body 30 lines with its own. Picking an item rebuilds the body for it (through `Defer`). Up and Down go through the side's items first, and the side scrolls to keep the highlight in view.
   - **Close reasons:** load a save from the pause menu with a kit window open: it closes (`SaveLoad`). A script that destroys a window's frame object closes it with `Destroyed`, and the game's keys come back.
   - **Pause Menu key:** with the game's Pause Menu action bound to another key, that key closes the top kit window too; the pad's Start does.
-  - **Top inset:** a Right window with `Top = 110` starts 110 units below the top.
+  - [x] **Top inset:** a Right window with `Top = 110` starts 110 units below the top. (2026-10-29: measured 110 exactly, outside in third person; 110 still covers the RM counter, so the docs say 150.)
   - **More tab of the demo:** the title, the green smaller label, Plain/Quiet/Box buttons (the boxes light up red), the Volume slider's Reset (shown while it isn't 0.50, on hover "Default: 0.50", Backspace on the row) and Max on its title bar side by side, the Ctrl+F7 key binding (hold Ctrl, Shift or Alt and press a key; a modifier alone doesn't finish it), twelve swatches in two rows without a header, the scroll area with its own bar (the wheel scrolls it, the keyboard highlight scrolls it), and the blue box with rounded corners (`UiSprites.RoundedRect`) drawn in a raw `Area`, with a dark-to-grey gradient strip under it.
   - **Slider once a frame:** dragging a slider whose callback logs prints at most one line a frame, the last value.
-  - **Live player preview:** (2026-10-29: shown in first person with Body and Face framing after a fix, and closing put both rigs and all eleven body renderers back off; third person and the idle animation by eye still open.) In the tenement, demo, Model tab, "Show the player, live". The player shows from the front, breathing (idle animation), in their clothes, and their body is gone from the scene behind; Body and Face switch the framing; dragging circles them. In first person too (the body is switched on for the preview). Closing the window brings the body back as it was (gone again in first person, shown in third person), with no lamp light left off.
+  - [x] **Live player preview:** (2026-10-29: first person with Body and Face framing, closing put both rigs and all eleven body renderers back off; third person in the tenement and outside, where the level switches the meshes' holder off, after a fix; dragging turns the player like a copy after a fix: right moves the face right, up moves it up. The idle animation by eye is still open.) In the tenement, demo, Model tab, "Show the player, live". The player shows from the front, breathing (idle animation), in their clothes, and their body is gone from the scene behind; Body and Face switch the framing; dragging circles them. In first person too (the body is switched on for the preview). Closing the window brings the body back as it was (gone again in first person, shown in third person), with no lamp light left off.
   - **Framing a copy:** an item or mod model with Face framing shows its top part.
 
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
@@ -199,12 +199,12 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
 | `DayLength` | `clock.get` twice, 30 real seconds apart | ~7.5 game min | ~3.75 game min |
 
 - [x] Every row of the table, then switch each tweak off again: the value returns. Passed 2026-10-29 in the tenement (`player.skills skill=Mashing value=1` first for `NoMinimumSkill`): every off and on value as in the table, 7.46 game minutes in 30 s off and 3.72 on, and all back to the off values after switching off. `GameTweaks.TweakState` read 1/false for everything off and the tweak values on, and `OnChanged` fired on each switch and config save.
-- [x] **ThirdPerson:** passed 2026-10-29, running the F6 hotkey's action from a script:
+- [x] **ThirdPerson:** passed 2026-10-29, running the F6 hotkey's action from a script. (Correction, same day: the 2.5 m was right but the camera sat above the head, along the game's leftover dolly direction, and outside the body didn't show. Fixed: behind the view and a little above, the body shown everywhere; checked outside with a screenshot.)
   - F6 moves the camera 2.5 m behind the player, and `firstperson` is False.
   - F6 again, or switching the tweak off in third person, gives first person with both locks True.
   - A zoom blocker shows "The camera has to stay in first person here." once.
   - Scroll to zoom on lifts the locks; off puts them back.
-- [ ] **ThirdPerson by hand:** press the real F6 key, and walk into a wall in third person.
+- [ ] **ThirdPerson by hand:** press the real F6 key, and walk into a wall in third person. Walk around: the camera stays behind, and the body turns with the mouse like the game's own (over-the-shoulder style).
 - [ ] **ThirdPerson [save]:** save while in third person. The save holds `disableThirdPerson:true` and `firstperson:true`.
 - [x] **CameraView (framework):** passed 2026-10-29 in the tenement through `player.camera`:
   - `mode=third distance=3` unlocks both locks and goes to third person (`firstPerson` False a frame later).

@@ -92,7 +92,7 @@ UiKit.Open(this, "mymod.wardrobe", "Wardrobe", ui => ShowOutfit(_picked), new Wi
 | `Dock` | `Center` | `Center` is the pause menu's column; `Left` and `Right` are columns along the screen edge; `Floating` is a box the player drags by its title (clicking it brings it to the front); `Full` covers the screen less a margin |
 | `Width`, `Height` | 760, 0 | in 1920x1080 units; height 0 is the full screen height (640 for a floating window). A full window ignores both |
 | `Position` | centre | floating windows: where the centre goes |
-| `Top` | 0 | full-height `Left` and `Right` columns: room kept free above the column (110 stays clear of the game's top-right corner) |
+| `Top` | 0 | full-height `Left` and `Right` columns: room kept free above the column (150 clears the game's two money counters in the top-right corner) |
 | `Side`, `SideWidth` | none, 440 | full windows: builds a panel left of the body, with its own scrolling and scrollbar. It is built again on `Rebuild()`, and the keyboard goes through it before the body |
 | `Footer` | Back button | builds the bottom bar |
 | `LockInput` | true | off makes a display-only panel: game keys, mouse look and Esc stay with the game, there's no keyboard navigation, and the HUD and hotkeys don't step aside for it. In a level the cursor stays hidden, so it can't be clicked; at the main menu it can |

@@ -30,6 +30,9 @@ ObenUIKit          the menus and windows of the mods (required)
 ObenPatches        fixes for bugs in the game; every fix has its own switch
 PerformanceFixes   cuts work the game does needlessly every frame; every fix has its own switch
 ObenSave           stores saves in a small compressed file (off until you switch it on)
+GameTweaks         optional changes to needs, stacks, crafting, renovations, day length, a third-person camera
+CheatMenu          cheats on Insert, a developer menu on F8
+ObenCoop           co-op, still being built: lobbies and chat work, the shared world doesn't yet
 
 Each mod's page in the MODS menu has its switches and settings. To remove a single mod, delete its
 folder from the game's Mods folder.

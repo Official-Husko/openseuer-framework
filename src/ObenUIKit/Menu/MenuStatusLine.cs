@@ -71,7 +71,7 @@ internal static class MenuStatusLine
         }
         string line = $"ObenseuerExtended  ·  {loaded} mod{(loaded == 1 ? "" : "s")} loaded";
         if (failed > 0)
-            line += $", {failed} failed (MODS > Errors)";
+            line += $", {failed} failed (see Errors in MODS)";
 
         var result = GameCheck.Last;
         if (GameCheck.IsRunning)
@@ -81,7 +81,7 @@ internal static class MenuStatusLine
         else if (result.Failure != null)
             line += "  ·  the game check couldn't run";
         else if (result.Problems.Count > 0)
-            line += $"  ·  {result.Problems.Count} game hook{(result.Problems.Count == 1 ? "" : "s")} don't fit (MODS > Errors)";
+            line += $"  ·  {result.Problems.Count} game hook{(result.Problems.Count == 1 ? "" : "s")} don't fit (see Errors in MODS)";
         else if (!result.VerifiedGame)
             line += "  ·  game check passed, on a game version they weren't made for";
         else

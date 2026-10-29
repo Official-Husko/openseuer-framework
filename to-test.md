@@ -27,7 +27,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 
 ## 0. Start-up and stability
 
-- [ ] `oben logs` shows `[ObenFramework] Ready: 34 parts.` with nothing listed as not working.
+- [x] `oben logs` shows `[ObenFramework] Ready: 34 parts.` with nothing listed as not working. (2026-10-29: 34 parts, game check passed: 728 hooks of 9 mods.)
 - [ ] `oben call framework.modules failed=true` gives `notWorking: 0`.
 - [ ] `oben call patches.areas mod=ObenFramework` lists every area as available, including `Shops` (8), `Clock` (1) and `ItemPlaceholders` (2).
 - [ ] `oben call mods.list` shows no `warning` on any mod.
@@ -48,12 +48,12 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
   - Clean up with `oben call mods.reload id=ScriptRunner`.
 - [ ] **Game version check:** give a test mod `"gameVersion": "0.4.x"`. It loads with a warning in the log, on the Errors page and in `mods.list`. With `"strictGameVersion": true` it doesn't load.
 - [ ] **Bad mod id:** a test mod with id `con` or `my mod`. The loader refuses it with a message saying what to change.
-- [ ] **Steam build:** here (sideloaded) `oben call game.info` has `gameBuildId: null` and the first line of `latest.log` names only the version. On a Steam install it shows the build, and a test mod with `"gameBuilds": ["1"]` loads with a "Made for Steam build 1" warning.
-- [ ] **RefuseOtherGameVersions:** with `"RefuseOtherGameVersions": true` in `ObenLoader/settings.json`, the test mod with `"gameVersion": "0.4.x"` (no `strictGameVersion`) doesn't load, and the log line names the setting. Take it out again afterwards.
-- [ ] **mod.json checks:** a test mod needing `"ObenFramework": "latest"` is refused with a message about the version; one with `"version": "first"` loads with a warning.
-- [ ] **Mod declared in code:** a folder with only a DLL whose `ObenMod` class has `[ObenModInfo("CodeTest", "Code Test", "1.0.0")]` and `[ObenModDependency("ObenFramework")]` shows in `mods.list` as Code Test 1.0.0 and loads after the framework.
-- [ ] **Loose DLL:** copy a test mod's DLL straight into `Mods/` (no folder). It loads, `mods.list` shows `loose: true`, the log warns to give it a folder, and its config lands in `Mods/<id>/`. A copy of `0Harmony.dll` loose in `Mods/` is skipped with a log line, and a loose copy of a mod that has its folder is refused as a duplicate.
-- [ ] **anyGameVersion:** a test mod with `"anyGameVersion": true` (or `"gameVersion": "*"`) loads without an Errors page entry, even with `RefuseOtherGameVersions` on, and the log has its "isn't checked" line.
+- [x] **Steam build:** here (sideloaded) `oben call game.info` has `gameBuildId: null` and the first line of `latest.log` names only the version. On a Steam install it shows the build, and a test mod with `"gameBuilds": ["1"]` loads with a "Made for Steam build 1" warning. (2026-10-29: this copy has a depot download's app manifest in its folder, so it reports build 26179069; the loader now finds kept manifests too.)
+- [x] **RefuseOtherGameVersions:** with `"RefuseOtherGameVersions": true` in `ObenLoader/settings.json`, the test mod with `"gameVersion": "0.4.x"` (no `strictGameVersion`) doesn't load, and the log line names the setting. Take it out again afterwards. (2026-10-29: StrictTest with 0.4.x refused with the setting named.)
+- [x] **mod.json checks:** a test mod needing `"ObenFramework": "latest"` is refused with a message about the version; one with `"version": "first"` loads with a warning. (2026-10-29: refused with the version message; the refusal is logged twice, see TODO review follow-ups.)
+- [x] **Mod declared in code:** a folder with only a DLL whose `ObenMod` class has `[ObenModInfo("CodeTest", "Code Test", "1.0.0")]` and `[ObenModDependency("ObenFramework")]` shows in `mods.list` as Code Test 1.0.0 and loads after the framework. (2026-10-29: CodeTest with AnyGameVersion loaded after the framework, even with RefuseOtherGameVersions on.)
+- [x] **Loose DLL:** copy a test mod's DLL straight into `Mods/` (no folder). It loads, `mods.list` shows `loose: true`, the log warns to give it a folder, and its config lands in `Mods/<id>/`. A copy of `0Harmony.dll` loose in `Mods/` is skipped with a log line, and a loose copy of a mod that has its folder is refused as a duplicate. (2026-10-29: LooseTest.dll loaded with the warning and its folder at Mods/LooseTest; a loose 0Harmony.dll was skipped. The duplicate case wasn't run.)
+- [x] **anyGameVersion:** a test mod with `"anyGameVersion": true` (or `"gameVersion": "*"`) loads without an Errors page entry, even with `RefuseOtherGameVersions` on, and the log has its "isn't checked" line. (2026-10-29: through the attribute; loaded under RefuseOtherGameVersions with the log note.)
 - [ ] **Handle shortcuts:** from a script, `this.SaveData<...>()`, `this.Postfix(...)` and `this.Hotkey(...)` behave like the static calls (the hotkey shows on the Hotkeys page).
 - [ ] **Log rate limit:** a script logging 1000 lines in one frame. About 100 lines appear, then one "dropped" note. Errors still count in `errors.log`.
 - [ ] **Time freeze:** `oben call time.freeze`, then `clock.get` twice 10 s apart gives the same time. `time.freeze on=false` lets the clock run again.

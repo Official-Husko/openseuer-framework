@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using HarmonyLib;
+using ObenFramework.Game;
 using ObenFramework.NewGames;
 using ObenLoader.Runtime;
 using ObenUIKit.Theme;
@@ -27,11 +28,14 @@ internal static class NewGameButton
     private static GameObject _entry;
     private static bool _tracked;
 
-    /// <summary>Called when the difficulty page shows: makes the button once per menu scene, then shows or hides it.</summary>
+    /// <summary>
+    /// Called when a difficulty page shows: makes the button once per menu scene, then shows or hides it. The pause
+    /// menu has a difficulty page too, without the New Game screen around it; that one is left alone.
+    /// </summary>
     public static void Show(DifficultyUI page)
     {
         var kit = UIKitMod.Instance;
-        if (kit == null)
+        if (kit == null || !WorldState.InMainMenu)
             return;
         if (!_tracked)
         {

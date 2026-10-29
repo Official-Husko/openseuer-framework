@@ -168,6 +168,8 @@
     <Compile Include="../../src/ObenUIKit/Menu/MainMenu/MainMenuSlots.cs" Link="Linked/Kit/MainMenuSlots.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Settings/RangeFix.cs" Link="Linked/Kit/RangeFix.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Settings/FieldText.cs" Link="Linked/Kit/FieldText.cs" />
+    <Compile Include="../../src/ObenUIKit/Menu/Errors/StackText.cs" Link="Linked/Kit/StackText.cs" />
+    <Compile Include="../../src/ObenUIKit/Controls/KitText.cs" Link="Linked/Kit/KitText.cs" />
     <Compile Include="../../src/ObenUIKit/Hotkeys/ChordRules.cs" Link="Linked/Kit/ChordRules.cs" />
     <Compile Include="../../tools/ObenTool/Cli/Args.cs" Link="Linked/Args.cs" />
     <Compile Include="../../tools/ObenTool/Cli/JsonOut.cs" Link="Linked/JsonOut.cs" />

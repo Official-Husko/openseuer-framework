@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ObenLoader.Logging;
 using ObenUIKit.Controls;
+using ObenUIKit.Menu.Errors;
 using TMPro;
 using UnityEngine;
 
@@ -8,15 +9,21 @@ namespace ObenUIKit.Menu.Pages;
 
 /// <summary>
 /// What went wrong this session, from the loader's error report: newest problem first, with who
-/// reported it, how often, when and where. The same report is written to ObenLoader/logs/errors.log.
+/// reported it, how often, when and where. Errors nobody caught are red, ones a mod caught and reported
+/// amber; stack traces are colored (see <see cref="StackText"/>), the first lines shown and the rest a
+/// button away. The same report is written to ObenLoader/logs/errors.log.
 /// </summary>
 internal static class ErrorsPage
 {
     public const string Title = "Errors";
 
     private const int MaxShown = 40;
-    private const int DetailLines = 3;
+    private const int DetailLines = 8;
+    private const int MaxLineLength = 300;
     private const float RebuildEvery = 2f;
+
+    // Problems whose whole stack trace is open. They are the report's own objects, gone after Clear.
+    private static readonly HashSet<ErrorReport.Problem> Expanded = new HashSet<ErrorReport.Problem>();
 
     /// <summary>The line under a problem that changes while it keeps happening.</summary>
     private sealed class CountLine
@@ -34,6 +41,7 @@ internal static class ErrorsPage
         var problems = ErrorReport.Snapshot();
         problems.Reverse();
 
+        var colors = Colors();
         ui.Label(problems.Count == 0 ? "Nothing has gone wrong this session." : Plural(problems.Count, "problem") + " this session.");
         ui.Label("Bug report? Attach ObenLoader/logs/errors.log. It holds this list with the game and mod versions.", muted: true);
 
@@ -48,6 +56,7 @@ internal static class ErrorsPage
             r.Button("Clear", () =>
             {
                 ErrorReport.Clear();
+                Expanded.Clear();
                 ui.Window.Rebuild();
             });
         });
@@ -56,7 +65,7 @@ internal static class ErrorsPage
 
         var counts = new List<CountLine>();
         for (int i = 0; i < problems.Count && i < MaxShown; i++)
-            counts.Add(BuildProblem(ui, problems[i]));
+            counts.Add(BuildProblem(ui, problems[i], colors));
         if (problems.Count > MaxShown)
             ui.Label($"{problems.Count - MaxShown} older problems are only in the log file.", muted: true);
 
@@ -82,22 +91,32 @@ internal static class ErrorsPage
         });
     }
 
-    private static CountLine BuildProblem(UiBuilder ui, ErrorReport.Problem problem)
+    private static CountLine BuildProblem(UiBuilder ui, ErrorReport.Problem problem, StackColors colors)
     {
-        ui.Header(problem.Source + (problem.Caught ? "  (caught)" : ""));
-        ui.Label(Verbatim(problem.Title));
+        string color = problem.Caught ? colors.Caught : colors.Error;
+        ui.Header(KitText.Paint(color, problem.Source) + (problem.Caught ? KitText.Paint(colors.Muted, "  (caught)") : ""));
+        ui.Label(StackText.Title(problem.Title, color, colors));
         var line = new CountLine { Problem = problem, Shown = problem.Count };
         line.Label = ui.Label(Meta(problem), muted: true);
 
-        int shown = 0;
-        foreach (string raw in (problem.Details ?? "").Split('\n'))
+        var lines = StackText.Lines(problem.Details);
+        for (int i = 0; i < lines.Count; i++)
         {
-            string text = raw.Trim();
-            if (text.Length == 0)
-                continue;
-            ui.Label(Verbatim(text.Length > 120 ? text.Substring(0, 120) + "..." : text), muted: true, align: TextAlignmentOptions.Left);
-            if (++shown == DetailLines)
-                break;
+            if (lines[i].Length > MaxLineLength)
+                lines[i] = lines[i].Substring(0, MaxLineLength) + "...";
+        }
+        bool open = Expanded.Contains(problem);
+        int shown = open ? lines.Count : Mathf.Min(lines.Count, DetailLines);
+        for (int i = 0; i < shown; i++)
+            ui.Label(StackText.Line(lines[i], color, colors), align: TextAlignmentOptions.Left);
+        if (lines.Count > DetailLines)
+        {
+            ui.Button(open ? "Show less" : $"Show all {lines.Count} lines", () =>
+            {
+                if (!Expanded.Remove(problem))
+                    Expanded.Add(problem);
+                ui.Window.Rebuild();
+            });
         }
         ui.Space(14f);
         return line;
@@ -111,8 +130,25 @@ internal static class ErrorsPage
         return string.IsNullOrEmpty(problem.Scene) ? when + "." : $"{when}, in {problem.Scene}.";
     }
 
-    // Stack traces and generic types are full of angle brackets the text renderer would take as tags.
-    private static string Verbatim(string text) => "<noparse>" + text.Replace("</noparse>", "") + "</noparse>";
+    // The text color comes from the theme (already in the linear space the game renders in); the rest are
+    // picked as sRGB and converted, or they'd come out too bright. Muted is darker than the theme's muted
+    // labels, so library frames and namespaces step back from the mod's own code.
+    private static StackColors Colors()
+    {
+        var theme = UiKit.Theme;
+        return new StackColors
+        {
+            Error = Hex(new Color(0.93f, 0.33f, 0.3f).linear),
+            Caught = Hex(new Color(0.92f, 0.68f, 0.3f).linear),
+            Muted = Hex(new Color(0.55f, 0.55f, 0.55f).linear),
+            Text = Hex(theme.Text),
+            Method = Hex(new Color(0.93f, 0.85f, 0.58f).linear),
+            File = Hex(new Color(0.6f, 0.8f, 0.58f).linear),
+            Number = Hex(new Color(0.6f, 0.76f, 0.93f).linear),
+        };
+    }
+
+    private static string Hex(Color color) => "#" + ColorUtility.ToHtmlStringRGB(color);
 
     private static string Plural(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 }

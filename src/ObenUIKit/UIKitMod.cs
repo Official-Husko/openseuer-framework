@@ -1,6 +1,7 @@
 using ObenFramework.Ui;
 using ObenLoader;
 using ObenUIKit.Computer;
+using ObenUIKit.Controls;
 using ObenUIKit.Input;
 using ObenUIKit.Menu;
 using ObenUIKit.Menu.Changelog;
@@ -30,6 +31,8 @@ public sealed class UIKitMod : ObenMod
         Track(new PromptRuntime(KitRuntime.Current.Kit));
         Track(new GameHudLeases(this));
         Hotkeys.Init(this);
+        // The menu font draws "<" and ">" as stray marks; text the kit shows as it is borrows TextMeshPro's.
+        KitText.BracketFont = TMPro.TMP_Settings.defaultFontAsset != null ? TMPro.TMP_Settings.defaultFontAsset.name : null;
         ModSettings.Init(this);
         ModMenu.Init(this);
         ModMenu.AddPage(this, ModsPage.Create());

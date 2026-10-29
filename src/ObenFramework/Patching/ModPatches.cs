@@ -72,6 +72,8 @@ public static partial class ModPatches
         }
         if (area != null)
             PatchAreas.Book.Applied(owner.Info.Id, area, () => Undo(harmony, target, prefix, postfix, transpiler, finalizer));
+        if (PatchEvents.HasListeners)
+            PatchEvents.Report(new PatchReport(owner.Info.Id, PatchEvents.Describe(target), target, prefix, postfix, transpiler, finalizer));
         return true;
     }
 
@@ -121,6 +123,7 @@ public static partial class ModPatches
     private static bool Fail(ObenMod owner, string area, string what, string reason, Exception e)
     {
         Track(owner);
+        PatchEvents.Report(PatchReport.Failed(owner.Info.Id, what, reason));
         string message = $"Patching {what} failed: {reason}";
         if (area == null)
         {

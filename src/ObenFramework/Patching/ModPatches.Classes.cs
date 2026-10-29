@@ -60,8 +60,9 @@ public static partial class ModPatches
     {
         try
         {
-            harmony.CreateClassProcessor(type).Patch();
+            var replacements = harmony.CreateClassProcessor(type).Patch();
             PatchAreas.Book.Applied(mod.Info.Id, area, () => TakeOff(harmony, type));
+            PatchEvents.ReportClass(mod.Info.Id, type, replacements);
             return true;
         }
         catch (Exception e)

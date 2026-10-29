@@ -69,10 +69,11 @@ internal static class ModActivator
                     continue;
                 try
                 {
-                    harmony.CreateClassProcessor(type).Patch();
+                    PatchEvents.ReportClass(harmony.Id, type, harmony.CreateClassProcessor(type).Patch());
                 }
                 catch (Exception e)
                 {
+                    PatchEvents.Report(PatchReport.Failed(harmony.Id, type.FullName, e.GetBaseException().Message));
                     throw new InvalidOperationException($"Patch class {type.FullName} failed: {e.GetBaseException().Message}", e);
                 }
             }

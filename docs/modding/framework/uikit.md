@@ -218,11 +218,12 @@ Every kit window can be used without the mouse. Controls register themselves as 
 | Left / Right, A / D, d-pad or left stick | steps a cycle or toggle, moves a slider by a twentieth of its range (a whole number for whole-number sliders), or moves along a row of buttons (a `Row` or the footer) |
 | Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
 | Backspace, Delete, pad X | puts the highlighted setting back to its default (Settings page rows with a Reset) |
+| Page Up / Page Down, the game's tab keys (Q by default), pad LB / RB | turns the page in a window that has pages (the mod menu), wrapping around |
 | Esc, pad B | closes the top window |
 
 The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. Disabled buttons are skipped. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
 
-Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings.
+Navigation reads the keyboard directly, and only runs while a window is open and no text field or key binding has the keyboard. W/S/A/D and the arrow keys are fixed; they don't follow the game's key bindings. The page keys do: the keys bound to the game's "Switch Tab Left" and "Switch Tab Right" turn pages too, unless one of them is a key that already moves around the window.
 
 ## Questions and notices
 
@@ -251,7 +252,7 @@ ModMenu.AddPage(this, new ModPage("My Mod", ui =>
 }) { Order = 50 });
 ```
 
-Pages are sorted by `Order`, then title, and chosen with a `< page >` row at the top. A page goes away when its mod unloads. `ModMenu.Open(pageTitle)` opens the menu, on a page if given; `ModMenu.Close()` and `ModMenu.IsOpen` do what they say.
+Pages are sorted by `Order`, then title, and chosen with a `< page >` row at the top or with the page keys (Page Up and Page Down, the game's tab keys, the pad's bumpers), which wrap around. The footer shows those keys next to Back. A page goes away when its mod unloads. Two pages with the same title get a warning in the kit's log, since only the first can be opened by name. A page whose build throws shows "This page couldn't be shown" under the page row, with the error in the kit's log, so the player can still turn to another page. `ModMenu.Open(pageTitle)` opens the menu, on a page if given; `ModMenu.Close()` and `ModMenu.IsOpen` do what they say.
 
 The built-in pages:
 
@@ -332,7 +333,7 @@ Every public instance field becomes a control, in declaration order:
 - **Ranges.** A number outside its `Min`..`Max` in the config file (a hand edit) is put back in range when the page first lists the config (or it is registered), with a warning in the mod's log; one that isn't a number ("NaN") gets its default. The file is written back with the fixed values.
 - **Reset per setting.** A setting that differs from its default has a small Reset at the right end of its title bar; hovering it shows the default. Backspace, Delete or the pad's X does the same on the highlighted row. Flags have no Reset of their own.
 - **Reset to defaults.** Every config gets a button at the bottom that asks first, then puts every shown field back to the value a new `T()` has. Hidden fields keep theirs (they are the mod's bookkeeping). From code, `config.ResetToDefaults()` resets everything, and `config.Defaults` is a fresh object with the defaults.
-- **Search.** The search box at the top of the page finds settings and actions of every mod: type a few words and press Enter (or leave the field). Every word has to appear in a setting's label, description, tooltip or group, ignoring case; words that match a mod's title find all of that mod's settings. The results are grouped in a card per mod and can be changed right there. "Clear the search" (or an empty search) goes back to one mod at a time.
+- **Search.** The search box at the top of the page finds settings and actions of every mod: type a few words and press Enter (or leave the field). Every word has to appear in a setting's label, description, tooltip or group, ignoring case; words that match a mod's title find all of that mod's settings. The results are grouped in a card per mod and can be changed right there. "Clear the search" (or an empty search) goes back to one mod at a time, and the search starts empty each time the menu opens.
 - **A setting that fails to build** (a broken value, a bug in a control) is logged and shown as a line saying so; the rest of the page is built as usual.
 - **Outside the Settings page.** `ModSettings.Draw(ui, config, title)` draws the same controls (groups, ranges, Reset, action buttons) into any kit window, for a mod that wants its settings in its own window too. Pass `showReset: false` to leave out the "Reset to defaults" button.
 

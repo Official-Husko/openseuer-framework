@@ -1,3 +1,4 @@
+using ObenFramework.Ui;
 using UnityEngine;
 using UInput = UnityEngine.Input;
 
@@ -5,7 +6,7 @@ namespace ObenUIKit.Input;
 
 /// <summary>
 /// What the keyboard and the pad mean in a menu. The arrow keys and WASD move, Enter and the pad's
-/// A activate. The pad axes are the ones the game's own menus read.
+/// A activate, the game's tab keys and the bumpers turn pages. The pad axes are the ones the game's own menus read.
 /// </summary>
 internal static class NavKeys
 {
@@ -48,6 +49,58 @@ internal static class NavKeys
     /// <summary>Backspace, Delete or the pad's X: put the highlighted setting back to its default.</summary>
     public static bool Reset() =>
         UInput.GetKeyDown(KeyCode.Backspace) || UInput.GetKeyDown(KeyCode.Delete) || UInput.GetKeyDown(KeyCode.Joystick1Button2);
+
+    /// <summary>
+    /// -1 for the previous page of a window, 1 for the next, 0 for neither: Page Up and Page Down, the keys the
+    /// game switches its own menu tabs with (Q by default), and the pad's bumpers.
+    /// </summary>
+    public static int Page()
+    {
+        if (UInput.GetKeyDown(KeyCode.PageUp) || TabKey("Switch Tab Left", KeyCode.Joystick1Button4))
+            return -1;
+        if (UInput.GetKeyDown(KeyCode.PageDown) || TabKey("Switch Tab Right", KeyCode.Joystick1Button5))
+            return 1;
+        return 0;
+    }
+
+    // The game's binding for a tab action, unless it is one of the keys that already move around a window.
+    private static bool TabKey(string action, KeyCode bumper)
+    {
+        var key = GameKeys.Key(action);
+        if (key != KeyCode.None && !Navigates(key) && UInput.GetKeyDown(key))
+            return true;
+        var button = GameKeys.Button(action);
+        return UInput.GetKeyDown(button != KeyCode.None ? button : bumper);
+    }
+
+    private static bool Navigates(KeyCode key) => key switch
+    {
+        KeyCode.UpArrow or KeyCode.DownArrow or KeyCode.LeftArrow or KeyCode.RightArrow => true,
+        KeyCode.W or KeyCode.A or KeyCode.S or KeyCode.D => true,
+        KeyCode.Return or KeyCode.KeypadEnter or KeyCode.Escape or KeyCode.Backspace or KeyCode.Delete => true,
+        _ => false,
+    };
+
+    /// <summary>The page keys as a window's key hint shows them: "PgUp / PgDn, Q, LB / RB".</summary>
+    public static string PageKeysLabel()
+    {
+        string label = "PgUp / PgDn";
+        var left = GameKeys.Key("Switch Tab Left");
+        var right = GameKeys.Key("Switch Tab Right");
+        bool hasLeft = left != KeyCode.None && !Navigates(left);
+        bool hasRight = right != KeyCode.None && !Navigates(right);
+        if (hasLeft && hasRight && left != right)
+            label += $", {KeyName(left)} / {KeyName(right)}";
+        else if (hasLeft || hasRight)
+            label += ", " + KeyName(hasRight ? right : left);
+        return label + ", LB / RB";
+    }
+
+    private static string KeyName(KeyCode key)
+    {
+        string name = key.ToString();
+        return name.StartsWith("Alpha", System.StringComparison.Ordinal) ? name.Substring(5) : name;
+    }
 
     // An axis the project's input settings don't define throws; give up on the pad once instead of every frame.
     private static float Axis(string name)

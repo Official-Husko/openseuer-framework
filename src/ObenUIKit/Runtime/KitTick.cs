@@ -8,7 +8,7 @@ namespace ObenUIKit.Runtime;
 /// The kit's only per-frame code, enabled only while a window is open: Esc or the pad's B closes
 /// the top window (a frame later, so the same key press can't also reach the game, and not while a
 /// text field or key capture has the keyboard), the top window gets keyboard and controller
-/// navigation, and open windows refresh a few times a second.
+/// navigation and, when it has pages, the page keys, and open windows refresh a few times a second.
 /// </summary>
 internal sealed class KitTick : MonoBehaviour
 {
@@ -50,7 +50,11 @@ internal sealed class KitTick : MonoBehaviour
             _pendingClose = top;
         }
         else if (top != null && !typing)
+        {
             top.Nav.Tick(Time.unscaledTime);
+            if (top.Pager != null && top.IsOpen && NavKeys.Page() is int page && page != 0)
+                top.Run("Turning the page", () => top.Pager(page));
+        }
 
         if (Time.unscaledTime >= _nextRefresh)
         {

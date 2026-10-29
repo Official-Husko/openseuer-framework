@@ -45,6 +45,9 @@ public sealed partial class UiWindow : ITracker
     /// <summary>Keyboard and controller navigation over this window's controls.</summary>
     internal UiNav Nav => _nav;
 
+    /// <summary>Turns the window's page (-1 back, 1 on) when the page keys are pressed; null for a window without pages.</summary>
+    internal Action<int> Pager { get; set; }
+
     internal bool KeepOnLevelChange => _options.KeepOnLevelChange;
 
     internal KitContext Kit => _kit;

@@ -146,6 +146,24 @@ New:
   - `menu.buttons remove=true` removes them.
 - [ ] **What's New:** MODS → Settings → "UI kit" → "Read What's New" opens the page. "Show What's New at the next start" clears `LastSeenVersion`, and the popup shows on the next launch.
 - [ ] **Camera after a kit window:** sit on a chair (or lie in bed), open and close a kit window. The camera stays locked the way the game had it.
+- [ ] **Mod menu (M06).** Needs a fresh start: the loader changed (`ObenMod.Configs`).
+  - **Configs found by themselves:** MODS → Settings → the Mod cycle lists Cheat Menu, DevBridge, DevBridge (trace), Game tweaks, ObenCoop, Performance Fixes and UI kit, each once. hotkeys.json isn't there. Cheat Menu shows only Key; Spots, Watches and MoveSpeed stay hidden.
+  - **Descriptions and lists:** the ObenCoop fields have their descriptions. "Ignored mods" reads "DevBridge, ScriptRunner"; changing it writes a JSON list to the file.
+  - **Reset per setting:**
+    - Change Game tweaks' stack size; "Reset" appears at the right end of its title bar.
+    - Hovering it shows "Default: 2", and clicking it puts the value back and hides it.
+    - Backspace on the highlighted row does the same, and so does the pad's X. Backspace on an unchanged row does nothing.
+  - **Search:**
+    - Type "speed" in the search box and press Enter: a card per mod with a matching setting.
+    - Change a value in the results: the file is written.
+    - "Clear the search" goes back to one mod at a time, and closing and reopening the menu empties the search.
+    - "game tweaks" finds every Game tweaks setting.
+  - **Page keys:**
+    - PgUp/PgDn, Q and the pad's LB/RB turn pages, wrapping at both ends. Q in the search box types a q.
+    - The footer hint fits next to Back.
+  - **A broken page:** a script adds a page whose build throws. The page shows "This page couldn't be shown", the error is in the kit's log, and the page row still turns.
+  - **Quit flush:** drag a slider and press Alt+F4 within a quarter second. The value is in the file.
+  - **New field kinds:** from a script, `ModSettings.Draw` a test config with a `[Flags]` enum, a `Vector3` and a `[Setting(Choices = ...)]` string into a window. They show as switches, a text field and a cycle; text that isn't three numbers puts the old vector back.
 
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 

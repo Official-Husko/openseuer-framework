@@ -66,6 +66,7 @@ public sealed partial class UiWindow : ITracker
         Id = id;
         CloseOnEscape = options.CloseOnEscape;
         _parts = WindowLayout.Build(kit.Root.Rect, kit.Theme, "Window " + id, options);
+        _parts.Frame.gameObject.AddComponent<WindowWatch>().Window = this;
         _nav = new UiNav(kit, _parts.Scroll);
         _parts.Title.text = title;
         if (_parts.Drag != null)
@@ -99,10 +100,14 @@ public sealed partial class UiWindow : ITracker
         _refreshers.Clear();
         _nav.BeginRebuild();
         BeginBuildPass();
+        if (_parts.SideContent != null)
+            Clear(_parts.SideContent);
         Clear(_parts.Content);
         Clear(_parts.Footer);
         try
         {
+            if (_parts.SideContent != null)
+                _options.Side(new UiBuilder(_kit, this, _parts.SideContent, inBody: false));
             _build?.Invoke(new UiBuilder(_kit, this, _parts.Content));
             var footer = new UiBuilder(_kit, this, _parts.Footer, inBody: false, group: _nav.NewGroup());
             if (_options.Footer != null)

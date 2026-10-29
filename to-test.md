@@ -169,6 +169,13 @@ New:
 - [x] **Errors page colors:** a caught problem (amber) with an inner exception and an uncaught one through Debug.LogException (red): "Caused by" on its own line, Unity's and Mono's frames colored, `S.Loader.Items (lambda)` and `(async or iterator)` names, System and Unity frames dimmed, "Show all 15 lines" and "Show less". (2026-10-29, screenshots.)
 - [x] **MODS button color:** MODS on the main menu has the same color as the other buttons (it kept the "???" placeholder's grey). (2026-10-29.)
 
+- [ ] **UI kit parity (M07).** Needs the kit deployed; `oben call ui.demo` opens the demo window.
+  - **Slider and cycle fixes:** a demo slider moved from code (`SliderHandle.Set`) shows the new number; clicking the middle of a cycle row steps it.
+  - **Full window:** Docked and floating, then Full. The window covers the screen less a margin, the scene is dimmed, the side panel lists 25 items with its own scrollbar, the body 30 lines with its own. Picking an item rebuilds the body for it (through `Defer`). Up and Down go through the side's items first, and the side scrolls to keep the highlight in view.
+  - **Close reasons:** load a save from the pause menu with a kit window open: it closes (`SaveLoad`). A script that destroys a window's frame object closes it with `Destroyed`, and the game's keys come back.
+  - **Pause Menu key:** with the game's Pause Menu action bound to another key, that key closes the top kit window too; the pad's Start does.
+  - **Top inset:** a Right window with `Top = 110` starts 110 units below the top.
+
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 
 Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled=true` in `new_scene Interior Player Tenement`. The guide `docs/modding/game-tweaks.md` has the exact evals.

@@ -21,6 +21,9 @@ public static class UiKit
     /// <summary>True while a kit window that takes the player's input is open.</summary>
     public static bool AnyWindowOpen => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.AnyModal;
 
+    /// <summary>True while any kit window is on screen, display-only ones (<see cref="WindowOptions.LockInput"/> off) included.</summary>
+    public static bool AnyWindowShown => KitRuntime.Current != null && KitRuntime.Current.Kit.Windows.Any;
+
     /// <summary>
     /// Opens a window and fills it with <paramref name="build"/>. Without a <paramref name="footer"/>
     /// it gets a Back button. A <paramref name="height"/> above 0 makes a centred box instead of the

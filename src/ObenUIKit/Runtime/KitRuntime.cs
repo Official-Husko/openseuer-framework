@@ -49,6 +49,7 @@ internal sealed class KitRuntime : IDisposable
         GameEvents.MainMenu.Subscribe(mod, () => mod.StartCoroutine(NextFrame(themes.CaptureMainMenu)));
         GameEvents.WhenWorldReady(mod, _ => themes.CaptureWorld());
         GameEvents.LevelChanging.Subscribe(mod, windows.CloseForLevelChange);
+        GameEvents.Loading.Subscribe(mod, windows.CloseForSaveLoad);
         if (WorldState.InMainMenu)
             themes.CaptureMainMenu();
     }

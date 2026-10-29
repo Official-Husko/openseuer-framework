@@ -21,6 +21,7 @@ internal static class KitDemoWindows
             r.Button("Left", () => Side(WindowDock.Left));
             r.Button("Right", () => Side(WindowDock.Right));
             r.Button("Floating", Floating);
+            r.Button("Full", Full);
         });
         ui.Tooltip("A floating window is dragged by its title.");
         ui.Button("Display-only panel (Esc can't close it)", Passive);
@@ -77,6 +78,30 @@ internal static class KitDemoWindows
             w.Toggle("Something", true, on => { });
             w.Slider("Something else", 0f, 10f, 5f, v => { });
         }, new WindowOptions { Dock = dock, Width = 560f });
+    }
+
+    // A side panel to pick from and a body that shows the pick; the pick is rebuilt a frame later with Defer.
+    private static void Full()
+    {
+        int picked = 0;
+        UiWindow window = null;
+        window = UiKit.Open(UIKitMod.Instance, "obenuikit.demo.full", "Full window", w =>
+        {
+            w.Header("Item " + (picked + 1));
+            for (int i = 0; i < 30; i++)
+                w.Label("Line " + (i + 1) + " of item " + (picked + 1) + ". The body scrolls on its own.", align: TMPro.TextAlignmentOptions.Left);
+        }, new WindowOptions
+        {
+            Dock = WindowDock.Full,
+            Side = side =>
+            {
+                for (int i = 0; i < 25; i++)
+                {
+                    int index = i;
+                    side.Button("Item " + (i + 1), () => { picked = index; window.Defer(window.Rebuild); });
+                }
+            },
+        });
     }
 
     private static void Floating()

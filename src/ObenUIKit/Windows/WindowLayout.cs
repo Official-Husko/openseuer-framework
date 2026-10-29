@@ -9,7 +9,8 @@ namespace ObenUIKit.Windows;
 /// <summary>
 /// Builds a window's frame the way the pause menu looks: a black column with grey edges, a title on
 /// top, a scrolling body and a footer for buttons. The centred column dims the scene behind; docked
-/// columns sit on the left or right edge, and a floating box can be dragged by its title.
+/// columns sit on the left or right edge, a floating box can be dragged by its title, and a full window
+/// covers the screen less a margin, with an optional side panel left of the body.
 /// </summary>
 internal static class WindowLayout
 {
@@ -17,6 +18,7 @@ internal static class WindowLayout
     public const float FooterHeight = 110f;
     public const float EdgeWidth = 4f;
     private const float DockMargin = 24f;
+    private const float BodyMargin = 24f;
 
     public sealed class Parts
     {
@@ -26,6 +28,9 @@ internal static class WindowLayout
         public ScrollRect Scroll;
         public RectTransform Content;
         public RectTransform Footer;
+
+        /// <summary>The side panel's scrolling column; full windows with a side panel only.</summary>
+        public RectTransform SideContent;
 
         /// <summary>The title's drag handle; floating windows only.</summary>
         public WindowDrag Drag;
@@ -45,7 +50,7 @@ internal static class WindowLayout
         Place(column, options, height);
         Edge(column, theme, left: true);
         Edge(column, theme, left: false);
-        if (box)
+        if (box || options.Dock == WindowDock.Full)
         {
             Cap(column, theme, top: true);
             Cap(column, theme, top: false);
@@ -78,8 +83,33 @@ internal static class WindowLayout
         row.childControlWidth = true;
         row.childControlHeight = true;
 
-        var (scroll, content) = Body(column, theme);
-        return new Parts { Frame = frame, Column = column, Title = title, Scroll = scroll, Content = content, Footer = footer, Drag = drag };
+        var parts = new Parts { Frame = frame, Column = column, Title = title, Footer = footer, Drag = drag };
+        float left = BodyMargin;
+        if (options.Dock == WindowDock.Full && options.Side != null)
+        {
+            var side = ScrollArea.Make(column, theme, "Side");
+            float width = Mathf.Max(120f, options.SideWidth);
+            Region(side.Region, BodyMargin, width);
+            parts.SideContent = side.Content;
+            var line = UiParts.Image(column, "SideEdge", null, theme.PanelEdge).rectTransform;
+            Region(line, BodyMargin + width + BodyMargin * 0.5f, EdgeWidth);
+            left = BodyMargin * 2f + width;
+        }
+        var body = ScrollArea.Make(column, theme, "Body");
+        UiParts.Stretch(body.Region, left, TitleHeight, BodyMargin - ScrollArea.BarRoom, FooterHeight);
+        parts.Scroll = body.Scroll;
+        parts.Content = body.Content;
+        return parts;
+    }
+
+    // A strip between the title and the footer, from the column's left edge.
+    private static void Region(RectTransform rect, float left, float width)
+    {
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 0.5f);
+        rect.offsetMin = new Vector2(left, FooterHeight);
+        rect.offsetMax = new Vector2(left + width, -TitleHeight);
     }
 
     private static void Place(RectTransform column, WindowOptions options, float height)
@@ -91,11 +121,18 @@ internal static class WindowLayout
             case WindowDock.Left:
             case WindowDock.Right:
                 float x = options.Dock == WindowDock.Left ? 0f : 1f;
+                float top = box ? 0f : Mathf.Max(0f, options.Top);
                 column.anchorMin = new Vector2(x, box ? 0.5f : 0f);
                 column.anchorMax = new Vector2(x, box ? 0.5f : 1f);
                 column.pivot = new Vector2(x, 0.5f);
-                column.sizeDelta = new Vector2(width, box ? height : 0f);
-                column.anchoredPosition = new Vector2(options.Dock == WindowDock.Left ? DockMargin : -DockMargin, 0f);
+                column.sizeDelta = new Vector2(width, box ? height : -top);
+                column.anchoredPosition = new Vector2(options.Dock == WindowDock.Left ? DockMargin : -DockMargin, -top * 0.5f);
+                break;
+            case WindowDock.Full:
+                column.anchorMin = Vector2.zero;
+                column.anchorMax = Vector2.one;
+                column.offsetMin = new Vector2(DockMargin, DockMargin);
+                column.offsetMax = new Vector2(-DockMargin, -DockMargin);
                 break;
             case WindowDock.Floating:
                 column.anchorMin = column.anchorMax = column.pivot = new Vector2(0.5f, 0.5f);
@@ -108,63 +145,6 @@ internal static class WindowLayout
                 column.sizeDelta = new Vector2(width, box ? height : 0f);
                 break;
         }
-    }
-
-    private static (ScrollRect, RectTransform) Body(RectTransform column, UiTheme theme)
-    {
-        var body = UiParts.Stretch(UiParts.Child(column, "Body"), 24f, TitleHeight, 24f, FooterHeight);
-        body.gameObject.AddComponent<RectMask2D>();
-        // An invisible background, so the mouse wheel scrolls over text and the gaps between controls too,
-        // not only over the controls that take clicks.
-        body.gameObject.AddComponent<Image>().color = Color.clear;
-        var scroll = body.gameObject.AddComponent<ScrollRect>();
-        scroll.horizontal = false;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 40f;
-        scroll.verticalScrollbar = Bar(column, theme);
-        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-
-        var content = UiParts.Child(body, "Content");
-        content.anchorMin = new Vector2(0f, 1f);
-        content.anchorMax = new Vector2(1f, 1f);
-        content.pivot = new Vector2(0.5f, 1f);
-        content.sizeDelta = Vector2.zero;
-        var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.spacing = 10f;
-        layout.childForceExpandHeight = false;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-        layout.childForceExpandWidth = true;
-        content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scroll.viewport = body;
-        scroll.content = content;
-        return (scroll, content);
-    }
-
-    // A thin bar in the body's right margin that shows how far down the page is and can be dragged. Hidden
-    // while everything fits.
-    private static Scrollbar Bar(RectTransform column, UiTheme theme)
-    {
-        var track = UiParts.Image(column, "Scrollbar", null, theme.SliderTrack, raycast: true).rectTransform;
-        track.anchorMin = new Vector2(1f, 0f);
-        track.anchorMax = new Vector2(1f, 1f);
-        track.pivot = new Vector2(1f, 0.5f);
-        track.offsetMin = new Vector2(-16f, FooterHeight);
-        track.offsetMax = new Vector2(-10f, -TitleHeight);
-
-        var area = UiParts.Stretch(UiParts.Child(track, "Area"));
-        var handle = UiParts.Image(area, "Handle", null, theme.TextMuted, raycast: true);
-        UiParts.Stretch(handle.rectTransform);
-
-        var bar = track.gameObject.AddComponent<Scrollbar>();
-        bar.direction = Scrollbar.Direction.BottomToTop;
-        bar.handleRect = handle.rectTransform;
-        bar.targetGraphic = handle;
-        bar.transition = Selectable.Transition.None;
-        // The kit moves the focus itself; the game's event system shouldn't select the bar.
-        bar.navigation = new Navigation { mode = Navigation.Mode.None };
-        return bar;
     }
 
     private static void Cap(RectTransform column, UiTheme theme, bool top)

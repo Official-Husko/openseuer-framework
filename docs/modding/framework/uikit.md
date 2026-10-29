@@ -40,14 +40,14 @@ UiWindow window = UiKit.Open(this, "mymod.settings", "My Mod", ui =>
 - The first argument is the owner (your mod, or one of its features). The window closes when the owner unloads.
 - The id keeps a window single: opening the same id again returns the open window.
 - Without a `footer` the window gets a Back button. Pass `footer: f => { f.Button(...); }` for your own.
-- Esc (or the pad's B) closes the top window. It closes a frame later, so the same key press doesn't also reach the game. While a text field or a key binding row has the keyboard, Esc goes to it instead and the window stays.
+- Esc (or the pad's B, or whatever key or pad button the game's "Pause Menu" action is bound to, as the game's own menus do) closes the top window. It closes a frame later, so the same key press doesn't also reach the game. While a text field or a key binding row has the keyboard, Esc goes to it instead and the window stays.
 - The window locks game input (movement, mouse look, hotkeys) and shows the cursor while open. In a level that goes through the game's own `GameController` lock, and a game menu that is open (inventory, map) closes first, since both can't have the keys. If the game's unlock throws on the way out, the keys and cursor are freed directly so the player isn't left stuck. At the main menu the menu's keyboard navigation is paused.
 - Over the pause menu, the pause menu's keyboard handler and its Esc toggle are held off until the window closes.
-- Windows close on their own when the player changes level.
+- Windows close on their own when the player changes level or a save starts loading. If something destroys a window's objects without closing it, the window closes itself so its input lock and scope are still released.
 
 A `height` argument (default 0, the full-height column) makes a centred box instead, which is what `UiKit.Confirm` uses.
 
-`UiWindow` has `Title`, `IsOpen`, `Close()`, `Rebuild()` (build the body again with current values), `CloseOnEscape`, `CloseReason`, `Dock`, `LocksInput` and a `Closed` event. `UiKit.Find(id)` returns an open window by id.
+`UiWindow` has `Title`, `IsOpen`, `Close()`, `Rebuild()` (build the body again with current values), `Defer(action)`, `CloseOnEscape`, `CloseReason`, `Dock`, `LocksInput` and a `Closed` event. `Defer` runs something at the end of the frame, after the click or key being handled: the place for a `Rebuild()` or `Close()` from inside a control's callback. `UiKit.Find(id)` returns an open window by id; `UiKit.AnyWindowOpen` is true while a window that takes input is open, `UiKit.AnyWindowShown` while any window is on screen, display-only ones included.
 
 ### Docked, floating and display-only windows
 
@@ -56,7 +56,7 @@ Pass a `WindowOptions` for anything beyond the centred column:
 ```csharp
 UiKit.Open(this, "mymod.tracker", "Tracker", ui => ui.Live(() => Status()), new WindowOptions
 {
-    Dock = WindowDock.Right,   // Center (default), Left, Right, Floating
+    Dock = WindowDock.Right,   // Center (default), Left, Right, Floating, Full
     Width = 520f,
     LockInput = false,         // display-only: the player keeps playing, no cursor, no Esc
 });
@@ -68,19 +68,28 @@ UiKit.Open(this, "mymod.notes", "Notes", Build, new WindowOptions
     Position = new Vector2(-500f, 100f),   // the window's centre, from the screen's centre, in 1920x1080 units
     CloseOnError = true,
 });
+
+UiKit.Open(this, "mymod.wardrobe", "Wardrobe", ui => ShowOutfit(_picked), new WindowOptions
+{
+    Dock = WindowDock.Full,    // the whole screen less a margin
+    Side = side => { foreach (var outfit in Outfits) side.Button(outfit.Name, () => Pick(outfit)); },
+    SideWidth = 440f,
+});
 ```
 
 | Option | Default | Does |
 | --- | --- | --- |
-| `Dock` | `Center` | `Center` is the pause menu's column; `Left` and `Right` are columns along the screen edge; `Floating` is a box the player drags by its title (clicking it brings it to the front) |
-| `Width`, `Height` | 760, 0 | in 1920x1080 units; height 0 is the full screen height (640 for a floating window) |
+| `Dock` | `Center` | `Center` is the pause menu's column; `Left` and `Right` are columns along the screen edge; `Floating` is a box the player drags by its title (clicking it brings it to the front); `Full` covers the screen less a margin |
+| `Width`, `Height` | 760, 0 | in 1920x1080 units; height 0 is the full screen height (640 for a floating window). A full window ignores both |
 | `Position` | centre | floating windows: where the centre goes |
+| `Top` | 0 | full-height `Left` and `Right` columns: room kept free above the column (110 stays clear of the game's top-right corner) |
+| `Side`, `SideWidth` | none, 440 | full windows: builds a panel left of the body, with its own scrolling and scrollbar. It is built again on `Rebuild()`, and the keyboard goes through it before the body |
 | `Footer` | Back button | builds the bottom bar |
 | `LockInput` | true | off makes a display-only panel: game keys, mouse look and Esc stay with the game, there's no keyboard navigation, and the HUD and hotkeys don't step aside for it. In a level the cursor stays hidden, so it can't be clicked; at the main menu it can |
-| `Dim` | centre only | darken the scene behind; a dimmed window also stops clicks reaching the game |
+| `Dim` | centre and full | darken the scene behind; a dimmed window also stops clicks reaching the game |
 | `CloseOnEscape` | true | |
 | `CloseOnError` | false | close the window as soon as one of its callbacks (a control, a `Live` text, the build itself) throws. The error is logged either way |
-| `KeepOnLevelChange` | false | stay open through a level change |
+| `KeepOnLevelChange` | false | stay open through a level change or a save loading |
 
 ### A window is a lifetime scope
 
@@ -93,7 +102,7 @@ window.Track(InputCapture.Key(this, KeyCode.G));       // the game gets G back w
 window.Closed += () => Log.Info("closed: " + window.CloseReason);
 ```
 
-`CloseReason` is one of `Requested`, `Escape`, `OwnerUnloaded`, `LevelChange`, `Error` or `KitUnloaded`. `window.Run(what, action)` runs a callback of yours with the same guard the controls use.
+`CloseReason` is one of `Requested`, `Escape`, `OwnerUnloaded`, `LevelChange`, `SaveLoad`, `Error`, `Destroyed` or `KitUnloaded`. `window.Run(what, action)` runs a callback of yours with the same guard the controls use.
 
 ## Controls
 
@@ -219,9 +228,9 @@ Every kit window can be used without the mouse. Controls register themselves as 
 | Enter, keypad Enter, pad A | presses a button, steps a cycle to the next option, puts the cursor in a text field, starts a key binding |
 | Backspace, Delete, pad X | puts the highlighted setting back to its default (Settings page rows with a Reset) |
 | Page Up / Page Down, the game's tab keys (Q by default), pad LB / RB | turns the page in a window that has pages (the mod menu), wrapping around |
-| Esc, pad B | closes the top window |
+| Esc, pad B, the game's "Pause Menu" key or button | closes the top window |
 
-The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body scrolls to keep the highlighted control in view. When the next control is out of view (a long description, the release notes, an error's stack trace), Up and Down first scroll the text a step at a time and move the highlight once that control shows, so pages that are mostly text can be read from the keyboard or pad. Disabled buttons are skipped.
+The highlight is the control's mouse hover look. Moving the mouse over a control moves the highlight there, so only one control is ever lit. The body, and any scroll area or side panel the control sits in, scrolls to keep the highlighted control in view. When the next control is out of view (a long description, the release notes, an error's stack trace), Up and Down first scroll the text a step at a time and move the highlight once that control shows, so pages that are mostly text can be read from the keyboard or pad. Disabled buttons are skipped.
 
 The mouse wheel scrolls the body anywhere over it, over text and the gaps between controls too. A thin bar in the right margin shows where you are on a long page and can be dragged; it hides when everything fits. When a window rebuilds (a mod menu page change, `Rebuild()`), the highlight stays at the same place in the list.
 

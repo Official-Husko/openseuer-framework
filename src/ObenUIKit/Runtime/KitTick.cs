@@ -8,7 +8,8 @@ namespace ObenUIKit.Runtime;
 /// The kit's only per-frame code, enabled only while a window is open: Esc or the pad's B closes
 /// the top window (a frame later, so the same key press can't also reach the game, and not while a
 /// text field or key capture has the keyboard), the top window gets keyboard and controller
-/// navigation and, when it has pages, the page keys, and open windows refresh a few times a second.
+/// navigation and, when it has pages, the page keys, open windows refresh a few times a second, and what a
+/// window deferred runs at the end of the frame.
 /// </summary>
 internal sealed class KitTick : MonoBehaviour
 {
@@ -61,5 +62,13 @@ internal sealed class KitTick : MonoBehaviour
             _nextRefresh = Time.unscaledTime + RefreshInterval;
             _windows.RefreshAll();
         }
+    }
+
+    // After every Update of the frame, so a deferred rebuild never pulls a control out from under the click
+    // or key that is still being handled.
+    private void LateUpdate()
+    {
+        if (_windows != null && _windows.Any)
+            _windows.RunDeferred();
     }
 }

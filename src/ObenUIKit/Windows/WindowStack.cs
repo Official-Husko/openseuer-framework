@@ -67,6 +67,12 @@ internal sealed class WindowStack
             _open[i].Refresh();
     }
 
+    public void RunDeferred()
+    {
+        for (int i = 0; i < _open.Count; i++)
+            _open[i].RunDeferred();
+    }
+
     public void CloseAll(WindowCloseReason reason = WindowCloseReason.Requested)
     {
         for (int i = _open.Count - 1; i >= 0; i--)
@@ -77,12 +83,17 @@ internal sealed class WindowStack
     }
 
     /// <summary>The player is leaving the level: close everything that didn't ask to stay.</summary>
-    public void CloseForLevelChange()
+    public void CloseForLevelChange() => CloseUnlessKept(WindowCloseReason.LevelChange);
+
+    /// <summary>A save started loading: the same, with its own reason.</summary>
+    public void CloseForSaveLoad() => CloseUnlessKept(WindowCloseReason.SaveLoad);
+
+    private void CloseUnlessKept(WindowCloseReason reason)
     {
         for (int i = _open.Count - 1; i >= 0; i--)
         {
             if (i < _open.Count && !_open[i].KeepOnLevelChange)
-                _open[i].Close(WindowCloseReason.LevelChange);
+                _open[i].Close(reason);
         }
     }
 }

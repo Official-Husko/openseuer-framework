@@ -224,8 +224,8 @@ internal sealed class UiNav
         _focus = index;
         var entry = _items[index];
         entry.Target.SetFocus(true);
-        if (scroll && entry.InBody && _scroll != null)
-            NavScroll.Reveal(_scroll, entry.Target.Rect);
+        if (scroll)
+            NavScroll.RevealAll(entry.Target.Rect);
     }
 
     // The next control that can take the focus in a direction, without wrapping around; -1 when there is none.

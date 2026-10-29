@@ -18,6 +18,12 @@ public enum WindowDock
 
     /// <summary>A box the player can drag by its title, anywhere on the screen.</summary>
     Floating,
+
+    /// <summary>
+    /// The whole screen less a margin, the scene dimmed behind. Can have a side panel along the left
+    /// (<see cref="WindowOptions.Side"/>), for a list to pick from beside the page that shows the pick.
+    /// </summary>
+    Full,
 }
 
 /// <summary>Why a window closed. Read <see cref="UiWindow.CloseReason"/> in a <see cref="UiWindow.Closed"/> handler.</summary>
@@ -43,6 +49,12 @@ public enum WindowCloseReason
 
     /// <summary>The kit itself unloaded.</summary>
     KitUnloaded,
+
+    /// <summary>A save started loading (a level change of its own; <see cref="WindowOptions.KeepOnLevelChange"/> keeps the window).</summary>
+    SaveLoad,
+
+    /// <summary>Something destroyed the window's objects without closing it.</summary>
+    Destroyed,
 }
 
 /// <summary>
@@ -54,7 +66,7 @@ public sealed class WindowOptions
     /// <summary>Where the window sits. Default: the centred column.</summary>
     public WindowDock Dock { get; set; } = WindowDock.Center;
 
-    /// <summary>Width in the kit's 1920x1080 units.</summary>
+    /// <summary>Width in the kit's 1920x1080 units. <see cref="WindowDock.Full"/> windows take the screen's width.</summary>
     public float Width { get; set; } = UiKit.DefaultWidth;
 
     /// <summary>
@@ -66,6 +78,22 @@ public sealed class WindowOptions
     /// <summary>Floating windows: where the window's centre goes, measured from the screen's centre in the kit's units. Default: the centre.</summary>
     public Vector2 Position { get; set; }
 
+    /// <summary>
+    /// Full-height <see cref="WindowDock.Left"/> and <see cref="WindowDock.Right"/> columns: room kept free above
+    /// the column, in the kit's units (say 110 to stay clear of the game's top-right corner). Default 0.
+    /// </summary>
+    public float Top { get; set; }
+
+    /// <summary>
+    /// <see cref="WindowDock.Full"/> windows: builds a panel along the left of the body, with its own scrolling.
+    /// It is built again with the body (<see cref="UiWindow.Rebuild"/>), and keyboard navigation runs through it
+    /// first.
+    /// </summary>
+    public Action<UiBuilder> Side { get; set; }
+
+    /// <summary>Width of the <see cref="Side"/> panel in the kit's units. Default 440.</summary>
+    public float SideWidth { get; set; } = 440f;
+
     /// <summary>Builds the bottom bar. Without one the window gets a Back button.</summary>
     public Action<UiBuilder> Footer { get; set; }
 
@@ -75,7 +103,7 @@ public sealed class WindowOptions
     /// </summary>
     public bool LockInput { get; set; } = true;
 
-    /// <summary>Darken the scene behind. Default: only for the centred column.</summary>
+    /// <summary>Darken the scene behind. Default: only for the centred column and full-screen windows.</summary>
     public bool? Dim { get; set; }
 
     /// <summary>Esc (or the pad's B) closes the window. Only for windows that lock input.</summary>
@@ -87,12 +115,12 @@ public sealed class WindowOptions
     /// </summary>
     public bool CloseOnError { get; set; }
 
-    /// <summary>Keep the window open through a level change (it closes by default, like the game's menus).</summary>
+    /// <summary>Keep the window open through a level change or a save loading (it closes by default, like the game's menus).</summary>
     public bool KeepOnLevelChange { get; set; }
 
-    internal bool Dims => Dim ?? Dock == WindowDock.Center;
+    internal bool Dims => Dim ?? (Dock == WindowDock.Center || Dock == WindowDock.Full);
 
-    internal float ResolvedHeight => Height > 0f ? Height : Dock == WindowDock.Floating ? 640f : 0f;
+    internal float ResolvedHeight => Dock == WindowDock.Full ? 0f : Height > 0f ? Height : Dock == WindowDock.Floating ? 640f : 0f;
 
     internal WindowOptions Copy() => (WindowOptions)MemberwiseClone();
 }

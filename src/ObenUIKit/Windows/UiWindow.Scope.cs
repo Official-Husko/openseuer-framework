@@ -8,6 +8,7 @@ namespace ObenUIKit.Windows;
 public sealed partial class UiWindow
 {
     private readonly List<IDisposable> _scope = new List<IDisposable>();
+    private readonly List<Action> _deferred = new List<Action>();
     private readonly Dictionary<string, int> _remembered = new Dictionary<string, int>();
     private int _buildSerial;
 
@@ -25,6 +26,32 @@ public sealed partial class UiWindow
         else
             DisposeOne(disposable);
         return disposable;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="action"/> at the end of this frame, after the click or key being handled now: the
+    /// place for a <see cref="Rebuild"/> or <see cref="Close()"/> from inside a control's callback. Dropped if
+    /// the window closes first. Errors are handled like <see cref="Run"/>.
+    /// </summary>
+    public void Defer(Action action)
+    {
+        if (action != null && IsOpen)
+            _deferred.Add(action);
+    }
+
+    internal void RunDeferred()
+    {
+        if (_deferred.Count == 0)
+            return;
+        // What runs now can defer more; that waits for the next frame.
+        var due = _deferred.ToArray();
+        _deferred.Clear();
+        foreach (var action in due)
+        {
+            if (!IsOpen)
+                return;
+            Run("A deferred step", action);
+        }
     }
 
     /// <summary>

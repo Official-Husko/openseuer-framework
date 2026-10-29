@@ -43,8 +43,9 @@ internal static class NavKeys
     public static bool Confirm() =>
         UInput.GetKeyDown(KeyCode.Return) || UInput.GetKeyDown(KeyCode.KeypadEnter) || UInput.GetKeyDown(KeyCode.Joystick1Button0);
 
-    /// <summary>Esc or the pad's B button.</summary>
-    public static bool Back() => UInput.GetKeyDown(KeyCode.Escape) || UInput.GetKeyDown(KeyCode.Joystick1Button1);
+    /// <summary>Esc, the pad's B button, or the game's "Pause Menu" key or button (as the game's own menus close).</summary>
+    public static bool Back() =>
+        UInput.GetKeyDown(KeyCode.Escape) || UInput.GetKeyDown(KeyCode.Joystick1Button1) || GameKey("Pause Menu");
 
     /// <summary>Backspace, Delete or the pad's X: put the highlighted setting back to its default.</summary>
     public static bool Reset() =>
@@ -61,6 +62,16 @@ internal static class NavKeys
         if (UInput.GetKeyDown(KeyCode.PageDown) || TabKey("Switch Tab Right", KeyCode.Joystick1Button5))
             return 1;
         return 0;
+    }
+
+    // The game's key or pad button for an action, unless the key is one that already moves around a window.
+    private static bool GameKey(string action)
+    {
+        var key = GameKeys.Key(action);
+        if (key != KeyCode.None && !Navigates(key) && UInput.GetKeyDown(key))
+            return true;
+        var button = GameKeys.Button(action);
+        return button != KeyCode.None && UInput.GetKeyDown(button);
     }
 
     // The game's binding for a tab action, unless it is one of the keys that already move around a window.

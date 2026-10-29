@@ -14,6 +14,23 @@ internal static class NavScroll
 
     private static readonly Vector3[] Corners = new Vector3[4];
 
+    /// <summary>
+    /// Scrolls every scrolling area around <paramref name="target"/>, innermost first (a scroll area inside the
+    /// body, a full window's side panel, the body), so the target shows.
+    /// </summary>
+    public static void RevealAll(RectTransform target)
+    {
+        var parent = target != null ? target.parent : null;
+        while (parent != null)
+        {
+            var scroll = parent.GetComponentInParent<ScrollRect>();
+            if (scroll == null)
+                return;
+            Reveal(scroll, target);
+            parent = scroll.transform.parent;
+        }
+    }
+
     public static void Reveal(ScrollRect scroll, RectTransform target)
     {
         var content = scroll.content;

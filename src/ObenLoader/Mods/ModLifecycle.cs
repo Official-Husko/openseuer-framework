@@ -31,8 +31,12 @@ internal static partial class ModLifecycle
         var ordered = DependencySorter.Sort(mods);
         var loaded = new List<ModInfo>(ordered.Count);
 
-        foreach (var mod in ordered)
+        for (int i = 0; i < ordered.Count; i++)
         {
+            var mod = ordered[i];
+            // At start the window is black until the first scene; its title shows how far loading got.
+            if (!atRuntime)
+                WindowTitle.Show($"loading mods ({i + 1}/{ordered.Count}): {mod.Manifest.DisplayName}");
             if (TryActivate(mod))
                 loaded.Add(mod);
         }

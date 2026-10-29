@@ -34,6 +34,8 @@ public sealed class MyMod : ObenMod
 - `Reset()` puts defaults back. `DataLoaded` fires after every replacement (load, reset, main menu).
 - Several objects per mod: pass a `key`, which gives `<modId>.<key>.json`. Registering the same mod and key twice throws.
 - The registration ends when the owner unloads. On a hot reload the current data is parked in the loader's `ReloadState` and handed to the new copy, so unsaved changes survive a reload. This only applies if no save was loaded in between; otherwise the loaded save's file wins.
+- `ModSaves.Peek<T>(modId, key)` reads what any mod stored in the loaded save without registering (a copy; null when there is nothing). Handy for reading another mod's data or your own from before you register.
+- A file over 64 MB isn't read back: it is set aside as `.corrupt` and the data starts from defaults, as for a file that can't be parsed. Newtonsoft's own limit of 64 levels of nesting applies too.
 - Add a version field to `T` yourself if the shape will change. Unknown JSON members are ignored and missing ones keep the constructor's defaults, so adding fields is safe.
 
 ## What gets written where

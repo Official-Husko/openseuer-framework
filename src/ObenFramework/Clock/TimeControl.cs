@@ -32,6 +32,19 @@ public static class TimeControl
     public static float Speed => Overrides.Speed;
 
     /// <summary>
+    /// How many real minutes a whole in-game day takes in this level at normal speed (the game's
+    /// <c>dayLenghtInMinutes</c>, part of the save), or 0 outside a level. Speeds and freezes don't change it.
+    /// </summary>
+    public static float DayLengthMinutes
+    {
+        get
+        {
+            var azure = TimeOfDayAzure.instance;
+            return azure != null ? azure.dayLenghtInMinutes : 0f;
+        }
+    }
+
+    /// <summary>
     /// The overrides are standing aside right now because the game itself runs time fast (sleeping,
     /// waiting, a crafting wait).
     /// </summary>

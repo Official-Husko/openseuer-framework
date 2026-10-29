@@ -61,6 +61,14 @@ public sealed class ModSaveData<T> : ISaveSlot where T : class, new()
             return;
         }
 
+        if (new FileInfo(path).Length > SaveFolders.MaxModFileBytes)
+        {
+            ModSaves.Log.Error($"{path} is over {SaveFolders.MaxModFileBytes / (1024 * 1024)} MB; using defaults for {ModId}. The file is kept as .corrupt.");
+            KeepCorrupt(path);
+            Reset();
+            return;
+        }
+
         if (JsonFile.TryRead<SaveEnvelope<T>>(path, out var envelope, out var error) && envelope.Data != null)
         {
             if (envelope.Format > SaveEnvelope<T>.CurrentFormat)

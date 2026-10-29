@@ -52,6 +52,24 @@ public static class ModSaves
         return data;
     }
 
+    /// <summary>
+    /// Reads what a mod (yours or another) stored in the loaded save, without registering: a copy, so
+    /// changing it changes nothing. Null at the main menu, in a new game, when there is no such file or it
+    /// can't be read as <typeparamref name="T"/>.
+    /// </summary>
+    public static T Peek<T>(string modId, string key = null) where T : class
+    {
+        if (string.IsNullOrEmpty(modId))
+            throw new ArgumentException("Name the mod whose data to read.", nameof(modId));
+        string folder = WorldState.InWorld ? SaveFolders.LoadedFolder() : null;
+        if (folder == null)
+            return null;
+        string path = SaveFolders.FileFor(folder, SaveFolders.FileName(modId, key));
+        if (!System.IO.File.Exists(path) || new System.IO.FileInfo(path).Length > SaveFolders.MaxModFileBytes)
+            return null;
+        return ObenLoader.Config.JsonFile.TryRead<SaveEnvelope<T>>(path, out var envelope, out _) ? envelope.Data : null;
+    }
+
     internal static void Init(ObenMod framework)
     {
         Log = framework.Log;

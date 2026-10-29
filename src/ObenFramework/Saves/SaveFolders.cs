@@ -12,6 +12,9 @@ internal static class SaveFolders
     /// </summary>
     public const string ModsFolder = "mods";
 
+    /// <summary>Largest mod data file read back; a bigger one is set aside like a broken one.</summary>
+    public const long MaxModFileBytes = 64L * 1024 * 1024;
+
     public static string FileFor(string saveFolder, string fileName) =>
         Path.Combine(saveFolder, ModsFolder, fileName);
 

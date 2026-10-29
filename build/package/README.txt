@@ -45,10 +45,18 @@ If something goes wrong
 The loader writes a log to the ObenLoader folder inside the game folder (logs/latest.log, and
 logs/errors.log when something failed). Send those with a bug report.
 
+To rule out a broken game install, check the game's files against the lists in game-files/hashes
+(the right list is picked from the game's version; it takes a minute or two):
+    ./game-files/verify-game.sh "/path/to/Obenseuer"
+    game-files\verify-game.bat "D:\Games\Obenseuer"
+It lists every file that is changed or missing. The files ObenseuerExtended adds or changes on
+purpose don't count. If something is listed, verify the game in your store or reinstall it.
+
 What's in here
 --------------
 Mods/            the mods, one folder each
 tool/            the installer and command-line tool (oben) for Linux and Windows
+game-files/      checks the game's files against known-good hash lists (verify-game.*)
 LICENSE          the license (GPL-3.0)
 install.*        installs everything
 uninstall.*      takes it out again

@@ -60,12 +60,15 @@ for rid in linux-x64 win-x64; do
 done
 
 cp "$repo/build/package/"{install,uninstall}.{sh,bat} "$repo/build/package/README.txt" "$repo/LICENSE" "$out/"
+mkdir -p "$out/game-files/hashes"
+cp "$repo/tools/game-files/"*.{sh,bat,ps1} "$out/game-files/"
+cp "$repo/tools/game-files/hashes/"*.json "$out/game-files/hashes/"
 for optional in THIRD-PARTY-NOTICES.md changelog.json; do
     [ ! -f "$repo/$optional" ] || cp "$repo/$optional" "$out/"
 done
 # Windows wants CRLF in batch files and Notepad in text files, whatever the checkout used.
-sed -i 's/\r$//; s/$/\r/' "$out/"*.bat "$out/README.txt"
-chmod +x "$out/"*.sh "$out/tool/linux-x64/oben"
+sed -i 's/\r$//; s/$/\r/' "$out/"*.bat "$out/game-files/"*.bat "$out/README.txt"
+chmod +x "$out/"*.sh "$out/game-files/"*.sh "$out/tool/linux-x64/oben"
 
 (cd "$repo/dist" && zip -qr "$name.zip" "$name")
 echo "Done: dist/$name.zip ($(du -h "$repo/dist/$name.zip" | cut -f1))"

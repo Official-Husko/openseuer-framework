@@ -162,3 +162,11 @@ oben run --reset console-greeting
 2. Try the idea with `oben eval` or a script under `--watch`.
 3. Move it into a mod with `"hotReload": true` and rebuild; the game picks it up by itself.
 4. `oben logs` or `oben call log.tail level=Warning` when something looks off.
+
+## After a game update
+
+1. `oben check` lists every hook and private member lookup the update broke.
+2. Make a hash list of the new game's files: `tools/game-files/hash-game.sh "<game>" --version <version> --build <steam build>` (on Windows `hash-game.bat "<game>" -Version ... -Build ...`). It writes `tools/game-files/hashes/<version>.json`, leaving out what ObenseuerExtended adds and the store-specific files, and hashing files the installer changed from their `.obenbak` originals. Make it from a clean install or a verified one; anything else lying in the game folder (crash logs, a depot download's own files) goes in `--exclude`.
+3. Once the framework is checked on it, put the new version, the Steam build (`oben call game.info` → `gameBuildId`) and the code hash (`gameCodeHash`, the first 16 digits are plenty) into `src/ObenFramework/mod.json` (`gameVersion`, `gameBuilds`, `gameHashes`), and the version into the other mods' `gameVersion`.
+
+`tools/game-files/verify-game.sh "<game>"` (or `.bat`) checks an install against the list that matches its code and lists changed or missing files. It ships in the player package as `game-files/`.

@@ -16,7 +16,8 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] GPL-3.0 license
 - [x] THIRD-PARTY-NOTICES.md (NomadsReach MIT code, LiteNetLib)
 - [ ] GitHub URL for the player README.txt and the docs, once the repository is up
-- [ ] Hot reload gets slower the longer the game runs: a cascade of all 9 mods took 5.2 s on the first rebuild and 15.2 s on the 24th (2026-10-29), while the mods' own loading is under 1 s of it. Each reload leaves the old assemblies loaded (449 after 24 rounds), so something that walks every loaded assembly or type (Harmony's `AccessTools.TypeByName`, our own scans) is the likely cause. Time the reload's steps first
+- [x] Hot reload got slower the longer the game ran: a cascade of all 9 mods took 5.2 s on the first rebuild and 15.2 s on the 24th. Two causes, both in Harmony: every patch and unpatch looked each handler up by walking all loaded modules (old copies included), and `UnpatchAll(id)` rebuilt and recompiled a method once per handler it removed, even when nothing was left. Fixed with `PatchLookups` and `Unpatching.RemoveAll`: now 2.5 s on the first and 5 s on the 24th (2026-10-29)
+- [ ] Hot reload still slows a little per round (2.5 s to 5 s over 24 rounds): compiling Harmony's new replacement methods gets slower as the game holds more code (0.16 ms per method fresh, 0.8 ms after 12 reloads). Keeping 10,000 extra dynamic methods alive only costs 20%, so it is mostly the growing number of loaded assemblies inside Mono's JIT. Harmony also keeps every old replacement alive (`HarmonySharedState.originals`/`originalsMono`); dropping those might help a little
 
 ## ObenFramework (core functionality)
 

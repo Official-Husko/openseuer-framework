@@ -32,7 +32,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 - [x] `oben call patches.areas mod=ObenFramework` lists every area as available, including `Shops` (8), `Clock` (1) and `ItemPlaceholders` (2). (2026-10-29: 25 areas, all on.)
 - [x] `oben call mods.list` shows no `warning` on any mod. (2026-10-29.)
 - [x] `oben call patches.check`: 0 broken. (2026-10-29: 473 patched methods with 708 handlers at the main menu; the 730 written here before was a guess.)
-- [x] **Hot reload stress.** In a level, run 12 cascade reloads, each followed by a forced full GC: (2026-10-29: 24 cascades in Interior Player Tenement, `indirect: 0` and `broken: []` in every round the bridge answered and at the end, no NullReferenceException in Player.log. A cascade of all 9 mods took 5.2 s at first and 15.2 s by the 24th, see TODO.md.)
+- [x] **Hot reload stress.** In a level, run 12 cascade reloads, each followed by a forced full GC: (2026-10-29: 24 cascades in Interior Player Tenement, `indirect: 0` and `broken: []` in every round the bridge answered and at the end, no NullReferenceException in Player.log. A cascade of all 9 mods took 5.2 s at first and 15.2 s by the 24th. Again after the unpatching fix: 24 rounds clean, 2.5 s at first and 5.0 s by the 24th, see TODO.md.)
   - repeat: `touch Mods/ObenFramework/ObenFramework.dll`, wait until `latest.log` has the next "Reloaded ObenFramework, ..." line (a fixed 7 s wait is too short now that every mod reloads with the framework), `oben eval 'System.GC.Collect(); System.GC.WaitForPendingFinalizers(); return 1;'`, then `patches.check`;
   - every round must show `indirect: 0` and `broken: 0`;
   - the game must still respond at the end.

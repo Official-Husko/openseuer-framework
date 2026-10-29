@@ -46,8 +46,8 @@ internal static class ModActivator
             Try(log, mod, "cleanup", instance.DisposeTracked);
         }
 
-        // Unpatch by id only: a bare UnpatchAll() would strip every mod's patches.
-        new Harmony(mod.Id).UnpatchAll(mod.Id);
+        // Only this mod's patches, one rebuild per method.
+        Unpatching.RemoveAll(mod.Id, (method, e) => log.Warn($"Taking {mod.Id}'s patches off {method.DeclaringType?.Name}.{method.Name} failed: {e.Message}"));
         AssemblyLoading.Retire(mod);
 
         mod.Instance = null;

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
+using ObenLoader;
 using ObenLoader.Logging;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -69,6 +70,7 @@ public sealed class ScriptScope : ITracker, IDisposable
             catch (Exception e) { Log.Error("Cleanup failed", e); }
         }
         _tracked.Clear();
-        _harmony?.UnpatchAll(_harmony.Id);
+        if (_harmony != null)
+            Unpatching.RemoveAll(_harmony.Id, (method, e) => Log.Warn($"Taking the script's patch off {method.Name} failed: {e.Message}"));
     }
 }

@@ -69,6 +69,7 @@ public static class Loader
         Log.Info($"Game folder: {LoaderPaths.GameDir} (exe {GameFiles.Short(GameExeHash) ?? "unreadable"})");
 
         InlineJumps.Use(Log);
+        PatchLookups.Use(Log);
         ModLifecycle.Init(ModHost.Create(Log), Log);
 
         var found = ModDiscovery.Scan(LoaderPaths.ModsDir, Log);

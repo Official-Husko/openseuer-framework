@@ -1,4 +1,5 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
+using System;
 using ObenFramework.Player.Survival;
 
 namespace GameTweaks.Needs;
@@ -19,7 +20,14 @@ internal sealed class NeedsTweak : TweakFeature
     };
 
     // What is in effect, so an unchanged value isn't set again on every config save.
-    private readonly float[] _applied = { 1f, 1f, 1f, 1f, 1f, 1f, 1f };
+    private static readonly float[] Applied = { 1f, 1f, 1f, 1f, 1f, 1f, 1f };
+
+    /// <summary>The rate in effect for <paramref name="drain"/>: 1 while the tweak is off or the need isn't one of these.</summary>
+    internal static float Rate(PlayerDrain drain)
+    {
+        int index = Array.IndexOf(Drains, drain);
+        return index < 0 ? 1f : Applied[index];
+    }
 
     public override string Id => "Needs";
     public override string Name => "Needs grow slower or faster";
@@ -42,16 +50,16 @@ internal sealed class NeedsTweak : TweakFeature
         for (int i = 0; i < Drains.Length; i++)
         {
             StatDrain.Remove(Owner, Drains[i]);
-            _applied[i] = 1f;
+            Applied[i] = 1f;
         }
     }
 
     private void Set(int index, float value)
     {
         float factor = TweakMath.Factor(value, 0f, Max);
-        if (factor == _applied[index])
+        if (factor == Applied[index])
             return;
-        _applied[index] = factor;
+        Applied[index] = factor;
         if (factor == 1f)
             StatDrain.Remove(Owner, Drains[index]);
         else

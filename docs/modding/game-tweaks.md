@@ -38,6 +38,12 @@ The tweaks are a port of the `Tweaks*` files and `CameraView` of the reference f
 
 **Third-person camera.** The game still has its third-person camera but locks it (`disableThirdPerson`, `firstpersonOnly`, both true in the tenement). The hotkey asks the framework's `CameraView` (see [framework/player-actions.md](framework/player-actions.md)) to lift the locks and move the camera back; going back to first person (or switching the tweak off) puts the game's values back. Camera triggers that force first person and building mode win: the camera goes in, a toast says so once, and it goes back out when the game lets go. A level change ends third person. While a save is written the camera briefly looks the way the game left it, so a save made in third person loads in first person, with or without the mod. Third person is a mode the game no longer uses, so the body, its animations and clipping can look rough.
 
+## For other mods
+
+`GameTweaks.TweakState` tells another mod what the tweaks do right now (reference GameTweaks.dll and check `ModRegistry.IsLoaded("GameTweaks")` first). Every value is the one in effect, so a tweak that is off reads as the game's own: `IsOn(id)`, `NeedRate(PlayerDrain)`, `StackSize`, `Spoilage`, `CraftingSpeed`, `DishwasherSpeed`, `NoMinimumSkill`, `RenovationCost`, `RenovationTime`, `InstantRenovations`, `RenovationsMoneyOnly`, `TimeSpeed` and `ThirdPersonKey`. `TweakState.OnChanged(this, handler)` hears when a tweak is switched or a value changes. The camera itself is the framework's `CameraView`.
+
+On the Settings page the values are grouped (needs, items, crafting, renovations, time, camera); "Reset to defaults" at the bottom puts them all back. A value edited out of its slider's range in config.json is put back in range at start, and every change is noted in the mod's log.
+
 ## Checking in game
 
 Load a level (the tenement is fine: `oben call console.exec 'command=new_scene Interior Player Tenement'`), then switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled=true` and compare with it off. `oben eval` snippets can go in a script file when the quoting gets awkward.
@@ -53,7 +59,7 @@ Load a level (the tenement is fine: `oben call console.exec 'command=new_scene I
 | `RenovationCost` | `oben call renovations.list state=Available`: the Makeshift stairwell goes from 3500 OC / 175 RM to 1750 / 88. |
 | `RenovationMoneyOnly` | `oben eval "TenementController.instance.CheckForItem(35010, 9999f)"` (9999 planks): False off, True on. |
 | `RenovationTime` | `oben call renovations.list state=Available`: the Makeshift stairwell goes from 24 to 12 hours. |
-| `DayLength` | `oben eval "HarmonyLib.Traverse.Create(TimeOfDayAzure.instance.TimeController).Field(\"m_dayLength\").GetValue<float>()"`: 96 off, 192 on (speed 0.5). `oben call clock.get` twice, 30 real seconds apart: about 30 game minutes off, 15 on. |
+| `DayLength` | `oben eval "HarmonyLib.Traverse.Create(TimeOfDayAzure.instance.TimeController).Field(\"m_dayLength\").GetValue<float>()"`: 96 off, 192 on (speed 0.5). `oben call clock.get` twice, 30 real seconds apart: about 7.5 game minutes off, 3.75 on (a 96-minute day is 15 game minutes per real minute). |
 | `ThirdPerson` | In the tenement press F6: the camera moves behind the player and `oben eval "ThirdPersonCameraCollision.instance.firstperson"` is False; F6 again or switching the tweak off: True, and `disableThirdPerson`/`firstpersonOnly` are True again. Save in third person and look for `"disableThirdPerson":true` and `"firstperson":true` in the save. |
 
 `oben call features.list` shows which tweaks are on.

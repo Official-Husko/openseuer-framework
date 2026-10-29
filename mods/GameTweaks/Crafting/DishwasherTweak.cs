@@ -12,6 +12,8 @@ internal sealed class DishwasherTweak : TweakFeature
 {
     private const string StationClass = "Dishwasher";
 
+    internal static float Speed = 1f;
+
     public override string Id => "DishwasherSpeed";
     public override string Name => "Faster (or slower) dishwasher";
     public override string Description =>
@@ -19,12 +21,16 @@ internal sealed class DishwasherTweak : TweakFeature
 
     public override void Apply(TweaksConfig config)
     {
-        float speed = TweakMath.Factor(config.DishwasherSpeed, CraftingSpeed.MinSpeed, CraftingSpeed.MaxSpeed);
-        if (speed == 1f)
+        Speed = TweakMath.Factor(config.DishwasherSpeed, CraftingSpeed.MinSpeed, CraftingSpeed.MaxSpeed);
+        if (Speed == 1f)
             CraftingSpeed.Remove(this, StationClass);
         else
-            CraftingSpeed.Set(this, StationClass, speed);
+            CraftingSpeed.Set(this, StationClass, Speed);
     }
 
-    protected override void OnDisable() => CraftingSpeed.Clear(this);
+    protected override void OnDisable()
+    {
+        Speed = 1f;
+        CraftingSpeed.Clear(this);
+    }
 }

@@ -24,11 +24,16 @@ public sealed class GameTweaksMod : ObenMod
     private readonly List<TweakFeature> _tweaks = new List<TweakFeature>();
     private ConfigFile<TweaksConfig> _config;
 
+    internal static GameTweaksMod Instance { get; private set; }
+
     /// <summary>The current values. Only valid while the mod is loaded.</summary>
     internal static TweaksConfig Settings { get; private set; } = new TweaksConfig();
 
     public override void OnLoad()
     {
+        Instance = this;
+        Track(Disposable.Create(() => Instance = null));
+        TweakState.Init(this);
         _config = LoadConfig<TweaksConfig>();
         Settings = _config.Value;
         _config.Save(); // Writes the defaults on first run so the file is easy to find.
@@ -55,6 +60,17 @@ public sealed class GameTweaksMod : ObenMod
         ModFeatures.Register(this, tweak);
     }
 
+    /// <summary>True when the tweak with this id is switched on.</summary>
+    internal bool IsOn(string id)
+    {
+        foreach (var tweak in _tweaks)
+        {
+            if (string.Equals(tweak.Id, id, StringComparison.OrdinalIgnoreCase))
+                return tweak.Enabled;
+        }
+        return false;
+    }
+
     private void OnChanged(TweaksConfig config)
     {
         Settings = config;
@@ -71,5 +87,6 @@ public sealed class GameTweaksMod : ObenMod
                 Log.Error($"Applying the new values to {tweak.Id} failed", e);
             }
         }
+        TweakState.Raise();
     }
 }

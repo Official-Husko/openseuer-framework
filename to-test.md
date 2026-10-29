@@ -85,6 +85,16 @@ Older key-press checks still open from the first UI work:
 
 New:
 
+- [x] **Settings page and config files (M04):** passed 2026-10-29.
+  - With `"StackSize": 500.0` and `"Spoilage": "NaN"` in Game Tweaks' config.json, the start logged two warnings, set 20 and 0.5, and rewrote the file.
+  - The log line `config.json: StackSize 500.0 -> 20.0, Spoilage "NaN" -> 0.5` appeared, and every later save logged its changes.
+  - The Game tweaks page shows Needs, Items, Crafting, Renovations, Time and Camera cards, with "Reset to defaults" at the bottom.
+  - Reset asks first; No changes nothing, Yes puts StackSize 20 back to 2 in the file.
+- [x] **Confirm dialogs have their No button again:** before, building the footer threw "Value does not fall within the expected range" and only Yes showed. Passed 2026-10-29.
+- [x] **Show mod hints / Show mod key prompts (UI kit settings):** passed 2026-10-29 from scripts.
+  - With hints off, `Hud.Hint` returns `IsActive` False, while a forced hint is still active; on again, hints show.
+  - With prompts off, `Hud.ShownPrompt` is null; on again, the prompt comes back.
+- [ ] **Setting switches by hand:** flip both switches on MODS, Settings, UI kit and watch a mod hint and a prompt.
 - [ ] `oben call ui.state` in a level with nothing open: `inWorld: true`, `busy: false`, `windows: []`.
 - [ ] **`oben call ui.demo`, Choices tab:**
   - a segmented Slow/Normal/Fast/Silly row with Normal lit;
@@ -144,13 +154,15 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
 | `RenovationTime` | same, hours | 24 | 12 |
 | `RenovationMoneyOnly` | `oben eval "TenementController.instance.CheckForItem(35010, 9999f)"` | False | True |
 | `DayLength` | `m_dayLength` via Traverse (guide) | 96 | 192 |
-| `DayLength` | `clock.get` twice, 30 real seconds apart | ~30 game min | ~15 game min |
+| `DayLength` | `clock.get` twice, 30 real seconds apart | ~7.5 game min | ~3.75 game min |
 
-- [ ] Every row of the table, then switch each tweak off again: the value returns.
-- [ ] **ThirdPerson:**
-  - F6 moves the camera behind the player, and `ThirdPersonCameraCollision.instance.firstperson` is False.
-  - F6 again, or switching the tweak off, gives first person with both locks True.
-  - Walking into a wall and pressing F6 keeps first person.
+- [x] Every row of the table, then switch each tweak off again: the value returns. Passed 2026-10-29 in the tenement (`player.skills skill=Mashing value=1` first for `NoMinimumSkill`): every off and on value as in the table, 7.46 game minutes in 30 s off and 3.72 on, and all back to the off values after switching off. `GameTweaks.TweakState` read 1/false for everything off and the tweak values on, and `OnChanged` fired on each switch and config save.
+- [x] **ThirdPerson:** passed 2026-10-29, running the F6 hotkey's action from a script:
+  - F6 moves the camera 2.5 m behind the player, and `firstperson` is False.
+  - F6 again, or switching the tweak off in third person, gives first person with both locks True.
+  - A zoom blocker shows "The camera has to stay in first person here." once.
+  - Scroll to zoom on lifts the locks; off puts them back.
+- [ ] **ThirdPerson by hand:** press the real F6 key, and walk into a wall in third person.
 - [ ] **ThirdPerson [save]:** save while in third person. The save holds `disableThirdPerson:true` and `firstperson:true`.
 - [x] **CameraView (framework):** passed 2026-10-29 in the tenement through `player.camera`:
   - `mode=third distance=3` unlocks both locks and goes to third person (`firstPerson` False a frame later).

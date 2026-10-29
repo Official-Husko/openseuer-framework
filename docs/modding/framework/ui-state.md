@@ -96,3 +96,20 @@ controls the game's own way (`GameController.ControlsDisabled`) instead.
 The patches are postfixes on `InputManager.GetKeyDown`, `GetKeyDownKeyboardOnly`, `GetKeyUp`, `GetKey` and
 `GetKeyWithHold`. They only look further when the game's answer was "pressed", so the cost while nothing is
 held is one bool check.
+
+## GameKeys
+
+The game's own bindings, by the same action names:
+
+```csharp
+KeyCode key = GameKeys.Key("Interact");      // the keyboard key the player bound (E by default)
+KeyCode pad = GameKeys.Button("Interact");   // the controller button
+string shown = GameKeys.Label("Interact");   // how the game writes it on screen, for the device in use
+if (GameKeys.Down("Jump")) { ... }           // also Held and Up
+```
+
+- Presses are read through the game's `InputManager`, the way the game reads them, so an `InputCapture` of
+  the action makes them read as not pressed. Read `UnityEngine.Input` with `GameKeys.Key(...)` to see the key
+  regardless of captures.
+- `GameKeys.IsAvailable` is false until the game's input is loaded; until then the reads give `KeyCode.None`,
+  "" and false.

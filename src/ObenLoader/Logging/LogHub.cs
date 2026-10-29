@@ -68,12 +68,18 @@ public static class LogHub
             if (Dropping.Count == 0)
                 return;
             DropsToReport.AddRange(Dropping);
-            foreach (var logger in DropsToReport)
+            try
             {
-                if (logger.ReportDrops())
-                    Dropping.Remove(logger);
+                foreach (var logger in DropsToReport)
+                {
+                    if (logger.ReportDrops())
+                        Dropping.Remove(logger);
+                }
             }
-            DropsToReport.Clear();
+            finally
+            {
+                DropsToReport.Clear();
+            }
         }
     }
 

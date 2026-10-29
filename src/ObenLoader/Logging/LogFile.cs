@@ -48,24 +48,37 @@ internal sealed class LogFile : IDisposable
                 return;
             string line = entry.ToString();
             _written += line.Length + 1;
-            if (_written > MaxChars)
+            try
             {
-                // A runaway session would otherwise fill the disk. The in-game buffer and errors.log go on.
-                _full = true;
-                _writer.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [Warning] [ObenLoader] This log reached its size limit ({MaxChars / (1024 * 1024)} MB); nothing more is written to it this session. Recent lines are still in the game (oben logs) and errors in errors.log.");
-                _writer.Flush();
-                return;
+                if (_written > MaxChars)
+                {
+                    // A runaway session would otherwise fill the disk. The in-game buffer and errors.log go on.
+                    _full = true;
+                    _writer.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [Warning] [ObenLoader] This log reached its size limit ({MaxChars / (1024 * 1024)} MB); nothing more is written to it this session. Recent lines are still in the game (oben logs) and errors in errors.log.");
+                    _writer.Flush();
+                    return;
+                }
+                _writer.WriteLine(line);
+                if (entry.Level >= LogLevel.Error)
+                    _writer.Flush();
             }
-            _writer.WriteLine(line);
-            if (entry.Level >= LogLevel.Error)
-                _writer.Flush();
+            catch (IOException)
+            {
+                // Disk full or the file went away: a log call must never throw into a mod.
+                _full = true;
+            }
         }
     }
 
     public void Flush()
     {
         lock (_lock)
-            _writer.Flush();
+        {
+            if (_full)
+                return;
+            try { _writer.Flush(); }
+            catch (IOException) { _full = true; }
+        }
     }
 
     public void Dispose()

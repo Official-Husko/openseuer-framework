@@ -164,6 +164,17 @@ Need bars, crafting timers, rent-due and invoice reminders, and a compass showin
 
 Built on: Hud.Bar, Hud.Prompt, Landmarks, CraftingEvents, Invoices, Tenement.
 
+### First Person Body (S to M)
+
+Your own body in first person: look down and see your clothes, arms and feet. The head is hidden from the camera but still casts its shadow, so your shadow on the floor has a head.
+
+- The head parts (head, eyes, hair, beard and moustache, glasses, hat) draw as shadows only (`ShadowCastingMode.ShadowsOnly`); the rest of the body draws as usual.
+- Follows outfit changes: a new hairstyle or hat swaps those meshes, and they need the same treatment.
+- To work out: the camera sitting inside the neck and shoulders (near-plane clipping; maybe hide the collar or nudge the camera forward), the body's arms next to held items, crouching and sitting poses.
+- A switch in its settings, and maybe one for the head's shadow.
+
+Built on: `CameraView.SetFirstPersonBody` (already keeps the body drawn in first person), PlayerLook (outfit changes), and what the live player preview found: the worn meshes sit under the player object beside the rigs, the head ones named like "Body: head", "eye_L"/"eye_R", "Head B: ...", "Beard: ..." and "Face: ...".
+
 ### Photo Mode (S)
 
 Freeze time, a free camera, a hidden HUD, screen effects.

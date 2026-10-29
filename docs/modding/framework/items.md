@@ -79,7 +79,8 @@ A save only keeps an item's id. Without the mod that adds it, the game would sho
 - It can't be used, eaten or sold (shops refuse it), stacks up to any size, keeps the stack's own data (quality, durability) and drops as the game's ERROR model that picks up as the same stand-in.
 - It is saved under its own id. Install the mod again and the stack is the real item on the next load. If the mod comes back while the game runs (a hot reload), stand-ins already handed out turn into the real item right away; a mod unloading mid-game leaves its items as stand-ins named after it.
 - `ItemPlaceholders.IsPlaceholder(id or item)`, `Active()` (stand-ins handed out this session) and `MissingInSave()` (what the loaded save lists without its mod) tell you about them. `IsAvailable` is false if its patches failed (patch area `ItemPlaceholders`).
-- `ItemPlaceholders.RemoveMissing(modId)` deletes the stacks of missing items (all, or one mod's) from the inventory and the containers in the loaded scenes and stops listing them, for a mod the player removed for good. They can't come back after that.
+- `ItemPlaceholders.Scan()` lists the stacks of missing items in the inventory and the containers of the loaded scenes (item, mod, amount, place) without changing anything.
+- `ItemPlaceholders.RemoveMissing(modId)` deletes one mod's missing items from the inventory and the containers in the loaded scenes and stops listing them, for a mod the player removed for good; `RemoveAllMissing()` does it for every mod. They can't come back after that.
 - Items in scenes that aren't loaded, and loot that the game rolls from its own tables, aren't touched; they get the stand-in when they're looked at.
 
 ## Adding recipes
@@ -204,4 +205,4 @@ StoragePanelButtons.Add(this, "Sort", press => SortInto(press.Container.Storage)
 
 ## Checking in game
 
-Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items), `registry.removemissing mod=...` (delete them for good). The `*.events` commands start listening on their first call.
+Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items), `registry.missing` (missing stacks and where they are), `registry.removemissing mod=...` or `all=true` (delete them for good). The `*.events` commands start listening on their first call.

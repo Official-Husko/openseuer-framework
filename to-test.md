@@ -64,7 +64,7 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
   3. Save and load. The inventory shows 2× "Missing item (ScriptRunner: Demo Crate)", and `<save>/mods/ObenFramework.items.json` lists it.
   4. A shop refuses it. Dropping it and picking it up again keeps the id.
   5. Running the script again turns the stack back into Demo Crate in place.
-  6. `registry.removemissing mod=ScriptRunner` deletes them.
+  6. `registry.missing` lists both stacks with their place; `registry.removemissing mod=ScriptRunner` deletes them (without `mod` or `all=true` it refuses).
 
 ## 2. UI kit, HUD, main menu, UI state (M05, M07, M26, M29)
 

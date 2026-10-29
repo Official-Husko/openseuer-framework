@@ -5,6 +5,7 @@ using ObenFramework.Events;
 using ObenFramework.Features;
 using ObenLoader;
 using ObenLoader.Config;
+using ObenLoader.Logging;
 using ObenLoader.Mods;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -82,7 +83,22 @@ internal sealed class ApiTrace : ModFeature
         GameEvents.Loaded.Subscribe(this, () => Mark("save loaded"));
         PatchEvents.Installed += OnPatch;
         Track(Disposable.Create(() => PatchEvents.Installed -= OnPatch));
+        if (settings.MirrorLog)
+        {
+            LogHub.LineWritten += OnLogLine;
+            Track(Disposable.Create(() => LogHub.LineWritten -= OnLogLine));
+        }
         _nextSweep = TraceHooks.Now + SweepSeconds;
+    }
+
+    // The log mirrored into the trace, like the reference's debug mode does. Any thread.
+    private static void OnLogLine(LogLevel level, string source, string message)
+    {
+        if (!TraceHooks.Active || level < LogHub.MinFileLevel || message == null)
+            return;
+        int end = message.IndexOf('\n');
+        string first = end < 0 ? message : message.Substring(0, end);
+        TraceHooks.Book?.AddMark($"log {level} [{source}] {TraceFormat.Cut(first)}", TraceHooks.Now, TraceHooks.Frame);
     }
 
     // Every patch that goes on or fails while the trace runs is marked; with PatchHandlers on, a traced

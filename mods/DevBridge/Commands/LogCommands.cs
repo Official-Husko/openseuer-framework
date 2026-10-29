@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using DevBridge.Server;
 using ObenFramework.Console;
+using ObenLoader;
 using ObenLoader.Logging;
 using Newtonsoft.Json.Linq;
 
@@ -19,6 +21,29 @@ internal static class LogCommands
         {
             ["last"] = LogHub.Buffer.LastSequence,
             ["lines"] = new JArray(lines.Select(e => $"{e.Sequence} [{e.Level}] [{e.Source}] {e.Message}").ToArray()),
+        };
+    }
+
+    [BridgeCommand("log.stats", "What the logs held back this session, whether verbose logging is on, and the log files with their sizes.")]
+    private static object Stats(JObject p)
+    {
+        var files = new JArray();
+        foreach (string sub in new[] { "", "mods" })
+        {
+            string dir = Path.Combine(LoaderPaths.LogsDir, sub);
+            if (!Directory.Exists(dir))
+                continue;
+            foreach (var file in new DirectoryInfo(dir).GetFiles("*.log").OrderBy(f => f.Name))
+                files.Add(new JObject { ["file"] = sub.Length == 0 ? file.Name : sub + "/" + file.Name, ["kb"] = (file.Length + 1023) / 1024 });
+        }
+        return new JObject
+        {
+            ["droppedLines"] = LogHub.DroppedLines,
+            ["heldBackErrors"] = LogHub.HeldBackErrors,
+            ["verbose"] = LogHub.Verbose,
+            ["frame"] = LogHub.Frame,
+            ["dir"] = LoaderPaths.LogsDir,
+            ["files"] = files,
         };
     }
 

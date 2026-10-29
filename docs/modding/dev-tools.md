@@ -50,6 +50,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `game.quit`, `game.timescale` | `value` | |
 | `scenes.loaded` | | loaded scenes, active first |
 | `log.tail` | `after?`, `max?`, `level?` | recent lines from mods, the loader and Unity; pass the returned `last` as `after` next time |
+| `log.stats` | | lines dropped over line limits and repeated errors held back this session, whether verbose logging is on, and the log files (`latest.log`, `errors.log`, `mods/<mod id>.log`...) with their sizes |
 | `console.exec` | `command` | runs a line in the F1 console and returns what it printed |
 | `console.mods` | | console commands added by mods |
 | `mods.list`, `mods.reload`, `mods.load`, `mods.unload`, `mods.rescan`, `mods.enable` | `id` | mod management |
@@ -116,7 +117,7 @@ Other mods can add commands: `ModRegistry.Get<DevBridgeMod>().Commands.Add(this,
 
 ### API call tracer
 
-The bridge can record every call into the framework's public API: arguments, result or exception, time taken, nesting depth, thread, and the mod that made the call, with markers for scene loads, saves, loads and every patch that goes on or fails (`patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`) in between. It is the `DevBridge/ApiTrace` feature, off by default, ported from the reference framework's `CoreDebugTrace` (NomadsReach, MIT). While it is off nothing is patched.
+The bridge can record every call into the framework's public API: arguments, result or exception, time taken, nesting depth, thread, and the mod that made the call, with markers for scene loads, saves, loads, every patch that goes on or fails (`patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`) and every line the mods log (`log Warning [MyMod] ...`, like the reference's debug mode mirrors its log; `MirrorLog` in `trace.json` switches that off) in between. It is the `DevBridge/ApiTrace` feature, off by default, ported from the reference framework's `CoreDebugTrace` (NomadsReach, MIT). While it is off nothing is patched.
 
 ```sh
 oben call trace.start filter=Quest,GlobalFlags     # trace QuestLog, QuestAuthoring, GlobalFlags...; no filter traces everything

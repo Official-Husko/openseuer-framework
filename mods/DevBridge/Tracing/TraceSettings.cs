@@ -21,6 +21,12 @@ public sealed class TraceSettings
     /// </summary>
     public bool PatchHandlers;
 
+    /// <summary>
+    /// Copy every line the mods and the loader log (debug lines too with verbose logging) into the trace as
+    /// a mark, so log and calls read in order.
+    /// </summary>
+    public bool MirrorLog = true;
+
     /// <summary>How many records are kept; older ones go first.</summary>
     public int Capacity = 2000;
 

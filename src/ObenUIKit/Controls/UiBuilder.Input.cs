@@ -58,14 +58,25 @@ public sealed partial class UiBuilder
         box.gameObject.SetActive(true);
 
         Register(kitRow, null, () => { _kit.Sounds.Press(); focus.Focus(); });
-        return new FieldHandle(input, focus);
+        return new FieldHandle(input, focus) { Rect = kitRow.Rect };
     }
 
     /// <summary>
     /// A key binding row: click it (or press Enter on it) and then press the new key or pad button. Esc or the
     /// pad's B cancels. Mouse buttons can't be bound.
     /// </summary>
-    public KeyBindHandle KeyBind(string label, KeyCode key, Action<KeyCode> onChange)
+    public KeyBindHandle KeyBind(string label, KeyCode key, Action<KeyCode> onChange) =>
+        KeyRow(label, new KeyChord(key), false, chord => onChange?.Invoke(chord.Key));
+
+    /// <summary>
+    /// A key binding row for a key with Ctrl, Shift or Alt: click it (or press Enter on it), hold the modifiers and
+    /// press the key. Esc or the pad's B cancels. A modifier can't be bound on its own here; use the
+    /// <see cref="KeyCode"/> row for that.
+    /// </summary>
+    public KeyBindHandle KeyBind(string label, KeyChord chord, Action<KeyChord> onChange) =>
+        KeyRow(label, chord, true, picked => onChange?.Invoke(picked));
+
+    private KeyBindHandle KeyRow(string label, KeyChord value, bool withModifiers, Action<KeyChord> changed)
     {
         Header(label);
         var kitRow = OptionRow(label);
@@ -74,20 +85,22 @@ public sealed partial class UiBuilder
         UiParts.Stretch(text.rectTransform, 24f, 0f, 24f, 0f);
 
         var theme = Theme;
-        var handle = new KeyBindHandle(text, key);
+        var handle = new KeyBindHandle(text, value, withModifiers) { Rect = kitRow.Rect };
         var capture = kitRow.gameObject.AddComponent<KitKeyCapture>();
         capture.Init(
             picked: k =>
             {
-                handle.Set(k);
-                Guard(label, () => onChange?.Invoke(k));
+                var chord = withModifiers ? new KeyChord(k, KeyChord.HeldExcluding(k)) : new KeyChord(k);
+                handle.Set(chord);
+                Guard(label, () => changed(chord));
             },
             waiting: on =>
             {
                 handle.Waiting(on);
                 if (text != null)
                     text.color = on ? theme.TextHover : theme.Text;
-            });
+            },
+            skipModifiers: withModifiers);
 
         void Begin()
         {

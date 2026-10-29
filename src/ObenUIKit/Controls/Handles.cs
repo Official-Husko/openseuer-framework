@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace ObenUIKit.Controls;
@@ -12,6 +13,26 @@ public sealed class LabelHandle
     internal LabelHandle(TMP_Text text)
     {
         _text = text;
+    }
+
+    /// <summary>The label's own rect.</summary>
+    public RectTransform Rect => _text.rectTransform;
+
+    /// <summary>
+    /// The text color, given the usual way (as an image editor shows it); it is drawn to match, even though the
+    /// game renders in linear space.
+    /// </summary>
+    public Color Color
+    {
+        get => _text.color.gamma;
+        set => _text.color = value.linear;
+    }
+
+    /// <summary>The font size (the kit's text is 24, a header 26).</summary>
+    public float Size
+    {
+        get => _text.fontSize;
+        set => _text.fontSize = value;
     }
 
     public string Text
@@ -37,6 +58,9 @@ public sealed class ButtonHandle
         _text = text;
     }
 
+    /// <summary>The button's rect.</summary>
+    public RectTransform Rect => _button.Rect;
+
     public bool Enabled
     {
         get => _button.Interactable;
@@ -56,6 +80,9 @@ public sealed class ButtonHandle
 /// </summary>
 public class CycleHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly TMP_Text _value;
     private readonly Action<int> _onChange;
     private string[] _options;
@@ -100,6 +127,9 @@ public sealed class ToggleHandle
         _cycle = cycle;
     }
 
+    /// <summary>The toggle's row.</summary>
+    public RectTransform Rect => _cycle.Rect;
+
     public bool Value => _cycle.Index == 1;
 
     public void Set(bool value) => _cycle.Set(value ? 1 : 0);
@@ -108,6 +138,9 @@ public sealed class ToggleHandle
 /// <summary>A slider with the game's number readout.</summary>
 public sealed class SliderHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly Slider _slider;
     private readonly TMP_Text _readout;
     private readonly string _format;

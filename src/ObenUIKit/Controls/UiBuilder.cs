@@ -69,20 +69,36 @@ public sealed partial class UiBuilder
     }
 
     /// <summary>An underlined text button, like Apply and Back in the game's options.</summary>
-    public ButtonHandle Button(string text, Action onClick)
+    public ButtonHandle Button(string text, Action onClick) => Button(text, ButtonStyle.Plain, onClick);
+
+    /// <summary>A button in one of the kit's looks: plain, quiet (for lesser actions) or a box (the main action).</summary>
+    public ButtonHandle Button(string text, ButtonStyle style, Action onClick)
     {
         var holder = Built(UiParts.Child(_parent, "Button " + text));
         UiParts.Height(holder, RowHeight);
-        var label = UiParts.Text(holder, Theme, text, Theme.ButtonSize, Theme.Text);
-        label.fontStyle = FontStyles.Underline;
+        bool box = style == ButtonStyle.Box;
+        float size = style == ButtonStyle.Quiet ? Theme.ButtonSize * 0.8f : Theme.ButtonSize;
+        var label = UiParts.Text(holder, Theme, text, size, Theme.Text);
+        label.fontStyle = box ? FontStyles.Normal : FontStyles.Underline;
         label.textWrappingMode = TextWrappingModes.NoWrap;
         UiParts.Stretch(label.rectTransform);
-        UiParts.Width(holder, label.preferredWidth + 20f);
+        UiParts.Width(holder, box ? Mathf.Max(240f, label.preferredWidth + 80f) : label.preferredWidth + 20f);
 
-        var hit = holder.gameObject.AddComponent<Image>();
-        hit.color = Color.clear; // Catches the pointer over the whole button, not just the glyphs.
+        // Catches the pointer over the whole button, not just the glyphs; the box's bar is the button.
+        var hit = box ? UiParts.Image(holder, "Bar", Theme.RowSprite, Theme.Header, raycast: true) : holder.gameObject.AddComponent<Image>();
+        if (box)
+        {
+            UiParts.Stretch(hit.rectTransform);
+            hit.transform.SetAsFirstSibling();
+        }
+        else
+        {
+            hit.color = Color.clear;
+        }
         var button = holder.gameObject.AddComponent<KitButton>();
         button.Init(label, _kit, onClick);
+        if (style != ButtonStyle.Plain)
+            button.Style(style == ButtonStyle.Quiet, box ? hit : null);
         button.Bind(_window.Nav);
         _window.Nav.Add(button, _inBody, _group);
         return new ButtonHandle(button, label);
@@ -92,13 +108,16 @@ public sealed partial class UiBuilder
     public void Space(float height = 20f) => UiParts.Height(UiParts.Child(_parent, "Space"), height);
 
     /// <summary>Controls side by side, centred.</summary>
-    public void Row(Action<UiBuilder> build)
+    public void Row(Action<UiBuilder> build) => Row(build, TextAnchor.MiddleCenter);
+
+    /// <summary>Controls side by side, placed by <paramref name="align"/> (MiddleLeft for a row from the left edge).</summary>
+    public void Row(Action<UiBuilder> build, TextAnchor align, float spacing = 40f)
     {
         var row = Built(UiParts.Child(_parent, "Row"));
         UiParts.Height(row, RowHeight);
         var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.spacing = 40f;
+        layout.childAlignment = align;
+        layout.spacing = spacing;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
         layout.childForceExpandWidth = false;

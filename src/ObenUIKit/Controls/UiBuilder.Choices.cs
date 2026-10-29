@@ -21,7 +21,7 @@ public sealed partial class UiBuilder
         var kitRow = OptionRow(label);
         var strip = Strip(kitRow.Rect, options, Theme.TextSize, padding: 24);
         ChoiceHandle handle = null;
-        handle = new ChoiceHandle(strip, index, i => Guard(label, () => onChange?.Invoke(i)));
+        handle = new ChoiceHandle(strip, index, i => Guard(label, () => onChange?.Invoke(i))) { Rect = kitRow.Rect };
         strip.Bind(handle.Pick);
         Register(kitRow, d => { _kit.Sounds.Press(); handle.Step(d); return true; },
             () => { _kit.Sounds.Press(); handle.Step(1); });
@@ -60,29 +60,48 @@ public sealed partial class UiBuilder
             _window.Remember(key, i);
             Guard(names[i], () => onChange?.Invoke(i));
         });
+        handle.Rect = kitRow.Rect;
+        handle.PageBuilder = column => new UiBuilder(_kit, _window, column, _inBody, _group);
         strip.Bind(handle.Pick);
         _last = kitRow.Rect;
         return handle;
     }
 
     /// <summary>
-    /// A header and a row of colour squares; the picked one has a frame. Colours are given the usual way
-    /// (as an image editor shows them) and drawn to match, even though the game renders in linear space.
+    /// A header and colour squares, in rows of up to eight; the picked one has a frame. Without a
+    /// <paramref name="label"/> (null or empty) there's no header. Colours are given the usual way (as an image
+    /// editor shows them) and drawn to match, even though the game renders in linear space.
     /// </summary>
     public SwatchHandle Swatches(string label, Color[] colors, int index, Action<int> onChange)
     {
         if (colors == null || colors.Length == 0)
             throw new ArgumentException("Swatches need at least one colour.", nameof(colors));
-        Header(label);
-        var kitRow = OptionRow(label);
-        var layout = kitRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(24, 24, 9, 9);
-        layout.spacing = 10f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = false;
+        if (!string.IsNullOrEmpty(label))
+            Header(label);
+        var kitRow = OptionRow(label ?? "Swatches");
+        int rows = (colors.Length + SwatchColumns - 1) / SwatchColumns;
+        if (rows == 1)
+        {
+            var layout = kitRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(24, 24, 9, 9);
+            layout.spacing = 10f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+        else
+        {
+            var grid = kitRow.gameObject.AddComponent<GridLayoutGroup>();
+            grid.padding = new RectOffset(24, 24, 9, 9);
+            grid.spacing = new Vector2(10f, 10f);
+            grid.cellSize = new Vector2(SwatchCell.Size, SwatchCell.Size);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = SwatchColumns;
+            grid.childAlignment = TextAnchor.UpperCenter;
+            UiParts.Height(kitRow, rows * SwatchCell.Size + (rows - 1) * 10f + 18f);
+        }
 
         var cells = new SwatchCell[colors.Length];
         SwatchHandle handle = null;
@@ -91,7 +110,7 @@ public sealed partial class UiBuilder
             int which = i;
             cells[i] = SwatchCell.Build(kitRow.Rect, _kit, Theme, colors[i], () => handle.Pick(which));
         }
-        handle = new SwatchHandle(cells, colors, index, i => Guard(label, () => onChange?.Invoke(i)));
+        handle = new SwatchHandle(cells, colors, index, i => Guard(label, () => onChange?.Invoke(i))) { Rect = kitRow.Rect };
         Register(kitRow, d => { _kit.Sounds.Press(); handle.Step(d); return true; },
             () => { _kit.Sounds.Press(); handle.Step(1); });
         return handle;
@@ -118,7 +137,7 @@ public sealed partial class UiBuilder
         StepperHandle handle = null;
         var down = Arrow(row, "<", left: true, () => handle.Step(-1));
         var up = Arrow(row, ">", left: false, () => handle.Step(1));
-        handle = new StepperHandle(text, down, up, value, min, max, step, format, v => Guard(label, () => onChange?.Invoke(v)));
+        handle = new StepperHandle(text, down, up, value, min, max, step, format, v => Guard(label, () => onChange?.Invoke(v))) { Rect = row };
         Register(kitRow, d => { if (handle.Step(d)) _kit.Sounds.Press(); return true; },
             () => { if (handle.Step(1)) _kit.Sounds.Press(); });
         return handle;
@@ -152,6 +171,8 @@ public sealed partial class UiBuilder
         }
         return new ChoiceStrip(_kit, cells, labels);
     }
+
+    private const int SwatchColumns = 8;
 
     /// <summary>A plain vertical stack for pages and cards.</summary>
     private static RectTransform Column(Transform parent, string name, float spacing)

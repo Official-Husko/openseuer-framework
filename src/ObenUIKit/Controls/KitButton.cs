@@ -6,6 +6,7 @@ using ObenUIKit.Theme;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace ObenUIKit.Controls;
 
@@ -26,6 +27,8 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     private bool _focus;
     private bool _pressed;
     private bool _interactable = true;
+    private bool _quiet;
+    private Image _back;
 
     public bool Interactable
     {
@@ -56,6 +59,17 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     public void Activate() => Click();
 
     public bool Step(int delta) => false;
+
+    /// <summary>
+    /// The look of a styled button: <paramref name="quiet"/> rests in the muted color, <paramref name="back"/> is a
+    /// box behind the text that lights up like the game's option rows.
+    /// </summary>
+    internal void Style(bool quiet, Image back)
+    {
+        _quiet = quiet;
+        _back = back;
+        Paint();
+    }
 
     internal void Init(TMP_Text text, KitContext kit, Action onClick)
     {
@@ -114,9 +128,13 @@ internal sealed class KitButton : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         if (_text == null)
             return;
+        bool lit = _hover || _focus || Selected;
         _text.color = !_interactable ? _theme.TextDisabled
             : _pressed ? _theme.TextPress
-            : _hover || _focus || Selected ? _theme.TextHover
+            : lit && _back == null ? _theme.TextHover
+            : _quiet ? _theme.TextMuted
             : _theme.Text;
+        if (_back != null)
+            _back.color = _interactable && (lit || _pressed) ? _theme.RowHover : _theme.Header;
     }
 }

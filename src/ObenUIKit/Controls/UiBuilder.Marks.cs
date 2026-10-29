@@ -31,22 +31,10 @@ public sealed partial class UiBuilder
     {
         if (bar == null)
             return null;
-        var holder = UiParts.Child(bar, "Reset");
-        holder.anchorMin = new Vector2(1f, 0f);
-        holder.anchorMax = new Vector2(1f, 1f);
-        holder.pivot = new Vector2(1f, 0.5f);
-        var label = UiParts.Text(holder, Theme, "Reset", Theme.TextSize * 0.85f, Theme.Text);
-        label.fontStyle = FontStyles.Underline;
-        label.textWrappingMode = TextWrappingModes.NoWrap;
-        UiParts.Stretch(label.rectTransform);
-        holder.sizeDelta = new Vector2(label.preferredWidth + 24f, 0f);
-        holder.anchoredPosition = new Vector2(-6f, 0f);
-        holder.gameObject.AddComponent<Image>().color = Color.clear;
+        var (holder, label) = HeaderAction(bar, "Reset", tip);
 
         var mark = new ResetMark(holder.gameObject, changed, () => Guard("Reset", reset));
         holder.gameObject.AddComponent<KitButton>().Init(label, _kit, () => mark.Run());
-        if (!string.IsNullOrEmpty(tip))
-            holder.gameObject.AddComponent<KitTooltip>().Init(_kit.Tooltips, tip);
         _lastRow?.SetReset(mark.Run);
         mark.Refresh();
         return mark;

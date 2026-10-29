@@ -36,7 +36,7 @@ public sealed partial class UiBuilder
         _window.Track(stage);
         _window.Nav.Add(view, _inBody, _group);
         _last = frame.rectTransform;
-        return new ModelPreviewHandle(view);
+        return new ModelPreviewHandle(view) { Rect = frame.rectTransform };
     }
 
     /// <summary>A model preview showing a model a mod loaded with <see cref="ModelRegistry"/>.</summary>

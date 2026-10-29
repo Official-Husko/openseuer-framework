@@ -99,6 +99,9 @@ public sealed class ListRow
 /// <summary>A long list. Change what it shows with <see cref="SetCount"/> and <see cref="Refresh"/>.</summary>
 public sealed class ListHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly KitList _list;
 
     internal ListHandle(KitList list)

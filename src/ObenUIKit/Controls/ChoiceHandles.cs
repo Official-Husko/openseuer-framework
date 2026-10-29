@@ -54,6 +54,9 @@ internal sealed class ChoiceStrip
 /// <summary>A segmented choice. <see cref="Set"/> changes the pick without calling the mod back.</summary>
 public sealed class ChoiceHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly ChoiceStrip _strip;
     private readonly Action<int> _onChange;
 
@@ -86,6 +89,9 @@ public sealed class ChoiceHandle
 /// <summary>A tab row and its pages. <see cref="Select"/> switches without calling the mod back.</summary>
 public sealed class TabsHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly ChoiceStrip _strip;
     private readonly RectTransform[] _pages;
     private readonly Action<int> _onChange;
@@ -119,6 +125,19 @@ public sealed class TabsHandle
     /// <summary>Changes a tab's name (a count in brackets, say).</summary>
     public void Rename(int index, string name) => _strip.Rename(index, name);
 
+    /// <summary>
+    /// A builder that adds to the end of tab <paramref name="index"/>'s page, for content that arrives after the
+    /// window was built. Its controls come last in keyboard navigation.
+    /// </summary>
+    public UiBuilder Page(int index)
+    {
+        if (index < 0 || index >= _pages.Length)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        return PageBuilder(_pages[index]);
+    }
+
+    internal Func<RectTransform, UiBuilder> PageBuilder { get; set; }
+
     internal void Pick(int index)
     {
         if (index == Selected)
@@ -133,7 +152,7 @@ public sealed class TabsHandle
 /// <summary>One colour square with the frame that marks the picked or hovered one.</summary>
 internal sealed class SwatchCell
 {
-    private const float Size = 40f;
+    internal const float Size = 40f;
     private const float Ring = 4f;
 
     private Image _ring;
@@ -181,6 +200,9 @@ internal sealed class SwatchCell
 /// <summary>A row of colour swatches. <see cref="Set"/> changes the pick without calling the mod back.</summary>
 public sealed class SwatchHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly SwatchCell[] _cells;
     private readonly Color[] _colors;
     private readonly Action<int> _onChange;

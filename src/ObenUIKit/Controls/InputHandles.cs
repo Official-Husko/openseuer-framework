@@ -6,6 +6,9 @@ namespace ObenUIKit.Controls;
 /// <summary>A text field. <see cref="Set"/> changes the text without calling the mod back.</summary>
 public sealed class FieldHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly TMP_InputField _input;
     private readonly KitField _focus;
 
@@ -37,24 +40,35 @@ public sealed class FieldHandle
     }
 }
 
-/// <summary>A key binding row. <see cref="Set"/> changes the key shown without calling the mod back.</summary>
+/// <summary>A key binding row. <see cref="Set(KeyCode)"/> changes the key shown without calling the mod back.</summary>
 public sealed class KeyBindHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly TMP_Text _text;
     private bool _waiting;
 
-    internal KeyBindHandle(TMP_Text text, KeyCode key)
+    private readonly bool _chord;
+
+    internal KeyBindHandle(TMP_Text text, KeyChord chord, bool withModifiers)
     {
         _text = text;
-        Key = key;
+        _chord = withModifiers;
+        Chord = chord;
         Show();
     }
 
-    public KeyCode Key { get; private set; }
+    public KeyCode Key => Chord.Key;
 
-    public void Set(KeyCode key)
+    /// <summary>The key with its Ctrl, Shift and Alt (none for a row built with a plain key).</summary>
+    public KeyChord Chord { get; private set; }
+
+    public void Set(KeyCode key) => Set(new KeyChord(key));
+
+    public void Set(KeyChord chord)
     {
-        Key = key;
+        Chord = chord;
         Show();
     }
 
@@ -68,6 +82,8 @@ public sealed class KeyBindHandle
     {
         if (_text == null)
             return;
-        _text.text = _waiting ? "Press a key (Esc cancels)" : KeyNames.Of(Key);
+        _text.text = !_waiting ? Chord.ToString()
+            : _chord ? "Hold Ctrl, Shift or Alt and press a key (Esc cancels)"
+            : "Press a key (Esc cancels)";
     }
 }

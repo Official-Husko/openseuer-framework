@@ -10,7 +10,8 @@ namespace ObenUIKit.Controls;
 /// <summary>
 /// Waits for the next key press for a key bind row. Esc, the pad's B or a click anywhere cancels. Pad buttons are
 /// kept as "any pad" (<c>JoystickButton3</c>). Mouse buttons, Esc and the pad's B can't be bound; modifiers can,
-/// since the game binds Walk and Crouch to them. Only enabled while waiting.
+/// since the game binds Walk and Crouch to them, except for a row that takes a key with modifiers, where they are
+/// what is held while the key is pressed. Only enabled while waiting.
 /// </summary>
 internal sealed class KitKeyCapture : MonoBehaviour
 {
@@ -19,12 +20,14 @@ internal sealed class KitKeyCapture : MonoBehaviour
     private Action<KeyCode> _picked;
     private Action<bool> _waiting;
     private bool _active;
+    private bool _skipModifiers;
     private int _startFrame;
 
-    internal void Init(Action<KeyCode> picked, Action<bool> waiting)
+    internal void Init(Action<KeyCode> picked, Action<bool> waiting, bool skipModifiers = false)
     {
         _picked = picked;
         _waiting = waiting;
+        _skipModifiers = skipModifiers;
         enabled = false;
     }
 
@@ -59,13 +62,20 @@ internal sealed class KitKeyCapture : MonoBehaviour
             // The any-pad buttons come before the numbered pads' in KeyCode, so a pad press lands there.
             if (key == KeyCode.None || key == KeyCode.Escape || key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6 || key > KeyCode.JoystickButton19)
                 continue;
-            if (!UInput.GetKeyDown(key))
+            if (!UInput.GetKeyDown(key) || _skipModifiers && IsModifier(key))
                 continue;
             End();
             _picked(key);
             return;
         }
     }
+
+    private static bool IsModifier(KeyCode key) => key switch
+    {
+        KeyCode.LeftControl or KeyCode.RightControl or KeyCode.LeftShift or KeyCode.RightShift => true,
+        KeyCode.LeftAlt or KeyCode.RightAlt or KeyCode.AltGr => true,
+        _ => false,
+    };
 
     private void OnDisable() => End();
 

@@ -37,7 +37,7 @@ public static class KitDemo
     private static void Build(UiBuilder ui)
     {
         ui.Label("Every control of the kit. Tabs keep their page when the window rebuilds.", muted: true);
-        ui.Tabs(new[] { "Choices", "Lists", "Model", "Windows", "HUD" }, (i, tab) =>
+        ui.Tabs(new[] { "Choices", "Lists", "Model", "Windows", "HUD", "More" }, (i, tab) =>
         {
             switch (i)
             {
@@ -45,7 +45,8 @@ public static class KitDemo
                 case 1: Lists(tab); break;
                 case 2: Model(tab); break;
                 case 3: KitDemoWindows.Build(tab); break;
-                default: KitDemoHud.Build(tab); break;
+                case 4: KitDemoHud.Build(tab); break;
+                default: KitDemoMore.Build(tab); break;
             }
         });
     }

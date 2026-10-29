@@ -7,6 +7,9 @@ namespace ObenUIKit.Controls;
 /// <summary>A number stepper. <see cref="Set"/> changes the value without calling the mod back.</summary>
 public sealed class StepperHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly TMP_Text _text;
     private readonly KitButton _down;
     private readonly KitButton _up;
@@ -81,6 +84,9 @@ public sealed class StepperHandle
 /// <summary>A card: a framed box with its own controls. Hide it to hide them all.</summary>
 public sealed class CardHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly RectTransform _card;
     private readonly TMP_Text _title;
 

@@ -175,6 +175,8 @@ New:
   - **Close reasons:** load a save from the pause menu with a kit window open: it closes (`SaveLoad`). A script that destroys a window's frame object closes it with `Destroyed`, and the game's keys come back.
   - **Pause Menu key:** with the game's Pause Menu action bound to another key, that key closes the top kit window too; the pad's Start does.
   - **Top inset:** a Right window with `Top = 110` starts 110 units below the top.
+  - **More tab of the demo:** the title, the green smaller label, Plain/Quiet/Box buttons (the boxes light up red), the Volume slider's Reset (shown while it isn't 0.50, on hover "Default: 0.50", Backspace on the row) and Max on its title bar side by side, the Ctrl+F7 key binding (hold Ctrl, Shift or Alt and press a key; a modifier alone doesn't finish it), twelve swatches in two rows without a header, the scroll area with its own bar (the wheel scrolls it, the keyboard highlight scrolls it), and the blue box drawn in a raw `Area`.
+  - **Slider once a frame:** dragging a slider whose callback logs prints at most one line a frame, the last value.
 
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 

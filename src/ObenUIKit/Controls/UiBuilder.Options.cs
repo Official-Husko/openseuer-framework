@@ -21,7 +21,7 @@ public sealed partial class UiBuilder
         UiParts.Stretch(value.rectTransform, 70f, 0f, 70f, 0f);
 
         CycleHandle handle = null;
-        handle = new CycleHandle(value, options, index, i => Guard(label, () => onChange?.Invoke(i)));
+        handle = new CycleHandle(value, options, index, i => Guard(label, () => onChange?.Invoke(i))) { Rect = row };
         Arrow(row, "<", left: true, () => handle.Step(-1));
         Arrow(row, ">", left: false, () => handle.Step(1));
         Action next = () => { _kit.Sounds.Press(); handle.Step(1); };
@@ -33,7 +33,10 @@ public sealed partial class UiBuilder
     public ToggleHandle Toggle(string label, bool value, Action<bool> onChange) =>
         new ToggleHandle(Cycle(label, OffOn, value ? 1 : 0, i => onChange?.Invoke(i == 1)));
 
-    /// <summary>A number between <paramref name="min"/> and <paramref name="max"/> with its value shown left of the bar.</summary>
+    /// <summary>
+    /// A number between <paramref name="min"/> and <paramref name="max"/> with its value shown left of the bar.
+    /// <paramref name="onChange"/> runs at most once a frame, at its end, with the latest value.
+    /// </summary>
     public SliderHandle Slider(string label, float min, float max, float value, Action<float> onChange,
         string format = "0", bool wholeNumbers = false)
     {
@@ -51,14 +54,25 @@ public sealed partial class UiBuilder
         slider.maxValue = max;
         slider.wholeNumbers = wholeNumbers;
         slider.SetValueWithoutNotify(value);
+        // A drag moves the value many times a frame; the mod hears the latest once, at the end of the frame.
+        float latest = value;
+        bool pending = false;
         slider.onValueChanged.AddListener(v =>
         {
             readout.text = KitText.Number(v, format);
-            Guard(label, () => onChange?.Invoke(v));
+            latest = v;
+            if (pending)
+                return;
+            pending = true;
+            _window.Defer(() =>
+            {
+                pending = false;
+                Guard(label, () => onChange?.Invoke(latest));
+            });
         });
         float step = wholeNumbers ? Mathf.Max(1f, Mathf.Round((max - min) / 50f)) : (max - min) / 20f;
         Register(kitRow, d => { slider.value += d * step; return true; }, null);
-        return new SliderHandle(slider, readout, format);
+        return new SliderHandle(slider, readout, format) { Rect = row };
     }
 
     private KitRow OptionRow(string name)

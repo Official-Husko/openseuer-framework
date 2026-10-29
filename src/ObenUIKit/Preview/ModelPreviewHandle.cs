@@ -11,6 +11,9 @@ namespace ObenUIKit.Preview;
 /// </summary>
 public sealed class ModelPreviewHandle
 {
+    /// <summary>The control's row (or its whole box), to add uGUI of your own to it or adjust its layout.</summary>
+    public RectTransform Rect { get; internal set; }
+
     private readonly KitModelView _view;
 
     internal ModelPreviewHandle(KitModelView view)

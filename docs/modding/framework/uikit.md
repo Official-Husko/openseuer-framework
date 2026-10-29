@@ -109,26 +109,42 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | Method | Looks like | Returns |
 | --- | --- | --- |
 | `Header(text)` | the grey bar above each setting in the game's options | `LabelHandle` |
-| `Label(text, muted, align)` | plain wrapped text; muted is greyer and smaller | `LabelHandle` |
+| `Title(text)` | a large line on the left for a section, without a bar | `LabelHandle` |
+| `Label(text, muted, align)` | plain wrapped text; muted is greyer and smaller | `LabelHandle` (`Text`, `Color`, `Size`) |
 | `Live(() => text, muted)` | a label read again four times a second while the window is open | `LabelHandle` |
 | `Button(text, onClick)` | underlined text button, like Apply and Back | `ButtonHandle` (`Enabled`, `Text`) |
+| `Button(text, style, onClick)` | `ButtonStyle.Plain` as above, `Quiet` (smaller and greyer, for lesser actions) or `Box` (a bar in the option-row look that lights up red, for the main action) | `ButtonHandle` |
 | `Cycle(label, options, index, onChange)` | a header and a `< value >` row; arrows step, the row lights up dark red under the cursor | `CycleHandle` (`Index`, `Set`, `SetOptions`) |
 | `Toggle(label, value, onChange)` | a cycle between Off and On; the game has no checkboxes | `ToggleHandle` (`Value`, `Set`) |
-| `Slider(label, min, max, value, onChange, format, wholeNumbers)` | a header and a slider with its value on the left | `SliderHandle` (`Value`, `Set`) |
+| `Slider(label, min, max, value, onChange, format, wholeNumbers)` | a header and a slider with its value on the left (written the same in every language); `onChange` runs at most once a frame, with the latest value | `SliderHandle` (`Value`, `Set`) |
 | `TextField(label, value, onChange, onEnd)` | a header and a box styled like the developer console's input field | `FieldHandle` (`Text`, `Set`, `Enabled`, `Focus()`) |
-| `KeyBind(label, key, onChange)` | a header and a row showing the key; click or Enter, then press the new key | `KeyBindHandle` (`Key`, `Set`) |
+| `KeyBind(label, key, onChange)` | a header and a row showing the key; click or Enter, then press the new key | `KeyBindHandle` (`Key`, `Chord`, `Set`) |
+| `KeyBind(label, chord, onChange)` | the same for a `KeyChord`: hold Ctrl, Shift or Alt and press the key | `KeyBindHandle` |
 | `Segmented(label, options, index, onChange)` | a header and a row with every option side by side; the picked one is lit and underlined | `ChoiceHandle` (`Index`, `Set`) |
-| `Tabs(names, (i, tab) => ..., index, onChange)` | a row of tab names over one page per tab | `TabsHandle` (`Selected`, `Select`, `Rename`) |
-| `Swatches(label, colors, index, onChange)` | a header and a row of colour squares; the picked one is framed | `SwatchHandle` (`Index`, `Color`, `Set`) |
+| `Tabs(names, (i, tab) => ..., index, onChange)` | a row of tab names over one page per tab | `TabsHandle` (`Selected`, `Select`, `Rename`, `Page(i)` to add to a page later) |
+| `Swatches(label, colors, index, onChange)` | a header (none for a null label) and colour squares in rows of up to eight; the picked one is framed | `SwatchHandle` (`Index`, `Color`, `Set`) |
 | `Stepper(label, value, min, max, step, onChange, format)` | a header and a `< 5 >` row that counts in steps and stops at the ends | `StepperHandle` (`Value`, `Set`, `SetRange`) |
 | `Card(title, c => ...)` | a framed grey box with its own controls and a small title | `CardHandle` (`Title`, `Visible`) |
 | `List(count, (i, row) => ..., onPick, rows)` | a long list that only builds the rows on screen | `ListHandle` (`Count`, `SetCount`, `Refresh`, `ScrollTo`, `Selected`) |
 | `ModelPreview(model or object, height)` | a box showing a 3D model, turned by dragging | `ModelPreviewHandle` (`Show`, `ShowItem`, `Clear`, `Spin`, `Rotation`, `Zoom`) |
 | `Tooltip(text)` | gives the control built just before it a tooltip | the builder, so calls chain |
-| `Row(r => ...)` | controls side by side, centred | |
+| `HeaderButton(text, onClick, tooltip)` | a small underlined button at the right end of the title bar of the control built just before it | `ButtonHandle` |
+| `Resettable(changed, reset, tooltip)` | gives the control built just before it a Reset like the Settings page's: shown on its title bar while `changed()` is true, and Backspace, Delete or the pad's X on its row | |
+| `Row(r => ...)`, `Row(r => ..., align, spacing)` | controls side by side, centred 40 apart, or placed and spaced as given | |
+| `Scroll(height, s => ...)` | a scrolling area of its own with its own scrollbar, for a long run of controls beside others that stay put | its `RectTransform` |
+| `Area(height)` | an empty area for uGUI of your own; put your objects under the rect it returns | `RectTransform` |
 | `Space(height)` | empty space | |
 
-`Set` on a handle changes what's shown without calling your callback. Callbacks are guarded: an exception is logged with the window's id and the window stays open (unless it was opened with `CloseOnError`).
+`Set` on a handle changes what's shown without calling your callback. Every handle has a `Rect` (the control's row or box) for uGUI of your own or layout changes. Callbacks are guarded: an exception is logged with the window's id and the window stays open (unless it was opened with `CloseOnError`).
+
+```csharp
+SliderHandle volume = null;
+volume = ui.Slider("Volume", 0f, 1f, _volume, v => _volume = v, "0.00");
+ui.Resettable(() => _volume != 0.5f, () => { _volume = 0.5f; volume.Set(0.5f); }, "Default: 0.50");
+ui.HeaderButton("Max", () => { _volume = 1f; volume.Set(1f); });
+```
+
+`HeaderButton` and `Resettable` go right after a control with a title bar (a slider, cycle, toggle, text field, key binding...); anywhere else they throw, which the window logs.
 
 ### Choices
 
@@ -517,4 +533,4 @@ The computers themselves (which one the player uses, sitting down and getting up
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
 - Only one key prompt shows at a time. A prompt's `Capture` goes through `InputCapture`, so keys the game reads straight from Unity (F1, the toolbelt numbers) still reach the game.
 - Main menu buttons go under the sign's grid; with many rows they may run past the bottom of the sign (`oben call menu.buttons` reports whether each sits inside the menu's rectangle).
-- Only one tab row per `Tabs` call and no nested scrolling inside a tab: a tab's page is part of the window's body and scrolls with it.
+- Only one tab row per `Tabs` call. A tab's page is part of the window's body and scrolls with it; a `Scroll` area inside it scrolls on its own, but the wheel doesn't pass on to the window once the inner area reaches its end.

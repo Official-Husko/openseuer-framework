@@ -41,7 +41,7 @@ public sealed partial class UiBuilder
         if (build != null)
             Guard(title ?? "Card", () => build(new UiBuilder(_kit, _window, card, _inBody, _group)));
         _last = card;
-        return new CardHandle(card, heading);
+        return new CardHandle(card, heading) { Rect = card };
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public sealed partial class UiBuilder
         var frame = UiParts.Image(_parent, "List", null, Color.clear, raycast: true);
         UiParts.Height(frame, Mathf.Max(1f, rows) * KitList.RowHeight);
         var list = frame.gameObject.AddComponent<KitList>();
-        var handle = new ListHandle(list);
+        var handle = new ListHandle(list) { Rect = frame.rectTransform };
         var window = _window;
         list.Init(_kit, Theme, Mathf.Max(0, count), bind, onPick,
             top => window.Remember(key, top),

@@ -28,6 +28,9 @@ public static class GameCheck
     private static bool _running;
     private static bool _ranThisSession;
 
+    /// <summary>A check started reading the assemblies (not raised when a kept result is used).</summary>
+    public static readonly GameEvent Started = new GameEvent(nameof(Started));
+
     /// <summary>The check finished; on the main thread.</summary>
     public static readonly GameEvent<GameCheckResult> Finished = new GameEvent<GameCheckResult>(nameof(Finished));
 
@@ -79,6 +82,7 @@ public static class GameCheck
         }
 
         _running = true;
+        Started.Raise(_log);
         string managed = Path.Combine(Application.dataPath, "Managed");
         string game = Loader.GameBuild;
         Task.Run(() => GameCheckRun.Run(managed, targets, game, verified, mismatch))

@@ -24,6 +24,7 @@ internal static class MenuStatusLine
     public static void Init(ObenMod kit)
     {
         _text = null;
+        GameCheck.Started.Subscribe(kit, Refresh);
         GameCheck.Finished.Subscribe(kit, _ => Refresh());
         GameEvents.MainMenu.Subscribe(kit, Refresh);
         GameEvents.SceneLoaded.Subscribe(kit, _ => Refresh());

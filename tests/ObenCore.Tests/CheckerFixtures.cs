@@ -1,3 +1,4 @@
+using Oben.Checks;
 // Stand-ins for "the game" and for mod code that hooks it. The hook checker is pointed at this
 // very assembly, so every class here is read back through Cecil and checked against Target.
 using HarmonyLib;

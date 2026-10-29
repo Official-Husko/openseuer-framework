@@ -1,6 +1,11 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>
 /// Reads the [HarmonyPatch] attributes in a mod (category classes included) and checks that each target

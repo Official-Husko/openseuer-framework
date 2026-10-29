@@ -1,6 +1,11 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>Shared steps for the scanners: resolving a referenced type and naming where a hook is in the mod.</summary>
 public static class TypeChecks
@@ -33,7 +38,7 @@ public static class TypeChecks
     /// <summary>The outermost class a method sits in (lambdas and iterators live in generated nested classes).</summary>
     public static string OuterClass(TypeDefinition type)
     {
-        while (type.DeclaringType != null && type.Name.StartsWith('<'))
+        while (type.DeclaringType != null && type.Name.StartsWith("<", StringComparison.Ordinal))
             type = type.DeclaringType;
         return type.FullName.Replace('/', '+');
     }
@@ -42,8 +47,8 @@ public static class TypeChecks
     public static string PlainName(MethodDefinition method)
     {
         string name = method.Name;
-        if (name.StartsWith('<') && name.IndexOf('>') is > 1 and var close)
-            return name[1..close];
+        if (name.StartsWith("<", StringComparison.Ordinal) && name.IndexOf('>') is > 1 and var close)
+            return name.Substring(1, close - 1);
         return name;
     }
 }

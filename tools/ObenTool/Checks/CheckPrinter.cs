@@ -1,3 +1,4 @@
+using Oben.Checks;
 namespace ObenTool.Checks;
 
 /// <summary>Prints the results of a check, grouped by mod, and works out the exit code.</summary>

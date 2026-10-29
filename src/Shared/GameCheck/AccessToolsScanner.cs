@@ -1,7 +1,12 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>
 /// Finds calls such as AccessTools.Method(typeof(X), "Name") in a mod's IL and checks the member is
@@ -77,11 +82,11 @@ public static class AccessToolsScanner
         {
             owner = IlArgs.AsType(args[typeParam]);
         }
-        else if (name != null && name.Contains(':'))
+        else if (name != null && name.IndexOf(':') >= 0)
         {
             // The single-string form: "Namespace.Type:Member".
-            ownerName = name[..name.IndexOf(':')];
-            name = name[(name.IndexOf(':') + 1)..];
+            ownerName = name.Substring(0, name.IndexOf(':'));
+            name = name.Substring(name.IndexOf(':') + 1);
         }
         else if (call is GenericInstanceMethod { GenericArguments.Count: 2 } generic && call.Name.EndsWith("FieldRefAccess"))
         {

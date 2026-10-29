@@ -13,6 +13,13 @@
     <Reference Include="netstandard;UnityEngine.UnityWebRequestModule;UnityEngine.UnityWebRequestAudioModule"
                HintPath="$(ObenManagedDir)/%(Identity).dll" Private="false" />  </ItemGroup>
 
+  <!-- The hook and member checks behind "oben check", run in the game at start (Diagnostics/GameCheck). Cecil
+       ships in the game's Managed folder with the loader, so it is only referenced here. -->
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" IncludeAssets="compile" PrivateAssets="all" />
+    <Compile Include="../Shared/GameCheck/*.cs" Link="Diagnostics/Checks/%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <!-- Ships as a regular mod folder: <game>/Mods/ObenFramework. -->
   <Import Project="$(RepoRoot)build/Mod.targets" />
 </Project>

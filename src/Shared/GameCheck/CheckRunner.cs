@@ -1,6 +1,11 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>Loads mod assemblies next to the game's and runs every scanner over them.</summary>
 public static class CheckRunner

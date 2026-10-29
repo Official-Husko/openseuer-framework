@@ -1,6 +1,11 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>
 /// Checks the parameters of a patch method against the method it patches: Harmony hands them over by
@@ -19,7 +24,7 @@ public static class PatchParameters
         {
             string name = parameter.Name;
             if (name.StartsWith("___"))
-                CheckField(report, cls, hook, patch, target, name[3..], name);
+                CheckField(report, cls, hook, patch, target, name.Substring(3), name);
             else if (name.StartsWith("__") && Special.Contains(name))
                 continue;
             else if (original != null)
@@ -42,7 +47,7 @@ public static class PatchParameters
         MethodDefinition original, string name)
     {
         // __0, __1 ... pick an argument by position.
-        if (name.StartsWith("__") && int.TryParse(name[2..], out int index))
+        if (name.StartsWith("__") && int.TryParse(name.Substring(2), out int index))
         {
             if (index >= original.Parameters.Count)
                 report.Add(Severity.Missing, cls, hook, $"{patch.Name}: parameter {name} is past the last argument of {original.Name} ({original.Parameters.Count})");

@@ -1,7 +1,12 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>
 /// Works out which instructions produced each argument of a call, so constants such as typeof(X) and

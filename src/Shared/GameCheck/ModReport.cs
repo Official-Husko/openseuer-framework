@@ -1,4 +1,9 @@
-namespace ObenTool.Checks;
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+namespace Oben.Checks;
 
 /// <summary>What the checks found out about one mod assembly.</summary>
 public sealed class ModReport

@@ -1,3 +1,4 @@
+using Oben.Checks;
 using ObenTool.Checks;
 using ObenTool.Cli;
 using ObenTool.Game;

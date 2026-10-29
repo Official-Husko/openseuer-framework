@@ -1,4 +1,5 @@
 using Mono.Cecil;
+using Oben.Checks;
 using ObenTool.Checks;
 
 namespace ObenCore.Tests;

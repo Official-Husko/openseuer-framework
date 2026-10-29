@@ -1,3 +1,4 @@
+using Oben.Checks;
 namespace ObenTool.Checks;
 
 /// <summary>Finds the mod DLLs to check: the repo's builds, or what is installed in the game's Mods folder.</summary>

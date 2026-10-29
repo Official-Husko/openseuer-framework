@@ -1,6 +1,11 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
-namespace ObenTool.Checks;
+namespace Oben.Checks;
 
 /// <summary>
 /// What one [HarmonyPatch(...)] attribute says about the target. Attributes on a class and on a patch

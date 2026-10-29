@@ -22,9 +22,10 @@
     <Compile Include="../../mods/ObenSave/Files/*.cs" Link="Saves/Files/%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Reads the game's and the mods' assemblies for "oben check". -->
+  <!-- Reads the game's and the mods' assemblies for "oben check"; the same checks run in the game (ObenFramework's GameCheck). -->
   <ItemGroup>
     <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" />
+    <Compile Include="../../src/Shared/GameCheck/*.cs" Link="Checks/Shared/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game.

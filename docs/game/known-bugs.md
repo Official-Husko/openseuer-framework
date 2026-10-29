@@ -87,6 +87,12 @@ So every load of those levels logs a `NullReferenceException` from `LightControl
 
 Fix: a prefix switches a controller with no `Light` next to it off before `Awake` runs, the same end state without the error. Tested on 0.5.13 with a controller added to an empty object in Interior Tenement Kolhola: with the fix off, one `NullReferenceException` in Player.log; with it on, none. Either way the controller ends switched off and outside `LightsController.controllersAll`. A controller with a light is untouched (on, distances set as before). Check in the level: Open Sewer Tenement loads without a `LightController.Awake` error.
 
+### ItemGiverRefillTime: refilling item givers count down twice as fast after a load
+
+An item giver that refills over time (`spawnSettings.respawnEnabled`, e.g. the cup dispensers in Interior Tenement Kolhola) subscribes `DeltaSeconds` to the static `TimeOfDayAzure.SecondsPassed` from `InitCoroutine`, which `Start` begins (`InteractableItemGiver.cs:192-219`). `OnLoadingGame` (`:148-150`) calls `Start()` itself, and Unity calls it too; `Start` checks a `startDone` flag (`:125`, `:194`) that is never set, so a giver in a level loaded from a save (every door) runs the coroutine twice and is subscribed twice. `SpawnSettings.TimeToSpawn` (`SpawnSettings.cs:133`) subtracts the passed seconds on every call, so its refill timer runs at double speed (givers on an every-day schedule are not affected). `OnDestroy` (`:537`) takes one copy off; the other stays on the static event after the level unloads, and on the next tick `DeltaSeconds` finds itself destroyed, logs "InteractableItemGiver is null!" and unsubscribes (`:511-515`). Seen on 2026-10-29/30: one error per cup dispenser each time the player left Kolhola, and two subscriptions per dispenser while there.
+
+Fix: a transpiler on `InitCoroutine`'s state machine replaces the subscription with one that takes the same handler off first, so a giver is subscribed once however often its setup runs. Setting `startDone` instead would also skip the second `Start` where it is the only one that starts the coroutine (a giver loaded while inactive), and that giver would never refill. Tested on 0.5.13: after walking into Kolhola with the fix on, each dispenser had one subscription (two before) and no destroyed giver was left on the clock.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

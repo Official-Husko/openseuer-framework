@@ -11,7 +11,7 @@ namespace ObenLoader.Config;
 /// to the defaults set in <typeparamref name="T"/>'s constructor or field initialisers. Every value that
 /// changes on a save or reload is written to the mod's log ("StackSize 2 -> 3").
 /// </summary>
-public sealed class ConfigFile<T> where T : class, new()
+public sealed class ConfigFile<T> : IConfigFile where T : class, new()
 {
     private readonly ModLogger _log;
 
@@ -23,6 +23,10 @@ public sealed class ConfigFile<T> where T : class, new()
 
     /// <summary>A fresh object with the default values (what a missing file gives).</summary>
     public T Defaults => new T();
+
+    Type IConfigFile.ValueType => typeof(T);
+    object IConfigFile.Value => Value;
+    object IConfigFile.Defaults => Defaults;
 
     /// <summary>Raised after <see cref="Save"/> or <see cref="Reload"/>. A handler that throws is logged, not passed on.</summary>
     public event Action<T> Changed;

@@ -20,6 +20,7 @@ namespace ObenLoader;
 public abstract class ObenMod : ITracker
 {
     private readonly List<IDisposable> _tracked = new List<IDisposable>();
+    private readonly List<IConfigFile> _configs = new List<IConfigFile>();
     private Harmony _harmony;
 
     public ModInfo Info { get; internal set; }
@@ -37,9 +38,25 @@ public abstract class ObenMod : ITracker
     /// <summary>Path inside the mod folder.</summary>
     public string PathTo(string relative) => Path.Combine(Info.Directory, relative);
 
-    /// <summary>Loads (or creates) &lt;mod folder&gt;/&lt;fileName&gt; as typed settings.</summary>
+    /// <summary>The config files this load of the mod opened with <see cref="LoadConfig{T}"/>, one per file.</summary>
+    public IReadOnlyList<IConfigFile> Configs => _configs;
+
+    /// <summary>
+    /// Loads (or creates) &lt;mod folder&gt;/&lt;fileName&gt; as typed settings. The file is listed in
+    /// <see cref="Configs"/>, which is how the mod menu's Settings page finds it; mark the settings class
+    /// <c>[System.ComponentModel.Browsable(false)]</c> to keep it off that page.
+    /// </summary>
     public ConfigFile<T> LoadConfig<T>(string fileName = "config.json") where T : class, new()
-        => new ConfigFile<T>(PathTo(fileName), Log);
+    {
+        var config = new ConfigFile<T>(PathTo(fileName), Log);
+        // Loading the same file again replaces the earlier copy, in its place.
+        int index = _configs.FindIndex(c => string.Equals(c.Path, config.Path, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0)
+            _configs[index] = config;
+        else
+            _configs.Add(config);
+        return config;
+    }
 
     /// <summary>
     /// Registers something to dispose when the mod unloads (event subscriptions, spawned objects,

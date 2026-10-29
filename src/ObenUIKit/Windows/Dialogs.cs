@@ -26,7 +26,8 @@ internal static class Dialogs
                     try { onYes?.Invoke(); }
                     catch (Exception e) { kit.Log.Error($"The answer to '{title}' failed", e); }
                 });
-                f.Button(no, window.Close);
+                // A lambda: the footer is built inside UiKit.Open, before 'window' is assigned.
+                f.Button(no, () => window.Close());
             },
             width: Width, height: Height);
         return window;

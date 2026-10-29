@@ -2,6 +2,7 @@
   "id": "PerformanceFixes",
   "name": "Performance Fixes",
   "version": "0.1.0",
+  "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Cuts needless work the game does every frame, such as refreshing the whole inventory dozens of times a second. Every fix can be switched off on its own.",
   "dependencies": { "ObenFramework": "0.1.0" },

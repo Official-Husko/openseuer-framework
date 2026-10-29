@@ -2,6 +2,7 @@
   "id": "ObenPatches",
   "name": "Unofficial ObenPatches",
   "version": "0.1.0",
+  "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Fixes for bugs in the game. Every fix can be switched on or off on its own.",
   "dependencies": { "ObenFramework": "0.1.0" },

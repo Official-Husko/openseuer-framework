@@ -18,7 +18,18 @@ internal static class DevActions
     {
         ctx.Run(what, () =>
         {
-            var result = change();
+            QuestResult result;
+            try
+            {
+                result = change();
+            }
+            catch
+            {
+                // It may have failed halfway, with part of the change already in the save.
+                if (marks)
+                    DevMarks.Mark();
+                throw;
+            }
             if (result.Changed)
             {
                 if (marks)
@@ -38,8 +49,15 @@ internal static class DevActions
     {
         ctx.Run(what, () =>
         {
-            change();
-            DevMarks.Mark();
+            try
+            {
+                change();
+            }
+            finally
+            {
+                // Also when it throws halfway: part of the change may already be in the save.
+                DevMarks.Mark();
+            }
             ctx.Say(what + ": done.");
         });
         ui.Window.Rebuild();

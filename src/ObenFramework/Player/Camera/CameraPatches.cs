@@ -1,7 +1,8 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using HarmonyLib;
+using ObenFramework.Patching;
 
-namespace GameTweaks.Camera;
+namespace ObenFramework.Player;
 
 /// <summary>The view the camera had before a save was written, put back right after.</summary>
 internal struct SavedView
@@ -16,25 +17,29 @@ internal struct SavedView
 }
 
 /// <summary>
-/// The camera tweak's hooks: which camera triggers force first person right now, and keeping the unlocked
-/// third-person camera out of the save. The camera's lock flags, mode and distance are saved with the game,
-/// so while a save is written the camera briefly looks the way the game left it (first person, locked),
-/// and a save made in third person loads fine without this mod.
+/// <see cref="CameraView"/>'s hooks: which camera triggers force first person right now, keeping the body drawn
+/// in first person for a mod, and keeping an unlocked third-person camera out of the save. The camera's lock
+/// flags, mode and distance are saved with the game, so while a save is written the camera briefly looks the
+/// way the game left it (first person, locked), and a save made in third person loads fine without mods.
 /// </summary>
-[HarmonyPatchCategory(ThirdPersonTweak.Key)]
+[PatchArea("Camera")]
 [HarmonyPatch]
 internal static class CameraPatches
 {
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerCameraTrigger), nameof(PlayerCameraTrigger.FirstPersonOnly))]
-    private static void TriggerSet(PlayerCameraTrigger __instance, bool enabled) => CameraView.TriggerChanged(__instance, enabled);
+    private static void TriggerSet(PlayerCameraTrigger __instance, bool enabled) => CameraLocks.TriggerChanged(__instance, enabled);
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(ThirdPersonCameraCollision), nameof(ThirdPersonCameraCollision.HidePlayerModel))]
+    private static bool HidingBody() => !CameraView.FirstPersonBodyShown;
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ThirdPersonCameraCollision), nameof(ThirdPersonCameraCollision.OnSavingGame))]
     private static void BeforeSave(ThirdPersonCameraCollision __instance, out SavedView __state)
     {
         __state = default;
-        bool unlocked = CameraView.GameLocks(__instance, out bool disableThirdPerson, out bool firstPersonOnly);
+        bool unlocked = CameraLocks.GameLocks(__instance, out bool disableThirdPerson, out bool firstPersonOnly);
         if (!unlocked && __instance.firstperson)
             return;
 

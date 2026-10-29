@@ -24,6 +24,27 @@ The cheat menu's move speed slider is one of these multipliers.
 
 **Holding the player still.** `PlayerControls.Lock(this)` stops walking, the camera and the game's keys the way dialogue does (`showCursor: true` for a window the player clicks in); `PlayerControls.LockLook(this)` only stops the camera turning. Both return an `IDisposable`, are held per mod (the player moves again when the last one lets go), come back after a level load while held, and outlast the game's own camera toggles without undoing them. `Locked` and `LookLocked` tell whether a mod holds one.
 
+## Camera view
+
+The game still has its third-person camera but keeps it locked. `CameraView` unlocks it for mods:
+
+```csharp
+if (!CameraView.SetThirdPerson(this, distance: 3f))
+    UiKit.Toast("The camera has to stay in first person here.");
+CameraView.Toggle(this);                 // a hotkey: first to third, third to first
+CameraView.SetFirstPerson(this);         // drop this mod's request
+CameraView.AllowScrollZoom(this, true);  // the mouse wheel zooms in and out of third person
+CameraView.SetFirstPersonBody(this);     // keep the body drawn in first person (a mirror, a cutscene)
+CameraView.ModeChanged.Subscribe(this, firstPerson => ...);
+```
+
+- **Requests are per mod.** The camera stays in third person while any mod asks for it; `SetFirstPerson` returns false while another mod still does. The game's lock values come back when the last request (and the last scroll-zoom allowance) goes. Requests and kept bodies end with a level load or when their mod unloads; scroll zoom is kept over level loads.
+- **The game wins where it needs first person.** Camera triggers in cutscenes and tight spaces, and building mode (the wheel turns furniture there), pull the camera in. `SetThirdPerson` returns false there; a request made earlier waits (`ThirdPersonHeldBack`) and the camera goes back out when the game lets go.
+- **Saves stay clean.** While a save is written the camera looks the way the game left it (first person, locked), so a save made in third person loads fine without mods.
+- `IsAvailable`, `IsFirstPerson`, `ThirdPersonAllowed` (false when the camera's hooks are switched off), `ThirdPersonWanted`, `Wants(mod)`, `ScrollZoomAllowed` and `FirstPersonBodyShown` read the state. The distance is clamped to what the game's camera allows, and at least 0.5 m (the game shows first person below that).
+
+Third person is a mode the game no longer uses, so the body, its animations and clipping through walls can look rough. The Game Tweaks mod's F6 key is built on this.
+
 ## Sleeping and waiting
 
 ```csharp

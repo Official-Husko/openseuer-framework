@@ -18,7 +18,7 @@ The tweaks are a port of the `Tweaks*` files and `CameraView` of the reference f
 | `RenovationMoneyOnly` | Renovations need only money | | prefixes on `TenementController.CheckForItem` and `RemoveRequiredItems` |
 | `RenovationTime` | Faster (or slower) renovations | Renovation time (0.5), Instant renovations (off) | prefix on `TenementUpgradeProgress.AddUpgrade`, postfix on `TenementUpgrade.GetRequiredTimeHours` |
 | `DayLength` | Longer (or shorter) days | Time speed (0.5) | prefix on `AzureTimeController.SetNewDayLength` |
-| `ThirdPerson` | Third-person camera | Third person distance (2.5 m), Scroll to zoom (off); the key is on the Hotkeys page (F6) | unlocks `ThirdPersonCameraCollision`; patches on `PlayerCameraTrigger.FirstPersonOnly` and `ThirdPersonCameraCollision.OnSavingGame` |
+| `ThirdPerson` | Third-person camera | Third person distance (2.5 m), Scroll to zoom (off); the key is on the Hotkeys page (F6) | the framework's `CameraView` (no patches of its own) |
 
 ## Notes per tweak
 
@@ -36,7 +36,7 @@ The tweaks are a port of the `Tweaks*` files and `CameraView` of the reference f
 
 **Day length.** The game hands the sky controller the length of a day in real minutes every frame (`TimeOfDayAzure.actualSpeed`, 96 minutes in the tenement at speed 1). Dividing it there moves the clock, the timers and every stat tick together, without touching `dayLenghtInMinutes`, which is in the save. Sleeping and waiting still speed time up on top. Two small things keep the unscaled length: the power meters' usage per real second, and where an NPC is put along its path when a level loads.
 
-**Third-person camera.** The game still has its third-person camera but locks it (`disableThirdPerson`, `firstpersonOnly`, both true in the tenement). The hotkey lifts the locks and moves the camera back; going back to first person (or switching the tweak off) puts the game's values back. Camera triggers that force first person and the game's zoom blockers win: the camera goes back to first person and a toast says so. While a save is written the camera briefly looks the way the game left it, so a save made in third person loads in first person, with or without the mod. Third person is a mode the game no longer uses, so the body, its animations and clipping can look rough.
+**Third-person camera.** The game still has its third-person camera but locks it (`disableThirdPerson`, `firstpersonOnly`, both true in the tenement). The hotkey asks the framework's `CameraView` (see [framework/player-actions.md](framework/player-actions.md)) to lift the locks and move the camera back; going back to first person (or switching the tweak off) puts the game's values back. Camera triggers that force first person and building mode win: the camera goes in, a toast says so once, and it goes back out when the game lets go. A level change ends third person. While a save is written the camera briefly looks the way the game left it, so a save made in third person loads in first person, with or without the mod. Third person is a mode the game no longer uses, so the body, its animations and clipping can look rough.
 
 ## Checking in game
 

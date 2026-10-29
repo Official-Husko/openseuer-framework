@@ -69,6 +69,7 @@ public sealed class FrameworkMod : ObenMod
         Start("player look", PlayerLookWatcher.Init);
         Start("survival", SurvivalEvents.Init);
         Start("player", Player.PlayerModule.Init);
+        Start("camera", Player.CameraView.Init, Player.CameraView.Update);
         Start("shops", ShopsModule.Init);
         Start("economy", EconomyModule.Init);
         Start("gambling", GamblingModule.Init);

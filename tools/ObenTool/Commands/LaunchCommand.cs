@@ -27,7 +27,7 @@ public sealed class LaunchCommand : ICommand
             throw new InvalidOperationException(
                 "The game only allows one copy at a time. Run 'oben install --multi-instance' first (undo with --single-instance).");
 
-        var gameArgs = args.Has("fullscreen") ? Array.Empty<string>() : GameProcess.WindowedArgs;
+        var gameArgs = args.Has("fullscreen") ? GameProcess.FullscreenArgs : GameProcess.WindowedArgs;
         Out.Info(GameProcess.Launch(game, instance, gameArgs));
 
         int wait = args.GetInt("wait", 0);

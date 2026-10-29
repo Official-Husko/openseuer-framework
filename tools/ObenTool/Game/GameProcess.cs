@@ -8,6 +8,9 @@ public static class GameProcess
     public static readonly string[] WindowedArgs =
         { "-screen-fullscreen", "0", "-screen-width", "1600", "-screen-height", "900" };
 
+    /// <summary>Fullscreen whatever the game saved last (Unity keeps the last screen mode).</summary>
+    public static readonly string[] FullscreenArgs = { "-screen-fullscreen", "1" };
+
     /// <summary>Is the game running? With an instance, only that copy counts (1 is the normal one).</summary>
     public static bool IsRunning(int? instance = null) => GameProcesses.Find(instance).Any();
 

@@ -95,7 +95,16 @@ New:
   - With hints off, `Hud.Hint` returns `IsActive` False, while a forced hint is still active; on again, hints show.
   - With prompts off, `Hud.ShownPrompt` is null; on again, the prompt comes back.
 - [ ] **Setting switches by hand:** flip both switches on MODS, Settings, UI kit and watch a mod hint and a prompt.
-- [ ] `oben call ui.state` in a level with nothing open: `inWorld: true`, `busy: false`, `windows: []`.
+- [x] `oben call ui.state` in a level with nothing open: `inWorld: true`, `busy: false`, `windows: []`. Passed 2026-10-29, with `captureHooks`, `rawKeyHooks` and `pauseHooks` true.
+- [x] **Input and UI state (M05):** passed 2026-10-29 in the tenement.
+  - **Raw keys:** every `Input.GetKey*(KeyCode)` call in `GameController.Update`, `DeveloperConsole.ShouldToggleDevConsole` and the three `InteractableList` methods goes through `RawKeys` (6, 6, 2, 2, 2; none left).
+  - **What each capture holds:** `Key(F12)` holds only F12; `Action("Screenshot")` holds F11; `All` holds 1, 4 and X, but not F1, F11, F12 or pad buttons.
+  - **F12 tapped through Unity:** with nothing held, `TakeScreenshot.ScreenshotNoUI` ran; with F12 held it didn't; with `All` it still ran.
+  - **Real presses by the owner:** F1 held kept the console shut and F1 free opened it; F12 held did nothing.
+  - **Hotkeys pressed by the owner:** test hotkeys K and Ctrl+K. K fired only K; Ctrl+K fired only Ctrl+K. `Down`, `Held`, `Up` were logged in order, and letting go of Ctrl before K ended Ctrl+K without a stray K "up" (fixed during the test). The K clash with the game's Hints key was logged at registration.
+  - **Window over the inventory:** opening `ui.demo` over the inventory closed the inventory; closing the window left nothing locked. `CursorVisible` and `InventoryDisabled` follow the game.
+  - **Pad buttons:** `JoystickButton3` reads "Pad Y" and clashes with the game's controller Y.
+- [ ] **By hand with a pad:** bind a mod hotkey to a pad button on the Hotkeys page and press it. Hold a capture of `Key(Alpha1)` with a tool equipped: 1 doesn't put it away.
 - [ ] **`oben call ui.demo`, Choices tab:**
   - a segmented Slow/Normal/Fast/Silly row with Normal lit;
   - seven swatches with a frame on red;

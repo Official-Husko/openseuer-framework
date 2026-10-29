@@ -19,6 +19,10 @@ public static class InputLock
         AccessTools.FieldRefAccess<ThirdPersonCameraController, bool>("moveDisabled");
     private static readonly AccessTools.FieldRef<ThirdPersonCameraController, bool> FirstPersonMoveDisabled =
         AccessTools.FieldRefAccess<ThirdPersonCameraController, bool>("firstpersonMoveDisabled");
+    private static readonly AccessTools.FieldRef<GameController, System.Collections.Generic.List<GameObject>> KeyHolders =
+        AccessTools.FieldRefAccess<GameController, System.Collections.Generic.List<GameObject>>("disabledKeysList");
+    private static readonly AccessTools.FieldRef<GameController, System.Collections.Generic.List<GameObject>> CursorHolders =
+        AccessTools.FieldRefAccess<GameController, System.Collections.Generic.List<GameObject>>("disabledCursorList");
 
     private static GameObject _owner;
     private static int _leases;
@@ -70,6 +74,7 @@ public static class InputLock
         var game = GameController.instance;
         if (game != null)
         {
+            CloseGameMenu();
             game.ControlsDisabled(_owner, ShowCursor: true);
             return;
         }
@@ -85,6 +90,23 @@ public static class InputLock
         Cursor.visible = true;
     }
 
+    // A game menu (inventory, map) and a mod window both wanting the keys don't mix: the window wins, as in
+    // the reference framework. The game's own close also gives back the menu's control lock.
+    private static void CloseGameMenu()
+    {
+        var ui = GameUIController.instance;
+        if (ui == null || !ui.IsMenuVisible)
+            return;
+        try
+        {
+            ui.HideGameMenu(forceHide: true);
+        }
+        catch (Exception e)
+        {
+            UIKitMod.Instance?.Log.Error("Closing the game's menu for a mod window failed", e);
+        }
+    }
+
     // GameController.ControlsEnabled also frees the camera unconditionally, which would undo a camera lock
     // something else holds (sitting at a computer, lying in bed, a cutscene). Keep those as they were.
     private static void Unlock(GameController game)
@@ -96,6 +118,11 @@ public static class InputLock
         {
             game.ControlsEnabled(_owner);
         }
+        catch (Exception e)
+        {
+            UIKitMod.Instance?.Log.Error("Giving the controls back failed; freeing the keys and cursor directly", e);
+            Recover(game);
+        }
         finally
         {
             if (camera != null)
@@ -103,6 +130,27 @@ public static class InputLock
                 MoveDisabled(camera) = move;
                 FirstPersonMoveDisabled(camera) = firstPerson;
             }
+        }
+    }
+
+    // ControlsEnabled drops our entry from its lists first and can throw before it frees the keys (it reaches
+    // camera singletons unguarded). Free what no one else holds, so the player isn't left stuck.
+    private static void Recover(GameController game)
+    {
+        try
+        {
+            if (KeyHolders(game).Count == 0)
+                game.keysDisabled = false;
+            if (CursorHolders(game).Count == 0)
+            {
+                game.cursorVisible = false;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+        catch (Exception e)
+        {
+            UIKitMod.Instance?.Log.Error("Freeing the keys failed too", e);
         }
     }
 

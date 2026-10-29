@@ -126,6 +126,7 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] BankInterest: weekly interest on savings and debts
 - [x] RenovationMaterialsOnce: `TenementController.RemoveRequiredItems` passed the full amount to every storage instead of what's still missing, so renovations took the item from every storage that held it
 - [ ] BankExchangeCoins: changing Real Money into coins uses an integer division (`TotalOCSupply / DailyAverageOcSpending`), so it pays 0 coins whenever the bank's coin supply is below its daily spending; the quote checks the RM supply instead and divides by zero when daily coin spending is 0
+- [ ] ScreenshotFolder: F11 and F12 never save a screenshot. `TakeScreenshot` makes `Obenseuer/Screenshots` but hands Unity the relative path `Screenshots/...`, which the player resolves inside `Obenseuer_Data`, so every shot ends in "Failed to store screen shot" (seen 2026-10-29). Pass the full path, or create the folder Unity writes to
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
 ## Review follow-ups
@@ -142,7 +143,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [ ] Kit: main menu mod buttons are copied active, so the copy's localization components run before they are stripped (check the label in game)
 - [ ] Kit: a guide waits forever when another mod hides its prompt
 - [ ] Kit: float settings miss the number ladder (`NumberSteps` compares the widened float with 1e-9, so 0.15f adds a second "0.15")
-- [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but story upgrades and orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Remember each order's total at `AddUpgrade` and work progress out from that
+- [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Story upgrades are scaled since 2026-10-29. Remember each order's total at `AddUpgrade` and work progress out from that
 - [ ] Game Tweaks: switching scroll zoom on inside a first-person trigger lifts that trigger's lock (triggers already active aren't registered)
 - [ ] Tracer: failed calls skip the per-window line cap
 - [ ] Cheat Menu: watches call any property getter four times a second; a watch whose type is gone searches every assembly on each rebuild; stat sliders without a maximum stop at 100

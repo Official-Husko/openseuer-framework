@@ -41,7 +41,7 @@ UiWindow window = UiKit.Open(this, "mymod.settings", "My Mod", ui =>
 - The id keeps a window single: opening the same id again returns the open window.
 - Without a `footer` the window gets a Back button. Pass `footer: f => { f.Button(...); }` for your own.
 - Esc (or the pad's B) closes the top window. It closes a frame later, so the same key press doesn't also reach the game. While a text field or a key binding row has the keyboard, Esc goes to it instead and the window stays.
-- The window locks game input (movement, mouse look, hotkeys) and shows the cursor while open. In a level that goes through the game's own `GameController` lock; at the main menu the menu's keyboard navigation is paused.
+- The window locks game input (movement, mouse look, hotkeys) and shows the cursor while open. In a level that goes through the game's own `GameController` lock, and a game menu that is open (inventory, map) closes first, since both can't have the keys. If the game's unlock throws on the way out, the keys and cursor are freed directly so the player isn't left stuck. At the main menu the menu's keyboard navigation is paused.
 - Over the pause menu, the pause menu's keyboard handler and its Esc toggle are held off until the window closes.
 - Windows close on their own when the player changes level.
 

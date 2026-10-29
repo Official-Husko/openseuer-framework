@@ -487,7 +487,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [ ] **ReflectionProbeRefresh** (off by default): check it in a level before turning it on.
 - [ ] **NpcSightChance** (off by default): an NPC's sight check before and after.
 - [ ] **StrayLightControllers:** load Open Sewer Tenement: Player.log has no `LightController.Awake` NullReferenceException (before the fix: one per load). The fix itself passed with a stray controller added in Interior Tenement Kolhola (2026-10-30).
-- [ ] **ItemGiverRefillTime:** leave Interior Tenement Kolhola: Player.log has no "InteractableItemGiver is null!" (before the fix: one per cup dispenser). Walking in with the fix passed on 2026-10-30: one clock subscription per dispenser instead of two.
+- [x] **ItemGiverRefillTime:** leave Interior Tenement Kolhola: Player.log has no "InteractableItemGiver is null!" (before the fix: one per cup dispenser). (2026-10-30: walking in, one clock subscription per dispenser instead of two; leaving at 00:29 and four more level loads, no error.)
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

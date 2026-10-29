@@ -1,10 +1,26 @@
 using System.Collections.Generic;
+using ObenLoader.Runtime;
 
 namespace ObenLoader.Mods;
 
+/// <summary>What is known about the running game: its version, Steam build (null off Steam) and code hash.</summary>
+internal readonly struct GameIdentity
+{
+    public GameIdentity(string version, string buildId = null, string codeHash = null)
+    {
+        Version = version;
+        BuildId = buildId;
+        CodeHash = codeHash;
+    }
+
+    public string Version { get; }
+    public string BuildId { get; }
+    public string CodeHash { get; }
+}
+
 /// <summary>
 /// Checks on a mod's manifest before it loads: a usable id, readable versions and dependencies, and the game
-/// version and Steam build it says it was made for. Plain logic with the game's version passed in, so it is
+/// version, Steam build and game code it says it was made for. Plain logic with the game's version passed in, so it is
 /// tested on its own.
 /// </summary>
 internal static class ModChecks
@@ -25,8 +41,13 @@ internal static class ModChecks
     /// </summary>
     /// <param name="buildId">The installed game's Steam build id, or null when it isn't known (no Steam manifest).</param>
     /// <param name="strictAll">The player's loader setting that refuses every mod made for another game version.</param>
-    public static string Refusal(ModManifest manifest, string gameVersion, string buildId, bool strictAll, out string warning, out string note)
+    public static string Refusal(ModManifest manifest, string gameVersion, string buildId, bool strictAll, out string warning, out string note) =>
+        Refusal(manifest, new GameIdentity(gameVersion, buildId), strictAll, out warning, out note);
+
+    /// <inheritdoc cref="Refusal(ModManifest, string, string, bool, out string, out string)"/>
+    public static string Refusal(ModManifest manifest, GameIdentity game, bool strictAll, out string warning, out string note)
     {
+        string gameVersion = game.Version;
         warning = null;
         note = null;
         string idProblem = ModIds.Problem(manifest.Id);
@@ -49,15 +70,15 @@ internal static class ModChecks
             return null;
         }
 
-        string game = GameProblem(manifest, gameVersion) ?? BuildProblem(manifest, buildId);
-        if (game != null)
+        string mismatch = Mismatch(manifest, game);
+        if (mismatch != null)
         {
             bool checkable = string.IsNullOrWhiteSpace(manifest.GameVersion) || VersionRange.TryParse(manifest.GameVersion, out _, out _);
             if (checkable && manifest.StrictGameVersion)
-                return game + " It only loads on those versions (strictGameVersion in its mod.json).";
+                return mismatch + " It only loads on those versions (strictGameVersion in its mod.json).";
             if (checkable && strictAll)
-                return game + " Mods made for other game versions are switched off (RefuseOtherGameVersions in ObenLoader/settings.json).";
-            notes.Add(checkable ? game + " It may not work right." : game);
+                return mismatch + " Mods made for other game versions are switched off (RefuseOtherGameVersions in ObenLoader/settings.json).";
+            notes.Add(checkable ? mismatch + " It may not work right." : mismatch);
         }
         warning = notes.Count > 0 ? string.Join(" ", notes) : null;
         return null;
@@ -80,19 +101,41 @@ internal static class ModChecks
     }
 
     /// <summary>
-    /// A sentence saying the game's Steam build isn't one the mod lists in <c>gameBuilds</c>, or null when it
-    /// is, the mod lists none, or the build isn't known.
+    /// Why the running game isn't one the mod was made for (version, Steam build or code), or null when it is,
+    /// the mod says it fits every version, or nothing it names can be checked here.
     /// </summary>
-    public static string BuildProblem(ModManifest manifest, string buildId)
+    public static string Mismatch(ModManifest manifest, GameIdentity game) =>
+        IsAnyGameVersion(manifest) ? null : GameProblem(manifest, game.Version) ?? BuildProblem(manifest, game.BuildId, game.CodeHash);
+
+    /// <summary>
+    /// A sentence saying the game is neither a Steam build in <c>gameBuilds</c> nor has a code hash in
+    /// <c>gameHashes</c>, or null when one of them matches, or nothing listed can be checked (no lists, or a
+    /// copy that didn't come from Steam with only Steam builds listed).
+    /// </summary>
+    public static string BuildProblem(ModManifest manifest, string buildId, string codeHash = null)
     {
-        if (string.IsNullOrEmpty(buildId) || manifest.GameBuilds == null || manifest.GameBuilds.Count == 0)
+        bool builds = buildId != null && manifest.GameBuilds != null && manifest.GameBuilds.Count > 0;
+        bool hashes = codeHash != null && manifest.GameHashes != null && manifest.GameHashes.Count > 0;
+        if (!builds && !hashes)
             return null;
-        foreach (string build in manifest.GameBuilds)
+        if (builds && manifest.GameBuilds.Exists(b => string.Equals(b?.Trim(), buildId, System.StringComparison.Ordinal)))
+            return null;
+        if (hashes && manifest.GameHashes.Exists(h => GameFiles.Matches(h, codeHash)))
+            return null;
+
+        var madeFor = new List<string>();
+        var running = new List<string>();
+        if (builds)
         {
-            if (string.Equals(build?.Trim(), buildId, System.StringComparison.Ordinal))
-                return null;
+            madeFor.Add("Steam build " + string.Join(", ", manifest.GameBuilds));
+            running.Add("build " + buildId);
         }
-        return $"Made for Steam build {string.Join(", ", manifest.GameBuilds)}, this is build {buildId}.";
+        if (hashes)
+        {
+            madeFor.Add("game code " + string.Join(", ", manifest.GameHashes));
+            running.Add("code " + GameFiles.Short(codeHash));
+        }
+        return $"Made for {string.Join(" or ", madeFor)}, this is {string.Join(", ", running)}.";
     }
 
     private static string DependencyProblem(ModManifest manifest)

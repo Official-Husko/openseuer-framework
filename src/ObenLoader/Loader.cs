@@ -22,14 +22,32 @@ public static class Loader
     /// </summary>
     public static string GameBuildId { get; private set; }
 
-    /// <summary>"0.5.13 (build 123456)", or just the version when the build isn't known.</summary>
-    public static string GameBuild => GameBuildId == null ? GameVersion : $"{GameVersion} (build {GameBuildId})";
+    /// <summary>
+    /// Lowercase hex SHA-256 of the game's code (Assembly-CSharp.dll), the same for a game version whichever
+    /// store it came from; checked against each mod's gameHashes. Null when the file can't be read.
+    /// </summary>
+    public static string GameCodeHash { get; private set; }
+
+    /// <summary>Lowercase hex SHA-256 of the game's exe, for telling copies apart when hunting a problem.</summary>
+    public static string GameExeHash { get; private set; }
+
+    /// <summary>"0.5.13 (build 123456, code 72c44ab48d2e)": the version with whatever else is known.</summary>
+    public static string GameBuild
+    {
+        get
+        {
+            string build = GameBuildId != null ? $"build {GameBuildId}, " : "";
+            return GameCodeHash == null ? GameVersion : $"{GameVersion} ({build}code {GameFiles.Short(GameCodeHash)})";
+        }
+    }
 
     internal static void Start()
     {
         GameVersion = Application.version;
         LoaderPaths.Init();
         GameBuildId = SteamBuild.Read(LoaderPaths.GameDir);
+        GameCodeHash = GameFiles.Hash(System.IO.Path.Combine(Application.dataPath, "Managed", "Assembly-CSharp.dll"));
+        GameExeHash = GameFiles.Hash(LoaderPaths.GameExe);
         LogHub.Init(LoaderPaths.LogsDir);
         ModRegistry.Init(Log);
         if (ModRegistry.Settings.VerboseLog)
@@ -38,7 +56,7 @@ public static class Loader
         Log.Info($"ObenLoader {Version} on Unity {Application.unityVersion}, game {GameBuild}, instance {Instance.Number}");
         if (ModRegistry.Settings.RefuseOtherGameVersions)
             Log.Info("Mods made for another game version or build are refused (RefuseOtherGameVersions in ObenLoader/settings.json).");
-        Log.Info($"Game folder: {LoaderPaths.GameDir}");
+        Log.Info($"Game folder: {LoaderPaths.GameDir} (exe {GameFiles.Short(GameExeHash) ?? "unreadable"})");
 
         InlineJumps.Use(Log);
         ModLifecycle.Init(ModHost.Create(Log), Log);

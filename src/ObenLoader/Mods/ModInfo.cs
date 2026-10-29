@@ -17,6 +17,12 @@ public sealed class ModInfo
     /// <summary>The mod is a DLL lying directly in the Mods folder rather than in a folder of its own.</summary>
     public bool IsLoose { get; internal set; }
 
+    /// <summary>
+    /// Why the running game isn't one this mod was made for (version, Steam build, code), or null when it is
+    /// or nothing the mod names can be checked. Set when the mod loads.
+    /// </summary>
+    public string GameMismatch { get; internal set; }
+
     /// <summary>The mod says it works with every game version (anyGameVersion, or a gameVersion of "*").</summary>
     public bool AnyGameVersion => ModChecks.IsAnyGameVersion(Manifest);
     public ModState State { get; internal set; } = ModState.Pending;

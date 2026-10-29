@@ -325,6 +325,65 @@ public class ModChecksTests
     }
 }
 
+public class GameHashTests
+{
+    private const string Code = "72c44ab48d2ea50f0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    private static ModManifest Made(string[]? builds = null, string[]? hashes = null) => new ModManifest
+    {
+        Id = "MyMod",
+        Version = "1.0.0",
+        GameBuilds = new List<string>(builds ?? Array.Empty<string>()),
+        GameHashes = new List<string>(hashes ?? Array.Empty<string>()),
+    };
+
+    [Theory]
+    [InlineData("72c44ab4", true)]
+    [InlineData("72C44AB48D2E", true)]
+    [InlineData(Code, true)]
+    [InlineData("72c44ab", false)]          // too short to mean anything
+    [InlineData("72c44ab48d2f", false)]
+    [InlineData("", false)]
+    public void HashesMatchByPrefix(string listed, bool expected) =>
+        Assert.Equal(expected, ObenLoader.Runtime.GameFiles.Matches(listed, Code));
+
+    [Fact]
+    public void ListedCodeMatchesOnAnyStore() =>
+        Assert.Null(ModChecks.BuildProblem(Made(hashes: new[] { "72c44ab48d2e" }), null, Code));
+
+    [Fact]
+    public void OtherCodeIsAMismatch()
+    {
+        string problem = ModChecks.BuildProblem(Made(hashes: new[] { "0a1b2c3d4e5f" }), null, Code);
+        Assert.Contains("game code 0a1b2c3d4e5f", problem);
+        Assert.Contains("code 72c44ab48d2e", problem);
+    }
+
+    [Fact]
+    public void EitherIdentityIsEnough()
+    {
+        // A hotfix that only rebuilt the exe: new Steam build, same code.
+        Assert.Null(ModChecks.BuildProblem(Made(new[] { "26179069" }, new[] { "72c44ab48d2e" }), "26200000", Code));
+        // The other way round: listed build, unknown code.
+        Assert.Null(ModChecks.BuildProblem(Made(new[] { "26179069" }, new[] { "0a1b2c3d4e5f" }), "26179069", Code));
+    }
+
+    [Fact]
+    public void OnlySteamBuildsListedIsNotCheckedOffSteam() =>
+        Assert.Null(ModChecks.BuildProblem(Made(new[] { "26179069" }), null, Code));
+
+    [Fact]
+    public void ModInfoMismatchUsesEverything()
+    {
+        var game = new GameIdentity("0.5.13", "26179069", Code);
+        var manifest = Made(hashes: new[] { "0a1b2c3d4e5f" });
+        manifest.GameVersion = "0.5.13";
+        Assert.NotNull(ModChecks.Mismatch(manifest, game));
+        manifest.AnyGameVersion = true;
+        Assert.Null(ModChecks.Mismatch(manifest, game));
+    }
+}
+
 public class SteamBuildTests
 {
     private const string Manifest = "\"AppState\"\n{\n\t\"appid\"\t\t\"951240\"\n\t\"name\"\t\t\"Obenseuer\"\n\t\"buildid\"\t\t\"25969064\"\n\t\"installdir\"\t\t\"Obenseuer\"\n}";

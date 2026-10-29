@@ -65,5 +65,12 @@ public sealed class ModManifest
     /// </summary>
     [JsonProperty("gameBuilds")] public List<string> GameBuilds = new List<string>();
 
+    /// <summary>
+    /// SHA-256 hashes (or prefixes of at least 8 hex digits) of the game's Assembly-CSharp.dll the mod was
+    /// made for. Checked like <see cref="GameVersion"/> on every copy of the game, whichever store it came
+    /// from: the log shows the running game's as "code ...".
+    /// </summary>
+    [JsonProperty("gameHashes")] public List<string> GameHashes = new List<string>();
+
     public string DisplayName => string.IsNullOrEmpty(Name) ? Id : Name;
 }

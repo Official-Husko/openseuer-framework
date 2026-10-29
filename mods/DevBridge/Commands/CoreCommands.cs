@@ -31,6 +31,8 @@ internal static class CoreCommands
         ["loaderVersion"] = Loader.Version,
         ["gameVersion"] = Application.version,
         ["gameBuildId"] = Loader.GameBuildId,
+        ["gameCodeHash"] = Loader.GameCodeHash,
+        ["gameExeHash"] = Loader.GameExeHash,
         ["unityVersion"] = Application.unityVersion,
         ["fps"] = Mathf.Round(1f / Mathf.Max(Time.smoothDeltaTime, 0.0001f)),
         ["timeScale"] = Time.timeScale,

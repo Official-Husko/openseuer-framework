@@ -13,7 +13,8 @@ public static partial class ErrorReport
         var sb = new StringBuilder();
         sb.Append("ObenseuerExtended error report\n");
         sb.Append("Written ").Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")).Append('\n');
-        sb.Append("Game ").Append(Application.productName).Append(' ').Append(Application.version)
+        sb.Append("Game ").Append(Application.productName).Append(' ').Append(Loader.GameBuild ?? Application.version)
+          .Append(", exe ").Append(Runtime.GameFiles.Short(Loader.GameExeHash) ?? "unreadable")
           .Append(", Unity ").Append(Application.unityVersion)
           .Append(", ObenLoader ").Append(Loader.Version)
           .Append(", ").Append(SystemInfo.operatingSystem).Append('\n');

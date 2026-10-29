@@ -6,7 +6,8 @@ namespace ObenLoader.Runtime;
 
 /// <summary>
 /// The game's Steam build id, read from Steam's app manifest (<c>steamapps/appmanifest_951240.acf</c>, two
-/// folders above the game). Copies installed some other way (a sideloaded or DRM-free install) have none.
+/// folders above the game, or a copy of it kept in the game folder or one of its folders, as depot downloads
+/// keep it). Copies from other stores have none; <see cref="GameFiles"/> identifies those by their code.
 /// </summary>
 internal static class SteamBuild
 {
@@ -20,6 +21,10 @@ internal static class SteamBuild
     {
         try
         {
+            string kept = KeptCopy(gameDir);
+            if (kept != null)
+                return Parse(File.ReadAllText(kept), null);
+
             var common = Directory.GetParent(gameDir);
             var steamApps = common?.Parent;
             if (steamApps == null || !steamApps.Exists)
@@ -40,6 +45,22 @@ internal static class SteamBuild
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
         {
+        }
+        return null;
+    }
+
+    // A manifest kept with the game (in its folder or one folder down) beats guessing at a library.
+    private static string KeptCopy(string gameDir)
+    {
+        string name = "appmanifest_" + AppId + ".acf";
+        string direct = Path.Combine(gameDir, name);
+        if (File.Exists(direct))
+            return direct;
+        foreach (string sub in Directory.GetDirectories(gameDir))
+        {
+            string inside = Path.Combine(sub, name);
+            if (File.Exists(inside))
+                return inside;
         }
         return null;
     }

@@ -80,8 +80,9 @@ internal static partial class ModLifecycle
 
     private static bool TryActivate(ModInfo mod)
     {
-        string refusal = ModChecks.Refusal(mod.Manifest, Loader.GameVersion, Loader.GameBuildId, ModRegistry.Settings.RefuseOtherGameVersions,
-            out string warning, out string note);
+        var game = new GameIdentity(Loader.GameVersion, Loader.GameBuildId, Loader.GameCodeHash);
+        mod.GameMismatch = ModChecks.Mismatch(mod.Manifest, game);
+        string refusal = ModChecks.Refusal(mod.Manifest, game, ModRegistry.Settings.RefuseOtherGameVersions, out string warning, out string note);
         if (refusal != null)
         {
             mod.Fail(refusal);

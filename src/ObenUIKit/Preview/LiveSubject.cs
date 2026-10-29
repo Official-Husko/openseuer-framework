@@ -28,7 +28,7 @@ internal sealed class LiveSubject : IDisposable
     private static LiveSubject _current;
 
     private readonly Transform _facing;
-    private readonly GameObject[] _roots;
+    private readonly GameObject _root;
     private readonly int _layer;
     private readonly List<Claimed> _claimed = new List<Claimed>();
     private readonly HashSet<Renderer> _known = new HashSet<Renderer>();
@@ -36,33 +36,39 @@ internal sealed class LiveSubject : IDisposable
     private readonly List<KeyValuePair<Light, int>> _lights = new List<KeyValuePair<Light, int>>();
     private bool _disposed;
 
-    private LiveSubject(Transform facing, GameObject[] roots, int layer)
+    // The renderers under root that are active once the given objects are switched on; parts the game keeps
+    // inactive (unchosen outfit slots, an unused model) are left alone.
+    private LiveSubject(GameObject root, GameObject[] switchOn, int layer)
     {
         _current?.Dispose();
         _current = this;
-        _facing = facing;
-        _roots = roots;
+        _facing = root.transform;
+        _root = root;
         _layer = layer;
-        foreach (var root in roots)
-            Activate(root);
+        foreach (var target in switchOn)
+            Activate(target);
         Adopt();
         MaskLights();
     }
 
-    /// <summary>The player's body (both rigs), or null outside a level.</summary>
+    /// <summary>
+    /// The player's body, or null outside a level. In first person the game switches the two rigs off and the
+    /// body's renderers (which sit beside the rigs) off as well; both come on for the preview.
+    /// </summary>
     public static LiveSubject Player(int layer)
     {
         var locator = PlayerLocator.instance;
         if (locator == null || locator.playerRig == null)
             return null;
-        var roots = locator.playerRigUnrigified != null
+        var rigs = locator.playerRigUnrigified != null
             ? new[] { locator.playerRig, locator.playerRigUnrigified }
             : new[] { locator.playerRig };
-        return new LiveSubject(locator.transform, roots, layer);
+        return new LiveSubject(locator.gameObject, rigs, layer);
     }
 
     /// <summary>Any object in the scene, faced from its own forward.</summary>
-    public static LiveSubject Of(GameObject root, int layer) => root == null ? null : new LiveSubject(root.transform, new[] { root }, layer);
+    public static LiveSubject Of(GameObject root, int layer) =>
+        root == null ? null : new LiveSubject(root, new[] { root }, layer);
 
     /// <summary>The object is still there.</summary>
     public bool Alive => !_disposed && _facing != null;
@@ -77,8 +83,20 @@ internal sealed class LiveSubject : IDisposable
         }
     }
 
-    /// <summary>How many renderers the preview shows.</summary>
-    public int Count => _claimed.Count;
+    /// <summary>How many renderers the preview shows (the claimed ones that are on).</summary>
+    public int Count
+    {
+        get
+        {
+            int count = 0;
+            foreach (var claimed in _claimed)
+            {
+                if (claimed.Renderer != null && claimed.Renderer.enabled && claimed.Renderer.gameObject.activeInHierarchy)
+                    count++;
+            }
+            return count;
+        }
+    }
 
     /// <summary>Picks up renderers added since (a changed outfit) and claims them too.</summary>
     public void Refresh()
@@ -147,24 +165,21 @@ internal sealed class LiveSubject : IDisposable
 
     private void Adopt()
     {
-        foreach (var root in _roots)
+        if (_root == null)
+            return;
+        foreach (var renderer in _root.GetComponentsInChildren<Renderer>(true))
         {
-            if (root == null)
+            if (!(renderer is MeshRenderer) && !(renderer is SkinnedMeshRenderer) || !_known.Add(renderer))
                 continue;
-            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            var claimed = new Claimed { Renderer = renderer, Enabled = renderer.enabled, Layer = renderer.gameObject.layer };
+            if (renderer is SkinnedMeshRenderer skin)
             {
-                if (!(renderer is MeshRenderer) && !(renderer is SkinnedMeshRenderer) || !_known.Add(renderer))
-                    continue;
-                var claimed = new Claimed { Renderer = renderer, Enabled = renderer.enabled, Layer = renderer.gameObject.layer };
-                if (renderer is SkinnedMeshRenderer skin)
-                {
-                    claimed.Offscreen = skin.updateWhenOffscreen;
-                    claimed.LocalBounds = skin.localBounds;
-                    claimed.Mesh = skin.sharedMesh;
-                }
-                _claimed.Add(claimed);
-                Claim(renderer);
+                claimed.Offscreen = skin.updateWhenOffscreen;
+                claimed.LocalBounds = skin.localBounds;
+                claimed.Mesh = skin.sharedMesh;
             }
+            _claimed.Add(claimed);
+            Claim(renderer);
         }
     }
 

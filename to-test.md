@@ -146,25 +146,25 @@ New:
   - `menu.buttons remove=true` removes them.
 - [ ] **What's New:** MODS → Settings → "UI kit" → "Read What's New" opens the page. "Show What's New at the next start" clears `LastSeenVersion`, and the popup shows on the next launch.
 - [ ] **Camera after a kit window:** sit on a chair (or lie in bed), open and close a kit window. The camera stays locked the way the game had it.
-- [ ] **Mod menu (M06).** Needs a fresh start: the loader changed (`ObenMod.Configs`). 2026-10-29: everything a script can drive passed (notes per item); the key presses and the real mouse wheel are still open.
+- [x] **Mod menu (M06).** Passed 2026-10-29 after a fresh start: the script-driven parts by script (notes per item), the key presses, hover and wheel by hand.
   - [x] **Configs found by themselves:** MODS → Settings → the Mod cycle lists Cheat Menu, DevBridge, DevBridge (trace), Game tweaks, ObenCoop, Performance Fixes and UI kit, each once. hotkeys.json isn't there. Cheat Menu shows only Key; Spots, Watches and MoveSpeed stay hidden.
   - [x] **Descriptions and lists:** the ObenCoop fields have their descriptions. "Ignored mods" reads "DevBridge, ScriptRunner"; changing it writes a JSON list to the file. (Typing "DevBridge, ScriptRunner , CheatMenu," wrote the three names; the field then kept the raw text, fixed: it shows what was saved.)
   - **Reset per setting:**
     - [x] Change Game tweaks' stack size; "Reset" appears at the right end of its title bar.
-    - [ ] Hovering it shows "Default: 2" (the mark carries that text; the hover needs the real mouse), and clicking it puts the value back and hides it (passed by script).
-    - [ ] Backspace on the highlighted row does the same, and so does the pad's X. Backspace on an unchanged row does nothing.
+    - [x] Hovering it shows "Default: 2", and clicking it puts the value back and hides it.
+    - [x] Backspace on the highlighted row does the same. Backspace on an unchanged row does nothing. (The pad's X wasn't tried.)
   - [x] **Search:** (passed by script: "speed" gave one Game tweaks card with its three speed settings, an edit there was written, "game tweaks" listed all 17, "port" found Dev Bridge and ObenCoop.)
     - Type "speed" in the search box and press Enter: a card per mod with a matching setting.
     - Change a value in the results: the file is written.
     - "Clear the search" goes back to one mod at a time, and closing and reopening the menu empties the search.
     - "game tweaks" finds every Game tweaks setting.
   - **Page keys:**
-    - [ ] PgUp/PgDn, Q and the pad's LB/RB turn pages, wrapping at both ends (the turn itself passed by script, both ways round). Q in the search box types a q.
+    - [x] PgUp/PgDn and Q turn pages, wrapping at both ends. Q in the search box types a q. (The pad's bumpers weren't tried.)
     - [x] The footer hint fits next to Back (three short lines).
   - [x] **A broken page:** a script adds a page whose build throws. The page shows "This page couldn't be shown", the error is in the kit's log, and the page row still turns.
-  - [ ] **Quit flush:** drag a slider and press Alt+F4 within a quarter second. The value is in the file.
+  - [x] **Quit flush:** drag a slider and press Alt+F4 within a quarter second. The value is in the file. (By script: a slider set and `Application.Quit()` in the same frame; `CraftingSpeed 2.0 -> 3.0` was logged right before "Game closing" and is in the file.)
   - [x] **New field kinds:** from a script, `ModSettings.Draw` a test config with a `[Flags]` enum, a `Vector3` and a `[Setting(Choices = ...)]` string into a window. They show as switches, a text field and a cycle; text that isn't three numbers puts the old vector back. (Passed after a fix: a config holding a Vector3 or Color couldn't be saved at all, Newtonsoft stopped on `Vector3.normalized` as a loop. They save as `{"x", "y", "z"}` now.)
-- [ ] **Scrolling in kit windows:** the mouse wheel scrolls MODS anywhere over the page (over text and gaps, not only over controls); a thin bar on the right shows the position and can be dragged, and it is gone on a page that fits. On What's New, Down and Up scroll the notes a step at a time. (By script: the wheel's raycast reaches the body from text and gaps, and Down/Up stepped What's New by 340 px.)
+- [x] **Scrolling in kit windows:** (2026-10-29, by hand.) the mouse wheel scrolls MODS anywhere over the page (over text and gaps, not only over controls); a thin bar on the right shows the position and can be dragged, and it is gone on a page that fits. On What's New, Down and Up scroll the notes a step at a time. (By script: the wheel's raycast reaches the body from text and gaps, and Down/Up stepped What's New by 340 px.)
 - [x] **What's New look:** release title, date line, colored counts, a card per mod, lines tagged feat/change/fix/remove in color with wrapped lines lined up. "MODS > Cheats" shows a real ">". (2026-10-29, screenshot.)
 - [x] **Errors page colors:** a caught problem (amber) with an inner exception and an uncaught one through Debug.LogException (red): "Caused by" on its own line, Unity's and Mono's frames colored, `S.Loader.Items (lambda)` and `(async or iterator)` names, System and Unity frames dimmed, "Show all 15 lines" and "Show less". (2026-10-29, screenshots.)
 - [x] **MODS button color:** MODS on the main menu has the same color as the other buttons (it kept the "???" placeholder's grey). (2026-10-29.)

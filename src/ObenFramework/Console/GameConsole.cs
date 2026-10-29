@@ -23,6 +23,26 @@ public static class GameConsole
 
     public static IEnumerable<ConsoleCommand> ModCommands => Commands.Values;
 
+    /// <summary>Opens the console, as F1 does. False when it doesn't exist yet or is already open.</summary>
+    public static bool Open()
+    {
+        var console = DeveloperConsole.Instance;
+        if (console == null || console.consoleOpened)
+            return false;
+        console.ToggleDevConsole();
+        return true;
+    }
+
+    /// <summary>Closes the console; the game finishes closing it a frame later. False when it isn't open.</summary>
+    public static bool Close()
+    {
+        var console = DeveloperConsole.Instance;
+        if (console == null || !console.consoleOpened)
+            return false;
+        console.ToggleDevConsole();
+        return true;
+    }
+
     /// <summary>
     /// Adds a command owned by a mod. Names can't clash with each other; a mod command with the same
     /// name as one of the game's replaces it while the mod is loaded.

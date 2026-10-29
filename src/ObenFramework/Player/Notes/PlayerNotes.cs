@@ -143,6 +143,48 @@ public static class PlayerNotes
         return Holds(controller, note);
     }
 
+    /// <summary>
+    /// Opens the menu's notes page at a held note, book or book page, as reading one from the inventory
+    /// does. A book opens at the page it was left on. False without a player, while saving or loading, or
+    /// when the player doesn't hold it.
+    /// </summary>
+    public static bool Open(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            throw new ArgumentException("Give the id of a held note, book or page.", nameof(id));
+        var controller = NoteController.instance;
+        if (controller == null || controller.notes == null || SaveGate.IsBusy)
+            return false;
+        var page = HeldPage(controller, id);
+        if (page == null)
+            return false;
+        controller.ReadNote(page);
+        return true;
+    }
+
+    private static NoteInfo HeldPage(NoteController controller, string id)
+    {
+        foreach (var entry in controller.notes)
+        {
+            if (entry == null)
+                continue;
+            if (entry.book == null)
+            {
+                if (entry.note != null && entry.note.Id == id)
+                    return entry.note;
+                continue;
+            }
+            if (entry.book.Id == id)
+                return entry.CurrentPage;
+            foreach (var page in entry.collectedPages)
+            {
+                if (page != null && page.Id == id)
+                    return page;
+            }
+        }
+        return null;
+    }
+
     /// <summary>Whether the player's notes hold this note (or this page of its book).</summary>
     internal static bool Holds(NoteController controller, NoteInfo note)
     {

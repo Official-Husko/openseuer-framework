@@ -50,7 +50,8 @@ problem() {
 
 [ -z "$(git status --porcelain)" ] || problem "the working tree has uncommitted changes"
 branch=$(git branch --show-current)
-last=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+# Only vX.Y.Z tags are releases; experimental builds are tagged vX.Y.Z+<commit>.
+last=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 last=${last#v}
 ! git rev-parse -q --verify "refs/tags/v$version" > /dev/null || problem "v$version already exists"
 if [ -n "$last" ]; then
@@ -116,7 +117,8 @@ build/package.sh "$version"
 zip="dist/ObenseuerExtended-$version.zip"
 [ -f "$zip" ] || false
 
-git tag -a "v$version" -m "ObenseuerExtended $version" -m "$(cat "$notes")"
+# Verbatim, or git drops the notes' "### Added" headings as comments.
+git tag -a --cleanup=verbatim "v$version" -m "ObenseuerExtended $version" -m "$(cat "$notes")"
 trap - ERR
 echo
 echo "Release $version is committed, packaged ($zip) and tagged v$version. Nothing has been pushed."

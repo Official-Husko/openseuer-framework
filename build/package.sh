@@ -2,7 +2,8 @@
 # Builds the player package: dist/ObenseuerExtended-<version>.zip with the mods, the oben tool for Linux
 # and Windows (self-contained, no .NET install needed) and the install scripts from build/package.
 #
-#   build/package.sh [version]     the version defaults to <Version> in Directory.Build.props
+#   build/package.sh [version] [name]   the version defaults to <Version> in Directory.Build.props, the name
+#                                       (folder and zip) to ObenseuerExtended-<version>
 #
 # Mods whose mod.json says "devOnly": true (the dev bridge, the script runner) stay out: they open a
 # local port or run code sent to the game, and are only for people making mods. Never deploys into the game.
@@ -11,7 +12,8 @@ set -euo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
 version=${1:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$repo/Directory.Build.props" | head -n 1)}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || { echo "package: '$version' isn't a version" >&2; exit 1; }
-name="ObenseuerExtended-$version"
+name=${2:-ObenseuerExtended-$version}
+[[ $name =~ ^[0-9A-Za-z._-]+$ ]] || { echo "package: '$name' isn't a plain file name" >&2; exit 1; }
 out="$repo/dist/$name"
 
 # Every folder with a mod.json that isn't marked devOnly, and the project to build for it.

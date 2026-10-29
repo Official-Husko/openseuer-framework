@@ -1,12 +1,18 @@
 # Releasing
 
-A release is a git tag `vX.Y.Z`, a zip players unpack and install from, and release notes made from the commit trailers. `build/package.sh` makes the zip, `build/release.sh` does the whole local part of a release. Nothing is pushed unless you ask for it.
+A release is a git tag, a zip players unpack and install from, and release notes made from the commit trailers. There are two kinds:
+
+- **Experimental** builds, GitHub pre-releases from `build/experimental.sh`: every few commits, or when a milestone is done. Named after the last stable version and the commit, `0.1.0 (57a4977)`, tagged `v0.1.0+57a4977`.
+- **Stable** releases from `build/release.sh X.Y.Z`, tagged `vX.Y.Z`: only when the owner says so.
+
+`build/package.sh` makes the zip for both. The pause menu shows the same `ObenseuerExtended v0.1.0 (57a4977)` for the installed build, read from the kit's assembly (`build/Revision.targets` stamps the commit into every assembly, with `-dirty` for uncommitted changes), so a player's report or a screenshot says which build it was, and after a hot reload the line tells whether the change loaded.
 
 ## The player package
 
 ```sh
 build/package.sh            # version from Directory.Build.props
 build/package.sh 0.2.0      # or a version of your own
+build/package.sh 0.2.0 ObenseuerExtended-0.2.0-experimental-57a4977   # and a name for the folder and zip
 ```
 
 It builds the player mods in Release without deploying them into the game, publishes `oben` self-contained and as one file for `linux-x64` and `win-x64` (players need no .NET), and writes `dist/ObenseuerExtended-<version>/` and the `.zip` next to it. Set `OBENSEUER_DIR` if the game isn't in the default place, the build needs its assemblies.
@@ -33,6 +39,23 @@ The payload (`ObenLoader.dll`, `0Harmony.dll`, `Mono.Cecil.dll`) is looked up in
 
 To try the installer without touching a real game, make a folder with an empty `Obenseuer.exe`, an `Obenseuer_Data/Managed` folder and copies of `ScriptingAssemblies.json` and `RuntimeInitializeOnLoads.json` in `Obenseuer_Data`, unpack the zip and run `install.sh --game <that folder>`.
 
+## Experimental builds
+
+```sh
+build/experimental.sh --dry-run   # what it would do, and the notes
+build/experimental.sh             # test, package, tag, push and publish the pre-release
+build/experimental.sh --local     # test and package only
+```
+
+Publish one every few commits, or when a milestone is done, from a clean tree on `main`. The script:
+
+1. Works out the version: the newest `vX.Y.Z` tag (or `<Version>` in `Directory.Build.props` before the first stable release) and the commit as `git describe --abbrev=7` writes it, the same one the assemblies carry.
+2. Stops when the tree has uncommitted changes, the commit is already released, or nothing is new since the previous release of either kind.
+3. Runs the tests, writes `changelog.json` (its new lines stay `Unreleased`), and builds `dist/ObenseuerExtended-X.Y.Z-experimental-<commit>.zip` from that commit.
+4. Tags `vX.Y.Z+<commit>`, pushes the branch and the tag, and creates a GitHub pre-release titled "ObenseuerExtended vX.Y.Z (<commit>), experimental". If the push fails the tag is taken back; if only the release fails it prints the command to make it.
+
+The notes start with a warning to back up saves, then the player lines since the previous release (`oben changelog --since <tag>`) and every commit since then (the newest 300) in a folded list. Experimental tags never count as releases in `changelog.json` or for `release.sh`, which only look at `vX.Y.Z`.
+
 ## Making a release
 
 Only when the owner asks for one.
@@ -52,4 +75,4 @@ gh release create vX.Y.Z dist/ObenseuerExtended-X.Y.Z.zip --title "ObenseuerExte
 
 `build/release.sh X.Y.Z --publish` runs them for you after the local part, asking first (`--yes` skips the question). It needs `gh` logged in, checked before anything is changed.
 
-Never push or release without being asked, and never tag by hand to try something out: the tag is the release.
+Stable releases only happen when the owner asks; experimental ones go out through `experimental.sh` as described above. Never tag or push by hand to try something out: the tag is the release.

@@ -58,7 +58,7 @@ Inside a release the mods come in alphabetical order, lines without a mod last, 
 
 ## Versions
 
-Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`. Each tag closes a release made of the commits since the previous tag. Commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out.
+Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`. Each tag closes a release made of the commits since the previous tag. Commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out. Experimental builds are tagged `vX.Y.Z+<commit>` ([releasing.md](releasing.md)); those tags don't close a release, so their changes stay `Unreleased` until the next stable one.
 
 Don't create a tag to try something out: the tag is the release. Before 1.0, breaking changes bump the minor version, new features the minor version, and fixes and tweaks the patch version.
 
@@ -74,6 +74,7 @@ Don't create a tag to try something out: the tag is the release. Before 1.0, bre
 | `oben changelog --write [--out FILE]` | Writes `changelog.json` in the repo root (or to `FILE`). |
 | `oben changelog --release X.Y.Z --notes` | Prints markdown release notes for the commits since the last tag, as if they were released as `X.Y.Z` today. Also works as `--notes X.Y.Z`. |
 | `oben changelog --release X.Y.Z` | The JSON with the unreleased commits counted as `X.Y.Z`, to see what the file will look like after the tag. |
+| `oben changelog --since REF` | Prints markdown notes for the commits after `REF` (a tag or commit), nothing when none has a line for players. `experimental.sh` uses it with the previous release's tag. |
 
 Run it from inside the repo. `--release` ignores a version that already has a tag.
 

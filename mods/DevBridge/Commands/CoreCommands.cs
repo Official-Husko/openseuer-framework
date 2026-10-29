@@ -29,6 +29,9 @@ internal static class CoreCommands
         ["inWorld"] = GameController.instance != null,
         ["paused"] = Time.timeScale == 0f,
         ["loaderVersion"] = Loader.Version,
+        // The bridge's own stamp, version and commit ("-dirty" with uncommitted changes): which build is loaded now.
+        ["build"] = ((System.Reflection.AssemblyInformationalVersionAttribute)System.Attribute.GetCustomAttribute(
+            typeof(CoreCommands).Assembly, typeof(System.Reflection.AssemblyInformationalVersionAttribute)))?.InformationalVersion,
         ["gameVersion"] = Application.version,
         ["gameBuildId"] = Loader.GameBuildId,
         ["gameCodeHash"] = Loader.GameCodeHash,

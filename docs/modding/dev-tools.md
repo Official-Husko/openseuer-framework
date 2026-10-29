@@ -46,7 +46,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | Command | Parameters | Result |
 | --- | --- | --- |
 | `ping`, `help` | | `"pong"`, every command with its parameters |
-| `game.info` | | scene, whether a world is loaded, versions, fps, mods |
+| `game.info` | | scene, whether a world is loaded, versions (`build` is the loaded build's version and commit, `0.1.0+57a4977`), fps, mods |
 | `game.quit`, `game.timescale` | `value` | |
 | `scenes.loaded` | | loaded scenes, active first |
 | `log.tail` | `after?`, `max?`, `level?` | recent lines from mods, the loader and Unity; pass the returned `last` as `after` next time |

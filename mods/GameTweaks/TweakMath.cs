@@ -53,14 +53,13 @@ public static class TweakMath
     }
 
     /// <summary>
-    /// The hours a renovation order starts with. Story-scripted orders keep theirs; an instant build
-    /// starts at zero; otherwise the time is scaled.
+    /// The hours a renovation order starts with: scaled, or zero for an instant build. Story-scripted orders
+    /// are scaled but never instant, so the story still gets its wait and the progress bar (which divides by
+    /// the scaled hours) still runs from empty to full.
     /// </summary>
     public static float OrderHours(float hours, float factor, bool instant, bool scripted)
     {
-        if (scripted)
-            return hours;
-        if (instant)
+        if (instant && !scripted)
             return 0f;
         return hours * factor;
     }

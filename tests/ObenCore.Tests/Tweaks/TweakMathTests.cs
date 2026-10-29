@@ -54,10 +54,10 @@ public class TweakMathTests
         Assert.Equal(expected, TweakMath.Hours(hours, factor));
 
     [Fact]
-    public void ScriptedOrdersKeepTheirHours()
+    public void ScriptedOrdersScaleButAreNeverInstant()
     {
-        Assert.Equal(30f, TweakMath.OrderHours(30f, 0.5f, instant: false, scripted: true));
-        Assert.Equal(30f, TweakMath.OrderHours(30f, 0.5f, instant: true, scripted: true));
+        Assert.Equal(15f, TweakMath.OrderHours(30f, 0.5f, instant: false, scripted: true));
+        Assert.Equal(15f, TweakMath.OrderHours(30f, 0.5f, instant: true, scripted: true));
     }
 
     [Fact]

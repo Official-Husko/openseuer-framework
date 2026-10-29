@@ -8,7 +8,8 @@ namespace GameTweaks.Housing;
 /// (<c>TenementUpgradeProgress.AddUpgrade</c>, private, the one place both the building and the apartments
 /// go through), so only orders placed from now on change; orders in progress keep their saved time. The
 /// hours the upgrade screen shows (<c>GetRequiredTimeHours</c>) are scaled to match. Upgrades the story
-/// starts itself (<c>TenementUpgradeStart.Upgrade</c>) keep their scripted time.
+/// starts itself (<c>TenementUpgradeStart.Upgrade</c>) are scaled too, since their progress bar divides by
+/// the scaled hours, but never made instant.
 /// </summary>
 internal sealed class RenovationTimeTweak : TweakFeature
 {
@@ -42,7 +43,7 @@ internal sealed class RenovationTimeTweak : TweakFeature
 [HarmonyPatch]
 internal static class RenovationTimePatches
 {
-    /// <summary>True while the story starts an upgrade, whose time is left alone.</summary>
+    /// <summary>True while the story starts an upgrade, which is never made instant.</summary>
     internal static bool Scripted;
 
     [HarmonyPrefix]

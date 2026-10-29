@@ -40,15 +40,21 @@ The scope of the commit subject (`fix(patches): ...`) decides. `ModAreas` in `to
 | Scope | Shown as |
 | --- | --- |
 | `loader` | Mod loader |
-| `framework`, `kit` | Framework |
-| `uikit`, `ui` | UI kit |
+| `framework` | Framework |
+| `kit`, `uikit`, `ui` | UI kit |
 | `bridge` | Dev bridge |
 | `scripts` | Script Runner |
 | `patches` | Unofficial ObenPatches |
 | `tool`, `mcp` | Command-line tool |
-| `coop` | Co-op |
+| `coop` | ObenCoop |
+| `perf` | Performance Fixes |
+| `save` | ObenSave |
+| `cheats` | Cheat Menu |
+| `tweaks` | Game Tweaks |
 
-A scope that isn't in the table is shown as it is, capitalized. A new mod with its own scope gets one line in `ModAreas`. A commit without a scope has its lines listed without a mod.
+A scope that isn't in the table is shown as it is, capitalized. A new mod with its own scope gets one line in `ModAreas`. A commit without a scope has its lines listed without a mod (as "General" in the game).
+
+Inside a release the mods come in alphabetical order, lines without a mod last, and a mod's lines keep the order of their commits.
 
 ## Versions
 
@@ -60,6 +66,10 @@ Don't create a tag to try something out: the tag is the release. Before 1.0, bre
 
 | Command | What it does |
 | --- | --- |
+| `build/changelog.sh` | Writes `changelog.json` in the repo root, refreshes the copy in the game folder's `Mods/ObenUIKit` (a running game picks it up), and lists the versions in it. Builds the `oben` tool first when its sources changed. |
+| `build/changelog.sh --release X.Y.Z` | The same, with the commits since the last tag counted as `X.Y.Z`, released today. `release.sh` uses it. |
+| `build/changelog.sh --check` | Fails when `changelog.json` is missing or doesn't match the history. Writes nothing. |
+| `build/changelog.sh --hooks` | Installs git hooks (post-commit, post-merge, post-rewrite and branch switches) that run the script in the background, so the file is always current. `--no-hooks` takes them out; a hook of your own is left alone and the script says what line to add to it. |
 | `oben changelog` | Prints the changelog JSON built from the history. Writes nothing. |
 | `oben changelog --write [--out FILE]` | Writes `changelog.json` in the repo root (or to `FILE`). |
 | `oben changelog --release X.Y.Z --notes` | Prints markdown release notes for the commits since the last tag, as if they were released as `X.Y.Z` today. Also works as `--notes X.Y.Z`. |
@@ -69,7 +79,7 @@ Run it from inside the repo. `--release` ignores a version that already has a ta
 
 ## How What's New finds the file
 
-`ObenUIKit.csproj` copies `changelog.json` from the repo root into the kit's mod folder (`Mods/ObenUIKit/changelog.json`) when it exists at build time, so run `oben changelog --write` before building a release. The What's New page reads it from there, newest release first, and again whenever the file changes. Without the file the page says "No changelog found." and nothing else breaks.
+`changelog.json` is generated, so it isn't committed (`.gitignore`); it can always be built again from the commits and tags. Run `build/changelog.sh` after committing (or install the hooks once), and `release.sh` writes it for a release. `ObenUIKit.csproj` copies it from the repo root into the kit's mod folder (`Mods/ObenUIKit/changelog.json`) when it exists at build time, and the release zip carries that copy. The What's New page reads it from there, newest release first, and again whenever the file changes. Without the file the page says "No changelog found." and nothing else breaks.
 
 The newest published release (the first one with `"released": true`; `Unreleased` never counts) is remembered in the kit's `config.json` as `LastSeenVersion`. When a newer one is installed, the mod menu opens on What's New once at the main menu, after the kit has taken the game's look. The "Show What's New after updates" setting turns the popup off; the page stays in the menu either way.
 

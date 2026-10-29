@@ -3,10 +3,11 @@
 #
 #   build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes]
 #
-# Checks that the tree is clean, runs the tests, sets <Version> in Directory.Build.props, writes
-# changelog.json with that version released, commits "chore(release): X.Y.Z", builds the package from
-# that commit and tags vX.Y.Z. Nothing leaves the machine: pushing and the GitHub release only happen
-# with --publish (and a confirmation, unless --yes). Without it the script prints the commands.
+# Checks that the tree is clean, runs the tests, sets <Version> in Directory.Build.props, commits
+# "chore(release): X.Y.Z", writes changelog.json with that version released (build/changelog.sh), builds
+# the package from that commit and tags vX.Y.Z. Nothing leaves the machine: pushing and the GitHub
+# release only happen with --publish (and a confirmation, unless --yes). Without it the script prints
+# the commands.
 # If a step fails before the tag exists, the release commit is taken back.
 #
 # --dry-run changes nothing: it reports what it finds and prints the release notes, skipping the tests.
@@ -102,11 +103,13 @@ rollback() {
 }
 trap 'rollback' ERR
 
+# The changelog hooks would write the file again after the commit, before the tag exists, so they sit
+# this one out; the release writes it itself.
+export OBEN_CHANGELOG_HOOKS=0
 sed -i "s|<Version>[^<]*</Version>|<Version>$version</Version>|" Directory.Build.props
-oben changelog --write --release "$version" > /dev/null
-git add Directory.Build.props changelog.json
-git commit -q -m "chore(release): $version" \
-    -m "Sets the version to $version and marks it released in changelog.json."
+git add Directory.Build.props
+git commit -q -m "chore(release): $version" -m "Sets the version to $version."
+build/changelog.sh --release "$version" --quiet
 
 # Built from the release commit, so the assemblies carry its hash without "-dirty".
 build/package.sh "$version"

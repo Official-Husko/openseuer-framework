@@ -10,7 +10,9 @@ public static class ModAreas
     {
         ["loader"] = "Mod loader",
         ["framework"] = "Framework",
-        ["kit"] = "Framework",
+        // "kit" was the framework's scope before ObenKit became ObenFramework; every kit commit with a
+        // changelog line came after that and is about the UI kit.
+        ["kit"] = "UI kit",
         ["uikit"] = "UI kit",
         ["ui"] = "UI kit",
         ["bridge"] = "Dev bridge",

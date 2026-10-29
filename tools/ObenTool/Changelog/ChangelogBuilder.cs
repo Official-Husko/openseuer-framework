@@ -32,13 +32,15 @@ public static class ChangelogBuilder
         return new JsonObject { ["releases"] = releases };
     }
 
-    // A mod's lines stay together, the mods in the order their first line comes up; otherwise a release
-    // with many lines for one mod has the other mods' lines scattered between them.
+    // A mod's lines stay together, the mods in alphabetical order and lines without a mod last, so every
+    // section lists the mods the same way. Inside a mod the lines keep the order of the commits.
     private static JsonArray Lines(List<CommitEntry> commits, ChangeKind kind)
     {
         var items = Collect(commits, kind);
         return new JsonArray(items
-            .GroupBy(item => item["area"]?.GetValue<string>() ?? "")
+            .GroupBy(item => item["area"]?.GetValue<string>())
+            .OrderBy(area => area.Key == null)
+            .ThenBy(area => area.Key, StringComparer.OrdinalIgnoreCase)
             .SelectMany(area => area)
             .ToArray<JsonNode?>());
     }
@@ -64,14 +66,20 @@ public static class ChangelogBuilder
     }
 
     /// <summary>
-    /// A new mod's line often starts with its own name ("Dev bridge: ..."). The area is shown in front
-    /// of every line already, so the name is dropped there.
+    /// A new mod's line often starts with its own name ("Dev bridge: ...", "Cheat Menu mod: ..."). The area
+    /// is shown in front of every line already, so the name is dropped there.
     /// </summary>
     private static string WithoutArea(string text, string? area)
     {
-        if (area == null || !text.StartsWith(area + ":", StringComparison.OrdinalIgnoreCase))
+        if (area == null)
             return text;
-        string rest = text[(area.Length + 1)..].TrimStart();
-        return rest.Length == 0 ? text : char.ToUpperInvariant(rest[0]) + rest[1..];
+        foreach (string prefix in new[] { area + ":", area + " mod:" })
+        {
+            if (!text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            string rest = text[prefix.Length..].TrimStart();
+            return rest.Length == 0 ? text : char.ToUpperInvariant(rest[0]) + rest[1..];
+        }
+        return text;
     }
 }

@@ -14,7 +14,7 @@ Build it with the solution (`dotnet build ObenseuerExtended.slnx -c Release`) an
 | `oben launch [--wait 150] [--fullscreen] [--instance 2]` | Starts the game windowed. `--wait` waits until the bridge answers. |
 | `oben stop [--force]` | Asks the game to quit over the bridge, kills it if that doesn't work. |
 | `oben logs [--player \| --runner \| --errors] [--lines N]` | The loader log, Unity's Player.log, umu/Proton's output, or this session's error report (`errors.log`). |
-| `oben changelog [--write] [--notes X.Y.Z]` | Builds the player changelog from commit trailers (see [changelog.md](changelog.md)). |
+| `oben changelog [--write] [--release X.Y.Z] [--notes]` | Builds the player changelog from commit trailers (see [changelog.md](changelog.md)). `build/changelog.sh` wraps it and keeps `changelog.json` current. |
 | `oben save list \| info \| export \| import \| convert` | Saves on disk: list them, inspect a slot, convert between the game's format and ObenSave's (see [save-format.md](save-format.md)). |
 | `oben call <method> [key=value ...]` | Runs a bridge command, e.g. `oben call game.info`. |
 | `oben eval "<code>"` | Runs C# in the game (see Scripts). |

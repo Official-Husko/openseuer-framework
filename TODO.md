@@ -10,7 +10,7 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] ObenFramework: events (MainMenu, WorldReady, save/load), WorldState, F1 console commands, switchable features
 - [x] Error report file (errors.log) for bug reports
 - [x] Changelog from commit history (`oben changelog`)
-- [x] In-game What's New page and popup reading changelog.json (needs a release with changelog.json to see it)
+- [x] In-game What's New page and popup reading changelog.json (`build/changelog.sh` writes it; the popup needs a tagged release)
 - [x] Release packaging (`build/package.sh`, `build/release.sh`; dev mods marked `devOnly`)
 - [x] Unit tests (`dotnet test`) and `oben check` for hooks after game updates
 - [x] GPL-3.0 license

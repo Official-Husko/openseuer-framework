@@ -60,7 +60,7 @@ internal static partial class LoadingOverlay
             Fill(dc, new Native.RECT(0, 0, Width, Height), Edge);
             Fill(dc, new Native.RECT(edge, edge, Width - edge, Height - edge), Background);
             Native.SetBkMode(dc, Native.TRANSPARENT);
-            Text(dc, "ObenseuerExtended", new Native.RECT(S(18), S(12), Width - S(18), S(40)), S(22), Native.FW_BOLD, Title);
+            Text(dc, "ObenseuerExtended v" + Loader.Version, new Native.RECT(S(18), S(12), Width - S(18), S(40)), S(22), Native.FW_BOLD, Title);
             Text(dc, status, new Native.RECT(S(18), S(42), Width - S(18), S(66)), S(17), Native.FW_NORMAL, Muted);
 
             var bar = new Native.RECT(S(18), S(74), Width - S(18), S(82));

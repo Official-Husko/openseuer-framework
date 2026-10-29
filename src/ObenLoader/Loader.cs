@@ -9,7 +9,8 @@ namespace ObenLoader;
 /// <summary>Startup sequence: logging, discovery, then the first load batch.</summary>
 public static class Loader
 {
-    public const string Version = "0.1.0";
+    /// <summary>ObenseuerExtended's version, as the build stamped it ("0.1.0").</summary>
+    public static readonly string Version = BuildVersion();
 
     private static readonly ModLogger Log = new ModLogger("ObenLoader");
 
@@ -45,6 +46,7 @@ public static class Loader
     {
         GameVersion = Application.version;
         LoaderPaths.Init();
+        WindowTitle.Brand(Version);
         StartupStatus.Show("starting...");
         GameBuildId = SteamBuild.Read(LoaderPaths.GameDir);
         string kept = System.IO.Path.Combine(LoaderPaths.DataDir, "game-files.json");
@@ -91,9 +93,22 @@ public static class Loader
         LogHub.Flush();
     }
 
+    private static string BuildVersion()
+    {
+        var stamped = typeof(Loader).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false);
+        string version = stamped.Length > 0 ? ((System.Reflection.AssemblyInformationalVersionAttribute)stamped[0]).InformationalVersion : null;
+        if (string.IsNullOrEmpty(version))
+            return typeof(Loader).Assembly.GetName().Version.ToString(3);
+        // "0.1.0+abc1234": the commit is for logs, not for the title.
+        int plus = version.IndexOf('+');
+        return plus > 0 ? version.Substring(0, plus) : version;
+    }
+
     private static void FirstScene(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= FirstScene;
         StartupStatus.Done();
+        // In case Unity set its own title again while making the window ready.
+        WindowTitle.Brand(Version);
     }
 }

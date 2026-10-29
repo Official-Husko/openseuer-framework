@@ -37,9 +37,9 @@ folder from the game's Mods folder.
 Is it working?
 --------------
 The window stays black for a while at start: the game starts up under the hood, then the loader
-loads the mods. While it does, a small ObenseuerExtended panel over the window (and the window
-title) says how far it got; the panel can be turned off with "LoadingPanel": false in
-ObenLoader/settings.json. On the title screen, the bottom-left corner
+loads the mods. While it does, a small ObenseuerExtended panel over the window says how far it
+got; it can be turned off with "LoadingPanel": false in ObenLoader/settings.json. The window
+title says "Obenseuer - ObenseuerExtended" and the version while the mods are installed. On the title screen, the bottom-left corner
 says how many mods are loaded and whether they fit your game version. If something doesn't fit, the
 MODS menu's Errors page says what.
 

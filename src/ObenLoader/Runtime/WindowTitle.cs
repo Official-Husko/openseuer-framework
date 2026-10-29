@@ -5,10 +5,9 @@ using System.Text;
 namespace ObenLoader.Runtime;
 
 /// <summary>
-/// The game window stays black while the loader loads the mods and Unity loads the first scene, since no frame is
-/// drawn until then. Its title says what is going on meanwhile ("Obenseuer - loading mods (3/9): ObenFramework"),
-/// so it doesn't look stuck, and goes back to the game's own title once the first scene is up. Windows calls,
-/// which Proton provides; where they don't work, nothing happens.
+/// Puts "ObenseuerExtended v&lt;version&gt;" after the game's own window title ("Obenseuer - ObenseuerExtended
+/// v0.1.0"), so it is clear the game runs modded. Windows calls, which Proton provides; where they don't work,
+/// nothing happens. The start-up progress is on the <see cref="LoadingOverlay"/>, which shows in fullscreen too.
 /// </summary>
 internal static class WindowTitle
 {
@@ -24,40 +23,30 @@ internal static class WindowTitle
 
     private const string UnityWindowClass = "UnityWndClass";
 
-    private static IntPtr _window;
-    private static string _title;
     private static bool _broken;
 
-    /// <summary>Shows "&lt;game's title&gt; - <paramref name="status"/>" in the window title.</summary>
-    public static void Show(string status)
+    /// <summary>
+    /// Adds " - ObenseuerExtended v&lt;version&gt;" to the game's title, once: calling it again (after something
+    /// reset the title) adds it back without doubling it.
+    /// </summary>
+    public static void Brand(string version)
     {
         if (_broken)
             return;
         try
         {
-            if (_window == IntPtr.Zero)
-            {
-                _window = Find();
-                if (_window == IntPtr.Zero)
-                    return;
-                _title = Read(_window);
-            }
-            SetWindowTextW(_window, string.IsNullOrEmpty(_title) ? status : _title + " - " + status);
+            var window = Find();
+            if (window == IntPtr.Zero)
+                return;
+            string brand = " - ObenseuerExtended v" + version;
+            string title = Read(window);
+            if (!title.EndsWith(brand, StringComparison.Ordinal))
+                SetWindowTextW(window, title + brand);
         }
         catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException || e is MarshalDirectiveException)
         {
             _broken = true;
         }
-    }
-
-    /// <summary>Puts the game's own title back.</summary>
-    public static void Restore()
-    {
-        if (_broken || _window == IntPtr.Zero || _title == null)
-            return;
-        try { SetWindowTextW(_window, _title); }
-        catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException) { }
-        _window = IntPtr.Zero;
     }
 
     /// <summary>The window Unity made for this process, or zero when there is none (yet) or the calls don't work.</summary>

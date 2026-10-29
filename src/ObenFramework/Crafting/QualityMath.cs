@@ -22,7 +22,9 @@ internal static class QualityMath
 
     /// <summary>
     /// The process time factor a craft gets at <paramref name="speed"/>: the game's own factor divided by the
-    /// speed, capped so the base time times the factor still fits the game's timers.
+    /// speed, capped so the base time times the factor still fits the game's timers. A faster craft still
+    /// takes at least a second (the game cuts the time to whole seconds), unless the game's own factor
+    /// already made it shorter.
     /// </summary>
     public static float TimeFactor(float gameFactor, float speed, int baseSeconds)
     {
@@ -30,7 +32,12 @@ internal static class QualityMath
             return gameFactor;
         float factor = gameFactor / speed;
         if (baseSeconds > 0)
+        {
             factor = (float)Math.Min(factor, MaxProcessSeconds / baseSeconds);
+            // A hair over one second, so float rounding can't cut it to zero.
+            double oneSecond = Math.Min(gameFactor, 1.0001 / baseSeconds);
+            factor = (float)Math.Max(factor, oneSecond);
+        }
         return factor;
     }
 }

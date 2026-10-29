@@ -29,6 +29,25 @@ public class CraftingRulesTests
         Assert.Equal(4f, QualityMath.TimeFactor(1f, 0.25f, 600), 4);
     }
 
+    [Theory]
+    [InlineData(5, 100f)]
+    [InlineData(3, 10f)]
+    [InlineData(1, 2f)]
+    [InlineData(7, 1000f)]
+    public void AFasterCraftStillTakesASecond(int baseSeconds, float speed)
+    {
+        float factor = QualityMath.TimeFactor(1f, speed, baseSeconds);
+        Assert.Equal(1, (int)(baseSeconds * factor));
+    }
+
+    [Fact]
+    public void KeepsTheGamesOwnShortTime()
+    {
+        // The game's factor alone already makes this under a second; speed doesn't push it back up.
+        Assert.Equal(0.1f, QualityMath.TimeFactor(0.1f, 4f, 5), 4);
+        Assert.Equal(25f, 600 * QualityMath.TimeFactor(1f, 24f, 600), 2);
+    }
+
     [Fact]
     public void CapsTheTimeSoTheGamesTimerHoldsIt()
     {

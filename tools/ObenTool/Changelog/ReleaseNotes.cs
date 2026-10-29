@@ -17,7 +17,12 @@ public static class ReleaseNotes
             .OfType<JsonObject>()
             .FirstOrDefault(r => r["version"]?.GetValue<string>() == version)
             ?? throw new InvalidOperationException($"The changelog has no lines for version {version}.");
+        return Markdown(release);
+    }
 
+    /// <summary>The sections of one release entry (<see cref="ChangelogBuilder.Entry"/>).</summary>
+    public static string Markdown(JsonObject release)
+    {
         var sb = new StringBuilder();
         foreach (var (key, title) in Sections)
         {

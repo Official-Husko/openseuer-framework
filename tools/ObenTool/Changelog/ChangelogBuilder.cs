@@ -13,23 +13,31 @@ public static class ChangelogBuilder
         var releases = new JsonArray();
         foreach (var release in Releases.Resolve(repo, releasing))
         {
-            var commits = CommitLog.Read(repo, release.Range);
             // Releases without anything for players (only tooling or docs commits) are left out.
-            if (commits.All(c => c.Lines.Count == 0))
-                continue;
-
-            var entry = new JsonObject
-            {
-                ["version"] = release.Version,
-                ["date"] = (release.TagDate ?? commits.Max(c => c.Date)).ToString("yyyy-MM-dd"),
-                ["released"] = release.Released,
-            };
-            foreach (var kind in Sections)
-                entry[kind.ToString().ToLowerInvariant()] = Lines(commits, kind);
-            releases.Add(entry);
+            var entry = Entry(repo, release);
+            if (entry != null)
+                releases.Add(entry);
         }
 
         return new JsonObject { ["releases"] = releases };
+    }
+
+    /// <summary>One release's entry from the commits in its range, or null when none of them has a line for players.</summary>
+    public static JsonObject? Entry(string repo, ReleaseRange release)
+    {
+        var commits = CommitLog.Read(repo, release.Range);
+        if (commits.All(c => c.Lines.Count == 0))
+            return null;
+
+        var entry = new JsonObject
+        {
+            ["version"] = release.Version,
+            ["date"] = (release.TagDate ?? commits.Max(c => c.Date)).ToString("yyyy-MM-dd"),
+            ["released"] = release.Released,
+        };
+        foreach (var kind in Sections)
+            entry[kind.ToString().ToLowerInvariant()] = Lines(commits, kind);
+        return entry;
     }
 
     // A mod's lines stay together, the mods in alphabetical order and lines without a mod last, so every

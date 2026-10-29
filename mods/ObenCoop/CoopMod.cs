@@ -82,6 +82,7 @@ public sealed partial class CoopMod : ObenMod
             CoopNotices.Show(Log, "Co-op", "The session carried on after a mod reload.");
 
         GameConsole.Register(this, CoopCommands.Name, CoopCommands.Usage, args => CoopCommands.Run(this, args));
+        Ui.CoopMenu.Init(this);
     }
 
     public override void OnUpdate()

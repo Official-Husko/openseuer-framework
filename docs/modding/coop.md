@@ -198,6 +198,7 @@ Files in `mods/ObenCoop/`:
 | `Chat/CoopChat.cs`, `CoopNotices.cs` | chat on `ChannelIds.Chat`; shows text as a game notification in a level and in the console otherwise |
 | `Commands/CoopCommands.cs`, `LobbyCommands.cs`, `PresenceCommands.cs`, `CoopStatus.cs`, `LobbyText.cs` | the `coop` console command |
 | `Bridge/CoopMod.Bridge.cs` | `BridgeStatus`, `BridgePresence`, `BridgeLobbies`: JSON for the dev bridge's `coop.*` commands |
+| `Ui/CoopMenu.cs` | Co-op on the main menu and in the pause menu (ObenUIKit's `MainMenuButtons` and `PauseMenuButtons`): a window with the co-op state and the console commands for now; hosting, joining and the lobby list move into it later |
 
 Settings in `config.json` are re-read each time you host, join or list, so editing it does not need a reload:
 

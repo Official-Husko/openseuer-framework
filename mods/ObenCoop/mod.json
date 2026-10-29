@@ -6,6 +6,6 @@
   "author": "pawbeans",
   "description": "Co-op for Obenseuer. For now: host or join over the network or Steam, lobby lists, join codes and invites, a player list, chat, and where everyone is. The shared world comes later.",
   "assemblies": [ "ObenCoop.Net.dll", "ObenCoop.dll" ],
-  "dependencies": { "ObenFramework": "0.1.0" },
+  "dependencies": { "ObenFramework": "0.1.0", "ObenUIKit": "0.1.0" },
   "hotReload": true
 }

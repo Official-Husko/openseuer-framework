@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ObenLoader/ObenLoader.csproj" />
     <ProjectReference Include="../../src/ObenFramework/ObenFramework.csproj" />
+    <ProjectReference Include="../../src/ObenUIKit/ObenUIKit.csproj" />
     <!-- Private="true": unlike the framework, ObenCoop.Net.dll is ours and has to be copied into the mod folder. -->
     <ProjectReference Include="../ObenCoop.Net/ObenCoop.Net.csproj" Private="true" />
   </ItemGroup>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Events;
+using ObenFramework.Patching;
 using ObenLoader.Runtime;
 using UnityEngine;
 
@@ -14,10 +15,12 @@ namespace ObenFramework.Ui;
 /// a mod's panel is up. The mod itself still sees the key through <c>UnityEngine.Input</c>.
 /// </summary>
 /// <remarks>
-/// A few keys the game reads straight from Unity (F1, F11, F12, the number keys of the toolbelt, the main
-/// menu's navigation) can't be held back this way. While a mod's text field has the keyboard, the game's actions
-/// are held back too (except the pause menu, menu, exit and interact keys), so typing doesn't walk the
-/// player around; turn that off with <see cref="WhileTyping"/>.
+/// The keys the game reads straight from Unity are held back too, for the game only (<see cref="RawKeys"/>): F1
+/// (console), F11 and F12 (screenshots) and pad buttons only by <see cref="Key"/> (F11 and F12 also by their
+/// "Screenshot" and "screenshotNoUI" actions); 1 to 4 (equipment) and the interact list's X and C also by
+/// <see cref="All"/> and while typing. Inside the game's own menus some keys stay out of reach. While a mod's
+/// text field has the keyboard, the game's actions are held back (except the pause menu, menu, exit and
+/// interact keys), so typing doesn't walk the player around; turn that off with <see cref="WhileTyping"/>.
 /// </remarks>
 public static class InputCapture
 {
@@ -42,6 +45,7 @@ public static class InputCapture
     private static int _all;
     private static int _typingFrame = -1;
     private static bool _typing;
+    private static bool _typingFailed;
 
     /// <summary>A capture started or the last one ended. The payload is <see cref="Any"/>.</summary>
     public static readonly GameEvent<bool> Changed = new GameEvent<bool>(nameof(Changed));
@@ -54,6 +58,12 @@ public static class InputCapture
 
     /// <summary>Every game action is held back.</summary>
     public static bool AllCaptured => _all > 0;
+
+    /// <summary>The hooks on the game's key reads are in place (false when a game update broke them).</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Ui");
+
+    /// <summary>The hooks on the keys the game reads straight from Unity are in place.</summary>
+    public static bool RawKeysAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "RawKeys");
 
     /// <summary>
     /// Holds back one of the game's actions (the names its key bindings use: "Interact", "Jump", "Inventory",
@@ -100,10 +110,34 @@ public static class InputCapture
         return WhileTyping && input.inputType != InputManager.InputType.Controller && Typing() && !Kept(action);
     }
 
+    /// <summary>Called through <see cref="RawKeys"/> when one of the game's direct key reads came back true.</summary>
+    internal static bool HoldsRaw(KeyCode key)
+    {
+        // F-keys and pad buttons are the console, screenshots and menus: only a capture of that very key holds them.
+        bool system = key >= KeyCode.F1 && key <= KeyCode.F15 || key >= KeyCode.JoystickButton0;
+        if (_all > 0 && !system)
+            return true;
+        string action = ActionOf(key);
+        for (int i = 0; i < Captures.Count; i++)
+        {
+            var capture = Captures[i];
+            if (capture.Kind == Kind.Key && capture.Key == key)
+                return true;
+            if (capture.Kind == Kind.Action && action != null && string.Equals(capture.Action, action, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return !system && WhileTyping && Typing();
+    }
+
+    // The game reads F11 and F12 both through these actions and straight from Unity.
+    private static string ActionOf(KeyCode key) =>
+        key == KeyCode.F11 ? "Screenshot" : key == KeyCode.F12 ? "screenshotNoUI" : null;
+
     internal static void Init(ObenLoader.ObenMod framework)
     {
         Captures.Clear();
         _all = 0;
+        _typingFailed = false;
         WhileTyping = true;
         framework.Track(Disposable.Create(() =>
         {
@@ -155,14 +189,26 @@ public static class InputCapture
         return false;
     }
 
-    // Asked once per frame at most: held keys (walking) read the same actions every frame.
+    // Asked once per frame at most: held keys (walking) read the same actions every frame. A failing check
+    // counts as not typing and is logged once, so the captures themselves keep working.
     private static bool Typing()
     {
         int frame = Time.frameCount;
-        if (frame != _typingFrame)
+        if (frame == _typingFrame)
+            return _typing;
+        _typingFrame = frame;
+        try
         {
-            _typingFrame = frame;
             _typing = UiState.IsTyping;
+        }
+        catch (Exception e)
+        {
+            _typing = false;
+            if (!_typingFailed)
+            {
+                _typingFailed = true;
+                GameEvents.Log.Error("Checking whether the player is typing failed; captures go on without it", e);
+            }
         }
         return _typing;
     }

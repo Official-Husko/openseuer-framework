@@ -29,6 +29,8 @@ internal static class FurniturePools
         AccessTools.FieldRefAccess<FurnitureBlueprintController, List<TaskItemBlueprint>>("blueprints");
     private static readonly AccessTools.FieldRef<FurnitureBlueprintController, bool> StartDone =
         AccessTools.FieldRefAccess<FurnitureBlueprintController, bool>("startDone");
+    private static readonly AccessTools.FieldRef<FurnitureBlueprintController, List<TaskItemBlueprint>> Spawned =
+        AccessTools.FieldRefAccess<FurnitureBlueprintController, List<TaskItemBlueprint>>("spawnedBlueprints");
 
     private static readonly Dictionary<TaskItemBlueprintListMain, TaskItemBlueprintList> Ours = new Dictionary<TaskItemBlueprintListMain, TaskItemBlueprintList>();
 
@@ -93,11 +95,13 @@ internal static class FurniturePools
         }
     }
 
-    // The game copied its pools when the level started; add new blueprints the player hasn't found yet.
+    // The game copied its pools when the level started; add new blueprints the player hasn't found yet. One
+    // that lies in the world already left the live pool when it spawned, so it doesn't go back in.
     private static void AddLive(FurnitureBlueprintController controller, string pool, TaskItemBlueprint blueprint)
     {
         var live = pool == General ? GeneralLive(controller) : pool == Start ? StartLive(controller) : null;
-        if (live != null && !live.Contains(blueprint) && !controller.BlueprintIsCollected(blueprint))
+        var spawned = Spawned(controller);
+        if (live != null && !live.Contains(blueprint) && (spawned == null || !spawned.Contains(blueprint)) && !controller.BlueprintIsCollected(blueprint))
             live.Add(blueprint);
     }
 
@@ -144,7 +148,8 @@ internal static class FurniturePools
         }
     }
 
-    // A save names the blueprints already spawned in the world by id; let it find the mod ones.
+    // A save names the blueprints already spawned in the world by id; let it find the mod ones. One whose
+    // mod is gone stays as the save made it (it crafts the stand-in of its piece) instead of vanishing.
     [HarmonyPatch(typeof(TaskItemBlueprintListMain), nameof(TaskItemBlueprintListMain.GetBlueprint))]
     private static class LookupPatch
     {
@@ -155,11 +160,28 @@ internal static class FurniturePools
             {
                 if (__result != null || FurnitureIds.Classify(id) != FurnitureIdKind.Blueprint)
                     return;
-                var entry = FurnitureBlueprints.Find(id);
-                if (entry != null)
+                var saved = SavedSpawn(id);
+                if (saved != null)
+                    __result = FurnitureBlueprints.Resolve(saved) ?? saved;
+                else if (FurnitureBlueprints.Find(id) is BlueprintEntry entry)
                     __result = FurnitureBlueprints.Registered(entry);
             }
             catch (Exception e) { FurnitureRegistry.Log.Error("Blueprint lookup hook", e); }
+        }
+
+        // The controller looks each loaded blueprint up while the loaded one still sits in its list.
+        private static TaskItemBlueprint SavedSpawn(string id)
+        {
+            var controller = FurnitureBlueprintController.instance;
+            var spawned = controller != null ? Spawned(controller) : null;
+            if (spawned == null)
+                return null;
+            foreach (var blueprint in spawned)
+            {
+                if (blueprint != null && blueprint.id == id)
+                    return blueprint;
+            }
+            return null;
         }
     }
 }

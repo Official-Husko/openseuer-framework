@@ -63,11 +63,11 @@ Defined pieces are added to the developer console's furniture list, so `add_furn
 
 ## Saves, and when a mod goes away
 
-The game saves a piece of furniture as just its asset path. A custom piece shares its template's path, so the framework has the game save it in full instead (id, title, prices, path) and links it back by id on load. What a player sees when things are missing:
+The game saves a piece of furniture as just its asset path. A custom piece shares its template's path, so the framework has the game save it in full instead (id, texts, prices, path) and links it back by id on load. That covers both of the game's save readers: its fast one (`FsStreamReader`, used for nearly every load) and the FullSerializer one it falls back to. What a player sees when things are missing:
 
-- **The mod is gone, the framework is there:** the piece loads as a stand-in: a copy of its template with the saved id and title. It keeps its place, its contents and its id, can be taken and placed again, and becomes the real piece again once the mod is back. The log names the missing mod once. `CustomFurniture.IsStandIn` tells them apart.
+- **The mod is gone, the framework is there:** the piece loads as a stand-in: a copy of its template with the saved id, title, description and prices. It keeps its place, its contents and its id, can be taken and placed again, and becomes the real piece again once the mod is back. The log names the missing mod once. `CustomFurniture.IsStandIn` tells them apart.
 - **The framework is gone too:** the game links the piece to its template, so it simply becomes the template piece. Nothing breaks.
-- **Blueprints** are saved by the game in full. With the mod gone a blueprint stays usable and crafts the stand-in; without the framework it crafts the template piece.
+- **Blueprints** are saved by the game in full. With the mod gone a blueprint stays usable and crafts the stand-in; without the framework it crafts the template piece. That goes for blueprints the player holds and for those lying in the world where a blueprint spawner put them (the game would otherwise drop those from the world on load).
 
 Pieces of a mod that unloads during a session (a hot reload) keep working until the level changes; after that they resolve again by id.
 
@@ -101,7 +101,7 @@ bool known = CustomFurniture.IsBlueprintKnown(id);
 TaskItemBlueprint blueprint = CustomFurniture.BlueprintOf(id);
 ```
 
-The game's pools are shared assets; the framework adds one list of its own to each and takes it out again when it unloads. A level that is already running gets new blueprints added to its live pools too.
+The game's pools are shared assets; the framework adds one list of its own to each and takes it out again when it unloads. A level that is already running gets new blueprints added to its live pools too, except those lying in the world already.
 
 `Blueprints` covers every blueprint of the level, the game's and the mods': `Blueprints.All()` (`BlueprintInfo`: `Id`, `Title`, `Result`, `Known`, `Custom`), `Blueprints.Find(idOrTitle)`, `Blueprints.IsKnown(blueprint)`, `Blueprints.Give(blueprint)`.
 

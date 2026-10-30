@@ -10,7 +10,7 @@ namespace ObenFramework.Building;
 /// <summary>
 /// How custom furniture goes through the game's own save. The game saves a piece of furniture as just its
 /// asset path and links it back to that asset on load. A custom piece shares its template's path, so it is
-/// saved in full instead (id, title, prices, path) and linked back by id: to the defined piece, or to a
+/// saved in full instead (id, texts, prices, path) and linked back by id: to the defined piece, or to a
 /// placeholder when its mod is gone. Without the framework the game links it to the template, so a save never
 /// breaks; the pieces just look and behave like their templates.
 /// </summary>
@@ -27,6 +27,16 @@ internal static class FurnitureSavePatches
 
     private static string Text(Dictionary<string, fsData> dict, string key) =>
         dict.TryGetValue(key, out var value) && value.IsString ? value.AsString : null;
+
+    private static int Number(Dictionary<string, fsData> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var value))
+            return -1;
+        return value.IsInt64 ? (int)value.AsInt64 : value.IsDouble ? (int)value.AsDouble : -1;
+    }
+
+    private static SavedPiece Saved(string id, Dictionary<string, fsData> dict) =>
+        new SavedPiece(id, Text(dict, "addressableAssetPath"), Text(dict, "title"), Text(dict, "details"), Number(dict, "priceOC"), Number(dict, "priceRM"));
 
     [HarmonyPatch(typeof(SavedAssets), "IsCollapsible")]
     private static class KeepInFull
@@ -63,7 +73,7 @@ internal static class FurnitureSavePatches
                 var dict = data.AsDictionary;
                 if (!IsCustom(dict, out string id))
                     return true;
-                var resolved = FurnitureResolve.Of(id, Text(dict, "addressableAssetPath"), Text(dict, "title"));
+                var resolved = FurnitureResolve.Of(Saved(id, dict));
                 if (resolved == null || !storageType.IsInstanceOfType(resolved))
                     return true;
                 __result = resolved;
@@ -89,7 +99,7 @@ internal static class FurnitureSavePatches
             {
                 if (__instance is global::Furniture furniture && FurnitureIds.Classify(furniture.id) == FurnitureIdKind.Furniture)
                 {
-                    var resolved = FurnitureResolve.Of(furniture.id, furniture.addressableAssetPath, furniture.title);
+                    var resolved = FurnitureResolve.Of(SavedPiece.Of(furniture));
                     __result = resolved != null ? resolved : furniture;
                     return false;
                 }

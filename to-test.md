@@ -418,24 +418,29 @@ Already checked:
 - **Mod NPC copies:** of an AI body (144) they walk, wander and stop; a copy of Crazy Neighbor (107) stays; a static body (59) refuses orders with a clear reason.
 - **Also:** say, kill and the died event; a destroyed mod NPC is noticed; crime state, scene phones, breeding pens.
 
-- [ ] **Saved mod NPCs [save]:**
+- [x] **Saved mod NPCs [save]:** (2026-10-30, on a copy of a real save: Saved Sam came back after save and load at his saved place, the file listed him; a DevBridge reload took him away and brought him back; `npcs.despawn` took him out of the save.)
   - `npcs.spawn name=s template=144 saved=true`, then save and load: the NPC comes back, and `<save>/mods/ObenFramework.npcs.json` exists.
   - Reload DevBridge: the NPC disappears and returns.
   - `npcs.despawn name=s` takes it out of the save.
-- [ ] **Look:** `npcs.look name=<n> meshes=true`, then `npcs.look name=<n> mesh=male_head shape=_02UpperLidRaise weight=80` changes the face (screenshot).
-- [ ] **Look on a slider body:** a mod NPC on 146, the only AI body with sliders, wearing a LookData.
-- [ ] **Sit and sleep orders:** `npcs.order order=sit` near a chair; `order=sleep` near a bed.
-- [ ] **Routine:** `NpcRoutines.Set` from a script. The NPC spawns at the step's point, changes step on the minute, and walks out through a door.
-- [ ] **Claims:**
-  - `Hold(Freeze|Talk)` stops the NPC moving and stops you talking to it.
-  - `PlayAnimation` blends a clip in and out.
-  - `Dispose` restores everything.
-- [ ] **Actions:** `npcs.act` follow, unfollow and hit on a game NPC.
-- [ ] **Animals:** in a scene with animals, `animals.list`, then `animals.act id=.. action=tame`. Also `sleepHold`, then `wake`, then `hunt`.
-- [ ] **Taming [save]:** a tamed animal is still tame after save and load (the game itself never re-applies the flag).
-- [ ] **Relationships:** `npcs.relationship` in a save that has relationships.
-- [ ] **Phone:** `phone.scene ring=<address> number=112`.
-- [ ] **Scene look on a mod NPC:** `scenelook.apply` with `ModNpc.Root` as target.
+- [x] **Saved NPCs of other scenes:** `npcs.saved` from another level lists a saved NPC with its scene and `here: false`. (2026-10-30: the Bazaar Keeper listed from the player's apartment.)
+- [x] **Look:** `npcs.look name=<n> meshes=true`, then a blend shape changes the face (screenshot). (2026-10-30: `_12OpenMouthSmil` at 100 opened the mouth to a grin.)
+- [x] **Look on a slider body:** a mod NPC on 146, the only AI body with sliders, wearing a LookData. (2026-10-30: wore the player's look, beanie, glasses and clothes.)
+- [x] **Sit and sleep orders:** `npcs.order order=sit` near a chair; `order=sleep` near a bed. (2026-10-30: they stood at the chair and on the bed until the orders got poses; now one sits on the chair and the other lies along the mattress. Despawning the sleeper frees the bed at once, with no error.)
+- [x] **Routine:** `NpcRoutines.Set` from a script. The NPC spawns at the step's point, changes step on the minute, and walks out through a door. (2026-10-30: stand, wander, then walked 3 m to the door and was removed when the step moved to the Bazaar.)
+- [x] **Claims:** (2026-10-30, on Marko Mainisto in the Bazaar and a mod NPC.)
+  - `Hold(Freeze|Talk)` stops the NPC moving and stops you talking to it. (He stayed put on a patrol; a talk gave CannotTalk, and Started once lifted.)
+  - `PlayAnimation` blends a clip in and out. (Only after the fix that fades the Animator's own output: before, nothing showed.)
+  - `Dispose` restores everything. (Claim gone, activity on again.)
+- [x] **Node groups:** `npcs.nodes` lists the Bazaar's 4 patrol routes; `npcs.claim do=patrol` walks one (about 7 m in 5 s), `stopnodes` stops him where he is; `Stand` at a group's standing spot walks there and stands. (2026-10-30.)
+- [x] **Mod animation without a claim:** a humanoid clip on the unclaimed Bazaar police lowers the hips, fades in and out and leaves no trace. (2026-10-30.)
+- [x] **Extras:** `npcs.extras` with templates 59, 70, 35, 107, 126 and 144: only `Appearance` or `CharacterAppearance` left on them, no errors in the log, all visible with their looks, and a humanoid clip plays on one. (2026-10-30.)
+- [x] **Actions:** `npcs.act` follow, unfollow and hit on a game NPC. (2026-10-30: Marko followed, stopped, took the hit.)
+- [x] **Animals:** `animals.list`, then `animals.act id=.. action=tame`, `sleepHold`, `wake`, `hunt`. (2026-10-30: on a cat, chicken and rat spawned as items; the rat only hunts when hungry, as in the game.)
+- [x] **Taming [save]:** a tamed animal is still tame after save and load. (2026-10-30: a rat of Deekula C, which the game saves; the other rat stayed wild.)
+- [x] **Relationships:** `npcs.relationship` in a save that has relationships. (2026-10-30: none of the saves here has one, so VeryGoodFriend was added the way a start choice does; disposition, target and pause came back after save and load.)
+- [x] **Phone:** `phone.scene ring=<address> number=112` rings with 112 as the caller; `phone.list check=` says 112 is the game's, 12ab is no number and 5550199 is free. (2026-10-30.)
+- [x] **Scene actors:** `npcs.actors nocharacter=true` lists an NPC object without a character with id -1 and a handle that finds it; `InScene` leaves it out. (2026-10-30: Hank's character taken off for the check and put back.)
+- [ ] **Scene look on a mod NPC:** `scenelook.apply` with `ModNpc.Root` as target. (2026-10-30, fails, M22: Topias's look matched by bone names onto a 144 copy showed as a giant floating head; Blender-style looks cover none of a slider copy's roles. TODO.md has it.)
 
 ## 10. Player (M16)
 

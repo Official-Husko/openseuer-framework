@@ -191,8 +191,9 @@ Each of these lists the objects of the loaded scenes with ids that work like con
 
 ```csharp
 var soup = ItemConsumables.Get(soupId).Copy();
-soup.Food += 20;
+soup.Amount += 20;                                 // a soup's food; drinks and smokes keep theirs in Amount too
 ItemConsumables.Set(this, soupId, soup);           // every bowl of soup, until your mod unloads
+ItemConsumables.SetForSave(this, soupId, soup);    // or kept in the loaded save; ClearForSave takes it out
 
 foreach (var fuel in FuelTypes.All()) ...          // burn time and what is left after burning
 
@@ -201,9 +202,11 @@ TaskItems.Add("Key_Basement");                     // journal items by id; TaskI
 StoragePanelButtons.Add(this, "Sort", press => SortInto(press.Container.Storage));
 ```
 
-- Consumable values live on the item definition, so they apply to every copy. Changes from several mods stack (the newest wins; removing it brings back the one under it, or the game's own values). They aren't saved: set them in your mod's load.
+- Most food, drink and smokes keep their whole effect in `Amount`, which fills the bar of the item's `Type` (food, drink or nicotine); `Food`, `Drink` and `Nicotine` add to it. Start from `Get(id).Copy()`: a new `ConsumableValues` sets everything you leave out to 0. The type itself can't be changed.
+- Consumable values live on the item definition, so they apply to every copy. Changes from several mods stack (the newest wins; removing it brings back the one under it, or the game's own values). `Set` lasts for the session: set it in your mod's load.
+- `SetForSave` keeps the values in the loaded save (the framework's `mods/ObenFramework.consumables.json`), one per mod and item. They come back each time that save loads with your mod loaded, leave at the main menu and in other saves, and leave the item while your mod is unloaded without leaving the save. A level change keeps their place in the stack. `SavedValues(modId, itemId)` reads what a save holds for any mod. It refuses at the main menu and while a save is written or loaded.
 - Container window buttons are copies of the game's "Take all" button, hidden while trading and for containers that belong to someone. A press on a full container shows the game's "storage full" feedback instead of calling your action.
 
 ## Checking in game
 
-Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items), `registry.missing` (missing stacks and where they are), `registry.removemissing mod=...` or `all=true` (delete them for good). The `*.events` commands start listening on their first call.
+Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `items.consumable id=14 set={"Amount":40} save=true` (then `clear=true`), `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items), `registry.missing` (missing stacks and where they are), `registry.removemissing mod=...` or `all=true` (delete them for good). The `*.events` commands start listening on their first call.

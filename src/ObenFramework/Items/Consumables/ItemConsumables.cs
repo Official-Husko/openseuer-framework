@@ -10,10 +10,10 @@ namespace ObenFramework.Items;
 /// Reads and changes what consumable items do (food, drink, health, intoxication...). The values live on the
 /// item's definition, so a change applies to every copy of the item. Changes stack: the newest one wins, and
 /// when it is removed (its mod unloads or the returned object is disposed) the one under it, or the game's own
-/// values, come back. They are kept for the session and re-applied when the game rebuilds its item database;
-/// they are not saved, so set them again in your mod's load.
+/// values, come back. They are re-applied when the game rebuilds its item database. <see cref="Set"/> lasts for
+/// the session (set it again in your mod's load); <see cref="SetForSave"/> is kept in the loaded save.
 /// </summary>
-public static class ItemConsumables
+public static partial class ItemConsumables
 {
     private static readonly Dictionary<int, ConsumableValues> Vanilla = new Dictionary<int, ConsumableValues>();
     private static readonly Dictionary<int, List<Layer>> Layers = new Dictionary<int, List<Layer>>();
@@ -43,6 +43,15 @@ public static class ItemConsumables
             throw new ArgumentNullException(nameof(owner));
         if (values == null || !values.IsFinite())
             return null;
+        var registration = Push(itemId, values.Copy(), null);
+        if (registration != null)
+            owner.Track(registration);
+        return registration;
+    }
+
+    // Puts a layer on top of the item's stack. Null when the item isn't consumable.
+    private static IDisposable Push(int itemId, ConsumableValues values, Action removed)
+    {
         var consumable = Find(itemId);
         if (consumable == null)
             return null;
@@ -51,13 +60,15 @@ public static class ItemConsumables
             Vanilla[itemId] = ConsumableValues.Read(consumable);
         if (!Layers.TryGetValue(itemId, out var stack))
             Layers[itemId] = stack = new List<Layer>();
-        var layer = new Layer(values.Copy());
+        var layer = new Layer(values);
         stack.Add(layer);
         layer.Values.WriteTo(consumable);
 
-        var registration = Disposable.Create(() => Remove(itemId, layer));
-        owner.Track(registration);
-        return registration;
+        return Disposable.Create(() =>
+        {
+            Remove(itemId, layer);
+            removed?.Invoke();
+        });
     }
 
     /// <summary>Puts every change back onto the item definitions. Called after the game rebuilds its item database.</summary>

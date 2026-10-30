@@ -20,6 +20,7 @@ internal static class ItemsModule
         // frame, or the first change would become the starting point instead of an event.
         InventoryWatch.Reset();
         UnloadedStorage.Init(framework);
+        ItemConsumables.Init(framework);
         framework.Track(Disposable.Create(() =>
         {
             ForgetScene();

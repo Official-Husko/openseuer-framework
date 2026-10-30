@@ -6,17 +6,15 @@ namespace ObenTool.Scripting;
 
 /// <summary>
 /// What a script compiles against: every managed DLL in the game's Managed folder (the game,
-/// Unity, the loader, Harmony) and every mod DLL deployed into Mods/. Cached per game folder.
+/// Unity, the loader, Harmony) and every mod DLL deployed into Mods/. Cached per game folder until a
+/// DLL there changes, so the long-running MCP server sees mods deployed after its first script.
 /// </summary>
 public static class ScriptReferences
 {
-    private static readonly Dictionary<string, List<MetadataReference>> Cache = new();
+    private static readonly Dictionary<string, (string Stamp, List<MetadataReference> References)> Cache = new();
 
     public static List<MetadataReference> For(GameInstall game)
     {
-        if (Cache.TryGetValue(game.Dir, out var cached))
-            return cached;
-
         var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (string dll in Directory.GetFiles(game.ManagedDir, "*.dll"))
             byName.TryAdd(Path.GetFileNameWithoutExtension(dll), dll);
@@ -26,12 +24,20 @@ public static class ScriptReferences
                 byName.TryAdd(Path.GetFileNameWithoutExtension(dll), dll);
         }
 
+        string stamp = Stamp(byName.Values);
+        if (Cache.TryGetValue(game.Dir, out var cached) && cached.Stamp == stamp)
+            return cached.References;
+
         var references = byName.Values.Where(IsManaged)
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .ToList();
-        Cache[game.Dir] = references;
+        Cache[game.Dir] = (stamp, references);
         return references;
     }
+
+    // Which files there are and when each was written: a deploy changes it, a second script doesn't.
+    private static string Stamp(IEnumerable<string> paths) =>
+        string.Join("|", paths.OrderBy(p => p, StringComparer.Ordinal).Select(p => p + "@" + File.GetLastWriteTimeUtc(p).Ticks));
 
     private static bool IsManaged(string path)
     {

@@ -7,7 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Deterministic>true</Deterministic>
     <Authors>pawbeans</Authors>
-    <Version>0.3.1</Version>
+    <Version>0.4.0</Version>
   </PropertyGroup>
 
   <!-- The commit a build comes from, in each assembly's informational version. -->

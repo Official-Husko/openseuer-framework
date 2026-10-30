@@ -42,8 +42,13 @@ public static class PlacedFurniture
     /// </summary>
     public static readonly WorldEvent<FurnitureMove> FurnitureMoved = new WorldEvent<FurnitureMove>(nameof(FurnitureMoved));
 
+    private const string ReloadKey = "ObenFramework.PlacedFurniture.Ids";
+
     private static readonly Dictionary<FurniturePlaceable, string> Ids = new Dictionary<FurniturePlaceable, string>();
     private static readonly Dictionary<string, FurniturePlaceable> ById = new Dictionary<string, FurniturePlaceable>();
+
+    // The ids handed out before the framework reloaded, by the piece's instance id: the pieces outlive the reload.
+    private static Dictionary<int, string> _parked;
 
     internal static bool AnySubscribers =>
         FurniturePlaced.HasSubscribers || FurnitureRemoved.HasSubscribers || FurnitureMoved.HasSubscribers;
@@ -110,7 +115,9 @@ public static class PlacedFurniture
             return id;
         }
 
-        if (placeable.isPreplacedFurniture && !string.IsNullOrEmpty(placeable.GUID))
+        if (_parked != null && _parked.TryGetValue(placeable.GetInstanceID(), out id) && !IsTaken(id))
+            _parked.Remove(placeable.GetInstanceID());
+        else if (placeable.isPreplacedFurniture && !string.IsNullOrEmpty(placeable.GUID))
             id = PreplacedPrefix + placeable.GUID;
         else
             id = FurnitureLedger.Match(SceneName(placeable), ManagerOf(placeable), TypeOf(placeable), placeable.transform.position, IsTaken)
@@ -157,19 +164,44 @@ public static class PlacedFurniture
     internal static void Init(ObenMod framework)
     {
         FurnitureLedger.Init(framework);
+        if (ReloadState.Take(ReloadKey, out Dictionary<int, string> parked))
+            _parked = parked;
         GameEvents.Saving.Subscribe(framework, RecordLedger);
+        GameEvents.Loading.Subscribe(framework, _ => ForgetIds());
+        GameEvents.MainMenu.Subscribe(framework, ForgetIds);
         framework.Track(Disposable.Create(() =>
         {
+            Park();
             FurnitureLedger.Shutdown();
+            ForgetIds();
             ForgetScene();
         }));
     }
 
-    internal static void ForgetScene()
+    /// <summary>
+    /// The level is going away: drop a held take. The ids stay until the next level loads, because a level
+    /// change saves (and records them in the ledger) after it is announced.
+    /// </summary>
+    internal static void ForgetScene() => FurnitureMoves.Reset();
+
+    private static void ForgetIds()
     {
         Ids.Clear();
         ById.Clear();
-        FurnitureMoves.Reset();
+        _parked = null;
+    }
+
+    // Placed since the last save, a piece is in no ledger; keep every id the next copy of the framework would lose.
+    private static void Park()
+    {
+        var parked = new Dictionary<int, string>();
+        foreach (var pair in Ids)
+        {
+            if (pair.Key != null)
+                parked[pair.Key.GetInstanceID()] = pair.Value;
+        }
+        if (parked.Count > 0)
+            ReloadState.Put(ReloadKey, parked);
     }
 
     internal static void Forget(FurniturePlaceable placeable)

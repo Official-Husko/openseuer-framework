@@ -433,19 +433,22 @@ Already checked: speed and jump multipliers (also over a reload), `clear=true`, 
 
 - [x] **Survival (M11), 2026-10-30, in a second copy on a test character:** a hunger threshold at 50 fired once going up (45 to 55, and again 49.99 to 50.1 after an apple took it down). A thirst drain multiplier of 0 held thirst at 29 for an in-game hour while hunger rose by its rate of 5. A damage hook halved a hunger hit (10 became 5, `Damaged` said 5) and cancelled a fall (no health lost, no `Damaged`). Consume hooks cancelled a sausage from the world and let an apple through (hunger 55 to 45, `Consumed`, `Source` World). With depression at 100 and a dirty player the game rolled a breakdown: drinking, then self-harm, both cancelled, no bleeding. Tiredness 100 raised `PassedOut`, a 300 hit raised `Died` (Hunger) once. Setting a stat from a `Loading` handler was refused.
   - To repeat it: the loaded slot had `PlayerStats.Active` off (saved during the start menu), so set it on first or no need changes. A breakdown is only rolled while depression is still moving toward its target, and a clean player's hygiene keeps effective depression under 100.
-- [ ] **Sleeping:** `player.sleep action=sleep` when tired; WokeUp fires.
-- [ ] **Clock label:** the wait clock shows the mod's label, e.g. "Reading" (screenshot during a wait).
-- [ ] **Custom skill [save]:** register one from a script.
-  - Its level-up banner shows; mod and game banners take turns.
-  - It has a row on the character page (C).
-  - The value survives save and load.
-- [ ] **Wardrobe:** `player.wardrobe`: equip a hat from the bag.
-- [ ] **Notes:** `player.notes give=<Assets/... path>`.
-- [ ] **Weapons:** `player.weapons target=Mining multiplier=3` with a pickaxe on rock gives triple damage.
-- [ ] **Custom interaction:** `CustomInteractions.Add` from a script. The title and verb show on the crosshair, and a refusal reason works.
-- [ ] **Look across a door [save]:** `PlayerLook.Keep` keeps the look over a door or level change.
-- [ ] **God mode [save]:** `HoldGodmode`, save, remove the mod, load. The save is not stuck in god mode.
-- [ ] **Medical and conditions:** a treatment at the doctor raises Treated; conditions list and change.
+- [x] **Sleeping:** with tiredness at 85, `player.sleep action=sleep seconds=7200` slept to the alarm in about 3 s; `SleepStarted` and `WokeUp` fired, tiredness 68 after (2026-10-30).
+- [x] **Clock label:** a 6-hour `PlayerSleep.Wait` with `Label = "Tinkering"` shows "Tinkering: 03:18" under the wait clock (screenshot, 2026-10-30).
+- [x] **Custom skill [save]:** passed 2026-10-30 on a copy of a real save.
+  - Registered from a script: "New skill Tinkering learned!" and "Tinkering increased to level 2!" banners. Two mod banners queued at once showed 9 s apart.
+  - It has a row on the Character page (level 2, 2400 XP; this early save has no game skills yet).
+  - 2.4 survived a level change and a load from disk, and `<save>/mods/ObenFramework.customskills.json` holds it.
+- [x] **Wardrobe:** `player.wardrobe equip=17730` (Hard Hat with Headlamp from the bag) filled Head, `unequip=Head` emptied it again (2026-10-30). It showed the game's head lamp bug (HeadLampPrompt in TODO.md).
+- [x] **Notes:** `player.notes give=Assets/Content/Notes/Bazaar/Bazaar_Restaurant_Note_001.asset` gave "Scatola Di Maccheroni - Help Wanted!", listed and readable on the Notes page (screenshot, 2026-10-30).
+- [x] **Weapons:** with a pickaxe on a rock in Open Sewer Mines (a hit of 50, swung from a script by setting the pickaxe's `hitEnabled`), Mining x3 gave 150 (2026-10-30). The rounding choice is checked in its own commit.
+- [x] **Custom interaction:** on a cube from a script, "Test box (Not yet)" in red while its reason held, then "Test box (Poke)" (screenshots, 2026-10-30).
+- [x] **Look across a door [save]:** `PlayerLook.Keep` with another hat and height 0.1 kept them over a level change from the mines to Kolhola and over a load from disk (2026-10-30).
+- [x] **God mode [save]:** held by Game Tweaks, the save wrote `"Godmode":false`; with Game Tweaks unloaded the save loaded without god mode (2026-10-30).
+- [x] **Camera lock, slider preview, wearable lists (2026-10-30):** `player.lookat` turned the view onto a point in first person and snapped in third person, gave way to a talk and came back after it, and the view stayed on release. `player.look preview=` showed slider changes on the body at once; `options=hat` listed the 9 hats.
+- [x] **Medical and conditions:** passed 2026-10-30 as far as the game allows.
+  - The doctor is in Interior Tenement Deekula A (a `Doctor` at about 62.65, -96.74, 20.53; Kolhola's "A3 Doctor" is only a room). With the menu opened by the game's `Doctor.ShowMenu()`, `Medical.Treat(Antidepressants)` bought it for 30 RM through the panel ("Item added!") and `Treated` fired with the kind and price.
+  - Conditions: 0.5.13 ships no condition assets at all (none even after `Resources.LoadAll`), so `player.conditions` lists nothing and refuses a made-up name, as it should.
 
 ## 11. Items and crafting (M17, M19)
 

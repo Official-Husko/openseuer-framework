@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using ObenCoop.Net.Session;
+using ObenUIKit.Menu.Settings;
 
 namespace ObenCoop;
 
@@ -45,8 +46,18 @@ public sealed class CoopSettings
     [Description("Offer Steam lobbies when the game's Steam is running. Direct play works either way.")]
     public bool Steam = true;
 
+    /// <summary>
+    /// Which Steam app the game starts as: "obenseuer", or "spacewar" (Valve's test app 480, which every
+    /// Steam account has: copies from GOG and other stores can play over Steam, and testing needs no
+    /// second copy of the game). Everyone in a game needs the same. Takes effect when the game starts.
+    /// </summary>
+    [Setting("Steam app", Choices = new[] { "obenseuer", "spacewar" },
+        Description = "Which Steam app the game runs as: obenseuer, or spacewar (Valve's free test app 480, so copies from GOG and other stores can play over Steam). Everyone needs the same. While on spacewar, Steam shows you in Spacewar and Obenseuer's achievements and play time don't count. Takes effect when the game starts.")]
+    public string SteamApp = "obenseuer";
+
     /// <summary>Who sees a hosted Steam lobby: "friends", "public" or "private" (invite only).</summary>
-    [Description("Who can see a hosted Steam lobby: friends, public or private (invite only).")]
+    [Setting("Steam lobby type", Choices = new[] { "friends", "public", "private" },
+        Description = "Who can see a hosted Steam lobby: friends, public or private (invite only).")]
     public string SteamLobbyType = "friends";
 
     /// <summary>Accepting a Steam invite (or "Join game" on a friend) joins at once.</summary>

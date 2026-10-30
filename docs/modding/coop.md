@@ -170,14 +170,16 @@ lobby.Poll();                                         // every frame, after sess
 
 ### Steam
 
-Optional and never the default. Steam play needs the game's own Steam to be running: `SteamGate` reads the game's `SteamManager` (`s_instance` and `m_bInitialized`, private, through cached field refs, at most once a second until it says yes). It does **not** use the public `SteamManager.Initialized`, which creates a manager when none exists and so starts Steam itself (or throws if Steam was started once). Until the gate says yes nothing touches Steamworks; if anything fails to start, direct play carries on alone and the status says so.
+Optional and never the default. Steam play needs the game's own Steam to be running: the framework's `GameSteam.IsReady` reads the game's `SteamManager` (`s_instance` and `m_bInitialized`, private, through cached field refs, at most once a second until it says yes). It does **not** use the public `SteamManager.Initialized`, which creates a manager when none exists and so starts Steam itself (or throws if Steam was started once). Until it says yes nothing touches Steamworks; if anything fails to start, direct play carries on alone and the status says so.
 
 The logic is in the library, behind two interfaces shaped after Steamworks so it is tested without Steam:
 
 - `IP2PNetwork` (legacy `ISteamNetworking`) under `P2PTransport` (see Transport). In the mod, `Steam/SteamP2P.cs` implements it on channel 2789.
 - `IMatchmaking` (`ISteamMatchmaking` plus friends and rich presence) under `MatchmakingBackend`. In the mod, `Steam/SteamLobbies.cs` implements it.
 
-Hosting creates a lobby (`SteamLobbyType`: friends only by default, `public` or `private`), writes `game=obencoop` and the `LobbyInfo` (base64) into its data, sets rich presence `connect = "+connect_lobby <id>"` so friends can "Join game", and lets only lobby members connect over P2P; members who leave the Steam lobby are dropped. Joining enters the lobby, waits up to 3 s for its data, refuses lobbies that aren't ObenCoop (and leaves them), runs the version checks, then connects to the owner's Steam id. Lists show the lobbies friends playing Obenseuer are in plus public ObenCoop lobbies. `coop invite` opens the overlay's invite dialog. Accepted invites, "Join game" clicks and a `+connect_lobby <id>` on the game's command line (Steam starts the game that way from an invite) come out as `JoinRequested`; with `JoinInvites` on, the mod joins at once.
+Hosting creates a lobby (`SteamLobbyType`: friends only by default, `public` or `private`), writes `game=obencoop` and the `LobbyInfo` (base64) into its data, sets rich presence `connect = "+connect_lobby <id>"` so friends can "Join game", and lets only lobby members connect over P2P; members who leave the Steam lobby are dropped. Joining enters the lobby, waits up to 3 s for its data, refuses lobbies that aren't ObenCoop (and leaves them), runs the version checks, then connects to the owner's Steam id. Lists show the lobbies friends playing the same Steam app are in plus public ObenCoop lobbies. `coop invite` opens the overlay's invite dialog. Accepted invites, "Join game" clicks and a `+connect_lobby <id>` on the game's command line (Steam starts the game that way from an invite) come out as `JoinRequested`; with `JoinInvites` on, the mod joins at once.
+
+**Obenseuer or Spacewar.** `SteamApp` in `config.json` (or the Settings page) picks the Steam app the game runs as: `obenseuer` (the default) or `spacewar`, Valve's free test app 480. Every Steam account has Spacewar, so with it copies from GOG and other stores can play over Steam (with the Steam client running), and two test accounts don't need two copies of the game. Lobbies and P2P sessions only meet within one app, so everyone in a game needs the same choice; public lobbies are told apart from other people's Spacewar tests by `game=obencoop`. The switch goes through the framework's `GameSteam.StartAs` in the mod's `OnLoad`, which runs before the game starts Steam in its first scene: it sets `SteamAppId`/`SteamGameId` for the process and skips the game's `RestartAppIfNecessary(951240)`, which would otherwise relaunch it through Steam as Obenseuer. A change takes effect at the next start of the game. While the game runs as Spacewar, Steam shows the player in Spacewar, and Obenseuer's achievements, stats and play time don't count. `coop status` says "ready as Spacewar (480)".
 
 This install's `steam_api64.dll` is replaced (an emulator answers with a fixed id), so Steam play could not be tried here; two copies on one machine would also share that id. The fake Steam in the tests (`FakeSteam.cs`) runs the whole flow instead: create, list, join, refusals, invites, members leaving, the host leaving, reloads.
 
@@ -194,7 +196,7 @@ Files in `mods/ObenCoop/`:
 | `Sessions/ModSetBuilder.cs` | builds the mod set from `ModRegistry` |
 | `Lobby/LobbyNotices.cs` | joins, leaves, failures and opened lobbies as notices; prints a finished lobby list to the console; joins on accepted invites |
 | `Presence/PresencePublisher.cs` | feeds the local player into presence |
-| `Steam/SteamGate.cs`, `SteamP2P.cs`, `SteamLobbies.cs`, `SteamSupport.cs` | the only code that touches Steamworks; starts once the game's Steam is up |
+| `Steam/SteamP2P.cs`, `SteamLobbies.cs`, `SteamSupport.cs` | the only code in the mod that touches Steamworks; starts once the framework's `GameSteam` says the game's Steam is up |
 | `Chat/CoopChat.cs`, `CoopNotices.cs` | chat on `ChannelIds.Chat`; shows text as a game notification in a level and in the console otherwise |
 | `Commands/CoopCommands.cs`, `LobbyCommands.cs`, `PresenceCommands.cs`, `CoopStatus.cs`, `LobbyText.cs` | the `coop` console command |
 | `Bridge/CoopMod.Bridge.cs` | `BridgeStatus`, `BridgePresence`, `BridgeLobbies`: JSON for the dev bridge's `coop.*` commands |
@@ -212,6 +214,7 @@ Settings in `config.json` are re-read each time you host, join or list, so editi
 | `PublicAddress` | `""` | IPv4 put in join codes; empty is this machine's network address |
 | `ScanPorts` | 4 | ports a lobby list asks, from `Port` up |
 | `Steam` | true | offer Steam lobbies when the game's Steam is running |
+| `SteamApp` | `obenseuer` | the Steam app the game runs as: `obenseuer`, or `spacewar` (480) for GOG copies and testing; at the next start |
 | `SteamLobbyType` | `friends` | `friends`, `public` or `private` (invite only) |
 | `JoinInvites` | true | accepting a Steam invite joins at once |
 | `SharePresence` | true | share where you are |

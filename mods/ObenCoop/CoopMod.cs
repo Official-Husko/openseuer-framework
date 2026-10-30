@@ -13,6 +13,7 @@ using ObenCoop.Presence;
 using ObenCoop.Sessions;
 using ObenCoop.Steam;
 using ObenFramework.Console;
+using ObenFramework.Game;
 using ObenLoader;
 using ObenLoader.Config;
 using ObenLoader.Runtime;
@@ -58,6 +59,7 @@ public sealed partial class CoopMod : ObenMod
         _settings = LoadConfig<CoopSettings>();
         if (!File.Exists(_settings.Path))
             _settings.Save();
+        ChooseSteamApp();
 
         var options = new SessionOptions
         {
@@ -159,6 +161,29 @@ public sealed partial class CoopMod : ObenMod
         if (!string.IsNullOrWhiteSpace(Settings.LobbyName))
             return Settings.LobbyName.Trim();
         return Session.Options.PlayerName + "'s game";
+    }
+
+    /// <summary>True when config.json asks for Steam as Spacewar (480) instead of Obenseuer.</summary>
+    internal bool WantsSpacewar
+    {
+        get
+        {
+            string app = (Settings.SteamApp ?? "").Trim().ToLowerInvariant();
+            return app == "spacewar" || app == "480";
+        }
+    }
+
+    // Mods load before the first scene, where the game starts Steam, so this is in time at game start.
+    // After a reload Steam is up already and a changed choice waits for the next start.
+    private void ChooseSteamApp()
+    {
+        if (!Settings.Steam)
+            return;
+        uint wanted = WantsSpacewar ? GameSteam.SpacewarAppId : GameSteam.GameAppId;
+        if (wanted == GameSteam.GameAppId && GameSteam.RequestedAppId == 0)
+            return;
+        if (!GameSteam.StartAs(this, wanted, out string problem))
+            Log.Warn(problem);
     }
 
     private static LobbyVisibility ParseVisibility(string text)

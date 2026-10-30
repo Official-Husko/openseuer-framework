@@ -2,12 +2,13 @@ using System;
 using ObenCoop.Net.Lobby;
 using ObenCoop.Net.Lobby.Matchmaking;
 using ObenCoop.Net.Transport.P2P;
+using ObenFramework.Game;
 using ObenLoader.Logging;
 
 namespace ObenCoop.Steam;
 
 /// <summary>
-/// The optional Steam way of playing. Nothing here touches Steam until <see cref="SteamGate"/> says the
+/// The optional Steam way of playing. Nothing here touches Steam until <see cref="GameSteam"/> says the
 /// game's Steam is up; then it adds a Steam lobby backend (Steam lobbies, peer-to-peer networking) next
 /// to direct play. When Steam never comes up, is switched off in config.json, or fails to start,
 /// direct play simply stays the only way, and nothing is logged as an error more than once.
@@ -68,8 +69,15 @@ internal sealed class SteamSupport : IDisposable
         if (_failed)
             return "failed to start, see the log";
         if (IsActive)
-            return "ready, signed in as " + _p2p.LocalId;
-        return SteamGate.Problem ?? "waiting for the game's Steam";
+            return $"ready{AppText()}, signed in as {GameSteam.LocalName} ({_p2p.LocalId})";
+        return GameSteam.Problem ?? "waiting for the game's Steam";
+    }
+
+    // Only said when it isn't Obenseuer, which is what everyone expects.
+    private static string AppText()
+    {
+        uint app = GameSteam.AppId;
+        return app == GameSteam.GameAppId ? "" : app == GameSteam.SpacewarAppId ? " as Spacewar (480)" : $" as app {app}";
     }
 
     /// <summary>Call every frame: starts once Steam is up. Cheap when started, off or failed.</summary>
@@ -77,7 +85,7 @@ internal sealed class SteamSupport : IDisposable
     {
         if (IsActive || _failed || !Enabled)
             return;
-        if (SteamGate.IsReady)
+        if (GameSteam.IsReady)
             Start();
     }
 

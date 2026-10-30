@@ -14,9 +14,6 @@ namespace ObenCoop.Steam;
 /// </summary>
 internal sealed class SteamLobbies : IMatchmaking, IDisposable
 {
-    /// <summary>Obenseuer's Steam app id, to find friends playing it.</summary>
-    public const uint AppId = 951240;
-
     /// <summary>What Steam puts on the command line or in rich presence to join a lobby.</summary>
     public const string ConnectPrefix = "+connect_lobby";
 
@@ -25,8 +22,11 @@ internal sealed class SteamLobbies : IMatchmaking, IDisposable
     private CallResult<LobbyEnter_t> _entered;
     private CallResult<LobbyMatchList_t> _listed;
 
+    private readonly uint _appId;
+
     public SteamLobbies()
     {
+        _appId = SteamUtils.GetAppID().m_AppId;
         _callbacks.Add(Callback<LobbyChatUpdate_t>.Create(u => LobbyChanged?.Invoke(u.m_ulSteamIDLobby)));
         _callbacks.Add(Callback<LobbyDataUpdate_t>.Create(u => LobbyChanged?.Invoke(u.m_ulSteamIDLobby)));
         _callbacks.Add(Callback<GameLobbyJoinRequested_t>.Create(r => JoinRequested?.Invoke(r.m_steamIDLobby.m_SteamID)));
@@ -97,7 +97,8 @@ internal sealed class SteamLobbies : IMatchmaking, IDisposable
         for (int i = 0; i < count; i++)
         {
             var friend = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
-            if (!SteamFriends.GetFriendGamePlayed(friend, out var game) || game.m_gameID.AppID().m_AppId != AppId)
+            // Friends in the same app as this game: Obenseuer, or Spacewar when the game started Steam as it.
+            if (!SteamFriends.GetFriendGamePlayed(friend, out var game) || game.m_gameID.AppID().m_AppId != _appId)
                 continue;
             if (game.m_steamIDLobby.IsValid() && game.m_steamIDLobby.IsLobby() && !into.Contains(game.m_steamIDLobby.m_SteamID))
                 into.Add(game.m_steamIDLobby.m_SteamID);

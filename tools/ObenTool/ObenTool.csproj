@@ -26,6 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Mono.Cecil" Version="$(CecilVersion)" />
     <Compile Include="../../src/Shared/GameCheck/*.cs" Link="Checks/Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../src/Shared/Reports/*.cs" Link="Reports/Shared/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- The installer ships the loader, Harmony and Cecil next to itself in payload/ and copies them into the game.

@@ -45,7 +45,9 @@ public override void OnLoad()
 
 ### Making a prop usable
 
-Give it an `InteractKey` (and a collider, the default) and register what happens with `WorldProps.OnUse(owner, key, handler)`. The player then sees the game's own prompt (`Title`, or the prop id) and the interact key runs the handler with a `WorldPropUse` (mod, key, prop id, scene, data, object). The prompt is the game's `Interactable` without a GUID, so the save system never writes it; every part of the prop with a collider gets one, moved to a layer the game's interact ray can use. The handler registration ends when the mod unloads; props placed before the handler is registered get their prompt as soon as it is.
+Give it an `InteractKey` (and a collider, the default) and register what happens with `WorldProps.OnUse(owner, key, handler)`. The player then sees the game's own prompt (`Title`, or the prop id) and the interact key runs the handler with a `WorldPropUse` (mod, key, prop id, scene, data, object). The prompt is the game's `Interactable` without a GUID, so the save system never writes it; every part of the prop with a collider gets one, moved to a layer the game's interact ray can use. A prop that has no collider of its own (a light, a model or item look without one) gets a box to aim at on the game's layer for usable things the player walks through; a trigger wouldn't do, as the game's physics queries skip triggers. The handler registration ends when the mod unloads; props placed before the handler is registered get their prompt as soon as it is.
+
+`WorldProps.IsAvailable` is true while props can be placed and recorded: a game is loaded and no save is running.
 
 `Data` is up to 256 characters of free text kept with the prop, handy to tell props with the same key apart.
 

@@ -32,6 +32,9 @@ public static partial class WorldProps
     /// <summary>Why the last refused call was refused, or null after a call that went through.</summary>
     public static string LastProblem { get; private set; }
 
+    /// <summary>The framework keeps props for the save that is loaded: a level is up and no save is running.</summary>
+    public static bool IsAvailable => _save != null && WorldState.InWorld && !SaveGate.IsBusy;
+
     /// <summary>
     /// Places a prop, or replaces the mod's prop with the same id. Returns the live object when
     /// <paramref name="scene"/> is loaded; for another scene the prop is only recorded and null is returned.

@@ -5,6 +5,7 @@ using HarmonyLib;
 using ObenFramework.Saves;
 using ObenFramework.Scenes;
 using Outputs;
+using ObenFramework.Patching;
 
 namespace ObenFramework.World.Logic;
 
@@ -28,6 +29,9 @@ public static class SceneLogic
     /// inactive or its requirements weren't met.
     /// </summary>
     public static readonly WorldEvent<RelayFired> Fired = new WorldEvent<RelayFired>(nameof(Fired));
+
+    /// <summary>False when the framework's relay hook failed to apply after a game update; <see cref="Fired"/> then stays quiet.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World.Logic");
 
     public static List<RelayInfo> Relays()
     {
@@ -95,7 +99,7 @@ public static class SceneLogic
     }
 
     internal static void RaiseFired(Relay relay) =>
-        Fired.Raise(new RelayFired(SceneIds.Of(relay), relay.name, relay.fireOnceOnly));
+        Fired.Raise(new RelayFired(SceneIds.Of(relay), relay.name, relay.fireOnceOnly, Enabled(relay.outputs)));
 
     private static bool RequirementsMet(Relay relay)
     {

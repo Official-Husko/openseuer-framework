@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using ObenFramework.Saves;
 using ObenFramework.Scenes;
+using ObenFramework.Patching;
 
 namespace ObenFramework.World;
 
@@ -55,6 +56,9 @@ public static class Signs
 
     /// <summary>A sign's text changed. For the player, raised once when they stop typing, if the text differs.</summary>
     public static readonly WorldEvent<SignTextChanged> TextChanged = new WorldEvent<SignTextChanged>(nameof(TextChanged));
+
+    /// <summary>False when the framework's sign hooks failed to apply after a game update; <see cref="TextChanged"/> then stays quiet.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     public static List<SignInfo> All()
     {

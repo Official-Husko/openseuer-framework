@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Saves;
 using UnityEngine;
+using ObenFramework.Patching;
 
 namespace ObenFramework.World;
 
@@ -60,6 +61,12 @@ public static partial class Landmarks
 
     /// <summary>A landmark was added to the current map (discovered, handed out or placed by a mod).</summary>
     public static readonly WorldEvent<LandmarkAdded> Added = new WorldEvent<LandmarkAdded>(nameof(Added));
+
+    /// <summary>
+    /// False when the framework's landmark hooks failed to apply after a game update: <see cref="Added"/> stays
+    /// quiet, and mod marks may be saved into the game's own save or not come back.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>Every landmark loaded in the game right now, the game's and the mods'.</summary>
     public static List<LandmarkInfo> All()

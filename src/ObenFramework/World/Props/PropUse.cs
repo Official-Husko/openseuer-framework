@@ -13,6 +13,7 @@ internal sealed class PropUse : Interactable
 {
     // Layers the game's interact ray treats as usable (InteractObjects.IsUsableLayer), most common first.
     private static readonly int[] UsableLayers = { 17, 23, 29, 20, 15 };
+    private const string WalkThroughLayer = "IgnorePlayerUsable";
 
     internal Action Used;
 
@@ -22,12 +23,26 @@ internal sealed class PropUse : Interactable
         catch (Exception e) { WorldProps.Log.Error("prop use handler", e); }
     }
 
-    /// <summary>Adds the use prompt to every collider part of <paramref name="go"/>. False when the game can't target it.</summary>
+    /// <summary>
+    /// Adds the use prompt to every collider part of <paramref name="go"/>. A prop without one (a light, an
+    /// anchor, a model or item look with no collider) gets a box to aim at on the game's layer for usable things
+    /// the player walks through: the game's physics queries skip triggers, so a trigger box would never be hit.
+    /// False when the game can't target it.
+    /// </summary>
     public static bool Attach(GameObject go, string title, Action used)
     {
         var objects = InteractObjects.instance;
         if (objects == null)
             return false;
+        if (go.GetComponentInChildren<Collider>(true) == null)
+        {
+            PropParts.EnsureCollider(go);
+            if (go.GetComponent<Renderer>() == null && go.GetComponent<BoxCollider>() is BoxCollider box)
+                box.size = Vector3.one * 0.5f;
+            int walkThrough = LayerMask.NameToLayer(WalkThroughLayer);
+            if (walkThrough >= 0)
+                go.layer = walkThrough;
+        }
 
         bool any = false;
         foreach (var collider in go.GetComponentsInChildren<Collider>(true))

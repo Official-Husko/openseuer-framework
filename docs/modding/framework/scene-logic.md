@@ -32,13 +32,13 @@ The rules behind the refusals are in `SceneStateRules`, which has no Unity types
 
 `SceneLogic.Relays()` lists the relays with whether they fire only once, have fired and have every output switched on. `SceneLogic.Fire(id)` fires a relay the way the level would, and only when it would really fire: active in the scene, not used up (fire-once relays that already fired), and its task item, objective and dialogue variable requirements met (`CanFire` tells). `SetEnabled(id, on)` switches all outputs of a relay or a trigger volume (`TriggerMultiple`).
 
-`SceneLogic.Fired` is raised after every relay that fired its outputs, with the relay's id, name and fire-once flag:
+`SceneLogic.Fired` is raised after every relay that fired its outputs, with the relay's id, name, fire-once flag and whether its outputs were switched on (`Enabled`):
 
 ```csharp
 SceneLogic.Fired.Subscribe(this, fired => Log.Info($"relay {fired.Name} ({fired.Id}) fired"));
 ```
 
-It is one Harmony postfix on `Relay.triggerOutputs(object)`, which every relay subclass calls; the prefix returns at once while nobody listens. Calls the relay ignored (used up, inactive, requirements not met) aren't reported. Outputs with a delay are still pending when the event runs.
+It is one Harmony postfix on `Relay.triggerOutputs(object)`, which every relay subclass calls; the prefix returns at once while nobody listens. Calls the relay ignored (used up, inactive, requirements not met) aren't reported. Outputs with a delay are still pending when the event runs. `SceneLogic.IsAvailable` is false when that hook failed to apply after a game update.
 
 ## Landmarks
 
@@ -50,11 +50,11 @@ It is one Harmony postfix on `Relay.triggerOutputs(object)`, which every relay s
 
 Mods add their own with `Create(owner, id, title, position, iconPath)` (a PNG or JPG in the mod folder), `Create(owner, id, title, position, sprite)` (a runtime sprite) or `Mark(owner, id, title, position)` (a red dot, without the "Discovered" notification unless asked). They are kept per map in the framework's save file (`ObenFramework.landmarks.json`) and put back once the map has loaded after every level change and load. Calling `Create` again for the same id on the same map keeps the saved position and updates the rest. `Remove(owner, id)` and `Clear(owner)` take them away; `Saved(modId?)` lists the records.
 
-The game saves the map's landmark lists itself. Right before `SaveController.SaveGame` writes, mod landmarks are taken out of those lists and put back afterwards (also when the save throws), so the game's save never refers to a landmark that only exists while a mod is loaded. A landmark with a runtime sprite can't come back by itself: the mod has to create it again in a later session (its saved position is kept). When a mod unloads its landmarks leave the map, and come back when it loads again. Limits: 128 per mod, 1024 in all; ids are letters, digits, `.`, `_` and `-`, up to 64; the game sees them as `modId:id`.
+The game saves the map's landmark lists itself. Right before `SaveController.SaveGame` writes, mod landmarks are taken out of those lists and put back afterwards (also when the save throws), so the game's save never refers to a landmark that only exists while a mod is loaded. A landmark with a runtime sprite can't come back by itself: the mod has to create it again in a later session (its saved position is kept). When a mod unloads its landmarks leave the map, and come back when it loads again. `Landmarks.IsAvailable` is false when the framework's landmark hooks failed to apply after a game update (then `Added` stays quiet and mod marks could end up in the game's save). Limits: 128 per mod, 1024 in all; ids are letters, digits, `.`, `_` and `-`, up to 64; the game sees them as `modId:id`.
 
 ## Signs
 
-`Signs.All()` lists the editable signs of the active scene (id, text, line and length limits); `Get(id)` reads one. `SetText(id, text)` sets the text, refused while the player is typing on that sign, while the game saves or loads, or when the text is longer or has more lines than the sign takes. The game saves sign text itself. `Signs.TextChanged` is raised when the player finishes typing (only if the text changed) or a mod set new text, with `ByPlayer` telling which.
+`Signs.All()` lists the editable signs of the active scene (id, text, line and length limits); `Get(id)` reads one. `SetText(id, text)` sets the text, refused while the player is typing on that sign, while the game saves or loads, or when the text is longer or has more lines than the sign takes. The game saves sign text itself. `Signs.TextChanged` is raised when the player finishes typing (only if the text changed) or a mod set new text, with `ByPlayer` telling which; `Signs.IsAvailable` is false when its hooks failed to apply. Editable signs come from the build menu's Signs group (the small label, for one), not from the levels.
 
 ## Saved objects and per-object data
 

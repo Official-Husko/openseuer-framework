@@ -113,11 +113,12 @@ public readonly struct RelayInfo
 /// <summary>Raised by <see cref="SceneLogic.Fired"/> after a relay fired its outputs.</summary>
 public readonly struct RelayFired
 {
-    public RelayFired(string id, string name, bool fireOnce)
+    public RelayFired(string id, string name, bool fireOnce, bool enabled = true)
     {
         Id = id;
         Name = name;
         FireOnce = fireOnce;
+        Enabled = enabled;
     }
 
     public string Id { get; }
@@ -126,4 +127,7 @@ public readonly struct RelayFired
     public string Name { get; }
 
     public bool FireOnce { get; }
+
+    /// <summary>None of its outputs was switched off when it fired.</summary>
+    public bool Enabled { get; }
 }

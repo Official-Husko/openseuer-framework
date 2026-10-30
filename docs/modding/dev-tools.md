@@ -95,8 +95,8 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `casino.machines`, `cards.tables`, `contests.list`, `gambling.payout`, `gambling.events` | see [framework/gambling.md](framework/gambling.md) | casino machines, card tables, contests, payout multipliers |
 | `assets.list` | `mod?`, `kind?` | textures, sounds and models mods have loaded, with sizes ([framework/assets.md](framework/assets.md)) |
 | `items.model`, `items.drawicon`, `text.get` | see [framework/assets.md](framework/assets.md) | a model on an item, an icon drawn from a model, texts in the player's language |
-| `npcs.list`, `npcs.get`, `npcs.nearest`, `npcs.act`, `npcs.relationship`, `npcs.crime`, `npcs.characters` | see [framework/npcs.md](framework/npcs.md) | NPCs, one-off actions, relationships, police and surveillance |
-| `npcs.spawn`, `npcs.despawn`, `npcs.mods`, `npcs.order`, `npcs.look` | see [framework/mod-npcs.md](framework/mod-npcs.md) | mod NPCs (owned by DevBridge) |
+| `npcs.list`, `npcs.get`, `npcs.nearest`, `npcs.actors`, `npcs.act`, `npcs.claim`, `npcs.nodes`, `npcs.relationship`, `npcs.crime`, `npcs.characters` | see [framework/npcs.md](framework/npcs.md) | NPCs (also those without a character), one-off actions, claims, the level's routes, relationships, police and surveillance |
+| `npcs.spawn`, `npcs.despawn`, `npcs.mods`, `npcs.order`, `npcs.look`, `npcs.saved`, `npcs.extras` | see [framework/mod-npcs.md](framework/mod-npcs.md) | mod NPCs and extras (owned by DevBridge), saved mod NPCs in every scene |
 | `animals.list`, `animals.act`, `animals.breeders` | see [framework/animals.md](framework/animals.md) | animals, taming, breeding pens |
 | `phone.list`, `phone.scene` | see [framework/phone.md](framework/phone.md) | phone numbers and the phones in the scene |
 | `props.list`, `props.spawn`, `props.move`, `props.remove` | see [framework/world-props.md](framework/world-props.md) | props that stay in the save |

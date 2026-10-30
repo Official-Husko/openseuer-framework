@@ -129,7 +129,7 @@ internal static class ModNpcCommands
     private static ModNpc Mine(JObject p) =>
         ModNpcs.Get(DevBridgeMod.Instance, p.Str("name")) ?? throw new ArgumentException("DevBridge has no mod NPC of that name here.");
 
-    private static (Vector3 position, float yaw) Spot(JObject p)
+    internal static (Vector3 position, float yaw) Spot(JObject p)
     {
         var given = p.Position();
         var body = PlayerRef.Body;

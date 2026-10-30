@@ -75,9 +75,12 @@ internal static class NpcCommands
     }
 
     [BridgeCommand("phone.list", "Every number in the game's phone book, with owner (null for the game's own), network and conversation.",
-        Params = new[] { "mods?: only numbers added by mods, default false" })]
+        Params = new[] { "mods?: only numbers added by mods, default false", "check?: instead, whether this number could be registered and why not" })]
     private static object PhoneList(JObject p)
     {
+        string check = p.Str("check", null);
+        if (check != null)
+            return new JObject { ["number"] = check, ["free"] = PhoneNumbers.CanRegister(check, out string reason), ["reason"] = reason };
         bool modsOnly = p.Bool("mods", false);
         var list = new JArray();
         foreach (var number in PhoneNumbers.List())

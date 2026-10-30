@@ -93,7 +93,7 @@ public sealed partial class NpcClaim : IDisposable
 
     /// <summary>
     /// Gives the NPC back: stops an animation, puts its appearance back, lifts the holds, stops looking,
-    /// cancels a walk and resumes the schedule.
+    /// ends a patrol or stand it started, cancels a walk and resumes the schedule.
     /// </summary>
     public void Dispose()
     {
@@ -103,6 +103,7 @@ public sealed partial class NpcClaim : IDisposable
         RestoreAppearance();
         ReleaseHolds();
         StopLooking();
+        StopNodes();
         Resume();
         _released = true;
         NpcControl.Remove(this);

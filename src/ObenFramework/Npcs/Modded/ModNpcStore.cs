@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using System.Collections.Generic;
 using ObenFramework.Events;
 using ObenFramework.Game;
 using ObenFramework.Player.Look;
@@ -81,6 +82,18 @@ internal static class ModNpcStore
     }
 
     public static int Forget(string mod, string name) => File.Drop(mod, name);
+
+    /// <summary>The save's entries, of one mod or (null) all of them, as they are in the file now.</summary>
+    public static List<ModNpcSaved> Entries(string mod)
+    {
+        var list = new List<ModNpcSaved>();
+        foreach (var entry in File.Npcs)
+        {
+            if (mod == null || string.Equals(entry.Mod, mod, StringComparison.OrdinalIgnoreCase))
+                list.Add(entry);
+        }
+        return list;
+    }
 
     // Before the game writes a save: living saved NPCs record their state, dead ones leave the save.
     public static void Snapshot()

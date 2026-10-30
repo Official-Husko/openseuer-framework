@@ -153,7 +153,7 @@ internal static class ModNpcBuilder
 
     // Points the body's look components at the copy, so the copy's look (not the template's asset) is what
     // they build from and what edits change.
-    private static void Repoint(GameObject go, Character template, Character body, Character clone)
+    internal static void Repoint(GameObject go, Character template, Character body, Character clone)
     {
         foreach (var appearance in go.GetComponentsInChildren<Appearance>(true))
             appearance.createdCharacter = clone;
@@ -174,7 +174,7 @@ internal static class ModNpcBuilder
         return false;
     }
 
-    private static bool Taken(int id)
+    internal static bool Taken(int id)
     {
         foreach (var character in CharacterDatabase.Characters)
         {

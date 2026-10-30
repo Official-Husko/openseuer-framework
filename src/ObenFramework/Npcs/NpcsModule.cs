@@ -14,6 +14,7 @@ internal static class NpcsModule
         NpcControl.Init(framework);
         NpcAnimation.Init(framework);
         ModNpcs.Init(framework);
+        NpcExtras.Init(framework);
         NpcRoutines.Init(framework);
         PhoneNumbers.Init(framework);
         Pursuit.Init(framework);

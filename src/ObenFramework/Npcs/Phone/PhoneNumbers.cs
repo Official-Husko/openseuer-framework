@@ -47,6 +47,17 @@ public static class PhoneNumbers
         return Add(owner, number, name, conversation, onCall, network, answerChance);
     }
 
+    /// <summary>
+    /// Whether <paramref name="number"/> can be registered now, without throwing: false with the reason (it
+    /// isn't a phone number, or the phone book already holds it and whose it is). <c>Register</c> throws
+    /// with the same reasons.
+    /// </summary>
+    public static bool CanRegister(string number, out string reason)
+    {
+        reason = Refusal(number, out _);
+        return reason == null;
+    }
+
     /// <summary>Every number in the phone book, the game's and the mods', in the order the game holds them.</summary>
     public static List<PhoneNumberInfo> List()
     {
@@ -101,20 +112,15 @@ public static class PhoneNumbers
     {
         if (owner == null)
             throw new ArgumentNullException(nameof(owner));
-        if (!PhoneDigits.TryParse(number, out var keys))
-            throw new ArgumentException($"'{number}' is not a phone number: use 1 to {PhoneDigits.MaxKeys} of 0-9, * and #.", nameof(number));
         if (answerChance < 0f || answerChance > 1f || float.IsNaN(answerChance))
             throw new ArgumentOutOfRangeException(nameof(answerChance), "The answer chance is between 0 and 1.");
         if ((network & ~(PhoneNumber.Network.Obenseuer | PhoneNumber.Network.Outside | PhoneNumber.Network.Wasteland)) != 0)
             throw new ArgumentException("Unknown network flags.", nameof(network));
-
-        EnsureGameBook();
-        var taken = FindAsset(keys);
-        if (taken != null)
-        {
-            string by = LineOf(taken)?.Owner ?? "the game";
-            throw new InvalidOperationException($"The number {number} is already in the phone book ({by}).");
-        }
+        string refusal = Refusal(number, out var keys);
+        if (refusal != null && keys == null)
+            throw new ArgumentException(refusal, nameof(number));
+        if (refusal != null)
+            throw new InvalidOperationException(refusal);
 
         var line = new PhoneLine(owner.Info.Id, number, keys, string.IsNullOrEmpty(name) ? number : name, conversation, onCall, network, answerChance);
         var asset = ScriptableObject.CreateInstance<PhoneNumber>();
@@ -132,6 +138,19 @@ public static class PhoneNumbers
         PhoneNumberDatabase.database.Add(asset);
         owner.Track(line);
         return line;
+    }
+
+    // Why a number can't be registered, or null. Keys are null when it isn't a phone number at all.
+    private static string Refusal(string number, out int[] keys)
+    {
+        if (!PhoneDigits.TryParse(number, out keys))
+        {
+            keys = null;
+            return $"'{number}' is not a phone number: use 1 to {PhoneDigits.MaxKeys} of 0-9, * and #.";
+        }
+        EnsureGameBook();
+        var taken = FindAsset(keys);
+        return taken != null ? $"The number {number} is already in the phone book ({LineOf(taken)?.Owner ?? "the game"})." : null;
     }
 
     // The game fills its book from Resources in PhoneNumberDatabase.Awake, but only while the list is empty.

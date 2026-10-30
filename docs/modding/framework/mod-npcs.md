@@ -79,6 +79,21 @@ GameEvents.WhenWorldReady(this, scene =>
 
 A saved NPC is written to the framework's per-save file (`mods/ObenFramework.npcs.json` next to the save) with the scene it was spawned in, its position and facing at save time, and its look. Every time that scene is ready it is spawned again, as long as your mod is loaded; a mod that loads mid-game (a hot reload) gets its NPCs back at once. For a saved NPC the save wins: if the save already has it in this scene, `Spawn` brings it back the way it was saved and ignores the spec's position and look. `Despawn` (or `ModNpcs.Clear`) forgets it. A saved NPC that dies leaves the save at the next save. Entries of mods that are not installed stay in the file, so the NPCs return with the mod. Up to 256 saved NPCs per mod.
 
+`ModNpcs.Saved(this)` lists your mod's NPCs in the loaded save, in every scene, not only the one you are in; `ModNpcs.SavedAll()` lists every mod's, also those of mods that aren't installed. A `SavedModNpc` has `Mod`, `Name`, `FirstName`, `LastName`, `Template`, `Body`, `Scene`, `Position` and `Yaw` (now if it is here, else where the save has it), `Here` and `ModLoaded`.
+
+## Extras
+
+```csharp
+var queue = new List<NpcExtra>();
+for (int i = 0; i < 5; i++)
+    queue.Add(NpcExtras.Spawn(this, "queue" + i, new ModNpcSpec { Template = 59 + i, Position = start + i * step, Yaw = 90f }));
+NpcAnimation.Play(this, queue[0].Animator, waitingClip);
+```
+
+An extra is a body that only stands there: for crowds, queues and set dressing, where a full mod NPC would be too much. It takes any of the game's 79 bodies, also those with no NPC logic at all, and keeps nothing of the NPC but the scripts that build its look: no AI, no talk, no barks, no save ids, no distance culling. The game doesn't list it among its NPCs and it isn't saved. Its Animator still plays the body's idle, and `NpcAnimation.Play` on `extra.Animator` gives it a pose or a loop.
+
+From the spec it uses `Template` (whose look), `Body` (whose body, 0 for the template's, or a slider body for a template without one), `FirstName` (optional), `Position` and `Yaw` (put on the ground below, like a mod NPC) and `Look` (slider bodies). `NpcExtra` has `Owner`, `Name`, `Template`, `Body`, `Root`, `Loaded`, `Position`, `Animator`, `Teleport(position, yaw)` and `Despawn()`. `NpcExtras.Get`, `List`, `All`, `Despawn` and `Clear` work like the mod NPC ones; names are apart from your mod NPCs' names. A mod can have 64 extras and all mods together 256. Extras are removed when your mod unloads and when the level changes; spawn them again from `GameEvents.WhenWorldReady`.
+
 ## Looks
 
 ```csharp
@@ -149,6 +164,11 @@ oben call npcs.order name=test order=wander radius=5
 oben call npcs.look name=test meshes=true
 oben call npcs.look name=test mesh=male_head shape=_02UpperLidRaise weight=50
 oben call npcs.despawn name=test
+oben call npcs.order name=test order=sleep x=101.8 y=-96 z=8.7   # the nearest free bed within 2 m
+oben call npcs.saved                                # saved mod NPCs in every scene
+oben call npcs.extras name=crowd1 template=59       # an extra in front of the player
+oben call npcs.extras name=crowd1 anim=female_sit_001
+oben call npcs.extras clear=true
 ```
 
 NPCs spawned from the bridge belong to DevBridge, so a DevBridge reload removes them (saved ones come back). `npcs.spawn` places the NPC two metres in front of the player, facing them, unless given a position. See [../dev-tools.md](../dev-tools.md).

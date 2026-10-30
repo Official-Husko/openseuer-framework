@@ -28,7 +28,7 @@ PhoneNumbers.Register(this, "5550199", "Pizza", "Phone/Infra/Aziz's Kebab and Bu
 - The conversation title must exist when the call is made. If it does not, a warning is logged and the phone hangs up.
 - The callback runs inside the game's call to `Phone.StartCall`, on the main thread, in its own try/catch. For a conversation line it runs just before the conversation starts. It gets a `PhoneCall` with the `Line` and the game's `Phone`.
 
-The result is a `PhoneLine` (`Owner`, `Number`, `Name`, `Conversation`, `Network`, `AnswerChance`, `IsRegistered`). `Dispose()` removes the number; the owning mod's unload does the same, so a hot reload leaves nothing behind. Numbers are not saved: register them in `OnLoad` each time. A callback line gives you no spoken text; to have a character talk, point a line at a conversation (see [dialogue.md](dialogue.md) for starting and watching conversations).
+The result is a `PhoneLine` (`Owner`, `Number`, `Name`, `Conversation`, `Network`, `AnswerChance`, `IsRegistered`). `Dispose()` removes the number; the owning mod's unload does the same, so a hot reload leaves nothing behind. Numbers are not saved: register them in `OnLoad` each time. `Register` throws when the number isn't 1 to 10 of 0-9, * and #, or the phone book already holds it; `PhoneNumbers.CanRegister(number, out reason)` asks first, without throwing, and gives the same reason (with whose number it is, the game's or a mod's). A callback line gives you no spoken text; to have a character talk, point a line at a conversation (see [dialogue.md](dialogue.md) for starting and watching conversations).
 
 ## Reading the book
 
@@ -75,6 +75,7 @@ Phones.Ringing.Subscribe(this, c => Log.Info($"{c.Number} is calling {c.Phone}")
 ## Dev bridge
 
 ```sh
+oben call phone.list check=5550123                     # could this number be registered, and why not
 oben call phone.list
 oben call phone.list mods=true
 oben call phone.scene

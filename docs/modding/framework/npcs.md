@@ -37,6 +37,8 @@ var closest = Npcs.Nearest(maxDistance: 8);  // from the player; or Nearest(some
 
 `Nearest` only looks at living, active NPCs in the scene. Reads build copies; call them when something happened, not every frame.
 
+Some NPC objects in a level have no character behind them (`NPCInfo.character` is empty), so they have no id and `InScene` leaves them out. `Npcs.Actors()` lists every NPC object in the scene, those included: a `SceneActor` has `Id` (-1 without a character), `Name` (the object's), `FullName`, `Handle` (a text id), `Position`, `Active`, `Dead`, `HasController` and `Live`. `Npcs.FindActor(handle)` gives the object back, for the game's own calls on it.
+
 ## Spawned and despawned
 
 ```csharp
@@ -79,12 +81,24 @@ What a claim can do:
 | `MoveTo(point, done, stopDistance, timeoutSeconds)` | pauses, then walks with the game's path finding. `done(true)` on arrival, `done(false)` when cancelled, timed out or the point is out of reach. A new walk cancels the last |
 | `CancelMove()` | stops where the NPC stands |
 | `LookAt(transform, turnBody)` / `LookAt(point)` / `StopLooking()` | eyes and head follow a transform; with `turnBody` the body turns too (which pauses the activity) |
+| `Patrol(nodeGroup)` / `Stand(nodeGroup)` / `StopNodes()` | walks one of the level's own patrol routes, or stands at a group's standing spot, with the game's own activities; see below |
 | `Hold(NpcHolds)` | switches parts of the NPC's own behaviour off, see below |
 | `PlayAnimation(clip, loop, fade)` / `StopAnimation(fade)` | plays an `AnimationClip` over the NPC's own animation, see below |
 | `ApplyLook`, `SetBlendShape`, `SetMeshVisible`, `SetMaterials`, `RestoreAppearance` | changes how the NPC looks until the claim ends, see below |
-| `Dispose()` | undoes everything: stops the animation, puts the appearance back, lifts the holds, stops looking, cancels a walk, resumes the schedule |
+| `Dispose()` | undoes everything: stops the animation, puts the appearance back, lifts the holds, stops looking, ends a patrol or stand, cancels a walk, resumes the schedule |
 
 The claim is released by `Dispose`, when the owning mod unloads, when the NPC leaves the scene or dies, and when the level changes. `claim.IsValid` is false after that. If someone else (not through the framework) already paused the NPC, the claim notes it and does not resume it for them.
+
+### The level's routes and spots
+
+```csharp
+var routes = NpcNodes.Groups(PlayerRef.Position);   // the scene's node groups, nearest first
+claim.Patrol(routes[0].Group);                      // round and round, as the group says
+...
+claim.StopNodes();                                  // stops where it is; the schedule takes over
+```
+
+A level keeps its NPCs' routes and standing spots as node groups. `NpcNodes.Groups()` lists them (`NodeGroupInfo`: `Id`, `Name`, `Nodes`, `Position` of the first node, `Loop`, `Mode` InOrder/Closest/Random, `CanStand`) and `NpcNodes.Find(id)` gives one back. `Patrol` and `Stand` start the game's own `Act_Patrol` and `Act_Stand`, so doors, waypoints and the nodes' own events work, at a priority above the timetable's, so the schedule doesn't take the NPC away meanwhile. They are refused for a frozen NPC, one another mod paused, a group without nodes (or, for `Stand`, without a standing spot) or an activity that can't be interrupted. The Bazaar has four patrol routes; many levels have none.
 
 ### Holds
 
@@ -237,6 +251,10 @@ oben call npcs.relationship id=Mother value=50
 oben call npcs.crime
 oben call npcs.crime action=stopPursuits
 oben call npcs.characters name=Pentti
+oben call npcs.actors nocharacter=true                 # NPC objects without a character
+oben call npcs.nodes                                   # the level's routes, nearest first
+oben call npcs.claim id=185 do=patrol group=<id>       # also stand, stopnodes, hold holds=Freeze,Talk,
+oben call npcs.claim id=185 do=anim clip=sitting_idle  #   anim, stopanim, pause, resume, release
 ```
 
 `npcs.list` prints id, name, scene, position, activity and whether the NPC is loaded; `npcs.get` adds the job, who claims it and its schedule; `npcs.nearest` gives the closest living NPC with its distance. Those three are read only. `npcs.act` runs one of the one-off actions above (`teleport`, `kill`, `hit`, `follow`, `unfollow`, `say`, `comment`, `talk`, `lookAtPlayer`, `stopLooking`, `changeLevel`); `npcs.relationship` lists relationships and sets one; `npcs.crime` shows the police, robbers, cameras, trespassing and janitor tags and can call (`callPolice`, `chase`) or stop the police; `npcs.characters` lists templates for mod NPCs. The mod NPC commands are in [mod-npcs.md](mod-npcs.md). See [../dev-tools.md](../dev-tools.md).

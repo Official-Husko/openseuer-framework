@@ -25,6 +25,9 @@ internal static class AssemblyResolver
         _hooked = true;
     }
 
+    /// <summary>Where a mod's DLL of this simple name is, if one was registered.</summary>
+    public static bool TryGetPath(string name, out string path) => PathsByName.TryGetValue(name, out path);
+
     public static void SetCurrent(Assembly assembly, string originalName)
     {
         Current[originalName] = assembly;

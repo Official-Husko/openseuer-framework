@@ -55,6 +55,9 @@
     <Compile Include="../../src/ObenLoader/Runtime/GameFiles.cs" Link="Linked/GameFiles.cs" />
     <Compile Include="../../src/ObenLoader/ObenModInfoAttribute.cs" Link="Linked/ObenModInfoAttribute.cs" />
     <Compile Include="../../src/ObenLoader/Mods/CodeManifest.cs" Link="Linked/CodeManifest.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/AssemblyRewriter.cs" Link="Linked/AssemblyRewriter.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/AssemblyResolver.cs" Link="Linked/AssemblyResolver.cs" />
+    <Compile Include="../../src/ObenLoader/Mods/RewriteResolver.cs" Link="Linked/RewriteResolver.cs" />
     <Compile Include="../../src/ObenFramework/Events/HandlerList.cs" Link="Linked/HandlerList.cs" />
     <Compile Include="../../src/ObenFramework/Events/GameEvent.cs" Link="Linked/GameEvent.cs" />
     <Compile Include="../../src/ObenFramework/Events/LoadAbortRules.cs" Link="Linked/LoadAbortRules.cs" />

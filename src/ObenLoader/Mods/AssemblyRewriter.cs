@@ -15,6 +15,8 @@ internal static class AssemblyRewriter
 {
     // Original simple name -> name of the copy currently in use.
     private static readonly Dictionary<string, string> CurrentNames = new Dictionary<string, string>();
+    // Every reload name -> original simple name.
+    private static readonly Dictionary<string, string> OriginalNames = new Dictionary<string, string>();
     private static readonly Dictionary<string, int> Generations = new Dictionary<string, int>();
 
     /// <summary>True once any assembly was renamed; until then nothing needs rewriting.</summary>
@@ -22,6 +24,9 @@ internal static class AssemblyRewriter
 
     public static string CurrentName(string original) =>
         CurrentNames.TryGetValue(original, out var name) ? name : original;
+
+    public static string OriginalName(string name) =>
+        OriginalNames.TryGetValue(name, out var original) ? original : name;
 
     /// <summary>
     /// Returns (image, symbols) ready for Assembly.Load. <paramref name="rename"/> gives the assembly
@@ -39,6 +44,7 @@ internal static class AssemblyRewriter
     {
         bool hasSymbols = symbols != null;
 
+        using var resolver = new RewriteResolver(OriginalName);
         using var input = new MemoryStream(image);
         using var pdbInput = hasSymbols ? new MemoryStream(symbols) : null;
         var readParams = new ReaderParameters
@@ -47,6 +53,7 @@ internal static class AssemblyRewriter
             SymbolStream = pdbInput,
             SymbolReaderProvider = hasSymbols ? new PortablePdbReaderProvider() : null,
             ReadingMode = ReadingMode.Immediate,
+            AssemblyResolver = resolver,
         };
 
         AssemblyDefinition assembly;
@@ -59,7 +66,7 @@ internal static class AssemblyRewriter
             // A missing or mismatched PDB only costs line numbers in stack traces.
             input.Position = 0;
             hasSymbols = false;
-            assembly = AssemblyDefinition.ReadAssembly(input, new ReaderParameters { ReadingMode = ReadingMode.Immediate });
+            assembly = AssemblyDefinition.ReadAssembly(input, new ReaderParameters { ReadingMode = ReadingMode.Immediate, AssemblyResolver = resolver });
         }
 
         using (assembly)
@@ -71,6 +78,7 @@ internal static class AssemblyRewriter
                 Generations[original] = generation;
                 assembly.Name.Name = original + "-r" + generation;
                 CurrentNames[original] = assembly.Name.Name;
+                OriginalNames[assembly.Name.Name] = original;
 
                 // A new identity needs a new module id too. Harmony (through MonoMod) maps modules by
                 // this id, and with the old one it resolves patch methods in the old copy.

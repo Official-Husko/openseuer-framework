@@ -99,7 +99,7 @@ internal static class NpcsSection
             r.Button("Stop its activity", () => DevActions.Act(ctx, ui, "Stop its activity",
                 () => NpcActions.StopActivity(id), "it isn't doing anything."));
             r.Button("Kill it", () => UiKit.Confirm(DevWindow.Owner ?? (ObenLoader.Runtime.ITracker)ctx.Mod, "Kill this NPC?",
-                "It dies the way it does in the game, and the save keeps it dead.",
+                "It dies the way it does in the game. The game doesn't save that: it is alive again the next time this level loads.",
                 () => DevActions.Act(ctx, ui, "Kill the NPC", () => NpcActions.Kill(id), "it can't be killed here.")));
         });
     }

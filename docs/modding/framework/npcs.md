@@ -150,7 +150,7 @@ Switching an entry off is the one change offered. The game skips disabled entrie
 
 ## One-off actions
 
-`NpcActions` does one thing to an NPC in your scene and leaves it to the game afterwards. No claim is needed; to hold an NPC for a while, claim it. Every call returns false when the NPC is not loaded, is dead, has no `NPCController`, or a save or load is running.
+`NpcActions` does one thing to an NPC in your scene and leaves it to the game afterwards. No claim is needed; to hold an NPC for a while, claim it. Every call returns false when the NPC is not loaded, is hidden or dead, or a save or load is running. Moving one (`Teleport`, `FollowPlayer`, `StopFollowing`, `StopActivity`) also needs an `NPCController`, which most of the game's NPCs don't have; killing, hitting, talking and looking work on every NPC in the scene, the plain scene objects too.
 
 ```csharp
 NpcActions.Teleport(id, spot);                      // on the navigation mesh
@@ -164,7 +164,7 @@ NpcActions.LookAtPlayer(id, seconds: 5);
 | Call | What it does |
 |---|---|
 | `Teleport(id, position)` | puts the NPC there at once through its path finding agent |
-| `Kill(id)` | the game's own death (state Dead, kept in the save); raises `Npcs.Died` |
+| `Kill(id)` | the game's own death (state Dead); raises `Npcs.Died`. The game doesn't save an NPC's state (`NPCInfo.state` is `[fsIgnore]`), so it is alive again the next time its level loads; a mod that wants it to stay dead keeps that in its own save data and kills it again on `WorldReady` |
 | `Hit(id)` | what a punch does without the damage: a reaction line or talk, a violent crime if the NPC reports those, an officer starts a chase, a robber gives up |
 | `FollowPlayer(id, run, untilStopped)` / `StopFollowing(id)` | the game's follow activity; with `untilStopped` (the default) the schedule cannot interrupt it |
 | `Say(id, text)` | a bark line, shown as given; refused during a conversation and while a claim holds `Barks` |

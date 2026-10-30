@@ -10,8 +10,10 @@ namespace ObenFramework.Npcs;
 /// One-off things to do to an NPC in the scene you are in: move it, kill it, hit it, make it follow the
 /// player, send it to another scene. Each call acts once and leaves the NPC to the game afterwards; to hold
 /// an NPC for a while use <see cref="NpcControl.Claim"/>. Every call returns false when the NPC is not
-/// loaded, is dead, cannot be steered (no <c>NPCController</c>) or a save or load is running.
-/// What is said and looked at is in the other half of this class (talk, barks, looks).
+/// loaded, is hidden or dead, or a save or load is running. Moving one (teleport, follow, stop its activity)
+/// also needs its <c>NPCController</c>, the path finding most of the game's NPCs don't have; killing,
+/// hitting, talking and looking work on every NPC. What is said and looked at is in the other half of this
+/// class (talk, barks, looks).
 /// </summary>
 public static partial class NpcActions
 {
@@ -25,18 +27,23 @@ public static partial class NpcActions
         return Run("Teleport", () => ai.Teleport(position));
     }
 
-    /// <summary>Kills the NPC the way the game does (its state becomes Dead; the save keeps it). Raises <see cref="Npcs.Died"/>.</summary>
+    /// <summary>
+    /// Kills the NPC the way the game does (its state becomes Dead). Raises <see cref="Npcs.Died"/>. The game doesn't
+    /// save an NPC's state, so it is alive again the next time its level loads: to keep it dead, remember it in your
+    /// mod's save data and kill it again when the world is ready.
+    /// </summary>
     public static bool Kill(int npcId)
     {
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         if (npc == null)
             return false;
         return Run("Kill", () =>
         {
+            // Only a walking NPC has an activity to stop; the game's own Kill copes without one.
             var controller = npc.npcController;
-            if (controller.Data != null && controller.Data.state != null)
+            if (controller != null && controller.Data != null && controller.Data.state != null)
                 controller.ForceStopActivity();
-            if (controller.richAI != null)
+            if (controller != null && controller.richAI != null)
                 controller.richAI.canMove = false;
             npc.Kill();
         });
@@ -49,7 +56,7 @@ public static partial class NpcActions
     /// </summary>
     public static bool Hit(int npcId)
     {
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         if (npc == null || npc.character == null || Crime.instance == null)
             return false;
         return Run("Hit", () =>
@@ -66,7 +73,8 @@ public static partial class NpcActions
             if (npc.setAnimatorValue != null)
                 npc.setAnimatorValue.Trigger("hit");
 
-            var activity = npc.npcController.Data != null && npc.npcController.Data.state != null ? npc.npcController.Data.state.CurrentActivity : null;
+            var data = npc.npcController != null ? npc.npcController.Data : null;
+            var activity = data != null && data.state != null ? data.state.CurrentActivity : null;
             if (activity is Act_Police police)
                 police.StartChase();
             else if (activity is Act_Robber robber)
@@ -154,14 +162,22 @@ public static partial class NpcActions
     }
 
     // A living, active NPC in this scene with a controller, outside saves and loads.
-    internal static NPCInfo Steerable(int npcId)
+    /// <summary>The NPC when it is in the scene, shown and alive, and no save or load runs; else null.</summary>
+    internal static NPCInfo Present(int npcId)
     {
         if (SaveGate.IsBusy)
             return null;
         var npc = Npcs.LiveObject(npcId);
-        if (npc == null || npc.npcController == null || !npc.gameObject.activeInHierarchy || npc.IsDead())
+        if (npc == null || !npc.gameObject.activeInHierarchy || npc.IsDead())
             return null;
         return npc;
+    }
+
+    /// <summary>Like <see cref="Present"/>, and the NPC has a controller to move it.</summary>
+    internal static NPCInfo Steerable(int npcId)
+    {
+        var npc = Present(npcId);
+        return npc != null && npc.npcController != null ? npc : null;
     }
 
     private static void ReactToHit(NPCInfo npc)

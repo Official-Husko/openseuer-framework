@@ -228,14 +228,17 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - **Session and story:** the values read live.
   - **Player and world:** setting health from the stat slider.
 - [x] **Watches over the game:** passed 2026-10-30. "Show them over the game" puts the watches in a box at the top left (an unknown type reads "can't be read"), it follows a change within a quarter of a second, steps aside while a window is open, and `devmenu watches` in the F1 console hides it (`WatchesOnScreen` false in config.json).
-- [ ] **Watches over the game, F9:** press the real F9 key in a level; the box comes and goes. A mod's `DevMenu.AddWatch` shows in it too.
+- [x] **Watches over the game, F9:** press the real F9 key in a level; the box comes and goes. A mod's `DevMenu.AddWatch` shows in it too. Passed 2026-10-30 by the owner (with a Script Runner watch counting frames).
 - [x] **Log part:** passed 2026-10-30. A Unity warning with `<b>bold</b>` in it shows the tags as text in amber, an error shows red with "+47 lines", Follow keeps the newest line in view, and picking a line shows all of it below.
-- [ ] **Log part by hand:** change Show, From and the filter, and click a row with the mouse; "Copy it" puts the line on the clipboard.
+- [x] **Log part by hand:** change Show, From and the filter, and click a row with the mouse; "Copy it" puts the line on the clipboard. Passed 2026-10-30 by the owner.
 - [x] **NPCs part:** passed 2026-10-30 in the tenement: Malone (37) and Seamus (125, hidden, greyed and listed after Malone). Go to it puts the player 1.5 m in front of Malone, facing him; Bring it here says Malone has no path finding. A spawned copy of character 84 ("Testy", CheatMenu/dev1) is listed in both lists; Bring it here, Follow me, Stop following and Look at me are done, Stop its activity says it isn't doing anything, and Despawn removes it.
 - [x] **Player and world, quests and console additions:** passed 2026-10-30 through the menu's buttons: Lockpicking set to 7.5; coordinates 97.5, -89.9, 23,5 (comma) take the player there and "abc" gets a sentence; Where I am refills X; searching 14 with How many 3 gives 3 sausages; Made by DevBridge lists only `DevBridge.test`, its line says "Now on: Open crates (0/5)", typing 3 in the counter field gives 3/5 (the game's "Objective Updated" shows); `devmenu` opens and closes the menu and `devmenu watches` hides the watches. In the Cheats window, 13 and 47 on the Hour and Minute sliders give 13:47.
-- [ ] **Items of removed mods [save]:** with a save holding a mod's items and that mod removed, the Player and world part lists the stacks, and removing them (asks first) clears them from the inventory and the open containers.
-- [ ] **NPCs part [save]:** the relationships (pick one, set the disposition, the target follows), and Kill it (asks first; the NPC stays dead in the save).
-- [ ] **Developer menu [save]:** any change made from the menu marks the save in `mods/CheatMenu.dev.json`.
+- [x] **Save round trip of the developer menu:** passed 2026-10-30 on a copy of Slot2 loaded as `Dev_Test` (player renamed, the owner's folder untouched):
+  - **Relationships:** "VeryGoodFriend" added through `RelationshipController.AddRelationship`, set to 42 from the menu (target 42 too), saved and loaded: still 42 to 42.
+  - **Kill it:** on Meri Haka (99), a plain scene NPC without a controller (it used to be refused; kill, hit, talk and look now work on every NPC), with the owner clicking Yes in the dialog: Dead. After save and load she is alive again: the game doesn't save `NPCInfo.state` (`[fsIgnore]`), so the docs and the dialog say so now.
+  - **Items of removed mods:** `scripts/examples/missing-item.cs`, `mods.reload id=ScriptRunner`, save and load: the menu lists 2 Demo Crate stacks of ScriptRunner; "Remove the stacks of ScriptRunner" with Yes clears them (0 left, `Scan` empty).
+  - **Dev mark:** `mods/CheatMenu.dev.json` in the saved slot has `Modified: true`.
+  - **Tracer marks:** "game saved (day 0 19:43, player at (26.01, -100, -0.5), saving no, loading no)" and "save loaded (...)", plus the framework's warning about the Demo Crate mirrored in between.
 - [x] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true). Passed 2026-10-30: `True False` after Finished, `False True` after Active.
 - [ ] **Third person in a tight spot:** in third person, walk into a real first-person camera trigger. The camera goes in, a "has to stay in first person" toast shows once, and the camera goes back out after the trigger.
 - [x] **Tracer:** passed 2026-10-30.
@@ -246,7 +249,7 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - `trace.start filter=ObenFramework.Clock internals=true`: 79 methods instead of 41, `TimeControlPatches.Prefix` x1636 collapsed into "more" records.
   - With `MirrorLinesPerSecond` at 20, 50 log lines give 20 marks and "30 log lines left out of the trace (more than 20 a second)".
   - No filter: 1853 methods in 4886 ms; `trace.stop` says `active: false` and the earlier records are still readable.
-- [ ] **Tracer marks on a real save:** with a trace on, save and load a game: the "game saved" and "save loaded" marks carry the day, the position and the save gate.
+- [x] **Tracer marks on a real save:** see the save round trip above (2026-10-30).
 - [x] **Tracer, patches:** (2026-10-29: all as expected.)
   - `trace.start filter=ObenFramework.Clock handlers=true` picks one more method than `handlers=false` (42 and 41), and `trace.list` shows `TimeControlPatches.Prefix` called every frame.
   - With a trace running, `features.set mod=PerformanceFixes id=TimerSnapshot enabled=false`, then `enabled=true`: `trace.list` has the mark `patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`.

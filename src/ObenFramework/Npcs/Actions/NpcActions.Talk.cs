@@ -16,7 +16,7 @@ public static partial class NpcActions
     {
         if (string.IsNullOrEmpty(text))
             return false;
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         if (npc == null || NpcControl.Holds(npc, NpcHolds.Barks) || !DialogueManager.hasInstance || DialogueManager.isConversationActive || Subtitles.instance == null)
             return false;
         return Run("Say", () =>
@@ -38,7 +38,7 @@ public static partial class NpcActions
     {
         if (string.IsNullOrEmpty(conversation))
             return false;
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         var starter = npc != null ? npc.characterBarkStarter : null;
         if (starter == null || !starter.enabled || starter.cacheBarkLines || NpcControl.Holds(npc, NpcHolds.Barks))
             return false;
@@ -55,7 +55,7 @@ public static partial class NpcActions
     {
         if (!Conversations.Exists(conversation) || Conversations.IsActive)
             return false;
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         var talk = npc != null ? npc.interactableTalk : null;
         if (talk == null)
             talk = npc != null ? npc.GetComponent<InteractableTalk>() : null;
@@ -69,7 +69,7 @@ public static partial class NpcActions
     /// <summary>Turns the NPC's head to the player, for <paramref name="seconds"/> when above zero, else until <see cref="StopLooking"/>.</summary>
     public static bool LookAtPlayer(int npcId, int seconds = 0)
     {
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         var head = npc != null ? npc.characterHeadController : null;
         if (head == null || ThirdPersonCameraCollision.instance == null)
             return false;
@@ -81,7 +81,7 @@ public static partial class NpcActions
     /// <summary>Turns the NPC's eyes and head to follow a transform until <see cref="StopLooking"/>. The body stays as it is.</summary>
     public static bool LookAt(int npcId, Transform target)
     {
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         var head = npc != null ? npc.characterHeadController : null;
         if (head == null || target == null)
             return false;
@@ -91,7 +91,7 @@ public static partial class NpcActions
     /// <summary>Lets the NPC's head go back to its usual looking around.</summary>
     public static bool StopLooking(int npcId)
     {
-        var npc = Steerable(npcId);
+        var npc = Present(npcId);
         var head = npc != null ? npc.characterHeadController : null;
         if (head == null)
             return false;

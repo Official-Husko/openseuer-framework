@@ -44,6 +44,35 @@ public static class ItemIcons
     /// <summary>Loads a PNG or JPEG from the mod's folder (square ones look best, 128 or 256 pixels) and uses it as the icon.</summary>
     public static IDisposable SetFromFile(ObenMod owner, int itemId, string path) => Set(owner, itemId, ModAssets.Sprite(owner, path));
 
+    /// <summary>
+    /// Draws <paramref name="model"/> with <see cref="ModelIcons"/> and uses the picture as the icon until
+    /// <paramref name="owner"/> unloads. Throws when the model has nothing to draw.
+    /// </summary>
+    public static IDisposable SetFromModel(ITracker owner, int itemId, GameObject model, IconOptions options = null)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        var sprite = ModelIcons.Render(model, options) ?? throw new ArgumentException($"There is nothing to draw in '{model.name}'.", nameof(model));
+        var icon = Set(owner, itemId, sprite);
+        var registration = Disposable.Create(() =>
+        {
+            icon.Dispose();
+            ModelIcons.Release(sprite);
+        });
+        owner.Track(registration);
+        return registration;
+    }
+
+    /// <inheritdoc cref="SetFromModel(ITracker, int, GameObject, IconOptions)"/>
+    public static IDisposable SetFromModel(ITracker owner, int itemId, ModelTemplate model, IconOptions options = null)
+    {
+        if (model == null)
+            throw new ArgumentNullException(nameof(model));
+        if (!model.IsAlive || model.Prefab == null)
+            throw new ArgumentException($"Model {model.Name} has been unloaded.", nameof(model));
+        return SetFromModel(owner, itemId, model.Prefab, options);
+    }
+
     /// <summary>True when a mod replaced the item's icon.</summary>
     public static bool IsReplaced(int itemId) => Top(itemId) != null;
 

@@ -41,7 +41,7 @@ public sealed class FurnitureDefinition
     /// <summary>Price in real money, or -1 for the template's.</summary>
     public int PriceRM = -1;
 
-    /// <summary>Build menu and inventory icon. Null keeps the template's.</summary>
+    /// <summary>Build menu and inventory icon. Null keeps the template's, or with <see cref="Model"/> draws one of the model.</summary>
     public Sprite Icon;
 
     /// <summary>

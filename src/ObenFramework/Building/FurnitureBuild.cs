@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Assets;
 using ObenFramework.World;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -78,7 +79,7 @@ internal static class FurnitureBuild
             furniture.details = definition.Details ?? template.details;
             furniture.priceOC = definition.PriceOC < 0 ? template.priceOC : definition.PriceOC;
             furniture.priceRM = definition.PriceRM < 0 ? template.priceRM : definition.PriceRM;
-            furniture.image = definition.Icon != null ? definition.Icon : template.image;
+            furniture.image = Icon(definition, template);
             furniture.dismantleItems = template.dismantleItems != null ? new List<global::Furniture.ReseourceItem>(template.dismantleItems) : new List<global::Furniture.ReseourceItem>();
             furniture.skins = new global::Furniture.Skin[0];
             furniture.alternativePrefabs = new global::Furniture.AlternativePrefab[0];
@@ -109,6 +110,20 @@ internal static class FurnitureBuild
             Object.Destroy(furniture);
             throw;
         }
+    }
+
+    // The mod's icon; else a picture of the piece's own model, which the template's icon wouldn't show. Kept
+    // for as long as the piece, like its mesh.
+    private static Sprite Icon(FurnitureDefinition definition, global::Furniture template)
+    {
+        if (definition.Icon != null)
+            return definition.Icon;
+        var drawn = definition.Model != null && definition.Model.IsAlive ? ModelIcons.Render(definition.Model) : null;
+        if (drawn == null)
+            return template.image;
+        drawn.texture.hideFlags = HideFlags.HideAndDontSave;
+        drawn.hideFlags = HideFlags.HideAndDontSave;
+        return drawn;
     }
 
     private static GameObject Copy(GameObject original, List<GameObject> made)

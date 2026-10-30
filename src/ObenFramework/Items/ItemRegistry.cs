@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ObenFramework.Assets;
 using ObenLoader;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -12,10 +13,10 @@ namespace ObenFramework.Items;
 /// rebuilds it, and taken out again when the owning mod unloads.
 /// </summary>
 /// <remarks>
-/// Items need ids from <see cref="ReservedIds"/> (use <see cref="ReservedIds.For"/>) and a sprite, or the
-/// inventory draws their slot empty. Saved games keep only the id: if the mod is removed, stacks of its
-/// items show up as a "Missing item" stand-in that keeps the id (<see cref="ItemPlaceholders"/>), and
-/// become the real item again when the mod is back.
+/// Items need ids from <see cref="ReservedIds"/> (use <see cref="ReservedIds.For"/>) and a sprite; an item
+/// without one gets a picture of its <c>Appearance.Prefab</c> (<see cref="ModelIcons"/>). Saved games keep
+/// only the id: if the mod is removed, stacks of its items show up as a "Missing item" stand-in that keeps
+/// the id (<see cref="ItemPlaceholders"/>), and become the real item again when the mod is back.
 /// </remarks>
 public static class ItemRegistry
 {
@@ -51,6 +52,7 @@ public static class ItemRegistry
     public static Item Register(ObenMod owner, Item item)
     {
         Validate(item);
+        DrawMissingIcon(owner, item);
         Entries[item.ID] = item;
         Owners[item.ID] = owner.Info.Id;
         owner.Track(Disposable.Create(() => Unregister(item)));
@@ -117,9 +119,24 @@ public static class ItemRegistry
         {
             throw new ArgumentException($"Item {item.ID} ({item.Title}) has an invalid Appearance.ColorValue: {e.Message}");
         }
+    }
 
-        if (item.Appearance.Sprite == null && string.IsNullOrEmpty(item.Appearance.SpritePath))
-            ItemsLog.Warn($"Item {item.ID} ({item.Title}) has no sprite, so its inventory slot will look empty.");
+    // An item without a sprite gets a picture of its pickup model, if it has one.
+    private static void DrawMissingIcon(ObenMod owner, Item item)
+    {
+        var look = item.Appearance;
+        if (look.Sprite != null || !string.IsNullOrEmpty(look.SpritePath))
+            return;
+        var model = look.Prefab != null ? look.Prefab
+            : !string.IsNullOrEmpty(look.PrefabPath) ? Resources.Load<GameObject>(look.PrefabPath) : null;
+        var sprite = model != null ? ModelIcons.Render(model) : null;
+        if (sprite == null)
+        {
+            ItemsLog.Warn($"Item {item.ID} ({item.Title}) has no sprite and no model to draw one from, so its inventory slot will look empty.");
+            return;
+        }
+        look.Sprite = sprite;
+        owner.Track(Disposable.Create(() => ModelIcons.Release(sprite)));
     }
 
     private static void Apply(Item item)

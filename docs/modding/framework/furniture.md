@@ -41,7 +41,7 @@ The definition fields:
 | Field | Meaning |
 |---|---|
 | `Template` | The game piece to copy. Surfaces, wallpapers and trains can't be copied. Confirmed templates in 0.5.13: `Red Metal Chair`, `Wooden Chair`, `Wooden Table`, `Small Wooden Table` (653 of the console's 655 pieces qualify). |
-| `Title`, `Details`, `Icon` | Null keeps the template's. |
+| `Title`, `Details`, `Icon` | Null keeps the template's; with its own `Model` and no `Icon` the piece gets a picture of the model (see [assets.md](assets.md)). |
 | `PriceOC`, `PriceRM` | -1 keeps the template's. |
 | `Model`, `Colliders` | A `ModelTemplate` from `ModelRegistry`. It goes under the piece's child 0 (the part the game rotates), centred on the template's visible mesh and standing on its base, at its own size. The template's renderers there are hidden and its solid colliders swapped for boxes around the model on the same objects, so sitting and storage still work. `Colliders` gives your own boxes (in the model's space, at most 64). The framework keeps its own copy of the mesh, so the piece stays intact after your mod unloads. |
 | `Placement` | `Template` (default), `Floor`, `Wall`, `Ceiling`, `FloorAndWall`, `Any`. |

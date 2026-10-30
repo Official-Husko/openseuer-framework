@@ -82,6 +82,7 @@
     <Compile Include="../../src/ObenFramework/Player/Weapons/HitRoundings.cs" Link="Linked/Player/HitRoundings.cs" />
     <!-- The asset formats (WAV, OBJ, MTL, mesh layout, image headers) use no Unity types. -->
     <Compile Include="../../src/ObenFramework/Assets/Formats/*.cs" LinkBase="Linked/Assets" />
+    <Compile Include="../../src/ObenFramework/Assets/IconPixels.cs" Link="Linked/Assets/IconPixels.cs" />
     <!-- NPC routine tables, walk maths, mod NPC and tame save files, phone digits: plain C#. -->
     <Compile Include="../../src/ObenFramework/Npcs/Logic/*.cs" LinkBase="Linked/Npcs" />
     <Compile Include="../../src/ObenFramework/Npcs/Phone/PhoneDigits.cs" Link="Linked/Npcs/PhoneDigits.cs" />

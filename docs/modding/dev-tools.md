@@ -94,7 +94,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `traders.list`, `traders.money`, `traders.factor`, `shops.hours`, `markets.list`, `markets.lock`, `furnitureshops.list`, `fuel.stations`, `fuel.price`, `playershops.list`, `playershops.create`, `playershops.set`, `playershops.stock`, `playershops.sell`, `playershops.collect`, `playershops.delete`, `economy.events` | see [framework/shops.md](framework/shops.md) | traders, opening hours, checkouts, fuel, player-run shops |
 | `casino.machines`, `cards.tables`, `contests.list`, `gambling.payout`, `gambling.events` | see [framework/gambling.md](framework/gambling.md) | casino machines, card tables, contests, payout multipliers |
 | `assets.list` | `mod?`, `kind?` | textures, sounds and models mods have loaded, with sizes ([framework/assets.md](framework/assets.md)) |
-| `items.model`, `text.get` | see [framework/assets.md](framework/assets.md) | a model on an item, texts in the player's language |
+| `items.model`, `items.drawicon`, `text.get` | see [framework/assets.md](framework/assets.md) | a model on an item, an icon drawn from a model, texts in the player's language |
 | `npcs.list`, `npcs.get`, `npcs.nearest`, `npcs.act`, `npcs.relationship`, `npcs.crime`, `npcs.characters` | see [framework/npcs.md](framework/npcs.md) | NPCs, one-off actions, relationships, police and surveillance |
 | `npcs.spawn`, `npcs.despawn`, `npcs.mods`, `npcs.order`, `npcs.look` | see [framework/mod-npcs.md](framework/mod-npcs.md) | mod NPCs (owned by DevBridge) |
 | `animals.list`, `animals.act`, `animals.breeders` | see [framework/animals.md](framework/animals.md) | animals, taming, breeding pens |

@@ -64,7 +64,7 @@ public override void OnLoad()
 ```
 
 - `Register` takes the mod as owner. The item is put back into the database whenever the game rebuilds it, and removed when your mod unloads.
-- **A sprite is required.** The game draws a slot empty when the item has none. Assign `Appearance.Sprite` directly and leave `SpritePath` empty.
+- **Give it a sprite.** Assign `Appearance.Sprite` directly and leave `SpritePath` empty. An item without one gets a picture of its `Appearance.Prefab` (or of the prefab at `PrefabPath`), drawn when it registers and released when the mod unloads (`ModelIcons`, see [assets.md](assets.md)); with neither, the game draws its slot empty.
 - **Pickup prefab:** assign `Appearance.Prefab` (and `PrefabMany`) to a GameObject with a `CollectibleItem`, for example another item's `Prefab`. Without one the item spawns as the game's ERROR prefab. Items may share a prefab: the framework points the pickup at the right item when it spawns. Pickups of modded items are not restored from saves yet, because the game rebuilds dropped items from a `Resources` path.
 - `ItemRegistry.Derive(template, id, title)` copies an existing item (actions, meta, categories, look) as a starting point.
 - If your mod is removed later, its items in a save become a "Missing item" stand-in that keeps the id (see below), and are the real item again once the mod is back.

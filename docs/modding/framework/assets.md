@@ -155,6 +155,22 @@ ModelRegistry.Load(this, "mug", "models/mug.obj", done: model =>
 - **Held models** work for items that can be held (with an `ItemEquipable` action): the framework copies the item's held object and puts the model on its first and third person meshes. It applies the next time the item is taken in hand.
 - Placed furniture with a model is in [furniture.md](furniture.md).
 
+### Icons drawn from a model
+
+A mod with a model but no icon art can have the icon drawn from the model:
+
+```csharp
+ItemIcons.SetFromModel(this, 35180, model);                            // a ModelTemplate, or any GameObject
+Sprite icon = ModelIcons.Render(model, new IconOptions { Size = 128, Yaw = 90f });
+ModelIcons.Release(icon);                                              // when it's no longer shown
+```
+
+- `ModelIcons.Render` takes a `ModelTemplate`, a game prefab or an object in the world and returns a square sprite with a clear background. Only the visible meshes are copied (the most detailed level of a LOD group), so none of the model's scripts run. The picture is taken far above the level with its own two lights, and with the level's fog, ambient light and lights kept off it, so it looks the same in every level and at any time of day, and the level looks the same afterwards.
+- `IconOptions`: `Size` (16 to 1024, default 256, as the game's own icons), `Yaw` (default 35: degrees round the model, 0 faces the model's +Z side), `Pitch` (default 25: degrees looking down) and `Margin` (default 0.06 of the icon on each side).
+- A sprite from `Render` belongs to the caller. `SetFromModel` releases its own when the mod unloads.
+- Whatever shader the model uses, the edges come out right: the model is drawn over black and over white, and the difference gives each pixel's coverage. A 256 pixel icon takes about 15 to 25 ms, so draw icons once (in `OnLoad`, say), not every frame.
+- Two places do it on their own: an item a mod registers without a sprite gets a picture of its `Appearance.Prefab` ([items.md](items.md)), and custom furniture with its own model and no `Icon` gets a picture of the model ([furniture.md](furniture.md)).
+
 ## Texts in the player's language
 
 `GameText` reads the game's own translations (its Unity Localization string tables, `Menu` by default) and lets mods register their own:
@@ -169,7 +185,7 @@ GameText.OnLanguageChanged(this, language => Rebuild());
 
 A language is matched by the game's full name ("English (en)"), the name alone or the code. 18 languages ship with 0.5.13.
 
-Bridge: `items.model` (`item`, `model`, `held`, `clear`) shows a loaded model on an item, owned by the bridge; `text.get` (`key`, `table`) returns a text and the languages.
+Bridge: `items.model` (`item`, `model`, `held`, `clear`) shows a loaded model on an item, owned by the bridge; `items.drawicon` (`item` or `model`, `size`, `yaw`, `pitch`, `margin`, `file`, `apply`, `clear`) draws an icon of an item's pickup model or a loaded model, writes it as a PNG and/or puts it on the item; `text.get` (`key`, `table`) returns a text and the languages.
 
 ## What is tracked
 

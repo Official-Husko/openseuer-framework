@@ -454,11 +454,11 @@ Already checked: speed and jump multipliers (also over a reload), `clear=true`, 
 
 Already checked: inventory events from Mod (also right after a framework reload), stacks, stations list, crafting speed factor, recipe search, loot pools, resource nodes, spawners, breakables.
 
-- [ ] **Inventory events:**
-  - Dragging a stack inside the inventory raises nothing.
-  - Moving a stack to a chest raises ItemRemoved from LocalPlayer.
-  - Eating raises ItemRemoved and ItemUsed.
-  - `inventory.equip id=<weapon>` raises HeldChanged.
+- [x] **Inventory events:** passed 2026-10-30 on a copy of a real save, with the storage window open.
+  - A drag inside the inventory (`ItemData.OnBeginDrag`, `Slot.OnDrop`, `OnEndDrag` from a script, like the C key) raised nothing.
+  - Quick-moving a sausage into a chest raised ItemRemoved (LocalPlayer, 1, total 2); dragging it back raised ItemAdded (LocalPlayer).
+  - Eating one from the inventory like the Use button (`item.InvokeAction(itemData, FirstAction)`) raised ItemUsed and ItemRemoved (Game); hunger fell by the game's 20.
+  - `inventory.equip id=10710` (pickaxe) raised HeldChanged into the primary hand, and `unequip=primary` back to -1.
 - [ ] **Crafting speed:** `crafting.speed key=* speed=4`, then open a stove: the shown time is a quarter. Craft once; `crafting.events` shows CraftStarted and Crafted.
 - [ ] **Crafting sources:**
   - Run as a script: `CraftingSources.Register(s, st => Containers.All().Where(c => Vector3.Distance(c.transform.position, st.Position) < 4f))`.
@@ -466,13 +466,14 @@ Already checked: inventory events from Mod (also right after a framework reload)
   - Crafting takes from the chest, and `crafting.events` shows SourceConsumed.
 - [ ] **Recipe filter:** `RecipeFilter.Add(scope, c => c.Name.Contains("Soup"))` lists only soups, and controller selection still picks the right recipe.
 - [ ] **Quality:** `crafting.quality` changes the output quality of a craft.
-- [ ] **Unloaded storage [save], in another scene:**
-  - `storage.unloaded scene="Interior Player Tenement"` lists container GUIDs.
-  - `storage.queue ... item=12 amount=2`, save, then walk into the tenement: `worlditems.events` shows UnloadedApplied.
-  - Save and reload: the change doesn't apply twice.
-- [ ] **Inventory sources [save]:** an extra container counts for blueprints and renovations; the inventory is used first.
+- [x] **Unloaded storage [save]:** passed 2026-10-30. From Kolhola, `storage.unloaded scene="Interior Player Tenement"` listed the tenement's container GUIDs. Two turnips queued into an empty chest and one wine bottle out of a beer crate stayed queued over a save and a load from disk; walking into the tenement raised UnloadedApplied for both and the chest held 2 turnips, the crate 1 bottle instead of 2. After a save and another load nothing applied twice.
+- [x] **Inventory sources [save]:** passed 2026-10-30 with a chest registered from a script.
+  - Renovation (the 5,215 OC one: 10 cables and more): with 4 cables in the inventory and 10 in the chest, `TenementController.CheckForItem` said no without the source and yes with it (14 counted). `TakeRequiredItemsAndMoney` took the inventory's 4 first and 6 from the chest, plus the rest and the money.
+  - Blueprint (Wooden Table, given with `furniture.blueprints give=`, at a Work table placed with `furniture.place`): with 1 plank in the inventory and 6 in the chest, `PlayerHasResources` was false without the source and true with it. The workshop window showed "3/4" planks after the craft, counting the chest. Crafting took the inventory's plank first and 3 from the chest, the rest from the inventory (the glue lost one use), and the bench started.
+  - The table needs Carpentry 2. The first craft tripped the game's auto-eat bug (AutoConsumeLastItem in TODO.md); keep hunger under 50 when repeating it.
 - [ ] **Machines:** recycling, dishwasher, growing station and autofarm events in a save that has them.
-- [ ] **Performance:** with the inventory window open, no recount work happens unless items change (profiler or frame time).
+- [x] **Performance:** with the inventory and a chest open, a script counting `InventoryWatch.Check` saw 0 recounts in about 940 frames, then exactly 1 after giving two apples (2026-10-30).
+- [x] **Consumable values [save]:** passed 2026-10-30 on a copy of a real save: a per-save sausage value fed 45 instead of 20, survived a level change under a session value, left with its mod and came back with it, was gone at the main menu and back after loading the save.
 
 ## 12. World props, scene logic, landmarks, signs (M22)
 

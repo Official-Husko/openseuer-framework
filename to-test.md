@@ -68,14 +68,20 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 - [x] **Overrides and countdowns across loads:** with `time.freeze` and `clock.after minutes=600` held, a level change keeps both; loading a save clears both with "A new session (SaveLoad): clock overrides cleared". (2026-10-30.)
 - [x] **No hour change from a load:** loading a save whose time is in another hour raises no `GameClock.HourChanged`; the first minute after it only records the hour. (2026-10-30: clock set to 13:30, then a save at 09:53 loaded: no `HourChanged`, and the clock ran on to 09:59. Before the fix it raised `HourChanged 9`.)
 - [x] **WorldReady after a save load:** load a save and watch `GameEvents.Loading`, `Loaded` and `WorldReady` from a script. `WorldReady` comes once, after `Loaded`, with the save's time on the clock, and `Sessions.Started` says `SaveLoad`. (2026-10-30: before the fix it also fired about 0.1 s before `Loading`, with the level's default time, and the real one then reported `Direct`.)
-- [ ] **Missing items, quick check:** `oben eval "new ItemReference(1234567).ID"` gives `1234567`; it gave `0` before. `oben call registry.placeholders` lists it under `active`.
-- [ ] **Missing items [save], full check:**
+- [x] **Missing items, quick check:** `oben eval "new ItemReference(1234567).ID"` gives `1234567`; it gave `0` before. `oben call registry.placeholders` lists it under `active`. (2026-10-30.)
+- [x] **Missing items [save], full check:** (2026-10-30, on a copy of a real save: both stacks showed as the missing item and the save's file listed it; a shop that takes everything refused it and still took a coin; dropped, it lay on the floor with its id and picked up as the same stand-in; the script turned the stacks back into Demo Crate on the spot; `registry.missing` listed 4 stacks in the inventory, `removemissing` without a mod refused and with `mod=ScriptRunner` removed 4.)
   1. `oben run scripts/examples/missing-item.cs`.
   2. `mods.reload id=ScriptRunner`.
   3. Save and load. The inventory shows 2× "Missing item (ScriptRunner: Demo Crate)", and `<save>/mods/ObenFramework.items.json` lists it.
   4. A shop refuses it. Dropping it and picking it up again keeps the id.
   5. Running the script again turns the stack back into Demo Crate in place.
   6. `registry.missing` lists both stacks with their place; `registry.removemissing mod=ScriptRunner` deletes them (without `mod` or `all=true` it refuses).
+- [x] **Missing recipes [save]:** (2026-10-30, on a copy of a real save: all as below; the save's file listed the recipe next to the item.)
+  1. `oben run scripts/examples/missing-recipe.cs`, then `mods.reload id=ScriptRunner`.
+  2. `oben eval "RecipeDatabase.instance.FetchRecipesById(<id>).Name"` gives "Missing recipe (ScriptRunner: Demo Sausage)".
+  3. Copying a blueprint's data keeps the id: `Item.CloneMeta` of an `ItemTaskItemData` with a `RecipeReference` to it returns the same id (the game made it 0).
+  4. `RecipeController.instance.AddRecipe(new RecipeReference(null) { ID = 1234567 })` returns true instead of throwing.
+  5. Save and load: the recipe list shows the stand-in (`registry.placeholders` lists it under `recipes`). Running the script again puts the real recipe in the list on the spot.
 
 ## 2. UI kit, HUD, main menu, UI state (M05, M07, M26, M29)
 
@@ -394,7 +400,11 @@ Already checked:
 - [ ] **Guitar:** hold one, then `guitar.play song=[0,0.5,0.5,0.25]`. Strums sound, and nearby NPCs comment.
 - [ ] **TVs:** `tvs.list` / `tvs.set` where there's a TV.
 - [ ] **Item model:** `items.model` shows a model on an item lying in the world and in the hands.
-- [ ] **Item icon:** `ItemIcons` replaces an item's icon in the inventory (screenshot).
+- [x] **Item icon:** `ItemIcons` replaces an item's icon in the inventory (screenshot). (2026-10-30: the sausage showed a mod model's drawn icon and the apple a drawing of its own model.)
+- [x] **Icons drawn from models:** (2026-10-30: at the main menu and in a level; about 15 to 25 ms for 256 pixels; fog, ambient light and the game's lights the same before and after.)
+  - `items.drawicon item=14 file=<png>` draws the sausage's pickup model with a clear background, close to the game's own icon.
+  - `ItemIcons.SetFromModel` with an OBJ model, a registered item without a sprite (drawn from its prefab) and custom furniture with its own model and no icon all get a drawn icon.
+  - Reloading the owning mod puts the item's own icon back and removes the rest.
 - [ ] **Text:** `text.get` reads the game's localization tables. A mod text in another language shows after switching the game's language.
 - [ ] **Assets left from the first round:**
   - an OGG and an MP3 through `ModAssets.SoundAsync`;

@@ -55,6 +55,42 @@ public static partial class PlayerLook
         return appearance != null && Apply(appearance, look);
     }
 
+    /// <summary>
+    /// Moves the body and face sliders of <paramref name="target"/> to <paramref name="look"/>'s values on the live
+    /// body without rebuilding it, cheap enough for every frame while a slider is dragged. Clothes, hair, the head
+    /// and gender stay as they are, and nothing is written into the target's Character, so <see cref="Capture(Appearance)"/>
+    /// reads the previewed values but the next level load shows the look it really has. Call <see cref="Apply"/>
+    /// to keep a look, or preview a look captured beforehand to go back. False before the body is built.
+    /// </summary>
+    public static bool Preview(Appearance target, LookData look)
+    {
+        if (target == null)
+            throw new ArgumentNullException(nameof(target));
+        if (look == null)
+            throw new ArgumentNullException(nameof(look));
+        if (!PlayerAppearances.IsStarted(target) || target.activeMeshes.Count == 0)
+            return false;
+        try
+        {
+            foreach (var dial in LookDials.All)
+                dial.Live(target, dial.Clamp(dial.Get(look)));
+            target.UpdateShapes();
+            return true;
+        }
+        catch (Exception e)
+        {
+            GameEvents.Log.Error("Previewing a look failed", e);
+            return false;
+        }
+    }
+
+    /// <summary><see cref="Preview"/> on the local player; false without one.</summary>
+    public static bool PreviewOnPlayer(LookData look)
+    {
+        var appearance = PlayerAppearance;
+        return appearance != null && Preview(appearance, look);
+    }
+
     /// <summary>Frees the private Character <see cref="Apply"/> gave to an Appearance. Does nothing for any other Character.</summary>
     public static void Release(Appearance target)
     {

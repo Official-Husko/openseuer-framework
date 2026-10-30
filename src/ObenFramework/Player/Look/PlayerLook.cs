@@ -70,12 +70,37 @@ public static partial class PlayerLook
     /// The asset names a slot can wear, for validating a look received from elsewhere. "-" is the
     /// empty item. Heads depend on <paramref name="male"/>; other slots ignore it.
     /// </summary>
-    public static IReadOnlyCollection<string> Options(string slot, bool male)
+    public static IReadOnlyCollection<string> Options(string slot, bool male) => WearableTable.Names(FindSlot(slot), male);
+
+    /// <summary>
+    /// The asset names <paramref name="appearance"/>'s own lists offer for a slot ("-" is the empty item). Every
+    /// Appearance fills its lists when it starts; on 0.5.13 they hold the same items for everyone, NPCs included.
+    /// Before it has started this gives the game's full list, as <see cref="Options(string, bool)"/> does.
+    /// </summary>
+    public static IReadOnlyCollection<string> Options(string slot, bool male, Appearance appearance)
+    {
+        if (appearance == null)
+            throw new ArgumentNullException(nameof(appearance));
+        var all = Options(slot, male);
+        var found = FindSlot(slot);
+        var choices = found.Choices(appearance, male);
+        if (choices == null || choices.Length == 0)
+            return all;
+        var names = new List<string>(choices.Length);
+        foreach (var wearable in choices)
+        {
+            if (wearable != null)
+                names.Add(wearable.name);
+        }
+        return names;
+    }
+
+    private static LookSlot FindSlot(string slot)
     {
         foreach (var candidate in LookSlots.All)
         {
             if (string.Equals(candidate.Name, slot, StringComparison.OrdinalIgnoreCase))
-                return WearableTable.Names(candidate, male);
+                return candidate;
         }
         throw new ArgumentException($"Unknown look slot '{slot}'. Known: {string.Join(", ", SlotNames)}");
     }

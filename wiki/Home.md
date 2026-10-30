@@ -16,7 +16,7 @@ It's early: there are only pre-releases so far. Back up your saves before you tr
 | [Unofficial ObenPatches](Unofficial-ObenPatches) | Fixes for bugs in the game itself, each with its own switch. |
 | [Performance Fixes](Performance-Fixes) | Stops the game from repeating work every frame that it doesn't need to. |
 | [Game Tweaks](Game-Tweaks) | Optional changes to needs, stacks, crafting, renovations, day length, and a third-person camera. |
-| [Cheat Menu](Cheat-Menu) | Cheats on Insert, and a developer menu for stuck quests. |
+| [Cheat Menu](Cheat-Menu) | Cheats on Insert, and a developer menu for stuck quests, NPCs and the log. |
 | [ObenSave](ObenSave) | Compressed saves, off until you turn it on. |
 | [ObenCoop](ObenCoop) | Co-op, still being built. |
 

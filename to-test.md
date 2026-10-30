@@ -467,26 +467,33 @@ Already checked: speed and jump multipliers (also over a reload), `clear=true`, 
 
 ## 11. Items and crafting (M17, M19)
 
-Already checked: inventory events from Mod (also right after a framework reload), stacks, stations list, crafting speed factor, recipe search, loot pools, resource nodes, spawners, breakables.
+Already checked: inventory events from Mod (also right after a framework reload), stacks, stations list, crafting speed factor, recipe search, loot pools, resource nodes, spawners, breakables. Everything in this area passes now.
 
 - [x] **Inventory events:** passed 2026-10-30 on a copy of a real save, with the storage window open.
   - A drag inside the inventory (`ItemData.OnBeginDrag`, `Slot.OnDrop`, `OnEndDrag` from a script, like the C key) raised nothing.
   - Quick-moving a sausage into a chest raised ItemRemoved (LocalPlayer, 1, total 2); dragging it back raised ItemAdded (LocalPlayer).
   - Eating one from the inventory like the Use button (`item.InvokeAction(itemData, FirstAction)`) raised ItemUsed and ItemRemoved (Game); hunger fell by the game's 20.
   - `inventory.equip id=10710` (pickaxe) raised HeldChanged into the primary hand, and `unequip=primary` back to -1.
-- [ ] **Crafting speed:** `crafting.speed key=* speed=4`, then open a stove: the shown time is a quarter. Craft once; `crafting.events` shows CraftStarted and Crafted.
-- [ ] **Crafting sources:**
-  - Run as a script: `CraftingSources.Register(s, st => Containers.All().Where(c => Vector3.Distance(c.transform.position, st.Position) < 4f))`.
-  - At a stove next to a chest with ingredients, the recipes become craftable.
-  - Crafting takes from the chest, and `crafting.events` shows SourceConsumed.
-- [ ] **Recipe filter:** `RecipeFilter.Add(scope, c => c.Name.Contains("Soup"))` lists only soups, and controller selection still picks the right recipe.
-- [ ] **Quality:** `crafting.quality` changes the output quality of a craft.
+- [x] **Crafting at a stove with extra sources:** passed 2026-10-30 on a copy of a real save (Slot1), at the player's Table Stove with grilled turnip (one turnip). The stove was switched off and its grid had no capacity in that save, so `Toggle(true)` and `power.grid capacity=3000` first.
+  - With turnips only in the chest and the cupboard next to it, `HasIngredients` was false; with `crafting.sources name=a container=<chest> priority=0` and `name=b container=<cupboard> priority=5` it was true, and the stove's window listed grilled turnip as craftable with nothing in the stove.
+  - `crafting.control action=start` took the turnip from the cupboard (priority 5): CraftStarted, then SourceConsumed from DevBridge for the cupboard. After `crafting.sources name=a priority=10` (changed in place) the next craft took it from the chest.
+  - Slot filters in place: both sources limited to paper (`item=10060`) made `HasIngredients` false, the cupboard limited to turnips (`item=12`) made it true again, `item=-1` lifted them.
+  - With the window open, the stove's own `Craft` (its button) took the turnip from the chest. With both containers emptied behind the open window, `Craft` started nothing and the window refreshed: grilled turnip grey, boiled turnip gone.
+- [x] **Quality:** passed 2026-10-30. With the game's random craft quality held at 0.6 by a script (`PlayerStats.SkillQuality`), a grilled turnip came out at 0.600, and at 0.900 with `crafting.quality key=* factor=1.5`. Two earlier crafts at Cooking 1 burnt to ash, the recipe's own fail output.
+- [x] **Crafting speed:** passed 2026-10-30. The same craft took 8.09 s from CraftStarted to Crafted, and 2.08 s with `crafting.speed key=* speed=4`.
+- [x] **Recipe filter:** passed 2026-10-30 in the stove's window: `recipes.filter text=Boiled` left only boiled turnip of the two, `SetSelectedRecipe("0")` (how the pad selects) picked boiled turnip, not grilled turnip (index 0 of the stove's own list), and lifting the filter brought both back.
+- [x] **Station control:** passed 2026-10-30 at a fermenting bucket in the Potato Mine with Speedy Sugar Mash (Fast Kilju): start went to Processing, pause held the timer (4146 s left over 4 s), resume ran it on, stop ruined the batch (Crafted, failed, Ruined Mash).
+- [x] **Upgrades:** passed 2026-10-30: Spices placed next to the Table Stove was listed as connected to it, the stove's equipment quality went from 0.5 to 0.8, and `CraftingUpgrades.SetOn` off and on took it to 0.5 and back. The upgrade pieces are Distillation Kit, Sample Analyzer, Spices and Sterilizer.
+- [x] **Machines:** passed 2026-10-30.
+  - Plants: a mushroom plant aged to 100% and harvested raised PlantHarvested (3 bags of green mushrooms). A tomato planted with `PlantActions.Plant` in a free can, grown, and one ripe tomato picked with `GrowItem.GetItem` (as the player does) raised PlantPicked. `GrowingStations.SetPaused` and `SetRotting` reached the planted plant.
+  - Dishwasher (placed with `furniture.place kind=Dishwasher`): it washes the owner off stolen items with washing powder and power. A pint owned by character 37 started with `crafting.control action=start` (at speed 50), came out with no owner, and raised CraftStarted, Crafted ("Pint") and DishwasherFinished.
+  - Recycling (O Market; Tenement B's two machines are disabled test props): 3 glass and 2 wine bottles put in through the panel raised Recycled (3 for 3, 2 for 4) and the panel showed 7. `Recycling.SetOwed` to 12 and Get coins paid 12 OC and left 0.
+  - Autofarm (Potato Mine, the farmer's 28-spot field): two plants harvested, then at 07:00 on a replant day Replanted came with 2 planted, not initial. `SetGrowPercent` took 20-60 and refused 70-20. The game's replant days are a day late (DateWeekdayShift in TODO.md).
 - [x] **Unloaded storage [save]:** passed 2026-10-30. From Kolhola, `storage.unloaded scene="Interior Player Tenement"` listed the tenement's container GUIDs. Two turnips queued into an empty chest and one wine bottle out of a beer crate stayed queued over a save and a load from disk; walking into the tenement raised UnloadedApplied for both and the chest held 2 turnips, the crate 1 bottle instead of 2. After a save and another load nothing applied twice.
 - [x] **Inventory sources [save]:** passed 2026-10-30 with a chest registered from a script.
   - Renovation (the 5,215 OC one: 10 cables and more): with 4 cables in the inventory and 10 in the chest, `TenementController.CheckForItem` said no without the source and yes with it (14 counted). `TakeRequiredItemsAndMoney` took the inventory's 4 first and 6 from the chest, plus the rest and the money.
   - Blueprint (Wooden Table, given with `furniture.blueprints give=`, at a Work table placed with `furniture.place`): with 1 plank in the inventory and 6 in the chest, `PlayerHasResources` was false without the source and true with it. The workshop window showed "3/4" planks after the craft, counting the chest. Crafting took the inventory's plank first and 3 from the chest, the rest from the inventory (the glue lost one use), and the bench started.
   - The table needs Carpentry 2. The first craft tripped the game's auto-eat bug (AutoConsumeLastItem in TODO.md); keep hunger under 50 when repeating it.
-- [ ] **Machines:** recycling, dishwasher, growing station and autofarm events in a save that has them.
 - [x] **Performance:** with the inventory and a chest open, a script counting `InventoryWatch.Check` saw 0 recounts in about 940 frames, then exactly 1 after giving two apples (2026-10-30).
 - [x] **Consumable values [save]:** passed 2026-10-30 on a copy of a real save: a per-save sausage value fed 45 instead of 20, survived a level change under a session value, left with its mod and came back with it, was gone at the main menu and back after loading the save.
 

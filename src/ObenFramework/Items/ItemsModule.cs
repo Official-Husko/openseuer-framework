@@ -1,4 +1,5 @@
 using ObenFramework.Events;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 
@@ -27,6 +28,9 @@ internal static class ItemsModule
             ItemsLog.Reset();
         }));
     }
+
+    /// <summary>The item patches (one patch area for all of them) are on.</summary>
+    internal static bool HooksInPlace => PatchAreas.IsAvailable(PatchAreas.Framework, "Items");
 
     /// <summary>Per-frame work: one flag check unless a stack changed.</summary>
     public static void Update() => InventoryWatch.Update();

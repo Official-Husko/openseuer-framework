@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ObenFramework.Game;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using UnityEngine;
 
 namespace ObenFramework.World;
@@ -19,6 +20,12 @@ namespace ObenFramework.World;
 /// </remarks>
 public static class FloorItems
 {
+    /// <summary>
+    /// The framework's world hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and ids given at spawn may not stick.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
+
     /// <summary>A pickup appeared by any means: a drop, a mod's <see cref="Spawn"/>, the game putting an item down.</summary>
     public static readonly WorldEvent<FloorItemEvent> Spawned = new WorldEvent<FloorItemEvent>(nameof(Spawned));
 
@@ -82,6 +89,9 @@ public static class FloorItems
         Assign(collectible, id);
         return id;
     }
+
+    /// <summary>The id of the pickup on <paramref name="obj"/> (what <see cref="WorldItems.Spawn"/> returns), or null when it has none.</summary>
+    public static string IdOf(GameObject obj) => obj != null && obj.TryGetComponent<Collectible>(out var collectible) ? IdOf(collectible) : null;
 
     /// <summary>
     /// Makes <paramref name="id"/> the pickup's id, for a machine that has to agree with another. The id must not

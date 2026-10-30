@@ -29,7 +29,7 @@ bool took = PlayerItems.Take(12, 2);        // all or nothing
 - Grants use owner -1 and skip crime checks, so a reward is never theft and stacks merge with the player's own.
 - **Overflow:** `Give` fills the inventory grid first. What doesn't fit is dropped on the ground at the player's feet by the game, and `Give` returns false. Call `GiveWithoutDropping(item, amount)` to add as many as fit (grid, equipment slots, then the equipped bag) and get back how many did not.
 - `Take` removes nothing when the player has fewer than asked. Stacks owned by NPCs are taken without a theft check. Liquids are refused, because the game's remove call matches a bottle by the liquid in it and would take the whole bottle; use `StackActions.TakeLiquid`. If the game removes a different number than asked, the difference is put back and `Take` returns false.
-- `PlayerItems.Stacks()` lists every stack with its details (`ItemStackInfo`: quality, freshness, liquid, owner, stolen flag, charge, wallet coins, written text). `FreeSlots` and `Capacity` count the grid and the equipped bag.
+- `PlayerItems.Stacks()` lists every stack with its details (`ItemStackInfo`: quality, freshness, liquid, owner, stolen flag, charge, an OS Coin Wallet's coins and their worth in OC, written text). `FreeSlots` and `Capacity` count the grid and the equipped bag.
 - **Money ids:** item 0 (Open Sewer Coin) and 1 (Real Money) are the two currencies, not stacks. `Give`, `Take` and `Count` route them to the [wallet](economy.md) in whole units. Don't use these ids for anything else.
 
 ## Spawning pickups
@@ -206,6 +206,10 @@ StoragePanelButtons.Add(this, "Sort", press => SortInto(press.Container.Storage)
 - Consumable values live on the item definition, so they apply to every copy. Changes from several mods stack (the newest wins; removing it brings back the one under it, or the game's own values). `Set` lasts for the session: set it in your mod's load.
 - `SetForSave` keeps the values in the loaded save (the framework's `mods/ObenFramework.consumables.json`), one per mod and item. They come back each time that save loads with your mod loaded, leave at the main menu and in other saves, and leave the item while your mod is unloaded without leaving the save. A level change keeps their place in the stack. `SavedValues(modId, itemId)` reads what a save holds for any mod. It refuses at the main menu and while a save is written or loaded.
 - Container window buttons are copies of the game's "Take all" button, hidden while trading and for containers that belong to someone. A press on a full container shows the game's "storage full" feedback instead of calling your action.
+
+## When a game update breaks the hooks
+
+The item patches form one patch area, `Items`; if one of them no longer fits the game, the whole area switches off and the rest of the game runs as usual. `InventoryEvents`, `InventorySources`, `LootPools`, `ResourceNodes`, `Spawners`, `Breakables`, `Extractables`, `ItemGivers`, `TaskItems` and `StoragePanelButtons` then have `IsAvailable` false: their events stay quiet and changes the game should pick up may not take. `FloorItems.IsAvailable` does the same for the `World` area.
 
 ## Checking in game
 

@@ -64,6 +64,12 @@ public readonly struct TaskItemChange
 /// <summary>The player's task items: listing them and hearing them change.</summary>
 public static class TaskItems
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     /// <summary>A task item was added, removed or changed amount. Not raised while a save loads.</summary>
     public static readonly WorldEvent<TaskItemChange> Changed = new WorldEvent<TaskItemChange>(nameof(Changed));
 

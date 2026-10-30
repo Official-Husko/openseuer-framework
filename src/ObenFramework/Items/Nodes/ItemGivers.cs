@@ -59,6 +59,12 @@ public readonly struct ItemGiven
 /// <summary>Item givers in the loaded scenes (the game's <c>InteractableItemGiver</c>): listing, emptying, refilling and hearing them give.</summary>
 public static class ItemGivers
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     private static readonly AccessTools.FieldRef<InteractableItemGiver, int> CurrentAmount =
         AccessTools.FieldRefAccess<InteractableItemGiver, int>("currentAmount");
 

@@ -43,7 +43,10 @@ internal static class ItemJson
         if (stack.Charge >= 0f)
             row["charge"] = $"{stack.Charge}/{stack.MaxCharge}";
         if (stack.WalletCoins >= 0f)
+        {
             row["walletCoins"] = stack.WalletCoins;
+            row["walletOc"] = stack.WalletOc;
+        }
         if (stack.IsWritable)
             row["written"] = stack.WrittenTitle;
         return row;

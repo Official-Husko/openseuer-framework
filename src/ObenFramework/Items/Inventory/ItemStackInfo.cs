@@ -5,7 +5,7 @@ namespace ObenFramework.Items;
 
 /// <summary>
 /// A snapshot of one stack with the details the game keeps in its meta data: quality, freshness, liquid
-/// contents, stolen flag, charge or ammo, wallet coins and written text. Values that don't apply to the item
+/// contents, stolen flag, charge or ammo, wallet coins and their worth, and written text. Values that don't apply to the item
 /// are -1 (numbers), false or null.
 /// </summary>
 public sealed class ItemStackInfo
@@ -42,8 +42,11 @@ public sealed class ItemStackInfo
 
     public float MaxCharge { get; private set; }
 
-    /// <summary>Coins in a wallet item, or -1.</summary>
+    /// <summary>OS coins in a crypto wallet item, or -1.</summary>
     public float WalletCoins { get; private set; }
+
+    /// <summary>What those coins are worth in OC at the game's fixed rate (62.06 OC a coin, rounded like the game), or -1.</summary>
+    public int WalletOc { get; private set; }
 
     public bool IsWritable { get; private set; }
 
@@ -82,6 +85,7 @@ public sealed class ItemStackInfo
             Charge = ammo != null ? ammo.ammo : -1f,
             MaxCharge = ammo != null ? ammo.maxAmmo : -1f,
             WalletCoins = wallet != null ? wallet.coins : -1f,
+            WalletOc = wallet != null ? wallet.ToOC() : -1,
             IsWritable = writable != null,
             WrittenTitle = writable != null ? writable.title : null,
             WrittenText = writable != null ? writable.content : null,

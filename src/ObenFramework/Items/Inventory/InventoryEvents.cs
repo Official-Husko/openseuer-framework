@@ -18,6 +18,12 @@ namespace ObenFramework.Items;
 /// </remarks>
 public static class InventoryEvents
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     /// <summary>The player has more of an item than before.</summary>
     public static readonly WorldEvent<InventoryChange> ItemAdded = new WorldEvent<InventoryChange>(nameof(ItemAdded));
 

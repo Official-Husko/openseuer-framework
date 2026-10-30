@@ -311,7 +311,7 @@ bool gone = FloorItems.Remove(id);                           // destroyed and re
 
 `All()` walks the game's own `Collectible.allCollectibles`, which holds pickups that have started (active objects of loaded scenes); the game re-creates that set on a load, so do not cache it.
 
-**Ids.** A pickup that came with the scene is identified by its game GUID. A spawned one has none, so it gets a random 8-character id the first time anyone asks (`FloorItems.IdOf`) or, while somebody is subscribed, when it appears. They last for the session: the game saves spawned pickups with the level but not our ids, so after a load they are new. `FloorItems.Adopt(pickup, id)` and `Spawn(..., id)` set an id on purpose, for a guest that must use the host's.
+**Ids.** A pickup that came with the scene is identified by its game GUID. A spawned one has none, so it gets a random 8-character id the first time anyone asks (`FloorItems.IdOf`, which also takes the GameObject `Items.WorldItems.Spawn` returns) or, while somebody is subscribed, when it appears. They last for the session: the game saves spawned pickups with the level but not our ids, so after a load they are new. `FloorItems.Adopt(pickup, id)` and `Spawn(..., id)` set an id on purpose, for a guest that must use the host's.
 
 **Events** (`WorldEvent<FloorItemEvent>`, with `Item` and `Source`):
 

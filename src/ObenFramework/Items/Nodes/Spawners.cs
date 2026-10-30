@@ -58,6 +58,12 @@ public readonly struct SpawnerInfo
 /// <summary>Spawners in the loaded scenes: listing them, changing their respawn settings, spawning now, and hearing them spawn.</summary>
 public static class Spawners
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     private static readonly AccessTools.FieldRef<Spawner, List<GameObject>> Objects =
         AccessTools.FieldRefAccess<Spawner, List<GameObject>>("objects");
 

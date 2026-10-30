@@ -32,6 +32,12 @@ public readonly struct ExtractableInfo
 /// <summary>Extractables in the loaded scenes: listing them, working on them, and hearing when one comes loose.</summary>
 public static class Extractables
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     /// <summary>An extractable came loose. The payload is its id.</summary>
     public static readonly WorldEvent<string> Extracted = new WorldEvent<string>(nameof(Extracted));
 

@@ -16,6 +16,12 @@ namespace ObenFramework.Items;
 /// </summary>
 public static class LootPools
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     private const int FirstModCategoryId = 1_000_000;
 
     private static readonly AccessTools.FieldRef<StorageSpawnCategoryDatabase, List<StorageSpawnCategory>> Database =

@@ -35,6 +35,12 @@ public readonly struct StoragePanelPress
 /// </summary>
 public static class StoragePanelButtons
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     private static readonly AccessTools.FieldRef<DefaultUIButton, UnityEngine.UI.Image> Glyph =
         AccessTools.FieldRefAccess<DefaultUIButton, UnityEngine.UI.Image>("controllerImage");
 

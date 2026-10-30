@@ -80,6 +80,12 @@ public readonly struct SmashedObject
 /// </summary>
 public static class Breakables
 {
+    /// <summary>
+    /// The framework's item hooks are in place. False when they failed to apply (a game update changed what they
+    /// patch); the events then stay quiet and changes the game should pick up may not take.
+    /// </summary>
+    public static bool IsAvailable => ItemsModule.HooksInPlace;
+
     /// <summary>An object broke. The payload is its id.</summary>
     public static readonly WorldEvent<string> Broken = new WorldEvent<string>(nameof(Broken));
 

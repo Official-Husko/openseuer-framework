@@ -8,6 +8,7 @@ On unless it says otherwise.
 | --- | --- |
 | Bank interest | Banks say they pay interest on savings and charge it on debts, but never did. Now they do, once a week, and it shows in the bank's history. |
 | Renovation materials | With more than one resource storage, a renovation took its materials from every storage that had them, and again from your inventory. Now it takes them once. |
+| Farms replant on their days | Farms that replant on certain weekdays did it a day late: the Potato Mine's Monday, Wednesday and Friday replant ran on Tuesday, Thursday and Saturday. Now they run on their days. |
 | Item givers refill on time | Cup dispensers and other things that refill over time refilled twice as fast after you entered their level, and leaving the level logged an error. |
 | Money in conversations | Money given or taken in conversations dropped the decimals of Real Money amounts. |
 | Pocket bank | The pocket bank conversation didn't know when you already had an account. |

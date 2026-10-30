@@ -93,6 +93,14 @@ An item giver that refills over time (`spawnSettings.respawnEnabled`, e.g. the c
 
 Fix: a transpiler on `InitCoroutine`'s state machine replaces the subscription with one that takes the same handler off first, so a giver is subscribed once however often its setup runs. Setting `startDone` instead would also skip the second `Start` where it is the only one that starts the coroutine (a giver loaded while inactive), and that giver would never refill. Tested on 0.5.13: after walking into Kolhola with the fix on, each dispenser had one subscription (two before) and no destroyed giver was left on the clock.
 
+### DateWeekdayShift: weekday schedules run a day late
+
+`TimeAndDay.GetWeekday` (`TimeAndDay.cs:203`) takes `AzureTimeController.GetDayOfWeek(year, month, day)`, which is .NET's `DayOfWeek` (Sunday is 0), and maps 0 to `Weekday.Monday`, 1 to Tuesday and so on, so every weekday it reports is a day late: 16 November 2026, a Monday, comes out as Tuesday. The clock's own `weekDay` (`TimeOfDayAzure.GetDayOfWeek`, `TimeOfDayAzure.cs:547`) subtracts one first and is right; doors, rent day and the framework's `GameClock` use that. Only two places use `GetWeekday`: `Autofarm.CurrentTime` for its replant days (`Autofarm.cs:100`) and `DateRelay` for weekly intervals (`DateRelay.cs:94`).
+
+A scan of all 124 level files found 11 `DateRelay`s, none of them set to a weekday (daily refreshes, the bus schedule and market bells run on day or hour intervals), and these autofarms with weekday replants, each running a day after its list: the Potato Mine's three (Monday, Wednesday and Friday at 07:00), Tenement A's two factory mushroom farms (Monday to Friday at 07:00), Kolhola's aquarium (Monday at 12:00) and the Fungi Boutique's two growing cabinets (Monday at 10:00). The autofarm's own tooltip says the day runs from 0 to 6, Monday first, so the listed days are the intended ones. Found 2026-10-30 when the Potato Mine farmer's Monday replant ran on Tuesday the 17th.
+
+Fix: a postfix moves the answer back one day (Monday becomes Sunday). Tested on 0.5.13 in the Potato Mine with every replant logged: with the fix on, the three autofarms replanted at 07:00 on Monday the 16th and Wednesday the 25th and not on Tuesday the 24th; with it off, nothing on Monday the 23rd and all three on Tuesday the 24th. `new TimeAndDay { day = 16, month = 11, year = 2026 }.GetWeekday()` is Monday with the fix, Tuesday without.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

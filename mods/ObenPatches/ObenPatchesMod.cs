@@ -26,6 +26,7 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new RenovationMaterialsOnce());
         ModFeatures.Register(this, new StrayLightControllers());
         ModFeatures.Register(this, new ItemGiverRefillTime());
+        ModFeatures.Register(this, new DateWeekdayShift());
         BankInterest.State = ModSaves.Register<BankInterestState>(this, "bank-interest");
         ModFeatures.Register(this, new BankInterest());
     }

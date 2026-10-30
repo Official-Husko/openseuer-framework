@@ -47,7 +47,7 @@ internal static class SaveHooks
         catch (System.Exception e) { GameEvents.Log?.Error("Watching the announced load failed", e); }
     }
 
-    private static void OnSaving() => GameEvents.Saving.Raise(GameEvents.Log);
+    private static void OnSaving() => GameEvents.Saving.Raise(CurrentSaveFolder(), GameEvents.Log);
 
     private static void OnSaved() => GameEvents.Saved.Raise(CurrentSaveFolder(), GameEvents.Log);
 
@@ -56,16 +56,17 @@ internal static class SaveHooks
         LoadAbortWatcher.Proceeding();
         WorldState.IsReady = false;
         WorldState.IsLoadingSave = true;
-        GameEvents.Loading.Raise(GameEvents.Log);
+        GameEvents.Loading.Raise(Saves.SaveFolders.LoadedFolder(), GameEvents.Log);
     }
 
     private static void OnLoaded()
     {
         WorldState.IsLoadingSave = false;
-        GameEvents.Loaded.Raise(GameEvents.Log);
+        GameEvents.Loaded.Raise(Saves.SaveFolders.LoadedFolder(), GameEvents.Log);
         ReadyWatcher.Arm();
     }
 
+    // The game sets the character and slot names before SavingStarted, so this is the folder being written.
     private static string CurrentSaveFolder()
     {
         try

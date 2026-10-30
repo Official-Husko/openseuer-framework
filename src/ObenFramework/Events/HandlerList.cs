@@ -51,8 +51,21 @@ public sealed class HandlerList<THandler> where THandler : Delegate
             }
             catch (Exception e)
             {
-                log.Error($"A {eventName} handler from {handlers[i].Method.DeclaringType?.Assembly.GetName().Name} threw", e);
+                log.Error($"A {eventName} handler from {Origin(handlers[i])} threw", e);
             }
         }
     }
+
+    private static string Origin(Delegate handler)
+    {
+        while (handler.Target is IWrappedHandler wrapped)
+            handler = wrapped.Inner;
+        return handler.Method.DeclaringType?.Assembly.GetName().Name;
+    }
+}
+
+/// <summary>A handler that forwards to another one; errors are reported against the inner one.</summary>
+internal interface IWrappedHandler
+{
+    Delegate Inner { get; }
 }

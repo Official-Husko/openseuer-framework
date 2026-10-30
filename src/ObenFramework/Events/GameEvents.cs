@@ -44,20 +44,26 @@ public static class GameEvents
     /// </summary>
     public static readonly GameEvent<bool> LoadAborted = new GameEvent<bool>(nameof(LoadAborted));
 
-    /// <summary>The game started writing a save.</summary>
-    public static readonly GameEvent Saving = new GameEvent(nameof(Saving));
+    /// <summary>
+    /// The game started writing a save, before any file is written. The payload is the folder it is about
+    /// to write (a level change writes Autosave). Handlers that don't need it can subscribe without it.
+    /// </summary>
+    public static readonly GameEvent<string> Saving = new GameEvent<string>(nameof(Saving));
 
     /// <summary>A save was written. The payload is the save folder; mods keep their own files there.</summary>
     public static readonly GameEvent<string> Saved = new GameEvent<string>(nameof(Saved));
 
-    /// <summary>A save started loading (from the menu, a door, or a reload).</summary>
-    public static readonly GameEvent Loading = new GameEvent(nameof(Loading));
+    /// <summary>
+    /// A save started loading (from the menu, a door, or a reload): the new scene is open and the game is
+    /// about to apply the save. The payload is the folder being loaded.
+    /// </summary>
+    public static readonly GameEvent<string> Loading = new GameEvent<string>(nameof(Loading));
 
     /// <summary>
-    /// The save's data was applied. The player may still be moved to the entry point a moment later;
-    /// wait for <see cref="WorldReady"/> before touching the world.
+    /// The save's data was applied. The payload is the folder it came from. The player may still be moved
+    /// to the entry point a moment later; wait for <see cref="WorldReady"/> before touching the world.
     /// </summary>
-    public static readonly GameEvent Loaded = new GameEvent(nameof(Loaded));
+    public static readonly GameEvent<string> Loaded = new GameEvent<string>(nameof(Loaded));
 
     /// <summary>
     /// Runs <paramref name="action"/> every time the world becomes ready, and right away if it already
@@ -73,10 +79,51 @@ public static class GameEvents
         }
     }
 
+    /// <summary>
+    /// Runs <paramref name="action"/> once: right away if the world is ready, otherwise at the next
+    /// <see cref="WorldReady"/> (after a save load, a level change or a new game's first level). Dispose
+    /// the result to cancel it; it is also dropped when <paramref name="owner"/> unloads first.
+    /// </summary>
+    public static IDisposable OnceWorldReady(ITracker owner, Action<string> action)
+    {
+        if (owner == null) throw new ArgumentNullException(nameof(owner));
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        if (WorldState.IsReady)
+        {
+            try { action(WorldState.SceneName); }
+            catch (Exception e) { Log.Error("A WorldReady handler threw", e); }
+            return Disposable.Create(() => { });
+        }
+        var once = new OnceHandler(action);
+        once.Subscription = WorldReady.Subscribe(once.Invoke);
+        owner.Track(once.Subscription);
+        return once.Subscription;
+    }
+
     internal static void Init(ObenMod framework)
     {
         Log = framework.Log;
         SaveHooks.Attach(framework);
         SceneHooks.Attach(framework);
+    }
+
+    private sealed class OnceHandler : IWrappedHandler
+    {
+        private readonly Action<string> _action;
+
+        public IDisposable Subscription;
+
+        public OnceHandler(Action<string> action)
+        {
+            _action = action;
+        }
+
+        public Delegate Inner => _action;
+
+        public void Invoke(string scene)
+        {
+            Subscription.Dispose();
+            _action(scene);
+        }
     }
 }

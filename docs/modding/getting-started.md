@@ -200,8 +200,12 @@ Things to know:
 | `WorldReady` (scene name) | A playable level is up: save applied, player in place. Once per level load; doors reload the level too. |
 | `LevelChanging` | The player is leaving the level (a save and reload follow). |
 | `LoadAborted` (true for a level change) | A level change or save load was announced but didn't happen (missing or broken save, or it stayed in the same scene). The player is still where they were; `WorldReady` doesn't fire again. |
-| `Saving`, `Saved` (save folder) | Around a save. Keep mod files in the save folder, written in `Saved`. |
-| `Loading`, `Loaded` | Around a save load. Wait for `WorldReady` before touching the world. |
+| `Saving`, `Saved` (save folder) | Around a save; `Saving` comes before any file is written. Keep mod files in the save folder, written in `Saved`. |
+| `Loading`, `Loaded` (save folder) | Around a save load. Wait for `WorldReady` before touching the world. |
+
+The save folder is the full path, like `.../Saves/Mira_Kallio/Slot2`; a level change writes and loads `Autosave`. A handler that doesn't need it can leave the argument out: `GameEvents.Saving.Subscribe(this, () => ...)`.
+
+`GameEvents.WhenWorldReady(this, scene => ...)` runs now if the world is ready and again after every level load. `GameEvents.OnceWorldReady(this, scene => ...)` runs once: now, or at the next `WorldReady`; dispose what it returns to cancel. For things that belong to a loaded game rather than a level, use `ObenFramework.NewGames.Sessions.WhenStarted` (once per save load or new game).
 
 `ObenFramework.Game.WorldState` has `InWorld`, `InMainMenu`, `IsReady`, `IsLoadingSave`, `IsPaused` and `SceneName`.
 

@@ -165,3 +165,11 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 ## Expansion mods
 
 Ideas welcome; each is its own mod on top of ObenFramework.
+
+- [ ] Health Conditions (submod, M): the game has a condition system (`BaseHealthCondition`, `PlayerStatsDiseasesAndConditions`, hooks in hygiene and radiation), and the doctor's menu already sells treatments for fungal disease, growths and radiation. But 0.5.13 ships no condition assets, so nothing ever happens: none were loaded even after `Resources.LoadAll` (checked 2026-10-30). A submod could finish it:
+  - its own conditions, made at runtime as `BaseHealthCondition` instances: for example lice or a rash from low hygiene, radiation sickness from a high dose, fungal growths from SMV, infected wounds. Each has a strength, a duration and effects through `StatDrain` and `PlayerEffects`;
+  - put them into the game's own lists (`lowHygieneConditions`, `highDoseConditions`) after every level and save load, and keep the active ones per save through `ModSaves`. Check first what the game's save does with a runtime condition in `activeConditions` (every save so far stores the lists empty); if it can't store one, keep it out of the save so the save loads without the mod;
+  - fix the game's condition bugs it would rely on (in known-bugs.md): `ApplyCondition` never adds a non-stacking condition, `UpdateStats` changes the list it loops over, and radiation's strength is 0 over the threshold;
+  - tie the doctor's treatments to them (Fungicide, Growths removal, the radiation painkillers, iodine pills) through `Medical.Treated`;
+  - show them: a line on the Character page or a HUD readout, and a notification when one starts or ends.
+  - Framework side: `PlayerConditions` only knows the conditions in the game's lists, so it needs a way for mods to register their own (`PlayerConditions.Register`). The Recovery idea in ideas.md would use it too.

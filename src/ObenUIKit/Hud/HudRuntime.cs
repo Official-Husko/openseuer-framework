@@ -27,6 +27,7 @@ internal sealed class HudRuntime : IDisposable
     private readonly HintPanel _panel;
     private readonly SubtitleLine _subtitle;
     private readonly BarStack _bars;
+    private readonly ReadoutStack _readouts;
     private readonly HashSet<ITracker> _owners = new HashSet<ITracker>();
     private HudHint _shown;
     private bool _shownNative;
@@ -43,6 +44,7 @@ internal sealed class HudRuntime : IDisposable
         _panel = new HintPanel(_root);
         _subtitle = new SubtitleLine(_root);
         _bars = new BarStack(_root, kit.Log);
+        _readouts = new ReadoutStack(_root, kit.Log);
         _tick = kit.Root.Root.AddComponent<HudTick>();
         _tick.Init(this);
         Current = this;
@@ -84,6 +86,22 @@ internal sealed class HudRuntime : IDisposable
         Refresh();
     }
 
+    public HudReadout AddReadout(ITracker owner, string title, Func<string> text)
+    {
+        var readout = new HudReadout(owner, title, text);
+        if (!_readouts.Add(readout, _kit.Theme))
+            return null;
+        Own(owner);
+        Refresh();
+        return readout;
+    }
+
+    public void RemoveReadout(HudReadout readout)
+    {
+        _readouts.Remove(readout);
+        Refresh();
+    }
+
     /// <summary>Called every frame while there is something to show.</summary>
     public void Tick(float delta)
     {
@@ -99,10 +117,11 @@ internal sealed class HudRuntime : IDisposable
         bool hudHidden = blocked || gameUiHidden;
         _subtitle.Tick(delta, hudHidden);
         _bars.Tick(delta, hudHidden || !WorldState.IsReady, _kit.Theme);
+        _readouts.Tick(hudHidden || !WorldState.IsReady, _bars.Bottom, _kit.Theme);
         _tick.enabled = Active;
     }
 
-    private bool Active => _queue.Count > 0 || _subtitle.Active || _bars.Count > 0;
+    private bool Active => _queue.Count > 0 || _subtitle.Active || _bars.Count > 0 || _readouts.Count > 0;
 
     private void Refresh()
     {
@@ -171,6 +190,7 @@ internal sealed class HudRuntime : IDisposable
             _owners.Remove(owner);
             _queue.RemoveOwner(owner);
             _bars.RemoveOwner(owner);
+            _readouts.RemoveOwner(owner);
             Refresh();
         }));
     }
@@ -193,6 +213,7 @@ internal sealed class HudRuntime : IDisposable
         _panel.Dispose();
         _subtitle.Dispose();
         _bars.Dispose();
+        _readouts.Dispose();
         _owners.Clear();
         if (_tick != null)
             UnityEngine.Object.Destroy(_tick);

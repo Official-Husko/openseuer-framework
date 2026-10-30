@@ -39,6 +39,9 @@ internal sealed class BarStack
 
     public int Count => _bars.Count;
 
+    /// <summary>How far down the column reaches while it shows (0 while it doesn't), for what goes under it.</summary>
+    public float Bottom => _stack != null && _stack.gameObject.activeSelf ? _stack.rect.height + 12f : 0f;
+
     /// <summary>True while a bar is still gliding, so the tick has per-frame work to do.</summary>
     public bool Gliding { get; private set; }
 

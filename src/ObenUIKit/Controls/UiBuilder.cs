@@ -68,6 +68,18 @@ public sealed partial class UiBuilder
         return handle;
     }
 
+    /// <summary>
+    /// Runs <paramref name="poll"/> a few times a second while the window is open, until it is built again: for
+    /// controls that follow something themselves, like a list that grows as lines come in. If it throws, the
+    /// error is logged and it stops.
+    /// </summary>
+    public void Poll(Action poll)
+    {
+        if (poll == null)
+            throw new ArgumentNullException(nameof(poll));
+        _window.AddRefresher(poll);
+    }
+
     /// <summary>An underlined text button, like Apply and Back in the game's options.</summary>
     public ButtonHandle Button(string text, Action onClick) => Button(text, ButtonStyle.Plain, onClick);
 

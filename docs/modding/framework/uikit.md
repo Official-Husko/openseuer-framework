@@ -24,6 +24,7 @@ For uGUI of your own (in an `Area`, or on a handle's `Rect`), the theme has a fe
 
 - `UiKit.Theme.MutedSize` (the size of muted text), `Accent`, `AccentHover` and `AccentPressed` (the game's reds for what is picked, hovered and pressed).
 - `UiKit.Theme.Glyph('→', "->")`: the character when the menu font draws it, else the fallback. Characters the font has but draws as something else ("<", ">", "»", "›") count as missing.
+- `UiText.Plain(text)` and `UiText.Paint(color, text)` (namespace `ObenUIKit.Controls`): text from outside (a log line, a name, a value) for a label, list row or title, shown exactly as it is. Labels read rich text tags, so a "<b>" in a log line would turn the rest bold, and the menu font draws angle brackets as stray marks; these escape the tags and draw the brackets in TextMeshPro's default font. `Paint` also colours it.
 - `UiTheme.Blocks(normal, highlighted, pressed)`: a uGUI `ColorBlock` for a `Selectable` of your own, with the disabled colour half transparent and a short fade.
 - `UiSprites.RoundedRect(radius)`: a white rounded rectangle (corners of 0 to 64 pixels) that slices to any size; put it on an `Image` with `type = Sliced` and tint it with the Image's colour. The kit's own windows keep the game's square look.
 - `UiSprites.Gradient(bottom, top)`: a 1 by 64 texture fading between two colours, for a `RawImage` backdrop.
@@ -122,6 +123,7 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | `Title(text)` | a large line on the left for a section, without a bar | `LabelHandle` |
 | `Label(text, muted, align)` | plain wrapped text; muted is greyer and smaller | `LabelHandle` (`Text`, `Color`, `Size`) |
 | `Live(() => text, muted)` | a label read again four times a second while the window is open | `LabelHandle` |
+| `Poll(() => ...)` | runs four times a second while the window is open, until it is built again: for a control that follows something itself, like a list that grows (a throw is logged and stops it) | nothing |
 | `Button(text, onClick)` | underlined text button, like Apply and Back | `ButtonHandle` (`Enabled`, `Text`) |
 | `Button(text, style, onClick)` | `ButtonStyle.Plain` as above, `Quiet` (smaller and greyer, for lesser actions) or `Box` (a bar in the option-row look that lights up red, for the main action) | `ButtonHandle` |
 | `Cycle(label, options, index, onChange)` | a header and a `< value >` row; arrows step, the row lights up dark red under the cursor | `CycleHandle` (`Index`, `Set`, `SetOptions`) |
@@ -441,7 +443,7 @@ Edits are written with `config.Save()` right away, which also raises the config'
 
 The list of fields is worked out by reflection once per settings class and cached.
 
-## HUD hints, subtitles and bars
+## HUD hints, subtitles, bars and readouts
 
 `Hud` puts short things on the game's HUD. Each belongs to the mod (or feature) that adds it and goes when that unloads.
 
@@ -455,15 +457,20 @@ Hud.Subtitle("Somebody is following you.", seconds: 4f);
 HudBar bar = Hud.Bar(this, "Stamina", () => Stamina.Fraction);
 bar.Color = Color.cyan;   // optional; the theme's slider colour otherwise
 bar.Remove();
+
+HudReadout readout = Hud.Readout(this, "Crates", () => $"Spawned {_spawned}\nOpened {_opened}");
+readout.Title = "Crates (hard mode)";
+readout.Remove();
 ```
 
 - **Hints** go through the game's own `HintOverlay` side panel in levels, so they look and animate like its scene hints, and `{key:Action Name}` becomes the player's current key (`HintContent.ResolveKeys`). Our entry goes above the scene's own hints while it shows, and theirs come back after. The player's Hints key and setting still apply: with hints switched off nothing shows unless you pass `force: true`. So does the kit's "Show mod hints" setting (MODS, Settings, UI kit): while it is off, `Hud.Hint` drops the hint and returns it with `IsActive` false, again unless `force: true`. `Hud.ModHintsShown` reads it. Where the game has no hint panel (the main menu) the kit draws an equivalent box on the right edge from the theme, and unresolved `{key:...}` shows as the plain action name.
 - Hints show one at a time in the order they were added, each for `seconds` (0.5 to 120, default 6) once it is up. Asking again for a hint with the same owner, title and text extends the one already waiting instead of queueing a copy, so calling `Hud.Hint` from an event that fires often is safe. At most six wait; the oldest waiting one is dropped first. `HudHint.Hide()` removes one early.
 - **Subtitle** is one line near the bottom of the screen on a dark strip, in the game's font. A new line replaces the one showing; it fades during its last half second. It has no owner because it only lives for a few seconds.
 - **Bar** is a small labelled bar at the top left, track and fill in the theme's slider colours. The function returns 0 to 1 and is read five times a second (the bar glides between reads, with no allocations per frame); if it throws, the bar is logged and removed. Up to six bars; `Hud.Bar` returns null beyond that. Bars only show in a level.
+- **Readout** is a box of text at the top left, under the bars, in the hint panel's look: a grey title (left out when empty) over the text, which may have several lines. The function is read four times a second and the label is only written when the text changed; if it throws, the readout is logged and removed (one that throws on its first read comes back with `IsActive` false). The text shows as it is, so values with angle brackets are safe; it is cut at 2000 characters. Up to four readouts; `Hud.Readout` returns null beyond that. Readouts only show in a level. The Cheat Menu's developer menu shows its watches in one.
 - Nothing shows while a kit window or the pause menu is open, while a save loads, or while the game's own HUD is hidden (the hide-HUD key, inventory and other full menus). Hint and subtitle timers wait until it is back. The HUD pieces sit under the kit's windows.
 
-The code is in `Hud/`: `HintQueue` (plain bookkeeping), `NativeHints` (the `HintOverlay` bridge), `HintPanel`, `SubtitleLine`, `BarStack`, with `HudRuntime` tying them to the kit's lifetime. The per-frame component is only enabled while something is showing.
+The code is in `Hud/`: `HintQueue` (plain bookkeeping), `NativeHints` (the `HintOverlay` bridge), `HintPanel`, `SubtitleLine`, `BarStack`, `ReadoutStack`, with `HudRuntime` tying them to the kit's lifetime. The per-frame component is only enabled while something is showing.
 
 ## Key prompts
 

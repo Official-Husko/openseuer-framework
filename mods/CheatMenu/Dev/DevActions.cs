@@ -44,6 +44,31 @@ internal static class DevActions
         ui.Window.Rebuild();
     }
 
+    /// <summary>
+    /// A change through a framework call that says itself whether it went through: only one that did marks the
+    /// save; one that didn't puts <paramref name="refused"/> on the status line.
+    /// </summary>
+    public static void Act(CheatContext ctx, UiBuilder ui, string what, Func<bool> change, string refused)
+    {
+        ctx.Run(what, () =>
+        {
+            bool done;
+            try
+            {
+                done = change();
+            }
+            catch
+            {
+                DevMarks.Mark();
+                throw;
+            }
+            if (done)
+                DevMarks.Mark();
+            ctx.Say(what + ": " + (done ? "done." : refused));
+        });
+        ui.Window.Defer(ui.Window.Rebuild);
+    }
+
     /// <summary>Any other change; one that throws leaves its message on the status line instead.</summary>
     public static void Change(CheatContext ctx, UiBuilder ui, string what, Action change)
     {

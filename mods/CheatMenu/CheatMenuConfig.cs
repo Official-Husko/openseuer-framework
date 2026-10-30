@@ -27,6 +27,10 @@ public sealed class CheatMenuConfig
     [Browsable(false)]
     public List<string> Watches = new List<string>();
 
+    /// <summary>The watches also show over the game, in a box at the top left (F9 switches it).</summary>
+    [Browsable(false)]
+    public bool WatchesOnScreen;
+
     /// <summary>Makes sure every spot slot exists, whatever the file held.</summary>
     internal void Normalise()
     {

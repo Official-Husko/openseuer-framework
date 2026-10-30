@@ -6,9 +6,10 @@ namespace CheatMenu.Dev;
 
 /// <summary>
 /// Watches on live values: type a type, pick one of its members (or type a longer path), and the value is
-/// shown and read again four times a second while the window is open. The player's watches are kept in the
-/// mod's config.json; watches mods add through <see cref="DevMenu.AddWatch"/> are listed below them.
-/// Reading is plain reflection on the main thread, so it only costs anything while the section is shown.
+/// shown and read again four times a second while the window is open, and over the game too with
+/// "Show them over the game" (<see cref="WatchHud"/>). The player's watches are kept in the mod's config.json;
+/// watches mods add through <see cref="DevMenu.AddWatch"/> are listed below them. Reading is plain
+/// reflection on the main thread, so it only costs anything while they are shown.
 /// </summary>
 internal static class WatchesSection
 {
@@ -41,6 +42,7 @@ internal static class WatchesSection
         }
         path = ui.TextField("Member or path", _path, t => _path = t);
         ui.Button("Watch it", () => Add(ctx, ui));
+        ui.Toggle("Show them over the game (F9)", WatchHud.IsShown, WatchHud.Set);
 
         BuildList(ui, ctx);
         BuildModWatches(ui);
@@ -64,6 +66,7 @@ internal static class WatchesSection
         {
             watches.Add(watch.Key);
             ctx.Config.Save();
+            WatchHud.Changed();
         }
         ctx.Say("Watching " + watch.Key + ".");
         ui.Window.Rebuild();
@@ -90,6 +93,7 @@ internal static class WatchesSection
             {
                 watches.Remove(kept);
                 ctx.Config.Save();
+                WatchHud.Changed();
                 ui.Window.Rebuild();
             });
         }
@@ -107,7 +111,8 @@ internal static class WatchesSection
         }
     }
 
-    private static string Read(DevWatch watch)
+    /// <summary>A mod's watch as text; one that throws shows its error instead.</summary>
+    internal static string Read(DevWatch watch)
     {
         try
         {

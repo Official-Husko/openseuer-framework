@@ -221,12 +221,18 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
   - `body=true` keeps `playerRig` active in first person; `body=false` hides it.
   - `ModeChanged` fired False, then True.
   - While `OnSavingGame` serialises the camera, it reads first person, locked, saved distance 0; right after, it is back in third person. Still to do: a real save.
-- [ ] **Developer menu:** switch on `CheatMenu/DevMenu`, press F8, and check each part:
-  - **Quests:** `DevBridge.test` shows the rewind buttons; `Abandoned2` only offers state changes.
-  - **Flags:** filter and switch flags.
-  - **Watches:** add TimeOfDayAzure / `timeSpeedOverrideFactor`; `clock.set speed=2` shows 2 within a quarter of a second.
+- [x] **Developer menu:** passed 2026-10-30 in `new_scene Interior Player Tenement`, driving the menu's own buttons from a script:
+  - **Quests:** `DevBridge.test` (made with `quests.create`) shows the rewind buttons.
+  - **Flags:** "Set a flag by name" sets `DevMenuTestFlag`, and filtering on `devmenu` lists it as On.
+  - **Watches:** TimeOfDayAzure / `timeSpeedOverrideFactor` reads 2.0 after the speed went to 2.
   - **Session and story:** the values read live.
-  - **Player and world:** stats, entrypoints, item search.
+  - **Player and world:** setting health from the stat slider.
+- [x] **Watches over the game:** passed 2026-10-30. "Show them over the game" puts the watches in a box at the top left (an unknown type reads "can't be read"), it follows a change within a quarter of a second, steps aside while a window is open, and `devmenu watches` in the F1 console hides it (`WatchesOnScreen` false in config.json).
+- [ ] **Watches over the game, F9:** press the real F9 key in a level; the box comes and goes. A mod's `DevMenu.AddWatch` shows in it too.
+- [x] **Log part:** passed 2026-10-30. A Unity warning with `<b>bold</b>` in it shows the tags as text in amber, an error shows red with "+47 lines", Follow keeps the newest line in view, and picking a line shows all of it below.
+- [ ] **Log part by hand:** change Show, From and the filter, and click a row with the mouse; "Copy it" puts the line on the clipboard.
+- [x] **NPCs part:** passed 2026-10-30 in the tenement: Malone (37) and Seamus (125, hidden, greyed and listed after Malone). Go to it puts the player 1.5 m in front of Malone, facing him; Bring it here says Malone has no path finding. A spawned copy of character 84 ("Testy", CheatMenu/dev1) is listed in both lists; Bring it here, Follow me, Stop following and Look at me are done, Stop its activity says it isn't doing anything, and Despawn removes it.
+- [ ] **NPCs part [save]:** the relationships (pick one, set the disposition, the target follows), and Kill it (asks first; the NPC stays dead in the save).
 - [ ] **Developer menu [save]:** any change made from the menu marks the save in `mods/CheatMenu.dev.json`.
 - [ ] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true).
 - [ ] **Third person in a tight spot:** in third person, walk into a real first-person camera trigger. The camera goes in, a "has to stay in first person" toast shows once, and the camera goes back out after the trigger.

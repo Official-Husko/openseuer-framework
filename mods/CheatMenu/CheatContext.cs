@@ -26,6 +26,9 @@ internal sealed class CheatContext
 
     public ConfigFile<CheatMenuConfig> Config { get; }
 
+    /// <summary>The Cheat Menu itself, for framework calls that want a mod as owner (spawning an NPC).</summary>
+    public ObenMod Mod => _mod;
+
     /// <summary>The last thing a cheat said; shown at the top of the panel.</summary>
     public string Status { get; private set; } = "";
 

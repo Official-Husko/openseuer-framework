@@ -161,8 +161,9 @@
     <Compile Include="../../src/ObenFramework/NewGames/Tutorial/TutorialSteps.cs" Link="Linked/NewGames/TutorialSteps.cs" />
     <!-- Game Tweaks: factor clamping and the stack, price, hour and duration maths. -->
     <Compile Include="../../mods/GameTweaks/TweakMath.cs" Link="Linked/GameTweaks/TweakMath.cs" />
-    <!-- Cheat Menu developer menu: filters, task owners, watch paths. -->
+    <!-- Cheat Menu developer menu: filters, task owners, watch paths, the log part's filtering. -->
     <Compile Include="../../mods/CheatMenu/Dev/DevRules.cs" Link="Linked/CheatMenu/DevRules.cs" />
+    <Compile Include="../../mods/CheatMenu/Dev/LogView.cs" Link="Linked/CheatMenu/LogView.cs" />
     <!-- The API call tracer: value formatting, the record book, target selection and the Harmony hooks. -->
     <Compile Include="../../mods/DevBridge/Tracing/TraceFormat.cs" Link="Linked/DevBridge/TraceFormat.cs" />
     <Compile Include="../../mods/DevBridge/Tracing/TraceBook.cs" Link="Linked/DevBridge/TraceBook.cs" />

@@ -8,15 +8,16 @@ using ObenUIKit.Windows;
 namespace CheatMenu.Dev;
 
 /// <summary>
-/// The developer menu window, also the Developer page of the MODS menu. The kit has no tabs yet, so a cycle
-/// at the top picks the part shown (quests, flags, watches, session, player and world, mods) and the window is built again.
+/// The developer menu window, also the Developer page of the MODS menu. A cycle at the top picks the part
+/// shown (quests, flags, watches, session, player and world, NPCs, the log, mods) and the window is built
+/// again, so only the part on screen costs anything.
 /// Each part is built inside its own guard: one that throws says so and the rest of the window still works.
 /// </summary>
 internal static class DevWindow
 {
     public const string WindowId = "cheatmenu.dev";
 
-    private static readonly string[] Parts = { "Quests", "Global flags", "Watches", "Session and story", "Player and world", "From mods" };
+    private static readonly string[] Parts = { "Quests", "Global flags", "Watches", "Session and story", "Player and world", "NPCs", "Log", "From mods" };
     private static int _part;
     private static UiWindow _window;
 
@@ -61,6 +62,8 @@ internal static class DevWindow
                 case 2: WatchesSection.Build(ui, ctx); break;
                 case 3: SessionSection.Build(ui, ctx); break;
                 case 4: WorldSection.Build(ui, ctx); break;
+                case 5: NpcsSection.Build(ui, ctx); break;
+                case 6: LogSection.Build(ui, ctx); break;
                 default: BuildModSections(ui, ctx); break;
             }
         }

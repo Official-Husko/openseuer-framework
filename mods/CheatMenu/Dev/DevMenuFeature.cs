@@ -24,7 +24,7 @@ internal sealed class DevMenuFeature : ModFeature
     public override string Id => Key;
     public override string Name => "Developer menu";
     public override string Description =>
-        "F8 opens a menu for testing: set quest states and rewind mod quests, switch global flags, watch live values, see the session and story state. Changes mark the save.";
+        "F8 opens a menu for testing: quests, global flags, watches (also over the game with F9), the session and story state, player and world tools, NPCs and the log. Changes mark the save.";
     public override bool EnabledByDefault => false;
 
     internal void Open() => DevWindow.Toggle(_ctx);
@@ -33,6 +33,8 @@ internal sealed class DevMenuFeature : ModFeature
     {
         DevWindow.Init(this);
         Hotkeys.Register(this, "dev", "Open or close the developer menu", KeyCode.F8, Open, scope: HotkeyScope.Anywhere);
+        Hotkeys.Register(this, "watches", "Show or hide the watches over the game", KeyCode.F9, WatchHud.Toggle);
+        WatchHud.Init(this, _ctx);
         ModMenu.AddPage(this, new ModPage("Developer", ui => DevWindow.Build(ui, _ctx)) { Order = 21 });
         Current = this;
     }
@@ -41,5 +43,6 @@ internal sealed class DevMenuFeature : ModFeature
     {
         Current = null;
         DevWindow.Init(null);
+        WatchHud.Init(null, _ctx);
     }
 }

@@ -148,6 +148,7 @@
     <!-- Dialogue authoring rules: definitions, ids, anchor matching, link priorities. -->
     <Compile Include="../../src/ObenFramework/Dialogue/Authoring/ConversationDefinition.cs" Link="Linked/Dialogue/ConversationDefinition.cs" />
     <Compile Include="../../src/ObenFramework/Dialogue/Authoring/DialoguePlan.cs" Link="Linked/Dialogue/DialoguePlan.cs" />
+    <Compile Include="../../src/ObenFramework/Dialogue/LuaChecks.cs" Link="Linked/Dialogue/LuaChecks.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionKind.cs" Link="Linked/NewGames/SessionKind.cs" />
     <Compile Include="../../src/ObenFramework/NewGames/SessionRules.cs" Link="Linked/NewGames/SessionRules.cs" />
     <!-- New game options, difficulty preset maths, start choice and tutorial rules. -->

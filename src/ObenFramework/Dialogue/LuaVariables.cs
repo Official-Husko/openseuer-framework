@@ -35,13 +35,21 @@ public static class LuaVariables
     public static string[] Names() => LuaState.IsReady ? DialogueLua.GetAllVariables() : Array.Empty<string>();
 
     /// <summary>
+    /// True for the variables the game and the Dialogue System write themselves (the day, the player's name,
+    /// the running conversation's actors, shop prices and a few more): <see cref="Set"/> and
+    /// <see cref="SetDefault"/> refuse them, because the game would overwrite the value. Reading them is fine.
+    /// </summary>
+    public static bool IsGameVariable(string name) => LuaChecks.IsGameVariable(name);
+
+    /// <summary>
     /// Sets a variable (created when missing). <paramref name="value"/> is a string, bool or number;
     /// numbers are saved as floats. Throws for values the game's save can't store (a backslash in a
-    /// string, NaN). Returns <see cref="LuaWriteResult.Deferred"/> while a save is loading.
+    /// string, NaN) and for the game's own variables (<see cref="IsGameVariable"/>). Returns
+    /// <see cref="LuaWriteResult.Deferred"/> while a save is loading.
     /// </summary>
     public static LuaWriteResult Set(string name, object value)
     {
-        LuaChecks.Name(name, nameof(name));
+        LuaChecks.VariableName(name, nameof(name));
         return LuaWrites.Variable(name, LuaChecks.Value(value, nameof(value)), onlyIfMissing: false);
     }
 
@@ -52,7 +60,7 @@ public static class LuaVariables
     /// </summary>
     public static LuaWriteResult SetDefault(string name, object value)
     {
-        LuaChecks.Name(name, nameof(name));
+        LuaChecks.VariableName(name, nameof(name));
         return LuaWrites.Variable(name, LuaChecks.Value(value, nameof(value)), onlyIfMissing: true);
     }
 }

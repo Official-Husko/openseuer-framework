@@ -22,14 +22,14 @@ ActorFields.Set("Pentti Penttilä", "KnowsTheName", true);
 
 | Class | Members |
 |---|---|
-| `LuaVariables` | `Exists`, `Get`, `GetString/GetInt/GetFloat/GetBool(name, fallback)`, `Names()`, `Set`, `SetDefault` |
+| `LuaVariables` | `Exists`, `Get`, `GetString/GetInt/GetFloat/GetBool(name, fallback)`, `Names()`, `IsGameVariable`, `Set`, `SetDefault` |
 | `ActorFields` | `ActorExists`, `Exists`, `Get`, `GetString/GetInt/GetFloat/GetBool(actor, field, fallback)`, `Set`, `SetDefault` |
 | `DialogueValue` | what `Get` returns: `Exists`, `Type`, `IsNumber/IsString/IsBool/IsTable`, `AsString/AsNumber/AsInt/AsBool`, `StringOr/NumberOr/IntOr/BoolOr(fallback)`, `ToObject()` |
 
 - Reads never throw. A missing variable, a missing actor and a Lua `nil` all give `Exists == false`, and the typed getters give your fallback when the value is missing or has another type.
 - Names go through the Dialogue System's own mapping (spaces become underscores), so `"Card Games"` and `"Card_Games"` are the same actor.
 - Values are `string`, `bool`, or a number. Numbers are saved by the game as floats, so whole numbers above about 16 million lose precision. `Set` throws `ArgumentException` for anything it cannot store: NaN or infinity, other types, and strings or names with a backslash or a control character (the game writes its save as Lua source and escapes almost nothing, so one backslash can corrupt the dialogue part of a save). Double quotes in strings are turned into single quotes by the game when it saves.
-- The game owns some variables (`Day`, `PlayerFirstName`, `Price`, `WakeUpReason`...) and rewrites them itself; the list is in the game notes. Prefix your own with the mod name. `Player.Money` and `Player.RealMoney` are kept in sync by the money code, so change money through `Wallet`.
+- The game and the Dialogue System write some variables themselves, and `Set` and `SetDefault` refuse those with an `ArgumentException` because the game would overwrite the value: `Actor`, `ActorIndex`, `Alert`, `Conversant`, `ConversantIndex`, `Conversation`, `Converrsant` (the game's spelling), `Currency`, `Day`, `PlayerAge`, `PlayerFirstName`, `PlayerGender`, `PlayerLastName`, `PoliceIdle`, `Price`, `SavedLevelName`, `Speaker`, `WakeUpReason`, and the dreams' `DREAM_<n>`. `LuaVariables.IsGameVariable(name)` tells you; reading them is fine. Change the day through `GameClock`. Raw Lua (`LuaScript.Run`) isn't checked. Prefix your own variables with the mod name. `Player.Money` and `Player.RealMoney` are kept in sync by the money code, so change money through `Wallet`.
 
 ### Timing around save loads
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace ObenFramework.Dialogue;
 
@@ -8,6 +9,29 @@ namespace ObenFramework.Dialogue;
 /// </summary>
 internal static class LuaChecks
 {
+    // Variables the game and the Dialogue System set themselves: the day, the player's name and age, the
+    // running conversation's actors, shop prices, the police and wake-up lines, the level the save was made
+    // in. "Converrsant" is the game's own spelling. Dreams store DREAM_<n> when the game saves.
+    private static readonly HashSet<string> GameVariables = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "Actor", "ActorIndex", "Alert", "Conversant", "ConversantIndex", "Conversation", "Converrsant", "Currency",
+        "Day", "PlayerAge", "PlayerFirstName", "PlayerGender", "PlayerLastName", "PoliceIdle", "Price",
+        "SavedLevelName", "Speaker", "WakeUpReason",
+    };
+
+    private const string DreamPrefix = "DREAM_";
+
+    public static bool IsGameVariable(string name) =>
+        name != null && (GameVariables.Contains(name) || name.StartsWith(DreamPrefix, StringComparison.Ordinal));
+
+    /// <summary>A variable name a mod may write: <see cref="Name"/>, and not one the game writes itself.</summary>
+    public static void VariableName(string value, string paramName)
+    {
+        Name(value, paramName);
+        if (IsGameVariable(value))
+            throw new ArgumentException($"'{value}' is written by the game itself, which would overwrite the change; it can only be read.", paramName);
+    }
+
     public static void Name(string value, string paramName)
     {
         if (string.IsNullOrEmpty(value))

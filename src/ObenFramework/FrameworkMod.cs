@@ -77,6 +77,7 @@ public sealed class FrameworkMod : ObenMod
         Start("world extras", WorldExtrasModule.Init);
         Start("scene look", SceneLookModule.Init);
         Start("items", ItemsModule.Init, ItemsModule.Update);
+        Start("recipe placeholders", RecipePlaceholders.Init);
         Start("item placeholders", ItemPlaceholders.Init);
         Start("crafting", CraftingModule.Init);
         Start("environment", EnvironmentModule.Init);

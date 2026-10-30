@@ -99,6 +99,18 @@ RecipeRegistry.Register(this, recipe);
 - `RequiresLearning()` hides the recipe until the player has learned it (`RecipeController.AddRecipe`).
 - `RecipeBuilder.From(Recipes.ById(templateId), id, name)` starts from one of the game's recipes: its station, look, conditions, tags, variant and stolen-item rules, skill and time come along, and you add inputs and outputs. `HardMinimumSkill()`, `SkillFactors()` and `Tags()` cover the rest; anything else can be set on the `Recipe` from `Build()`.
 - The framework only touches the in-memory list. It never calls `RecipeDatabase.AddRecipe` and friends, which would rewrite the game's `Recipes.json`.
+- `RecipeRegistry.IsModded(id)` and `OwnerOf(id)` say whether a loaded mod registered a recipe and which.
+- If your mod is removed later, everything that remembers the recipe keeps its id through a "Missing recipe" stand-in (see below), and it is the real recipe again once the mod is back.
+
+## Recipes from removed mods
+
+The game remembers a recipe by its id in several places: blueprint items and letters that teach it, recipe books lying in a level, and the player's recipe list. Without the mod that adds it, using such a blueprint or letter throws, a recipe book with it throws while the save loads, and copying a blueprint stack (splitting it, moving it) quietly changes the id to 0, so the recipe is gone for good. `RecipePlaceholders` stops that: a lookup of a missing id in the mod range gets a stand-in with the same id.
+
+- It is called "Missing recipe (Mod: Name)". The names come from the same `mods/ObenFramework.items.json`, which lists the mods' recipes next to their items.
+- It takes and makes nothing, and no station lists it. A blueprint or letter for it can still be used: the player's recipe list gets the stand-in, which keeps the id.
+- Recipes the player had learned show as the stand-in after loading a save without the mod (the game kept them by id already), and are the real recipe again when the save loads with the mod. If the mod comes back while the game runs, the recipe list gets the real recipe right away.
+- A craft that was running when the mod went away finishes from the game's own saved copy of the recipe; items of the missing mod come out as missing items.
+- `RecipePlaceholders.IsPlaceholder(recipe)`, `Active()` and `MissingInSave()` work like the item ones; `IsAvailable` is false if its patch failed (patch area `RecipePlaceholders`).
 
 ## Inventory events
 
@@ -213,4 +225,4 @@ The item patches form one patch area, `Items`; if one of them no longer fits the
 
 ## Checking in game
 
-Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `items.consumable id=14 set={"Amount":40} save=true` (then `clear=true`), `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.placeholders` (missing mod items), `registry.missing` (missing stacks and where they are), `registry.removemissing mod=...` or `all=true` (delete them for good). The `*.events` commands start listening on their first call.
+Bridge commands: `items.find`, `items.give`, `items.count`, `items.spawn`, `items.consumable id=14 set={"Amount":40} save=true` (then `clear=true`), `inventory.stacks`, `inventory.equip`, `inventory.liquid`, `inventory.events`, `loot.pools`, `storage.unloaded`, `storage.queue`, `worlditems.list kind=...`, `worlditems.events`, `registry.items` (mod items and their mods), `registry.recipes` (mod recipes, their mods and whether the game has them now), `registry.placeholders` (missing mod items and recipes), `registry.missing` (missing stacks and where they are), `registry.removemissing mod=...` or `all=true` (delete them for good). The `*.events` commands start listening on their first call.

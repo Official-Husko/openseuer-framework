@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace ObenFramework.Items;
 
-/// <summary>One mod item a save knows about: its id, the mod that adds it and its title.</summary>
+/// <summary>One mod item (or recipe) a save knows about: its id, the mod that adds it and its title.</summary>
 public sealed class ItemManifestEntry
 {
     public int Id;
@@ -12,10 +12,13 @@ public sealed class ItemManifestEntry
     public string Title;
 }
 
-/// <summary>What the framework keeps in each save about mod items (<c>mods/ObenFramework.items.json</c>).</summary>
+/// <summary>What the framework keeps in each save about mod items and recipes (<c>mods/ObenFramework.items.json</c>).</summary>
 public sealed class ItemManifestFile
 {
     public List<ItemManifestEntry> Items = new List<ItemManifestEntry>();
+
+    /// <summary>Mod recipes, with the recipe's name as the title.</summary>
+    public List<ItemManifestEntry> Recipes = new List<ItemManifestEntry>();
 }
 
 /// <summary>
@@ -32,13 +35,16 @@ internal sealed class ItemManifestBook
     public int CarriedCount => _carried.Count;
 
     /// <summary>The entries of a loaded save whose items aren't registered now. Returns how many were dropped over the cap.</summary>
-    public int Load(ItemManifestFile file, Func<int, bool> isRegistered)
+    public int Load(ItemManifestFile file, Func<int, bool> isRegistered) => Load(file?.Items, isRegistered);
+
+    /// <summary>The same for a list of entries (the save's recipes use the same shape).</summary>
+    public int Load(List<ItemManifestEntry> entries, Func<int, bool> isRegistered)
     {
         _carried.Clear();
-        if (file?.Items == null)
+        if (entries == null)
             return 0;
         int dropped = 0;
-        foreach (var entry in file.Items)
+        foreach (var entry in entries)
         {
             if (entry == null || !ReservedIds.Contains(entry.Id) || isRegistered(entry.Id) || _carried.ContainsKey(entry.Id))
                 continue;
@@ -109,13 +115,13 @@ internal sealed class ItemManifestBook
         return ids.Count;
     }
 
-    /// <summary>"Missing item (Mod: Title)" for a placeholder's name.</summary>
-    public static string Label(ItemManifestEntry entry)
+    /// <summary>"Missing item (Mod: Title)" for a placeholder's name, or another first part such as "Missing recipe".</summary>
+    public static string Label(ItemManifestEntry entry, string missing = "Missing item")
     {
         string mod = entry?.Mod ?? "";
         string title = entry?.Title ?? "";
         string detail = mod.Length == 0 ? title : title.Length == 0 ? mod : mod + ": " + title;
-        return detail.Length == 0 ? "Missing item" : "Missing item (" + detail + ")";
+        return detail.Length == 0 ? missing : missing + " (" + detail + ")";
     }
 
     private static ItemManifestEntry Copy(ItemManifestEntry entry) =>

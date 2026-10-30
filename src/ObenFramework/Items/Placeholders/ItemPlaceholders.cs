@@ -70,7 +70,11 @@ public static partial class ItemPlaceholders
         _data.DataLoaded.Subscribe(framework, Loaded);
         Loaded(_data.Value);
         GameEvents.Saving.Subscribe(framework, BeforeSave);
-        GameEvents.MainMenu.Subscribe(framework, () => Manifest.Clear());
+        GameEvents.MainMenu.Subscribe(framework, () =>
+        {
+            Manifest.Clear();
+            RecipePlaceholders.Manifest.Clear();
+        });
         framework.Track(Disposable.Create(() =>
         {
             if (Cache.Count > 0)
@@ -155,6 +159,7 @@ public static partial class ItemPlaceholders
         foreach (var entry in Manifest.Carried)
             ItemsLog.WarnOnce("missing:" + entry.Id, $"The save has '{entry.Title}' (item {entry.Id}) from {entry.Mod}, which isn't adding it now. Its stacks show as a missing item until {entry.Mod} is back.");
         Relabel();
+        RecipePlaceholders.Loaded(file?.Recipes);
     }
 
     private static void BeforeSave()
@@ -162,6 +167,7 @@ public static partial class ItemPlaceholders
         if (_data == null)
             return;
         _data.Value.Items = Manifest.Build(ItemRegistry.ManifestEntries()).Items;
+        _data.Value.Recipes = RecipePlaceholders.ToSave();
     }
 
     // Stand-ins made before the save's list was read get their names now.

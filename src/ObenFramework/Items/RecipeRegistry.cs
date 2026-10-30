@@ -16,7 +16,10 @@ namespace ObenFramework.Items;
 /// <remarks>
 /// A recipe must use one of the game's <see cref="RecipeType"/> values; stations only list the types
 /// they were built for. Use <see cref="ReservedIds.For"/> for the id. A recipe with
-/// <c>RecipeRequired</c> set is hidden until the player learns it (<c>RecipeController.AddRecipe</c>).
+/// <c>RecipeRequired</c> set is hidden until the player learns it (<c>RecipeController.AddRecipe</c>). If the
+/// mod is removed, blueprints, letters and books that teach the recipe and the player's recipe list keep its
+/// id through a "Missing recipe" stand-in (<see cref="RecipePlaceholders"/>), and it is the real recipe again
+/// when the mod is back.
 /// </remarks>
 public static class RecipeRegistry
 {
@@ -24,16 +27,24 @@ public static class RecipeRegistry
         AccessTools.MethodDelegate<Action<CraftingBase>>(AccessTools.Method(typeof(CraftingBase), "UpdateRecipes"));
 
     private static readonly List<Recipe> Entries = new List<Recipe>();
+    private static readonly Dictionary<int, string> Owners = new Dictionary<int, string>();
     private static readonly HashSet<Recipe> Warned = new HashSet<Recipe>();
     private static object _itemsAppliedTo;
 
     public static IReadOnlyList<Recipe> Recipes => Entries;
+
+    /// <summary>True when a loaded mod registered a recipe with this id (whether or not its items exist now).</summary>
+    public static bool IsModded(int id) => Owners.ContainsKey(id);
+
+    /// <summary>The id of the mod that registered the recipe, or null.</summary>
+    public static string OwnerOf(int id) => Owners.TryGetValue(id, out string owner) ? owner : null;
 
     /// <summary>Registers a recipe until <paramref name="owner"/> unloads. Throws when the recipe is invalid or its id is taken.</summary>
     public static Recipe Register(ObenMod owner, Recipe recipe)
     {
         Validate(recipe);
         Entries.Add(recipe);
+        Owners[recipe.ID] = owner.Info.Id;
         owner.Track(Disposable.Create(() => Unregister(recipe)));
         Sync();
         return recipe;
@@ -62,6 +73,7 @@ public static class RecipeRegistry
                 recipe.Appearance?.LoadSprite();
                 recipe.SetItems();
                 list.Add(recipe);
+                RecipePlaceholders.Returned(recipe);
                 changed = true;
             }
             else if (!valid && present)
@@ -97,9 +109,29 @@ public static class RecipeRegistry
         Sync();
     }
 
+    /// <summary>The registered recipes as save manifest entries (id, mod, name).</summary>
+    internal static List<ItemManifestEntry> ManifestEntries()
+    {
+        var list = new List<ItemManifestEntry>(Entries.Count);
+        foreach (var recipe in Entries)
+            list.Add(new ItemManifestEntry { Id = recipe.ID, Mod = OwnerOf(recipe.ID), Title = recipe.Name });
+        return list;
+    }
+
+    /// <summary>A registered recipe as a manifest entry, or null.</summary>
+    internal static ItemManifestEntry ManifestEntry(int id)
+    {
+        var recipe = Entries.Find(r => r.ID == id);
+        return recipe != null ? new ItemManifestEntry { Id = id, Mod = OwnerOf(id), Title = recipe.Name } : null;
+    }
+
     private static void Unregister(Recipe recipe)
     {
-        Entries.Remove(recipe);
+        if (!Entries.Remove(recipe))
+            return;
+        // Remembered, so stand-ins carry its name and the next save still lists it.
+        RecipePlaceholders.Removed(new ItemManifestEntry { Id = recipe.ID, Mod = OwnerOf(recipe.ID), Title = recipe.Name });
+        Owners.Remove(recipe.ID);
         Warned.Remove(recipe);
         if (RecipeDatabase.Recipes.Remove(recipe))
             RefreshStations();

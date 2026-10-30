@@ -105,4 +105,30 @@ public class ItemManifestTests
 
     [Fact]
     public void LabelWithoutEntry() => Assert.Equal("Missing item", ItemManifestBook.Label(null!));
+
+    [Fact]
+    public void RecipeLabels()
+    {
+        Assert.Equal("Missing recipe (keymod: Key Mould)", ItemManifestBook.Label(Entry(1, "keymod", "Key Mould"), "Missing recipe"));
+        Assert.Equal("Missing recipe", ItemManifestBook.Label(null!, "Missing recipe"));
+    }
+
+    [Fact]
+    public void SavesWithoutRecipesLoadEmpty()
+    {
+        var book = new ItemManifestBook();
+        Assert.Equal(0, book.Load((List<ItemManifestEntry>)null!, _ => false));
+        Assert.Equal(0, book.CarriedCount);
+        Assert.Empty(new ItemManifestFile().Recipes);
+    }
+
+    [Fact]
+    public void RecipesLoadFromTheirOwnList()
+    {
+        var file = new ItemManifestFile { Recipes = { Entry(Key, "keymod", "Key Mould") } };
+        var book = new ItemManifestBook();
+        book.Load(file.Recipes, _ => false);
+        Assert.Equal("Key Mould", book.Find(Key)!.Title);
+        Assert.Single(book.Build(Array.Empty<ItemManifestEntry>()).Items);
+    }
 }

@@ -4,7 +4,7 @@ using ObenFramework.Items;
 
 namespace DevBridge.Commands;
 
-/// <summary>Items mods register, and the stand-ins for mod items whose mod is gone.</summary>
+/// <summary>Items and recipes mods register, and the stand-ins for those whose mod is gone.</summary>
 internal static class RegistryCommands
 {
     [BridgeCommand("registry.items", "Items registered by mods, with the mod that added each.")]
@@ -16,12 +16,27 @@ internal static class RegistryCommands
         return list;
     }
 
-    [BridgeCommand("registry.placeholders", "Missing mod items: stand-ins handed out this session and the ones the loaded save lists without their mod.")]
+    [BridgeCommand("registry.recipes", "Recipes registered by mods, with the mod that added each and whether the game has it now.")]
+    private static object Recipes(JObject p)
+    {
+        var list = new JArray();
+        foreach (var recipe in RecipeRegistry.Recipes)
+            list.Add(new JObject { ["id"] = recipe.ID, ["name"] = recipe.Name, ["mod"] = RecipeRegistry.OwnerOf(recipe.ID), ["inGame"] = RecipeDatabase.Recipes.Contains(recipe) });
+        return list;
+    }
+
+    [BridgeCommand("registry.placeholders", "Missing mod items and recipes: stand-ins handed out this session and the ones the loaded save lists without their mod.")]
     private static object Placeholders(JObject p) => new JObject
     {
         ["available"] = ItemPlaceholders.IsAvailable,
         ["active"] = Entries(ItemPlaceholders.Active()),
         ["missingInSave"] = Entries(ItemPlaceholders.MissingInSave()),
+        ["recipes"] = new JObject
+        {
+            ["available"] = RecipePlaceholders.IsAvailable,
+            ["active"] = Entries(RecipePlaceholders.Active()),
+            ["missingInSave"] = Entries(RecipePlaceholders.MissingInSave()),
+        },
     };
 
     [BridgeCommand("registry.removemissing", "Delete stacks of missing mod items from the inventory and loaded containers (for good).",

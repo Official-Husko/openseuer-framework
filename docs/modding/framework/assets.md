@@ -75,7 +75,7 @@ The slider column was measured in 0.5.13 with a tone on each group. Everything b
 
 `ModSounds.Group("Name")` gives any group by name and `ModSounds.GroupNames()` lists all of them (Soundscape, Muffled, Underwater and so on), if you want a sound to be muffled with the rest. Playing goes through the game's own `AudioSourceMaker`, so the output group is resolved the way the game does it, and sources pause with the game. `Play` and `PlayAt` return the `AudioSource` (null if the audio system isn't up yet) and the object is destroyed when the clip ends.
 
-`ModAssets.Clip(owner, name, samples, channels, sampleRate)` makes a clip from samples you generate, as floats from -1 to 1 or as 16-bit `short`s.
+`ModAssets.Clip(owner, name, samples, channels, sampleRate)` makes a clip from samples you generate, as floats from -1 to 1 or as 16-bit `short`s. Samples out of range are clipped and NaN or infinite ones become silence (your array is left as it is), and a clip holds at most `ModAssets.MaxClipSamples` (16,777,216, as many as the largest WAV file).
 
 ### Turning the game's volume down
 
@@ -122,7 +122,7 @@ GameObject also = ModelRegistry.Spawn("MyMod/crate", position, Quaternion.identi
 ### What is loaded
 
 - **OBJ:** positions, UVs, normals, faces of any size (triangulated as fans, so concave polygons need "Triangulate Faces" in the exporter), negative indices, `usemtl` groups as submeshes (at most 8; extra materials share the last), and a hard limit of 64 MB, 2 million vertices and 6 million indices. Without normals in the file, smooth ones are calculated.
-- **MTL:** `Kd` (colour), `Ke` (emission), `map_Kd` (diffuse texture, PNG or JPG, which must be inside the model's folder), and `d`/`Tr`. Transparency is read but not supported: those materials draw opaque (a warning says so).
+- **MTL:** `Kd` (colour), `Ke` (emission), `map_Kd` (diffuse texture, PNG or JPG, which must be inside the model's folder), and `d`/`Tr`. A material that is partly see-through gets the Standard shader's Fade mode (glass, ghosts); other shaders only get the colour's alpha.
 - Colours are treated as the linear values Blender writes and converted for the game's linear colour space.
 - The materials use the game's **Standard** shader (the game's build has no scriptable render pipeline and 5,000 of its materials use Standard). A shader can be named in `ModelOptions.Shader`; if Standard were ever missing, Diffuse, Unlit and Sprites/Default are tried in that order.
 
@@ -167,6 +167,8 @@ ModelRegistry.Load(this, "mug", "models/mug.obj", done: model =>
 - **World models** swap the look of every pickup of the item when it appears, including pickups loaded from a save: the original renderers are hidden and the model shown in their place, centred on them and scaled so its longest side matches (pass `fit: false` for the model's own size). Colliders and behaviour stay the item's own. When the mod unloads, pickups in the world get their own look back.
 - **Held models** work for items that can be held (with an `ItemEquipable` action): the framework copies the item's held object and puts the model on its first and third person meshes. It applies the next time the item is taken in hand.
 - Placed furniture with a model is in [furniture.md](furniture.md).
+
+`ItemIcons.IsAvailable` and `ItemModels.IsAvailable` are false when their hooks failed to apply after a game update.
 
 ### Icons drawn from a model
 

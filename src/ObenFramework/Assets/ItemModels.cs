@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenLoader.Runtime;
 using OS.Items;
 using UnityEngine;
@@ -19,6 +20,9 @@ namespace ObenFramework.Assets;
 public static class ItemModels
 {
     internal const string PartName = "Mod model";
+
+    /// <summary>False when the framework's pickup hook failed to apply after a game update; items in the world then keep their look.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Assets");
 
     private sealed class Entry
     {

@@ -17,7 +17,7 @@ namespace ObenFramework.Assets;
 /// </summary>
 /// <remarks>
 /// Models are named <c>modId/key</c>. The materials use the game's Standard shader, with the colour,
-/// emission and diffuse texture from the MTL file; transparency is not supported and draws opaque.
+/// emission, diffuse texture and transparency (Fade mode) from the MTL file.
 /// </remarks>
 public static class ModelRegistry
 {

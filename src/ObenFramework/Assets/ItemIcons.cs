@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace ObenFramework.Assets;
 /// </summary>
 public static class ItemIcons
 {
+    /// <summary>False when the framework's icon hooks failed to apply after a game update; replaced icons may then not show.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Assets");
+
     private sealed class Entry
     {
         public int ItemId;

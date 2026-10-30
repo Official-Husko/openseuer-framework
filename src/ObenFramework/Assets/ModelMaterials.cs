@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ObenFramework.Assets;
 
@@ -51,13 +52,14 @@ internal static class ModelMaterials
 
     /// <summary>
     /// Builds one material from an MTL entry (null for the default white). The MTL colours are linear
-    /// values, which is what Blender writes; they are converted for Unity's colour properties.
+    /// values, which is what Blender writes; they are converted for Unity's colour properties. An entry
+    /// that is partly see-through (<c>d</c> or <c>Tr</c>) gets the Standard shader's Fade mode.
     /// </summary>
     public static Material Create(Shader shader, MtlMaterial mtl, Texture2D texture, float smoothness, string name)
     {
         var material = new Material(shader) { name = name };
 
-        Color color = mtl == null ? Color.white : new Color(Gamma(mtl.Kd[0]), Gamma(mtl.Kd[1]), Gamma(mtl.Kd[2]), 1f);
+        Color color = mtl == null ? Color.white : new Color(Gamma(mtl.Kd[0]), Gamma(mtl.Kd[1]), Gamma(mtl.Kd[2]), mtl.Alpha);
         if (material.HasProperty("_Color"))
             material.SetColor("_Color", color);
         if (material.HasProperty("_BaseColor"))
@@ -82,7 +84,25 @@ internal static class ModelMaterials
             material.EnableKeyword("_EMISSION");
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
+        if (mtl != null && mtl.Alpha < 1f)
+            SeeThrough(material);
         return material;
+    }
+
+    // What the Standard shader's own editor sets for Fade. Other shaders keep their mode and only get the alpha.
+    private static void SeeThrough(Material material)
+    {
+        if (!material.HasProperty("_Mode"))
+            return;
+        material.SetFloat("_Mode", 2f);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.DisableKeyword("_ALPHATEST_ON");
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.renderQueue = (int)RenderQueue.Transparent;
     }
 
     private static float Gamma(float linear) => Mathf.LinearToGammaSpace(linear);

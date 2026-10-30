@@ -71,14 +71,20 @@ public static partial class ModAssets
             owner.StartCoroutine(SoundDecoder.Load(set, full, FinishClip));
     }
 
+    /// <summary>As many samples as a clip made from code may have: as many as the largest WAV file holds.</summary>
+    public const int MaxClipSamples = (int)(WavParser.MaxBytes / 2);
+
     /// <summary>
     /// Makes a clip from samples in the range -1 to 1 (interleaved when there is more than one
-    /// channel), for tones and other generated sound. The clip is destroyed with the mod.
+    /// channel), for tones and other generated sound. Samples out of range are clipped, and NaN or infinite
+    /// ones become silence. The clip is destroyed with the mod.
     /// </summary>
     public static AudioClip Clip(ObenMod owner, string name, float[] samples, int channels, int sampleRate)
     {
         if (samples == null)
             throw new ArgumentNullException(nameof(samples));
+        if (samples.Length > MaxClipSamples)
+            throw new ArgumentException($"a clip holds at most {MaxClipSamples} samples", nameof(samples));
         if (channels < 1 || channels > 8)
             throw new ArgumentException("channels must be from 1 to 8", nameof(channels));
         if (sampleRate < 1000 || sampleRate > 384000)
@@ -86,8 +92,23 @@ public static partial class ModAssets
         if (samples.Length == 0 || samples.Length % channels != 0)
             throw new ArgumentException("samples must hold whole frames and not be empty", nameof(samples));
 
-        var wav = new WavData { Channels = channels, SampleRate = sampleRate, Samples = samples };
+        var wav = new WavData { Channels = channels, SampleRate = sampleRate, Samples = Clean(samples) };
         return AssetSets.For(owner).Adopt(MakeClip(name, wav));
+    }
+
+    // A NaN or an infinity fed to the mixer can upset its filters for every sound after it.
+    private static float[] Clean(float[] samples)
+    {
+        float[] clean = null;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float sample = samples[i];
+            if (sample >= -1f && sample <= 1f)
+                continue;
+            clean ??= (float[])samples.Clone();
+            clean[i] = float.IsNaN(sample) || float.IsInfinity(sample) ? 0f : Mathf.Clamp(sample, -1f, 1f);
+        }
+        return clean ?? samples;
     }
 
     /// <summary>The same from 16-bit samples, as most encoders and network voice codecs hand them out.</summary>
@@ -95,6 +116,8 @@ public static partial class ModAssets
     {
         if (samples == null)
             throw new ArgumentNullException(nameof(samples));
+        if (samples.Length > MaxClipSamples)
+            throw new ArgumentException($"a clip holds at most {MaxClipSamples} samples", nameof(samples));
         var wide = new float[samples.Length];
         for (int i = 0; i < samples.Length; i++)
             wide[i] = samples[i] / 32768f;

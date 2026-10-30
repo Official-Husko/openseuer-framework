@@ -443,7 +443,7 @@ Already checked:
 - [x] **Relationships:** `npcs.relationship` in a save that has relationships. (2026-10-30: none of the saves here has one, so VeryGoodFriend was added the way a start choice does; disposition, target and pause came back after save and load.)
 - [x] **Phone:** `phone.scene ring=<address> number=112` rings with 112 as the caller; `phone.list check=` says 112 is the game's, 12ab is no number and 5550199 is free. (2026-10-30.)
 - [x] **Scene actors:** `npcs.actors nocharacter=true` lists an NPC object without a character with id -1 and a handle that finds it; `InScene` leaves it out. (2026-10-30: Hank's character taken off for the check and put back.)
-- [ ] **Scene look on a mod NPC:** `scenelook.apply` with `ModNpc.Root` as target. (2026-10-30, fails, M22: Topias's look matched by bone names onto a 144 copy showed as a giant floating head; Blender-style looks cover none of a slider copy's roles. TODO.md has it.)
+- [x] **Scene look on a mod NPC:** `scenelook.apply` with `ModNpc.Root` as target. (2026-10-31, fixed and passes: Topias's look on a 144 copy stands whole in his six shown meshes; Jens Brom's Blender-rig look is retargeted onto a 144 copy, stands on the floor and walks with it. The first try on 2026-10-30 showed a giant floating head: the kit's Z-up clothes read in the body's Y-up space.)
 
 ## 10. Player (M16)
 
@@ -504,20 +504,20 @@ Already checked: inventory events from Mod (also right after a framework reload)
 
 Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props cube and furniture chair, relays and states, landmarks list, objects near, visited scenes.
 
-- [ ] **Props [save]:**
+- [x] **Props [save]:** (2026-10-31, on a copy of a real save)
   - `props.spawn id=test kind=cube scale=0.5` and `props.spawn id=chair kind=furniture source="Red Metal Chair"`.
-  - Change level and come back: both are there.
-  - Save and load: `<save>/mods/ObenFramework.props.json` exists and both props come back.
-  - Rebuild DevBridge: they vanish and return.
-  - `props.remove all=true`.
-- [ ] **Use prompt:**
+  - Change level and come back: both are there. (None in Tenement B, all four back in the player's tenement.)
+  - Save and load: `<save>/mods/ObenFramework.props.json` exists and both props come back. (All four live after the load.)
+  - Rebuild DevBridge: they vanish and return. (A framework rebuild reloaded DevBridge; all four came back.)
+  - `props.remove all=true`. (Removed 4.)
+- [x] **Use prompt:** (2026-10-31: "Poke me (Use)" on the cube and the interact path ran the handler with "btn"; a light prop got its prompt once props without a collider got a box on the walk-through usable layer, as the game's physics queries skip triggers; in third person both showed in the game's interaction list and the selected one ran.)
   - `oben eval 'ObenFramework.World.Props.WorldProps.OnUse(ObenLoader.Mods.ModRegistry.Find("DevBridge").Instance, "poke", u => UnityEngine.Debug.Log("poked " + u.PropId)); return "ok";'`
   - then `props.spawn id=btn kind=cube interact=poke title="Poke me"`.
   - Looking at it shows the prompt, and the interact key logs "poked btn". Also try in third person (Game Tweaks).
-- [ ] **Landmarks [save]:** `landmarks.mark id=test title="Test"` puts a red dot on the map. It comes back after save and reload, and `Globals.tnmt` never contains `DevBridge:test`.
-- [ ] **Signs:** `signs.list` and `signs.set` where there's an editable sign; TextChanged fires.
-- [ ] **Scene logic:** `scene.set` on something harmless (a counter or state), and `scene.fire` on a relay.
-- [ ] **SceneLook retarget:** `scenelook.apply ... mode=apply` on a different rig, e.g. the player's model. Also: `scenelooks status` and `scenelooks here` in F1.
+- [x] **Landmarks [save]:** `landmarks.mark id=test title="Test"` puts a red dot on the map. It comes back after save and reload, and `Globals.tnmt` never contains `DevBridge:test`. (2026-10-31, screenshots; the map needs the Tenement Map task item, and a mark on the player's own spot hides under the game's player pin.)
+- [x] **Signs:** `signs.list` and `signs.set` where there's an editable sign; TextChanged fires. (2026-10-31: no level has one; a Small Label from the build menu's Signs group is one. Set to "Mod was here", TextChanged with ByPlayer false.)
+- [x] **Scene logic:** `scene.set` on something harmless (a counter or state), and `scene.fire` on a relay. (2026-10-31: a relay fired with its Fired event, the tenement's branch set and back, a relay's outputs off and on.)
+- [x] **SceneLook retarget:** `scenelook.apply ... mode=apply` on a different rig, e.g. the player's model. Also: `scenelooks status` and `scenelooks here` in F1. (2026-10-31: Topias's look on the player's mesh model, posed with the body; the scripts object above it isn't the one to target. `scenelooks status`, `here` and the new `checks` work, and so does "Run scene looks checks" on the MODS menu's Settings page.)
 
 ## 13. Saves, ObenSave and the first real save
 

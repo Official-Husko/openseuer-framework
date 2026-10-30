@@ -70,6 +70,7 @@ internal sealed class SceneLookRenderer
 {
     public long PathId;
     public SceneLookRef GameObject;
+    public bool Enabled;
     public SceneLookRef Mesh;
     public List<SceneLookRef> Materials;
     public List<SceneLookRef> Bones;

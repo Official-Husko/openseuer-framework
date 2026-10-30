@@ -20,7 +20,7 @@ internal static class SceneLookLoad
             reason = "root not found";
             return null;
         }
-        var renderers = SceneLookScan.RenderersUnder(file, root);
+        var renderers = Shown(file, root, SceneLookScan.RenderersUnder(file, root));
         if (renderers.Count == 0)
         {
             reason = "no skinned renderers under the root";
@@ -52,6 +52,33 @@ internal static class SceneLookLoad
             look.Renderers.Add(item);
         }
         return look;
+    }
+
+    // Characters made from the game's clothing kit carry every variant and show a few: the rest sit on
+    // switched-off objects or renderers below the body. The look is what the scene shows (the body itself may
+    // be off, waiting for its hours), or every renderer when it shows none, as a script then picks them.
+    private static List<long> Shown(SceneLookFile file, long root, List<long> renderers)
+    {
+        var shown = new List<long>(renderers.Count);
+        foreach (long pathId in renderers)
+        {
+            var renderer = SceneLookMeshReader.ParseRenderer(pathId, file.ReadObject(pathId));
+            if (renderer.Enabled && renderer.GameObject.FileId == 0 && OnBelow(file, renderer.GameObject.PathId, root))
+                shown.Add(pathId);
+        }
+        return shown.Count > 0 ? shown : renderers;
+    }
+
+    private static bool OnBelow(SceneLookFile file, long gameObject, long root)
+    {
+        foreach (long current in SceneLookReader.Chain(file, gameObject))
+        {
+            if (current == root)
+                return true;
+            if (!SceneLookReader.GameObject(file, current).Active)
+                return false;
+        }
+        return true;
     }
 
     private static SceneLookLookRenderer Renderer(SceneLookFile file, SceneLookChecks.RendererCheck check, SceneLookLook look,

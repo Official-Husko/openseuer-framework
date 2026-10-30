@@ -63,8 +63,11 @@ internal static partial class SceneLookApplyRig
     }
 
     // A bind pose from the body's rest skeleton where the bone is known, else the file's own.
-    private static Matrix4x4[] BindPoses(SceneLookLookRenderer renderer, Dictionary<string, string> map, Dictionary<string, SceneLookMatrix> rest, SceneLookMatrix frame)
+    private static Matrix4x4[] BindPoses(SceneLookLookRenderer renderer, Dictionary<string, string> map, Dictionary<string, SceneLookMatrix> rest, SceneLookMatrix holderFrame)
     {
+        var frame = MeshFrame(renderer, map, rest, out bool known);
+        if (!known)
+            frame = holderFrame;
         var poses = new Matrix4x4[renderer.Bones.Count];
         for (int i = 0; i < poses.Length; i++)
         {
@@ -74,6 +77,26 @@ internal static partial class SceneLookApplyRig
                 poses[i] = SceneLookApplyMesh.FilePose(renderer.Mesh, i);
         }
         return poses;
+    }
+
+    // Each look mesh comes in the space it was authored in, which needn't be the body's: the game's clothing
+    // stands along Z while its heads stand along Y. Like the body's own meshes when its rest is put together,
+    // the mesh is brought into the rest's frame through a bone both know; only a mesh sharing none keeps the
+    // holder's frame.
+    private static SceneLookMatrix MeshFrame(SceneLookLookRenderer renderer, Dictionary<string, string> map, Dictionary<string, SceneLookMatrix> rest, out bool known)
+    {
+        var mesh = new SceneLookBindMesh<string>();
+        if (renderer.Mesh?.BindPoses == null || renderer.Mesh.BindPoses.Length != renderer.Bones.Count)
+        {
+            known = false;
+            return SceneLookMatrix.Identity();
+        }
+        for (int i = 0; i < renderer.Bones.Count; i++)
+        {
+            if (map.TryGetValue(renderer.Bones[i].Name, out string name))
+                mesh.Add(name, SceneLookApplyMesh.FromUnity(SceneLookApplyMesh.FilePose(renderer.Mesh, i)));
+        }
+        return SceneLookBind.Frame(mesh, rest, out known);
     }
 
     // The body's bones at rest, recovered from the bind poses of its own skinned renderers.

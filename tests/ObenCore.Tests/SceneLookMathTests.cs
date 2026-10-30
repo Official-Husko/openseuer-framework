@@ -82,6 +82,32 @@ public class SceneLookMathTests
     }
 
     [Fact]
+    public void A_mesh_authored_on_another_axis_is_framed_through_a_shared_bone()
+    {
+        // The body's meshes stand along Y; the look's mesh was authored standing along Z, and a -90 degree
+        // turn about X stands it up. Its frame in the body's rest is that turn, found through the pelvis.
+        var pelvis = Translate(0, 1, 0);
+        var head = Translate(0, 1.6f, 0);
+        var body = new SceneLookBindMesh<string>();
+        body.Add("pelvis", pelvis.Inverse());
+        body.Add("head", head.Inverse());
+        var upright = SceneLookMatrix.Trs(new[] { 0f, 0f, 0f }, new[] { -0.70710678f, 0f, 0f, 0.70710678f }, new[] { 1f, 1f, 1f });
+        var look = new SceneLookBindMesh<string>();
+        look.Add("unknown", SceneLookMatrix.Identity());
+        look.Add("pelvis", pelvis.Inverse().Multiply(upright));
+        var rest = SceneLookBind.Rest(new[] { body }, out _);
+
+        var frame = SceneLookBind.Frame(look, rest, out bool known);
+
+        Assert.True(known);
+        Assert.True(frame.MaxDifference(upright) < Close);
+        // A vertex 1.6 up the look mesh's Z sits on the head bone once skinned with the rebuilt bind pose.
+        var vertex = Translate(0, 0, 1.6f);
+        var skinned = rest["head"].Multiply(SceneLookBind.BindPose(rest["head"], frame)).Multiply(vertex).Translation();
+        Assert.True(Math.Abs(skinned[0]) < Close && Math.Abs(skinned[1] - 1.6f) < Close && Math.Abs(skinned[2]) < Close);
+    }
+
+    [Fact]
     public void Bind_pose_is_the_bone_rest_inverse_in_the_renderer_frame()
     {
         var bone = Translate(0, 1, 0);

@@ -47,6 +47,7 @@ internal sealed class SceneLookGameObject
     public long PathId;
     public string Name;
     public List<SceneLookRef> Components;
+    public bool Active = true;
 }
 
 internal sealed class SceneLookTransform

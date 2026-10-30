@@ -1,6 +1,6 @@
 # Scene looks: character looks from the game's scene files
 
-`ObenFramework.SceneLook.SceneLooks` takes the look of any character the game has placed in a level (every NPC, posed body and shadow figure) straight from the game's scene files and puts it on another body: a mod NPC, a live NPC, a prop with an animator. A look is the character's skinned meshes with their skeleton, bind poses, materials, textures and blend shapes, as the level stores them. No scene has to be loaded to find or load one.
+`ObenFramework.SceneLook.SceneLooks` takes the look of any character the game has placed in a level (every NPC, posed body and shadow figure) straight from the game's scene files and puts it on another body: a mod NPC, a live NPC, a prop with an animator. A look is the character's skinned meshes with their skeleton, bind poses, materials, textures and blend shapes, as the level stores them. Characters made from the game's clothing kit carry every variant (Topias Iisalmi in the market has 29 meshes and wears 6); a look holds the ones the scene shows, the rest sitting on switched-off objects or renderers below the body. No scene has to be loaded to find or load one.
 
 This is separate from the player's own appearance (`ObenFramework.Player.Look`, body sliders and worn items), which describes a look by the character creator's settings rather than by meshes.
 
@@ -33,7 +33,7 @@ How a look goes on depends on the body:
 
 | Path | When | What happens |
 | --- | --- | --- |
-| name | every bone of the look has a bone with the same name on the body (the head bone `mr_duck_head` maps to `Bip001 Head`, `Bip001_root` to the body itself) | the meshes are skinned onto the body's own bones, with bind poses rebuilt from the body's rest skeleton so they line up |
+| name | every bone of the look has a bone with the same name on the body (the head bone `mr_duck_head` maps to `Bip001 Head`, `Bip001_root` to the body itself) | the meshes are skinned onto the body's own bones, with bind poses rebuilt from the body's rest skeleton so they line up; each mesh is first brought into the body's space through a bone both know, as the kit's clothes are authored standing along Z and its heads along Y |
 | retarget | the names differ but the body is humanoid and the look covers the 15 humanoid roles | the look's own skeleton and a humanoid avatar are built under the body, scaled to it, and a driver copies the body's pose onto it every frame |
 | skeleton | `ApplyToSkeleton` | the meshes are skinned onto the body's humanoid skeleton, matching bones by name or by humanoid role |
 

@@ -15,7 +15,8 @@ internal static class SceneLookMeshReader
     {
         var c = new SceneLookCursor(bytes, 0);
         var renderer = new SceneLookRenderer { PathId = pathId, GameObject = c.Pptr() };
-        c.Skip(60); // enabled, shadow and probe settings, lightmap data
+        renderer.Enabled = c.U8() != 0;
+        c.Skip(59); // shadow and probe settings, lightmap data
         int materials = c.Count();
         renderer.Materials = new List<SceneLookRef>(Math.Min(materials, 64));
         for (int i = 0; i < materials; i++)

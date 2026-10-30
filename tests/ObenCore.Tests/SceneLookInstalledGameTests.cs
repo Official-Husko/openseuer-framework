@@ -115,6 +115,25 @@ public class SceneLookInstalledGameTests
         Assert.True(loaded > 0);
     }
 
+    [Fact]
+    public void A_kit_character_loads_only_the_clothes_its_scene_shows()
+    {
+        string data = DataDir();
+        if (data == null)
+            return;
+        using var files = new SceneLookFiles(data);
+        var scan = SceneLookScan.ScanFile(files, "level112");
+        var topias = scan.Roots.Find(r => r.Path == "Stuff 2/Bazaar NPCs/Topias Iisalmi/Topias Time/Hide/Topias Iisalmi");
+        Assert.NotNull(topias);
+
+        var look = SceneLookLoad.Load(files, "level112", topias.GameObject, out string why);
+
+        // The market's Topias carries all 29 meshes of the clothing kit and wears six of them.
+        Assert.True(look != null, why);
+        var names = look.Renderers.Select(r => r.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray();
+        Assert.Equal(new[] { "head", "male_arms_wrist", "male_casual_cargo_pants", "male_casual_hoodie_long_sleeves", "male_casual_hoodie_torso_default", "male_casual_shoes_b" }, names);
+    }
+
     // A look's own bone names, as a body with the same skeleton would have them.
     private static List<string> BoneNames(SceneLookLook look)
     {

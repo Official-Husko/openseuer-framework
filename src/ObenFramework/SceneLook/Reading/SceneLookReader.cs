@@ -171,6 +171,11 @@ internal static partial class SceneLookReader
             go.Components.Add(c.Pptr());
         c.I32(); // layer
         go.Name = c.Text();
+        if (c.Position + 3 <= bytes.Length)
+        {
+            c.U16(); // tag
+            go.Active = c.U8() != 0;
+        }
         return go;
     }
 

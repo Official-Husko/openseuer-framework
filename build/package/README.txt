@@ -54,9 +54,18 @@ integrity of game files" restores the game as well.
 
 If something goes wrong
 -----------------------
-The loader writes a log to the ObenLoader folder inside the game folder (logs/latest.log, and
-logs/errors.log when something failed). Send those with a bug report. Each mod also has its own
-file in logs/mods, if its author only asks for that one.
+Open MODS in the game and go to the Report page. Tick what you want to share, press Make report,
+then Report on GitHub: your browser opens a bug report with the versions filled in, and you drag
+the zip into it. The zips are in the ObenLoader/reports folder of your game. Your user name, Steam
+id and IP addresses are left out of them.
+
+If the game won't start, make the same zip from here:
+    ./tool/linux-x64/oben report
+    tool\win-x64\oben.exe report
+Add --cpu --gpu --ram (or --all, which also adds your newest save) to include your PC.
+
+The logs themselves are in ObenLoader/logs (latest.log, and errors.log when something failed),
+with one file per mod in logs/mods.
 
 To rule out a broken game install, check the game's files against the lists in game-files/hashes
 (the right list is picked from the game's version; it takes a minute or two):

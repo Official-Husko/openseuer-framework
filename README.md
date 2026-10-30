@@ -17,7 +17,7 @@ Run the installer, start the game, and everything shows up under MODS in the mai
 [Download](https://github.com/Official-Husko/openseuer-framework/releases) ·
 [Install](#installing) ·
 [Features](#features) ·
-[Report a bug](https://github.com/Official-Husko/openseuer-framework/issues) ·
+[Report a bug](https://github.com/Official-Husko/openseuer-framework/issues/new/choose) ·
 [Make your own mods](#making-your-own-mods)
 
 </div>
@@ -36,7 +36,8 @@ Everything comes as separate mods, and most fixes inside them have their own swi
 - The settings of every mod on one page, with a search box and a Reset next to anything you changed.
 - Change mod hotkeys, to keys or controller buttons. Clashes are pointed out.
 - What's New opens once after an update.
-- An Errors page that says which mod went wrong, with a button to copy a report for a bug report.
+- An Errors page that says which mod went wrong.
+- A Report page that packs everything a bug report needs into one zip: versions, logs, settings and, if you want, your PC, your save and the last crash. Your user name, Steam id and IP addresses are left out. One more button opens a bug report on GitHub with the versions already filled in.
 - Mouse, keyboard and controller all work.
 
 ### Unofficial ObenPatches
@@ -90,7 +91,7 @@ Co-op is being built. You can already host or join a game over your network or t
 - No BepInEx. The loader plugs into the game's own Unity startup files and keeps a copy of the originals.
 - While the window is still black at start, a small panel shows how far loading the mods got. The title screen then tells you how many mods loaded and whether they fit your game version.
 - The pause menu shows which build you have, for example `ObenseuerExtended v0.1.0 (a185d27)`.
-- Every mod writes its own log, and problems end up in one short report you can attach to a bug report.
+- Every mod writes its own log, and the Report page packs them with everything else a bug report needs.
 - `verify-game` checks your game's files against known-good lists, to rule out a broken install.
 
 ## Installing
@@ -116,9 +117,9 @@ Made for Obenseuer 0.5.13. After a game update the MODS menu tells you which mod
 
 ## Something broke?
 
-1. Open MODS, then Errors. It lists what went wrong and has a button to copy a report.
-2. The logs are in the game folder under `ObenLoader/logs`: `latest.log`, and `errors.log` when something failed.
-3. [Open an issue](https://github.com/Official-Husko/openseuer-framework/issues) with the report or the logs, your game version, and the version from the pause menu.
+1. Open MODS and go to the Report page. Tick what you want to share and press Make report.
+2. Press Report on GitHub. Your browser opens a bug report with the versions filled in; describe what happened and drag the zip in. The zips are in the `ObenLoader/reports` folder of your game.
+3. Game won't start at all? Run `oben report` from the folder you installed from (`tool/linux-x64/oben report`, or `tool\win-x64\oben.exe report` on Windows). It makes the same zip, and [the bug form](https://github.com/Official-Husko/openseuer-framework/issues/new/choose) is a click away.
 
 ## Making your own mods
 

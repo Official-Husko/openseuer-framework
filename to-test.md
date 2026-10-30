@@ -374,14 +374,14 @@ Already checked:
 - **Bazaar:** level exits (140), entrypoints, ladders, a tarp door opened, the radio set to station 2 with its event, locks.
 - **Custom furniture:** "Test Chair" defined from the Red Metal Chair and placed.
 
-- [ ] **Custom furniture [save]:**
+- [x] **Custom furniture [save]:** (2026-10-30, on a copy of a real save.)
   - `furniture.custom key=test template="Red Metal Chair" title="Test Chair" category="Mod Furniture"`, then `furniture.give id=oben:DevBridge/test`.
-  - It shows under a "Mod Furniture" build group. Place it from the build menu, save and load: it's still "Test Chair".
-  - Disable DevBridge and load: it's a stand-in that looks like the chair.
-  - With ObenFramework off: a plain Red Metal Chair.
-- [ ] **Known gap:** custom pieces don't show in `furniture.kinds`. Decide whether they should, and fix it.
-- [ ] **Known limitation:** placed furniture gets new ids after a framework hot reload in a session without a save. Check whether ids hold over a hot reload in a real save, where the ledger exists. If not, carry the id map over the reload with `ReloadState`.
-- [ ] Furniture shops sell the custom piece; flatpack loot spawns it; blueprints can be given and mailed.
+  - It shows under a "Mod Furniture" build group. Place it from the build menu, save and load: it's still "Test Chair". (Placed through the build bar, kept its title and id over save and load. The first try found the game's fast save reader collapsing custom pieces to their template, which turned the pieces into plain Red Metal Chairs; fixed.)
+  - Disable DevBridge and load: it's a stand-in that looks like the chair. (After a DevBridge reload: a stand-in with the saved title, description and price 123; defined again, it was the real piece after the next load.)
+  - With ObenFramework off: a plain Red Metal Chair. (Seen before the reader fix: with nothing linking it by id, the game loads the saved piece as its template.)
+- [x] **Known gap:** custom pieces don't show in `furniture.kinds`. Decide whether they should, and fix it. (They do now, marked `custom`, without using the console first; `known=` checks the build menu's list.)
+- [x] **Known limitation:** placed furniture gets new ids after a framework hot reload in a session without a save. Check whether ids hold over a hot reload in a real save, where the ledger exists. If not, carry the id map over the reload with `ReloadState`. (2026-10-30: carried over; all 21 ids held, also a chair placed after the load. The check found a second case: a level change cleared the ids before its own save, so pieces placed or moved since the last load got new ids. Fixed; a new and a moved chair kept theirs over two level changes.)
+- [x] Furniture shops sell the custom piece; flatpack loot spawns it; blueprints can be given and mailed. (2026-10-30: Ankea's furniture shop offered a piece once on load, 3 at 77 OC, and bought it back; bought out, it didn't come back on the next load. Flatpacks with the piece came from TrashBin rolls, a trash bin, a ground spawner and package contents, which stayed empty without the new package hook. A blueprint was given, another mailed and delivered; one lying in Tenement B stayed in the world when its mod was gone and crafted the stand-in.)
 - [ ] **Locks:** `locks.set` on one of `locks.list radius=10 lockedOnly=true` locks and unlocks it, and `locks.givekey` lets the player open it.
 - [ ] **Keypads:** `keypads.list` / `keypads.set` where there's a keypad.
 - [ ] **Door hours:** `doors.schedule` changes a door's hours, and they come back on unload.

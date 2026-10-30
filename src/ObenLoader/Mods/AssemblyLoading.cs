@@ -23,6 +23,8 @@ internal static class AssemblyLoading
             AssemblyResolver.SetCurrent(assembly, Path.GetFileNameWithoutExtension(path));
             result.Add(assembly);
         }
+        if (mod.LoadCount > 0)
+            Runtime.MonoModCaches.Forget();
         return result;
     }
 

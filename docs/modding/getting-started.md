@@ -169,6 +169,7 @@ Things to know:
 - Old copies stay in memory until the game exits; Mono can't unload assemblies.
 - Anything not tracked (a `new GameObject`, an event handler on a game object) stays behind after unload. Track it.
 - The loader itself, Harmony and Cecil can't be reloaded.
+- Patching another mod's methods (rather than the game's) works across its reloads too: MonoMod caches the types a patched method uses, and for generic types over a mod's own types (`List<MyRecord>`) that cache can't tell the copies apart, so the loader empties it whenever a new copy loads.
 
 ## Building a mod in this repo
 

@@ -72,6 +72,7 @@ public static class Loader
 
         InlineJumps.Use(Log);
         PatchLookups.Use(Log);
+        MonoModCaches.Use(Log);
         ModLifecycle.Init(ModHost.Create(Log), Log);
 
         var found = ModDiscovery.Scan(LoaderPaths.ModsDir, Log);

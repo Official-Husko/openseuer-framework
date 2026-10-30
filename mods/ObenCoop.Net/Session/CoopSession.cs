@@ -222,24 +222,25 @@ public sealed partial class CoopSession
         transport.PacketReceived -= OnPacket;
     }
 
-    // Names end up in rich text (notifications, the console), so no tags or control characters get through.
-    private static string CleanName(string name)
+    // Names end up in rich text (notifications, the console), so no tags, control, hidden or unpaired characters get through.
+    internal static string CleanName(string name)
     {
         if (name != null)
         {
             var chars = new System.Text.StringBuilder(name.Length);
-            foreach (char c in name)
+            for (int i = 0; i < name.Length; i++)
             {
+                char c = name[i];
                 if (c == '<' || c == '>')
                     chars.Append(c == '<' ? '(' : ')');
-                else if (!char.IsControl(c))
+                else if (!char.IsControl(c) && !SafeText.IsHidden(c) && !SafeText.IsLoneSurrogate(name, i))
                     chars.Append(c);
             }
             name = chars.ToString().Trim();
         }
         if (string.IsNullOrEmpty(name))
             return "Player";
-        return name.Length > Protocol.MaxNameLength ? name.Substring(0, Protocol.MaxNameLength) : name;
+        return SafeText.Cut(name, Protocol.MaxNameLength);
     }
 
     private readonly struct PendingPeer

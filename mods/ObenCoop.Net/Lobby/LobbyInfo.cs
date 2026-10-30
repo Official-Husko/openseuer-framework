@@ -146,11 +146,7 @@ public sealed class LobbyInfo
 
     private static int Clamp(int value) => value < 0 ? 0 : value > 255 ? 255 : value;
 
-    private static string Cut(string text, int max)
-    {
-        text = text ?? "";
-        return text.Length <= max ? text : text.Substring(0, max);
-    }
+    private static string Cut(string text, int max) => SafeText.Cut(text ?? "", max);
 
     // Names come from other people and end up in rich text and the console: no tags, no control characters.
     internal static string Clean(string text, int max)
@@ -159,13 +155,14 @@ public sealed class LobbyInfo
             return "";
         var chars = new char[text.Length];
         int n = 0;
-        foreach (char c in text)
+        for (int i = 0; i < text.Length; i++)
         {
-            if (c == '<' || c == '>' || char.IsControl(c))
+            char c = text[i];
+            if (c == '<' || c == '>' || char.IsControl(c) || SafeText.IsHidden(c) || SafeText.IsLoneSurrogate(text, i))
                 continue;
             chars[n++] = c;
         }
         string clean = new string(chars, 0, n).Trim();
-        return clean.Length <= max ? clean : clean.Substring(0, max);
+        return SafeText.Cut(clean, max);
     }
 }

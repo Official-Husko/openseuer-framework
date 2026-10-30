@@ -397,20 +397,23 @@ Already checked:
   - Esc closes the window and the player stays seated.
   - `ComputerApps.Open(id)` opens it standalone.
 - [ ] **Computers:** e-mails, recycle bin files, desktop picture swap and back on unload.
-- [ ] **Guitar:** hold one, then `guitar.play song=[0,0.5,0.5,0.25]`. Strums sound, and nearby NPCs comment.
-- [ ] **TVs:** `tvs.list` / `tvs.set` where there's a TV.
-- [ ] **Item model:** `items.model` shows a model on an item lying in the world and in the hands.
+- [x] **Guitar:** hold one, then `guitar.play song=[0,0.5,0.5,0.25]`. Strums sound, and nearby NPCs comment. (2026-10-30: a strum and the song gave 5 strum events. NPCs only comment during a long note held over 10 s, never on strums; a note held with `guitar.play hold=1` drew a comment from a mod NPC that could see the player once the hold stopped skipping the guitar's update. The long notes loop; the player's own key release ends a mod's note.)
+- [x] **TVs:** `tvs.list` / `tvs.set` where there's a TV. (2026-10-30, Interior Player Tenement: the old TV was unpowered and `tvs.set on=true` refused; powered from a script it switched on (static on screen) and off (dark), each with a `Television` event.)
+- [x] **Item model:** `items.model` shows a model on an item lying in the world and in the hands. (2026-10-30: a sausage on the floor showed a two-cube OBJ at its size while an apple kept its look; the guitar in hand showed it in first person and still strummed; `clear` gave both their own look back.)
 - [x] **Item icon:** `ItemIcons` replaces an item's icon in the inventory (screenshot). (2026-10-30: the sausage showed a mod model's drawn icon and the apple a drawing of its own model.)
 - [x] **Icons drawn from models:** (2026-10-30: at the main menu and in a level; about 15 to 25 ms for 256 pixels; fog, ambient light and the game's lights the same before and after.)
   - `items.drawicon item=14 file=<png>` draws the sausage's pickup model with a clear background, close to the game's own icon.
   - `ItemIcons.SetFromModel` with an OBJ model, a registered item without a sprite (drawn from its prefab) and custom furniture with its own model and no icon all get a drawn icon.
   - Reloading the owning mod puts the item's own icon back and removes the rest.
-- [ ] **Text:** `text.get` reads the game's localization tables. A mod text in another language shows after switching the game's language.
-- [ ] **Assets left from the first round:**
-  - an OGG and an MP3 through `ModAssets.SoundAsync`;
-  - `ModSounds.Loop(..., SoundGroup.Music)` follows the Music slider and stops on Dispose and on mod unload;
-  - a 9-slice sprite on a UI Image;
-  - an OBJ with 500k+ vertices loads without a one-frame hitch.
+- [x] **Text:** `text.get` reads the game's localization tables. A mod text in another language shows after switching the game's language. (2026-10-30: "Resume Game" read "Jatka peliä" and a mod text "Hei modilta" in Finnish; switching back raised `OnLanguageChanged` with "English (en)".)
+- [x] **Assets left from the first round:** (2026-10-30)
+  - an OGG and an MP3 through `ModAssets.SoundAsync`; (3.00 s and 3.13 s clips, about 10 ms each)
+  - `ModSounds.Loop(..., SoundGroup.Music)` follows the Music slider and stops on Dispose and on mod unload; (a tone on each mixer group measured from the game's output: the Music group follows only Music, every other group Sound; the loop went on Dispose and on a DevBridge reload)
+  - a 9-slice sprite on a UI Image; (border 12 kept sharp, sliced next to plain in a screenshot)
+  - an OBJ with 500k+ vertices loads without a one-frame hitch. (518,400 vertices in 2.86 s, UInt32 indices; worst frame 27 ms during the load against 35 ms before it)
+- [x] **Volume channels:** `sounds.volume channel=Music share=0.3`. (2026-10-30: Music at -10.46 dB; the game rereading its volume file and its options menu setting itself up kept it lowered while the menu read 0 dB; a slider move to -6 saved -6 and played at -16.46; the volume file was byte for byte the same afterwards; a Sound lowering moved OtherSounds too and ended on a DevBridge reload.)
+- [x] **See-through MTL:** an OBJ whose MTL has `d 0.35` draws in Fade mode beside an opaque material (screenshot, 2026-10-30).
+- [x] **Generated clips:** NaN, infinite and out-of-range samples came back as 0, 0 and clipped, the caller's array untouched, and a clip over `MaxClipSamples` was refused (2026-10-30).
 
 ## 9. NPCs and animals (M15)
 

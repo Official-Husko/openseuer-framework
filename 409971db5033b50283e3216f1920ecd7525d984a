@@ -1,0 +1,1 @@
+Changelog-Changed: Mods can no longer set the dialogue variables the game sets itself (the day, the player's name, shop prices and the like), which the game would overwrite anyway.

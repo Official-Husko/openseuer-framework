@@ -86,9 +86,11 @@ public static partial class NpcRoutines
         }
         if (NpcOrders.HasStep(npc))
             return;
+        // One that can't get to the door (no path, or it timed out) leaves where it is; one the mod gave an
+        // order of its own meanwhile stays for it.
         NpcOrders.Begin(npc, NpcStepKind.Stand, new[] { door }, 0f, 0f, false, true, false, ok =>
         {
-            if (ok && Entries.Contains(entry))
+            if (Entries.Contains(entry) && (ok || !NpcOrders.HasOrder(npc)))
                 Release(entry);
         });
     }

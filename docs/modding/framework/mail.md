@@ -36,7 +36,7 @@ Everything is one `BundleMail`, the game's own mail type for several things at o
 
 ## Reading
 
-`Inbox(kind)` is the mail waiting to be taken. `InTransit()` is what has been sent with a delay and not arrived, by anyone, with `SecondsLeft` in game seconds. Both return `MailInfo`: `Title`, `Kind`, `Text`, `Attachments` (items), `Contents` (display names of everything, including notes and furniture), `Oc`, `Rm`.
+`Inbox(kind)` is the mail waiting to be taken. `InTransit()` is what has been sent with a delay and not arrived, by anyone, with `SecondsLeft` in game seconds. Both return `MailInfo`: `Title`, `Kind`, `Text`, `Attachments` (items), `Contents` (display names of everything, including notes and furniture), `Oc`, `Rm`, and for a written note or e-mail `IsNote` (its title is the one entry of `Contents`, its words `Text`) and `Sender` (who wrote an e-mail).
 
 ## Receiving
 

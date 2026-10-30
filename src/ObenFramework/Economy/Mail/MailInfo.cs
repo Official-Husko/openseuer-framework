@@ -31,9 +31,11 @@ public readonly struct MailAttachment
 public sealed class MailInfo
 {
     internal MailInfo(string title, MailKind kind, string text, IReadOnlyList<MailAttachment> attachments,
-        IReadOnlyList<string> contents, int oc, float rm, int secondsLeft)
+        IReadOnlyList<string> contents, int oc, float rm, int secondsLeft, bool isNote = false, string sender = null)
     {
         Title = title ?? "";
+        IsNote = isNote;
+        Sender = sender ?? "";
         Kind = kind;
         Text = text ?? "";
         Attachments = attachments ?? Array.Empty<MailAttachment>();
@@ -65,6 +67,12 @@ public sealed class MailInfo
 
     /// <summary>Game seconds until delivery for mail on its way, 0 once delivered.</summary>
     public int SecondsLeft { get; }
+
+    /// <summary>A written note or e-mail rather than goods; its text is <see cref="Text"/>, its title the one entry of <see cref="Contents"/>.</summary>
+    public bool IsNote { get; }
+
+    /// <summary>Who wrote it, for an e-mail sent as a note; empty otherwise.</summary>
+    public string Sender { get; }
 
     public override string ToString() => Kind + " \"" + Title + "\"";
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Game;
+using ObenFramework.Items;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenLoader;
@@ -109,10 +110,13 @@ public static partial class PlayerShops
     public static bool SetCurrency(string id, Currency currency) =>
         Edit(id, r => r.RealMoney = currency == Currency.RM);
 
-    /// <summary>A fixed price for one item in the shop's currency (whole coins, Real Money in tenths). 0 takes it off sale.</summary>
+    /// <summary>
+    /// A fixed price for one item in the shop's currency (whole coins, Real Money in tenths). 0 takes it off
+    /// sale. False for money and for an item id the game doesn't know (register mod items first).
+    /// </summary>
     public static bool SetPrice(string id, int itemId, float price)
     {
-        if (itemId <= 1 || float.IsNaN(price) || price < 0f || price > PlayerShopMath.MaxTill)
+        if (itemId <= 1 || !ItemLookup.Exists(itemId) || float.IsNaN(price) || price < 0f || price > PlayerShopMath.MaxTill)
             return false;
         return Edit(id, r => r.Prices[itemId] = PlayerShopMath.Settle(price, r.RealMoney));
     }

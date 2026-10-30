@@ -157,17 +157,20 @@ public static partial class BankAccounts
 
         int coins = account.OC;
         float realMoney = account.RM;
+        string title = "Cash from " + bank;
+        int letters = Letters(title);
         TakeFrom(account, rm, value);
         bool posted;
         try
         {
-            posted = PlayerMail.Send("Cash from " + bank, null, null, MailKind.Letter, delayMinutes,
+            posted = PlayerMail.Send(title, null, null, MailKind.Letter, delayMinutes,
                 rm ? 0 : (int)sent, rm ? sent : 0f);
         }
         catch (Exception e)
         {
             World.WorldLog.Failed("BankAccounts.WithdrawByPost", e);
-            posted = false;
+            // A failure after the game queued the letter must not pay out twice.
+            posted = Letters(title) > letters;
         }
         if (!posted)
         {
@@ -176,5 +179,16 @@ public static partial class BankAccounts
         }
         BankLedger.Reconcile(LedgerKind.CashByPost);
         return BankResult.Ok;
+    }
+
+    // Letters of this title in the mailbox or on their way.
+    private static int Letters(string title)
+    {
+        int count = 0;
+        foreach (var mail in PlayerMail.Inbox())
+            count += mail.Title == title ? 1 : 0;
+        foreach (var mail in PlayerMail.InTransit())
+            count += mail.Title == title ? 1 : 0;
+        return count;
     }
 }

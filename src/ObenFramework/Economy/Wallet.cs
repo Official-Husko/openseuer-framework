@@ -1,4 +1,6 @@
 using System;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 using Currency = Money.Currency;
@@ -13,6 +15,9 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class Wallet
 {
+    /// <summary>True when the framework's hooks on the game's money calls are in place, so <see cref="Changed"/> is raised. Reading and changing money works either way.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Economy");
+
     /// <summary>
     /// A balance changed through the game's <c>Money.AddMoney</c> or <c>RemoveMoney</c>, whoever called it: a
     /// shop, a bank, a quest, a mod. Raised once per currency that changed, after the change.
@@ -58,11 +63,12 @@ public static class Wallet
 
     /// <summary>
     /// Adds money. A negative amount removes it instead, down to zero at most (the game never lets a
-    /// balance go negative). Returns false when nothing could be changed.
+    /// balance go negative). Returns false when nothing could be changed, also while a save is written or
+    /// loaded (the change would be half saved, or overwritten).
     /// </summary>
     public static bool Add(Currency currency, float amount)
     {
-        if (!CanChange)
+        if (!CanChange || SaveGate.IsBusy)
             return false;
         if (amount < 0f)
             return RemoveUpTo(currency, -amount);
@@ -76,10 +82,10 @@ public static class Wallet
         return true;
     }
 
-    /// <summary>Removes exactly this much if the player can afford it. Otherwise nothing changes and it returns false.</summary>
+    /// <summary>Removes exactly this much if the player can afford it. Otherwise nothing changes and it returns false, as while a save is written or loaded.</summary>
     public static bool TryRemove(Currency currency, float amount)
     {
-        if (!CanChange || amount < 0f || !CanAfford(currency, amount))
+        if (!CanChange || SaveGate.IsBusy || amount < 0f || !CanAfford(currency, amount))
             return false;
 
         float value = Normalize(currency, amount);
@@ -91,7 +97,7 @@ public static class Wallet
     /// <summary>Removes both amounts, or neither when the player can't afford them together.</summary>
     public static bool TryRemove(float coins, float realMoney)
     {
-        if (!CanChange || coins < 0f || realMoney < 0f || !CanAfford(coins, realMoney))
+        if (!CanChange || SaveGate.IsBusy || coins < 0f || realMoney < 0f || !CanAfford(coins, realMoney))
             return false;
         return TryRemove(Currency.OC, coins) && TryRemove(Currency.RM, realMoney);
     }
@@ -104,7 +110,7 @@ public static class Wallet
         return true;
     }
 
-    // OC is whole numbers (the game truncates), RM is rounded to tenths.
+    // OC is whole numbers, rounded to the nearest; RM is rounded to tenths.
     private static float Normalize(Currency currency, float amount) =>
         currency == Currency.RM ? ToTenths(amount) / 10f : Mathf.RoundToInt(amount);
 

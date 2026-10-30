@@ -13,6 +13,8 @@ internal static class MailDescriber
         int oc = 0;
         float rm = 0f;
         List<string> contents = null;
+        bool isNote = false;
+        string sender = null;
 
         switch (mail)
         {
@@ -33,6 +35,8 @@ internal static class MailDescriber
             case MailController.NoteMail noteMail when noteMail.noteInfo != null:
                 text = noteMail.noteInfo.content ?? "";
                 contents = new List<string> { noteMail.noteInfo.title };
+                isNote = true;
+                sender = (noteMail.noteInfo as Email)?.from;
                 break;
         }
 
@@ -44,7 +48,7 @@ internal static class MailDescriber
             if (oc != 0 || rm != 0f)
                 contents.Add(oc != 0 ? oc + " OC" : rm + " RM");
         }
-        return new MailInfo(mail.mailName, kind, text, attachments, contents, oc, rm, secondsLeft);
+        return new MailInfo(mail.mailName, kind, text, attachments, contents, oc, rm, secondsLeft, isNote, sender);
     }
 
     // The letter text rides on the game's parcel card item (a paper with text meta); it is not an attachment.

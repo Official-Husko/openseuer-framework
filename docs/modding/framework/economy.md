@@ -20,7 +20,7 @@ Wallet.TryRemove(coins: 20, realMoney: 1.5f);   // both or neither
 - Every change goes through the game's `Money.AddMoney` and `RemoveMoney`, so the HUD, dialogue variables (`Money`, `RealMoney`) and the coin sound stay right. Don't set the fields yourself.
 - **Real Money is stored in tenths.** The framework rounds amounts to the nearest tenth (12.34 becomes 12.3) and compares in whole tenths, so `CanAfford(RM, 0.3f)` is true for a balance of exactly 0.3. `Wallet.ToTenths` exposes that conversion if you need it. Open Sewer Coin amounts are rounded to whole numbers.
 - `TryRemove` takes exactly the amount or nothing. A negative `Add` removes money, but only down to zero (the game never goes negative), and returns true.
-- `Add` returns false when the world isn't loaded or the balance would overflow.
+- `Add` and `TryRemove` return false when the world isn't loaded, while a save is written or loaded (the change would be half saved, or overwritten by the load), or when the balance would overflow.
 - Items 0 and 1 are the two currencies, not stacks: `PlayerItems.Give/Take/Count` with those ids call the wallet. See [items.md](items.md).
 
 `Wallet.Changed` reports every balance change, whoever made it (a shop, a bank, a quest, another mod), once per currency, after the change:
@@ -28,6 +28,8 @@ Wallet.TryRemove(coins: 20, realMoney: 1.5f);   // both or neither
 ```csharp
 Wallet.Changed.Subscribe(this, c => Log.Info($"{c.Currency}: {c.Before} -> {c.After} ({c.Delta:+0.#;-0.#})"));
 ```
+
+`Wallet.IsAvailable` is false when the hooks behind `Changed` are switched off; reading and changing money still work then.
 
 Bridge commands: `money.get`, `money.add`.
 
@@ -66,8 +68,8 @@ r = Banks.RepayLoan("Stalburg Bank", 100);
 - Everything goes through the game's own bank methods, so supplies, notifications and the wallet behave exactly as at the desk. That includes **corruption**: a branch can lose up to its `Corruption` share of a deposit. Read the account afterwards for what arrived.
 - **Nothing happens partly.** The game quietly does less when the bank or the wallet is short; the framework refuses instead (`Insufficient`, `BankShort`). Every call returns a `BankResult`, and anything but `Ok` changed nothing.
 - **Services** follow the branch's window: deposits only where it offers deposits (`Deposit`, `Both`), exchange only at an exchange desk (`Exchange`, `Both`), withdrawals everywhere but exchange-only desks.
-- **Exchange** is refused when it would pay back less than 1 (the game would take the money for nothing). `Quote` is worked out the way the exchange itself works, which differs from the game's own quote method (that one checks the wrong supply in one direction). Keep in mind the game's rates: the rate drops while the bank is short of the currency it pays out, and the Real Money to coin rate falls to **0** whenever the bank's coin supply is below its daily spending (a whole-number division in the game); `Quote` shows that, and `Exchange` then refuses with `TooSmall`.
-- **Loans** are in the branch's `LoanCurrency`. A bank that lends without an account (`LoanWithoutAccount`) opens one for the loan, as the clerk's dialogue does. `RepayLoan` pays whole units through the game's own method; a Real Money debt left with hundredths (interest rounds to two decimals) is cleared with the next tenth up.
+- **Exchange** is refused when it would pay back less than 1 (the game would take the money for nothing). `Quote` is worked out the way the exchange itself works, which differs from the game's own quote method (that one checks the wrong supply in one direction). Keep in mind the game's rates: the rate drops while the bank is short of the currency it pays out, and the Real Money to coin rate falls to **0** whenever the bank's coin supply is below its daily spending (a whole-number division in the game); `Quote` shows that, and `Exchange` then refuses with `TooSmall`. The game also cuts the credit to whole units after a float multiplication, so 100 OC at the money exchange's 0.06 pays 5 RM, not 6 (as a float, 0.06 is slightly less than 0.06); `Quote` gives the same 5.
+- **Loans** are in the branch's `LoanCurrency`, as at the clerk: the game folds the other currency's limit into it, so a loan in the other currency would be outside its rules. A bank that lends without an account (`LoanWithoutAccount`) opens one for the loan, as the clerk's dialogue does. `RepayLoan` pays whole units through the game's own method; a Real Money debt left with hundredths (interest rounds to two decimals) is cleared with the next tenth up.
 
 ### Accounts from anywhere
 
@@ -86,7 +88,7 @@ BankAccounts.WithdrawByPost("Stalburg Bank", Money.Currency.OC, 200, fee: 10); /
 BankAccounts.SetFrozen("Stalburg Bank", false);
 ```
 
-Accounts keep coins whole and Real Money to two decimals. A frozen account refuses everything but `Credit` (the game's own credits ignore the freeze too). `PayInvoice` does what the payment machine does: runs the invoice's paid action (a loan instalment lowers the debt), removes it and raises `Invoices.Paid`. `WithdrawByPost` takes nothing if the letter can't be sent.
+Accounts keep coins whole and Real Money to two decimals. A frozen account refuses everything but `Credit` (the game's own credits ignore the freeze too). `PayInvoice` does what the payment machine does: runs the invoice's paid action (a loan instalment lowers the debt), removes it and raises `Invoices.Paid`. `WithdrawByPost` takes nothing if the letter can't be sent; if something fails after the game queued it, the letter counts as sent, so the money never goes out twice.
 
 ### Ledger
 
@@ -99,7 +101,7 @@ foreach (var e in BankLedger.Entries("Stalburg Bank", max: 20))
 BankLedger.Added.Subscribe(this, e => Log.Info($"{e.Bank}: {e.Kind}"));
 ```
 
-Page further back with `Entries(bank, max, beforeId: smallestIdSoFar)`.
+Page further back with `Entries(bank, max, beforeId: smallestIdSoFar)`. `BankLedger.IsAvailable` is false when the bank hooks are switched off; changes are then only seen at the next reconcile, as `Other`.
 
 Bridge commands: `bank.branches`, `bank.accounts`, `bank.ledger` (`bank`, `max?`, `before?`), `bank.quote` (`bank`, `amount`, `to`), `bank.exchange` (`bank`, `amount`, `to`: `rm` or `oc`), `bank.open`, `bank.deposit` / `bank.withdraw` (`bank`, `oc?`, `rm?`), `bank.loan` (`bank`, `amount?`; without an amount it shows the maximum), `bank.repay`, `bank.charge` (`bank`, `currency`, `amount`, `credit?`), `bank.transfer` (`bank`, `currency`, `amount`, `to`: `account` or `wallet`), `bank.freeze` (`bank`, `frozen`), `bank.post` (`bank`, `currency`, `amount`, `fee?`, `delay?`).
 
@@ -120,6 +122,7 @@ Invoices.Paid.Subscribe(this, e => Log.Info($"paid {e.Invoice} from {e.Payer}"))
 Invoices.Expired.Subscribe(this, e => Log.Info($"{e.Invoice.Debtor} expired, now a crime"));
 ```
 
+- `Send` takes 1 to 100,000,000 of OC or RM and throws for anything else.
 - `Issued`, `Paid` (with `Payer`: `Wallet` or `BankAccount`), `Cancelled` and `Expired` cover every invoice, the game's and mods'.
 - `Cancel` refuses invoices that do something when paid or when they expire (`HasPaidAction`, `HasExpiredAction`: loan instalments, legal fees), since skipping them would skip the game's bookkeeping.
 - Amounts are whole numbers; a Real Money invoice is for whole Real Money.

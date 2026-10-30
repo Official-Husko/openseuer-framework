@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Events;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -67,6 +68,9 @@ public readonly struct TicketEvent
 /// </summary>
 public static class TrainTickets
 {
+    /// <summary>True when the ticket hooks are in place: price rules take effect and the ticket events are raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
+
     internal static readonly AccessTools.FieldRef<InteractableTicketMachine, int> PriceField = AccessTools.FieldRefAccess<InteractableTicketMachine, int>("ticketPrice");
     internal static readonly AccessTools.FieldRef<InteractableTicketMachine, Money.Currency> CurrencyField = AccessTools.FieldRefAccess<InteractableTicketMachine, Money.Currency>("currency");
     internal static readonly AccessTools.FieldRef<InteractableTicketMachine, ItemReference> TicketField = AccessTools.FieldRefAccess<InteractableTicketMachine, ItemReference>("ticket");

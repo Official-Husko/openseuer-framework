@@ -63,7 +63,8 @@ public static class Invoices
     /// <summary>
     /// Sends the player an invoice by mail, as the game's own senders do. Expiring unpaid makes it a crime
     /// worth about the amount. Returns the new invoice, or null outside a world or when the game's invoice
-    /// item is missing. Throws for an empty debtor, a non-positive amount or an out-of-range due time.
+    /// item is missing. Throws for an empty debtor, an amount below 1 or above 100,000,000, an unknown currency
+    /// or an out-of-range due time.
     /// </summary>
     /// <param name="debtor">Who it is from, as printed on it.</param>
     /// <param name="amount">Whole units of <paramref name="currency"/>.</param>
@@ -72,8 +73,10 @@ public static class Invoices
     {
         if (string.IsNullOrWhiteSpace(debtor))
             throw new ArgumentException("A debtor is required.", nameof(debtor));
-        if (amount <= 0)
-            throw new ArgumentOutOfRangeException(nameof(amount), "An invoice must be for 1 or more.");
+        if (amount <= 0 || amount > AccountMath.MaxAmount)
+            throw new ArgumentOutOfRangeException(nameof(amount), $"An invoice must be for 1 to {AccountMath.MaxAmount:0}.");
+        if (currency != Currency.OC && currency != Currency.RM)
+            throw new ArgumentOutOfRangeException(nameof(currency), "An invoice is in OC or RM.");
         if (days < 0 || days > MaxDays)
             throw new ArgumentOutOfRangeException(nameof(days), "0 to " + MaxDays + " days.");
         if (!IsAvailable || MailController.instance == null || SaveGate.IsBusy)

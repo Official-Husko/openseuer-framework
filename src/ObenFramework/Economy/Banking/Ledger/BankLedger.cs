@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ObenFramework.Clock;
 using ObenFramework.Events;
 using ObenFramework.Game;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenLoader;
@@ -19,6 +20,9 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class BankLedger
 {
+    /// <summary>True when the bank hooks are in place, so changes are booked under what made them rather than as Other.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Economy");
+
     private static readonly List<LedgerEntry> Fresh = new List<LedgerEntry>();
     private static ModSaveData<LedgerSave> _save;
     private static bool _reconciling;

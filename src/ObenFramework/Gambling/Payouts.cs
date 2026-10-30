@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using ObenFramework.Patching;
 using ObenFramework.Player;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -15,6 +16,9 @@ namespace ObenFramework.Gambling;
 /// </summary>
 public static class Payouts
 {
+    /// <summary>True when the payout hooks are in place, so multipliers take effect.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Gambling");
+
     /// <summary>Largest multiplier one mod may set, and the cap on a game's combined multiplier.</summary>
     public const float MaxMultiplier = 10f;
 

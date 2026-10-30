@@ -7,8 +7,8 @@
 #   when everything in PROGRESS.md is at 100% and the owner says so.
 #   From 1.0.0 on: a breaking change bumps the major version, a feature the minor version, the rest the patch.
 #
-# The first numbered release is <Version> in Directory.Build.props (0.1.0: the pre-releases before it were tagged
-# v0.1.0-pre.1 to pre.5).
+# Without a numbered release yet, the version in Directory.Build.props is the start; the pre-releases tagged
+# v0.1.0-pre.1 to pre.5 before numbering began count as 0.1.0, so the first numbered one goes past it (0.2.0).
 #
 #   build/next-version.sh [--minor | --patch]
 #
@@ -28,16 +28,22 @@ for arg in "$@"; do
 done
 
 last=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+since=$last
 if [ -z "$last" ]; then
     first=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props | head -n 1)
     [[ $first =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "next-version: no <Version> in Directory.Build.props" >&2; exit 1; }
-    echo "$first first numbered release"
-    exit 0
+    # Pre-releases tagged v<that version>-pre.N count as that version: the next one goes past it.
+    since=$(git tag --list "v$first-pre.*" --sort=-v:refname | head -n 1 || true)
+    if [ -z "$since" ]; then
+        echo "$first first numbered release"
+        exit 0
+    fi
+    last="v$first"
 fi
 
 IFS=. read -r major minor patch <<< "${last#v}"
-subjects=$(git log --no-merges --format=%s "$last..HEAD")
-bodies=$(git log --no-merges --format=%b "$last..HEAD")
+subjects=$(git log --no-merges --format=%s "$since..HEAD")
+bodies=$(git log --no-merges --format=%b "$since..HEAD")
 
 if [ -n "$force" ]; then
     bump=$force

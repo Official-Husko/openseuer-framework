@@ -45,6 +45,16 @@ CameraView.ModeChanged.Subscribe(this, firstPerson => ...);
 
 Third person is a mode the game no longer uses, so the body, its animations and clipping through walls can look rough. The Game Tweaks mod's F6 key is built on this.
 
+### Locking the view on something
+
+```csharp
+IDisposable look = CameraLook.LockOn(this, npcTransform);                 // turns at the game's 100 degrees a second
+IDisposable fast = CameraLook.LockOn(this, sign, instantly: true);        // or snaps
+look.Dispose();                                                           // let go
+```
+
+The view turns toward the target and stays on it, in first and third person, the way the game turns you toward someone you talk to. The mouse can't turn it away; walking still works, and in first person the body turns with the view. The newest lock whose target still exists wins, and the one before takes over when it ends. A lock ends when it is disposed, its target is destroyed (a level change destroys scene objects) or the mod unloads; `CameraLook.Release(this)` ends all of a mod's. The game's own look-at (a talk, lockpicking, a card game's tutorial), frozen rotation and death go first: the lock waits while they run. Nothing of the camera's saved state changes. `IsLocked` and `Target` read the state.
+
 ## Sleeping and waiting
 
 ```csharp
@@ -160,6 +170,7 @@ The object needs a collider of its own and must not be one of the game's interac
 | --- | --- |
 | `player.speed [stat=] [multiplier=] [clear=true]` | Current and base speeds, every multiplier; set or clear the bridge's own on a stat. |
 | `player.camera [mode=first\|third] [distance=] [body=true\|false]` | The camera view, what mods ask of it and the game's lock values; switch it or keep the body drawn for the bridge. |
+| `player.lookat [npc=] [x= y= z=] [instantly=] [speed=] [release=true]` | Lock the view onto an NPC or a point for the bridge, or let go. |
 | `player.skills [skill=] [value=] [add=] [learning=]` | Game and custom skills (`modId:skillId`); set, raise, or scale learning. |
 | `player.effects [wasteland=true\|false]` | Every effect with its strength. |
 | `player.conditions [add=] [remove=]` | Conditions by asset name. |

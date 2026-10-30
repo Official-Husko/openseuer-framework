@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using HarmonyLib;
 using ObenFramework.Patching;
+using UnityEngine;
 
 namespace ObenFramework.Player;
 
@@ -29,6 +30,20 @@ internal static class CameraPatches
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerCameraTrigger), nameof(PlayerCameraTrigger.FirstPersonOnly))]
     private static void TriggerSet(PlayerCameraTrigger __instance, bool enabled) => CameraLocks.TriggerChanged(__instance, enabled);
+
+    // Per frame; returns at once unless a mod locks the view. The game's own look-at only exists in first person.
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(ThirdPersonCameraController), "LateUpdate")]
+    private static void AfterCameraUpdate(ThirdPersonCameraController __instance, bool ___rotationDisabled, bool ___firstpersonSoftLock, Transform ___lookAtTarget)
+    {
+        if (!CameraLook.Any)
+            return;
+        var view = ThirdPersonCameraCollision.instance;
+        bool gameLooks = ___rotationDisabled
+            || (___firstpersonSoftLock && ___lookAtTarget != null && view != null && view.firstperson)
+            || (Death.instance != null && Death.instance.dead);
+        CameraLook.Steer(__instance, gameLooks);
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ThirdPersonCameraCollision), nameof(ThirdPersonCameraCollision.HidePlayerModel))]

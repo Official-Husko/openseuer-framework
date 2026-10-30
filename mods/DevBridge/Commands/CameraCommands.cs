@@ -1,7 +1,9 @@
 using System;
 using DevBridge.Server;
 using Newtonsoft.Json.Linq;
+using ObenFramework.Npcs;
 using ObenFramework.Player;
+using UnityEngine;
 
 namespace DevBridge.Commands;
 
@@ -40,6 +42,46 @@ internal static class CameraCommands
                 throw new InvalidOperationException("The body hook isn't in place.");
         }
         return State();
+    }
+
+    private static IDisposable _lock;
+    private static GameObject _marker;
+
+    [BridgeCommand("player.lookat", "Lock the view onto an NPC or a point with CameraLook, or let go (release=true).",
+        Params = new[] { "npc?: NPC name", "x?,y?,z? or pos?: a point instead", "instantly?: turn at once, default false",
+            "speed?: degrees per second, default 100", "release?: true lets go of the bridge's lock" })]
+    private static object LookAt(JObject p)
+    {
+        var owner = DevBridgeMod.Instance ?? throw new InvalidOperationException("The bridge isn't loaded.");
+        ReleaseLock();
+        if (!p.Bool("release", false))
+        {
+            Transform target;
+            if (p["npc"] != null)
+            {
+                var npc = Npcs.Find(p.Str("npc")) ?? throw new ArgumentException("No such NPC.");
+                var live = Npcs.LiveObject(npc.Id);
+                target = live != null ? live.transform : throw new InvalidOperationException("That NPC isn't in this scene.");
+            }
+            else
+            {
+                var point = p.Position() ?? throw new ArgumentException("Give npc, or x/y/z or pos.");
+                _marker = new GameObject("DevBridge look-at marker");
+                _marker.transform.position = point;
+                target = _marker.transform;
+            }
+            _lock = CameraLook.LockOn(owner, target, p.Bool("instantly", false), p.Float("speed", CameraLook.GameTurnSpeed));
+        }
+        return new JObject { ["locked"] = CameraLook.IsLocked, ["target"] = CameraLook.Target != null ? CameraLook.Target.name : null };
+    }
+
+    private static void ReleaseLock()
+    {
+        _lock?.Dispose();
+        _lock = null;
+        if (_marker != null)
+            UnityEngine.Object.Destroy(_marker);
+        _marker = null;
     }
 
     private static JObject State()

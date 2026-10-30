@@ -152,7 +152,7 @@ The object needs a collider of its own and must not be one of the game's interac
 
 `Jobs.All()` lists the level's work spots (`Title`, `Address`, pay per hour in both currencies, `Skill`, `RequiredSkill`, `Hardness`, `ShiftMinutes`); `Jobs.Worked` fires after a shift is paid with the hours worked and the pay that reached the wallet.
 
-`GameAchievements.All()`, `Get(id)` and `IsUnlocked(id)` read the achievements; `Unlock(id)`, `AddProgress` and `SetProgress` change them; `Items()` lists the items that count towards one. These are the player's Steam achievements: unlocking one here unlocks it on Steam, so only do it for something the player really did.
+`GameAchievements.All()`, `Get(id)` and `IsUnlocked(id)` read the achievements; `Unlock(id)`, `AddProgress` and `SetProgress` change them; `Items()` lists the items that count towards one. These are the player's Steam achievements: unlocking one here unlocks it on Steam, so only do it for something the player really did. While the game runs as Spacewar ([steam.md](steam.md)) they only change the game's own records.
 
 ## Dev bridge commands
 

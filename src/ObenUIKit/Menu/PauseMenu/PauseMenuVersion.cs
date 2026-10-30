@@ -9,8 +9,8 @@ using UnityEngine;
 namespace ObenUIKit.Menu;
 
 /// <summary>
-/// "ObenseuerExtended v0.1.0 (57a4977)" just above the game's own version at the bottom of the pause menu, in the same
-/// small text. It is a new label styled after the game's (whose ShowVersion script would overwrite a copy), made in
+/// "ObenseuerExtended" and "v0.1.0 (57a4977)" on two lines just above the game's own version at the bottom of the pause
+/// menu, in the same small text and inside the menu's column. It is a new label styled after the game's (whose ShowVersion script would overwrite a copy), made in
 /// every level and dying with it.
 /// </summary>
 internal static class PauseMenuVersion
@@ -58,8 +58,6 @@ internal static class PauseMenuVersion
         rect.anchorMin = source.anchorMin;
         rect.anchorMax = source.anchorMax;
         rect.pivot = source.pivot;
-        rect.sizeDelta = new Vector2(Mathf.Max(source.sizeDelta.x, 400f), source.sizeDelta.y);
-        rect.anchoredPosition = source.anchoredPosition + new Vector2(0f, source.sizeDelta.y);
 
         var label = line.AddComponent<TextMeshProUGUI>();
         label.font = game.font;
@@ -70,8 +68,32 @@ internal static class PauseMenuVersion
         label.alignment = game.alignment;
         label.textWrappingMode = TextWrappingModes.NoWrap;
         label.raycastTarget = false;
-        label.text = "ObenseuerExtended v" + Version;
+
+        // The menu's black column is narrow: a pre-release's "v0.1.0-pre.5 (6e6bac1)" ran over its edges on one
+        // line, so the version always has a line of its own, and a still longer one shrinks a little.
+        float room = ColumnWidth(source) - 2f * ColumnMargin;
+        string shown = "ObenseuerExtended\nv" + Version;
+        label.text = shown;
+        label.fontSizeMax = game.fontSize;
+        label.fontSizeMin = game.fontSize * 0.7f;
+        label.enableAutoSizing = true;
+
+        // Grows upwards: the bottom stays just above the game's own version line.
+        float height = Mathf.Max(source.sizeDelta.y, label.GetPreferredValues(shown).y);
+        float bottom = source.anchoredPosition.y + source.sizeDelta.y - rect.pivot.y * source.sizeDelta.y;
+        rect.sizeDelta = new Vector2(room, height);
+        rect.anchoredPosition = new Vector2(source.anchoredPosition.x, bottom + rect.pivot.y * height);
         _line = line;
+    }
+
+    private const float ColumnMargin = 10f;
+
+    // The pause menu's buttons sit in a black column ("Menu", 260 wide in 0.5.13) next to the version lines.
+    private static float ColumnWidth(RectTransform version)
+    {
+        var column = version.parent != null ? version.parent.Find("Menu") as RectTransform : null;
+        float width = column != null ? column.rect.width : 0f;
+        return width > 2f * ColumnMargin ? width : 260f;
     }
 
     private static string Stamp()

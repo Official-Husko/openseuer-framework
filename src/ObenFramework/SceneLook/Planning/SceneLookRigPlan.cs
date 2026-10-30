@@ -62,27 +62,31 @@ internal static class SceneLookRoles
         "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand",
     };
 
-    /// <summary>Each row: the humanoid role, then the bone names that fill it (first match wins).</summary>
+    /// <summary>
+    /// Each row: the humanoid role, then the bone names that fill it (first match wins). The game has two rigs:
+    /// the 3ds Max biped (Bip001) and a Blender one with dotted names, whose bone called Spine is the hips (the
+    /// thighs hang off it) and whose Ankle bones are the feet; its Hip, Chest and Wrist bones are helpers.
+    /// </summary>
     public static readonly string[][] Table =
     {
-        new[] { "Hips", "Bip001 Pelvis" },
-        new[] { "Spine", "Bip001 Spine" },
-        new[] { "Chest", "Bip001 Spine1" },
-        new[] { "Neck", "Bip001 Neck" },
-        new[] { "Head", "mr_duck_head", "Bip001 Head" },
-        new[] { "LeftUpperLeg", "Bip001 L Thigh" },
-        new[] { "LeftLowerLeg", "Bip001 L Calf" },
-        new[] { "LeftFoot", "Bip001 L Foot" },
-        new[] { "RightUpperLeg", "Bip001 R Thigh" },
-        new[] { "RightLowerLeg", "Bip001 R Calf" },
-        new[] { "RightFoot", "Bip001 R Foot" },
-        new[] { "LeftShoulder", "Bip001 L Clavicle" },
-        new[] { "LeftUpperArm", "Bip001 L UpperArm" },
-        new[] { "LeftLowerArm", "Bip001 L Forearm" },
-        new[] { "LeftHand", "Bip001 L Hand" },
-        new[] { "RightShoulder", "Bip001 R Clavicle" },
-        new[] { "RightUpperArm", "Bip001 R UpperArm" },
-        new[] { "RightLowerArm", "Bip001 R Forearm" },
-        new[] { "RightHand", "Bip001 R Hand" },
+        new[] { "Hips", "Bip001 Pelvis", "Spine" },
+        new[] { "Spine", "Bip001 Spine", "Spine1" },
+        new[] { "Chest", "Bip001 Spine1", "Spine2" },
+        new[] { "Neck", "Bip001 Neck", "Neck" },
+        new[] { "Head", "mr_duck_head", "Bip001 Head", "Head" },
+        new[] { "LeftUpperLeg", "Bip001 L Thigh", "Thigh.L" },
+        new[] { "LeftLowerLeg", "Bip001 L Calf", "Shin.L" },
+        new[] { "LeftFoot", "Bip001 L Foot", "Ankle.L" },
+        new[] { "RightUpperLeg", "Bip001 R Thigh", "Thigh.R" },
+        new[] { "RightLowerLeg", "Bip001 R Calf", "Shin.R" },
+        new[] { "RightFoot", "Bip001 R Foot", "Ankle.R" },
+        new[] { "LeftShoulder", "Bip001 L Clavicle", "Shoulder.L" },
+        new[] { "LeftUpperArm", "Bip001 L UpperArm", "Arm.L" },
+        new[] { "LeftLowerArm", "Bip001 L Forearm", "Forearm.L" },
+        new[] { "LeftHand", "Bip001 L Hand", "Hand.L" },
+        new[] { "RightShoulder", "Bip001 R Clavicle", "Shoulder.R" },
+        new[] { "RightUpperArm", "Bip001 R UpperArm", "Arm.R" },
+        new[] { "RightLowerArm", "Bip001 R Forearm", "Forearm.R" },
+        new[] { "RightHand", "Bip001 R Hand", "Hand.R" },
     };
 }

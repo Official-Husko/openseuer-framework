@@ -30,16 +30,28 @@ internal static partial class SceneLookApplyRig
 
         var rest = SceneLookNotes.Rest(look);
         var holder = SceneLookRigTools.Holder(look, body, state);
-        var nodes = Skeleton(look, holder, state);
+        var names = SceneLookChain.Names(look);
+        var nodes = Skeleton(look, names, holder, state);
         var byTransform = SceneLookFrame.ByTransform(look);
-        SceneLookRigTools.PlaceMatrix(holder.transform, SceneLookApplyMesh.ToUnity(SceneLookFrame.Holder(look, byTransform)));
+        // The rest comes in the space the reference mesh was authored in (the game's clothing stands along Z).
+        // The avatar has to stand along Y in the holder's own frame, so the holder stays upright and the bones
+        // carry that mesh's place under the root.
+        var frame = SceneLookFrame.Holder(look, byTransform);
         holder.transform.localScale *= factor;
         var worlds = new Dictionary<long, SceneLookMatrix>(look.Nodes.Count);
         var locals = new Dictionary<long, Matrix4x4>(look.Nodes.Count);
         foreach (var node in look.Nodes)
-            Place(look, node, byTransform, nodes, rest, worlds, locals, 0);
+            Place(look, node, byTransform, nodes, rest, frame, worlds, locals, 0);
+        SceneLookTPose.Apply(holder.transform, RoleBones(look, plan, nodes));
+        foreach (var node in look.Nodes)
+        {
+            if (node.GameObject == look.Root)
+                continue;
+            var placed = nodes[node.Transform];
+            locals[node.Transform] = Matrix4x4.TRS(placed.localPosition, placed.localRotation, placed.localScale);
+        }
 
-        var avatar = AvatarBuilder.BuildHumanAvatar(holder, Description(look, plan, locals));
+        var avatar = AvatarBuilder.BuildHumanAvatar(holder, Description(look, plan, names, locals));
         if (avatar == null || !avatar.isValid || !avatar.isHuman)
         {
             if (avatar != null)
@@ -78,15 +90,16 @@ internal static partial class SceneLookApplyRig
             if (!Attach(ownerObject, renderer, assets, bones, rootBone, target, poses, state, out reason))
                 return false;
         }
-        return AddDriver(targetAvatar, targetAnimator, avatar, holder, state, out reason);
+        RoleBones(look, plan, nodes).TryGetValue("Hips", out var hips);
+        return AddDriver(targetAvatar, targetAnimator, avatar, holder, hips, state, out reason);
     }
 
     // One object per look node, parented as in the file; the root node is the holder itself.
-    private static Dictionary<long, Transform> Skeleton(SceneLookLook look, GameObject holder, SceneLookApplied state)
+    private static Dictionary<long, Transform> Skeleton(SceneLookLook look, Dictionary<long, string> names, GameObject holder, SceneLookApplied state)
     {
         var nodes = new Dictionary<long, Transform>(look.Nodes.Count);
         foreach (var node in look.Nodes)
-            nodes[node.Transform] = node.GameObject == look.Root ? holder.transform : SceneLookRigTools.Child(node.Name, holder.transform, state).transform;
+            nodes[node.Transform] = node.GameObject == look.Root ? holder.transform : SceneLookRigTools.Child(names[node.Transform], holder.transform, state).transform;
         foreach (var node in look.Nodes)
         {
             if (node.GameObject == look.Root)
@@ -99,7 +112,7 @@ internal static partial class SceneLookApplyRig
         return nodes;
     }
 
-    private static bool AddDriver(Avatar targetAvatar, Animator targetAnimator, Avatar avatar, GameObject holder, SceneLookApplied state, out string reason)
+    private static bool AddDriver(Avatar targetAvatar, Animator targetAnimator, Avatar avatar, GameObject holder, Transform hips, SceneLookApplied state, out string reason)
     {
         reason = null;
         HumanPoseHandler from = null;
@@ -110,6 +123,14 @@ internal static partial class SceneLookApplyRig
             to = new HumanPoseHandler(avatar, holder.transform);
             var driver = holder.AddComponent<SceneLookPoseDriver>();
             driver.Setup(from, to);
+            var bodyHips = targetAnimator.GetBoneTransform(HumanBodyBones.Hips);
+            if (hips != null && bodyHips != null)
+            {
+                float lookHeight = SceneLookTPose.Hips(avatar, holder.transform, hips).y;
+                float bodyHeight = SceneLookTPose.Hips(targetAvatar, targetAnimator.transform, bodyHips).y;
+                float ratio = lookHeight > 0.05f && bodyHeight > 0.05f ? lookHeight / bodyHeight : 1f;
+                driver.Anchor(targetAnimator.transform, bodyHips, holder.transform, hips, ratio);
+            }
             state.Driver = driver;
             from = null;
             to = null;
@@ -129,7 +150,7 @@ internal static partial class SceneLookApplyRig
 
     // Places a node at its rest pose (from the bind poses) or, for nodes no mesh binds, its file pose.
     private static SceneLookMatrix Place(SceneLookLook look, SceneLookNode node, Dictionary<long, SceneLookNode> byTransform, Dictionary<long, Transform> nodes,
-        Dictionary<long, SceneLookMatrix> rest, Dictionary<long, SceneLookMatrix> worlds, Dictionary<long, Matrix4x4> locals, int depth)
+        Dictionary<long, SceneLookMatrix> rest, SceneLookMatrix frame, Dictionary<long, SceneLookMatrix> worlds, Dictionary<long, Matrix4x4> locals, int depth)
     {
         if (worlds.TryGetValue(node.Transform, out var cached))
             return cached;
@@ -141,9 +162,9 @@ internal static partial class SceneLookApplyRig
         }
         worlds[node.Transform] = SceneLookMatrix.Identity();
         var parentNode = SceneLookFrame.Parent(node, byTransform);
-        var parentWorld = parentNode == null ? SceneLookMatrix.Identity() : Place(look, parentNode, byTransform, nodes, rest, worlds, locals, depth + 1);
+        var parentWorld = parentNode == null ? SceneLookMatrix.Identity() : Place(look, parentNode, byTransform, nodes, rest, frame, worlds, locals, depth + 1);
         var matrix = rest.TryGetValue(node.Transform, out var restWorld)
-            ? SceneLookBind.Local(parentWorld, restWorld)
+            ? SceneLookBind.Local(parentWorld, frame.Multiply(restWorld))
             : SceneLookApplyMesh.FromUnity(SceneLookRigTools.Local(node));
         var local = SceneLookApplyMesh.ToUnity(matrix);
         locals[node.Transform] = local;
@@ -153,7 +174,7 @@ internal static partial class SceneLookApplyRig
         return world;
     }
 
-    private static HumanDescription Description(SceneLookLook look, SceneLookRigPlan plan, Dictionary<long, Matrix4x4> locals)
+    private static HumanDescription Description(SceneLookLook look, SceneLookRigPlan plan, Dictionary<long, string> names, Dictionary<long, Matrix4x4> locals)
     {
         var description = new HumanDescription
         {
@@ -171,7 +192,7 @@ internal static partial class SceneLookApplyRig
             var matrix = locals[node.Transform];
             skeleton[i] = new SkeletonBone
             {
-                name = node.Name,
+                name = names[node.Transform],
                 position = new Vector3(matrix.m03, matrix.m13, matrix.m23),
                 rotation = matrix.rotation,
                 scale = matrix.lossyScale,
@@ -183,6 +204,23 @@ internal static partial class SceneLookApplyRig
             human[i] = new HumanBone { boneName = plan.Roles[i].LookName, humanName = plan.Roles[i].HumanName, limit = new HumanLimit { useDefaultValues = true } };
         description.human = human;
         return description;
+    }
+
+    private static Dictionary<string, Transform> RoleBones(SceneLookLook look, SceneLookRigPlan plan, Dictionary<long, Transform> nodes)
+    {
+        var byName = new Dictionary<string, Transform>();
+        foreach (var node in look.Nodes)
+        {
+            if (nodes.TryGetValue(node.Transform, out var placed) && !byName.ContainsKey(node.Name))
+                byName[node.Name] = placed;
+        }
+        var roles = new Dictionary<string, Transform>();
+        foreach (var role in plan.Roles)
+        {
+            if (byName.TryGetValue(role.LookName, out var bone))
+                roles[role.HumanName] = bone;
+        }
+        return roles;
     }
 
     private static Transform RootNode(SceneLookLook look, SceneLookRigPlan plan, Dictionary<long, Transform> nodes, Transform fallback)

@@ -14,6 +14,11 @@ internal sealed class SceneLookPoseDriver : MonoBehaviour
     private HumanPoseHandler _from;
     private HumanPoseHandler _to;
     private HumanPose _pose;
+    private Transform _bodyRoot;
+    private Transform _bodyHips;
+    private Transform _holder;
+    private Transform _lookHips;
+    private float _ratio = 1f;
 
     /// <summary>Sync on its own every frame; off lets a mod drive the look's pose itself.</summary>
     public bool Auto = true;
@@ -25,12 +30,28 @@ internal sealed class SceneLookPoseDriver : MonoBehaviour
         _pose = new HumanPose { muscles = new float[HumanTrait.MuscleCount] };
     }
 
+    /// <summary>
+    /// Places the look's hips where the body's are, scaled by their reference heights, after each pose. The pose's
+    /// own body position can't be trusted across avatars: the game's slider bodies measure it from a root node that
+    /// moves with the hips, which put a copied look's hips at its feet.
+    /// </summary>
+    public void Anchor(Transform bodyRoot, Transform bodyHips, Transform holder, Transform lookHips, float ratio)
+    {
+        _bodyRoot = bodyRoot;
+        _bodyHips = bodyHips;
+        _holder = holder;
+        _lookHips = lookHips;
+        _ratio = ratio;
+    }
+
     public void Sync()
     {
         if (_from == null || _to == null)
             return;
         _from.GetHumanPose(ref _pose);
         _to.SetHumanPose(ref _pose);
+        if (_bodyRoot != null && _bodyHips != null && _holder != null && _lookHips != null)
+            _lookHips.position = _holder.TransformPoint(_bodyRoot.InverseTransformPoint(_bodyHips.position) * _ratio);
     }
 
     private void LateUpdate()

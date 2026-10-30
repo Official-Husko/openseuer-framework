@@ -250,14 +250,17 @@ internal static class SceneLookRig
         return null;
     }
 
+    // Only the bones and the nodes above them make the avatar; other objects (footstep audio, the clothes'
+    // own objects) may share names, and the rebuilt skeleton numbers those apart (SceneLookChain.Names).
     private static void Duplicates(SceneLookLook look, SceneLookRigPlan plan)
     {
         if (look.Nodes == null)
             return;
+        var chain = SceneLookChain.Bones(look);
         var seen = new HashSet<string>();
         foreach (var node in look.Nodes)
         {
-            if (!seen.Add(node.Name) && !plan.Duplicates.Contains(node.Name))
+            if (chain.Contains(node.Transform) && !seen.Add(node.Name) && !plan.Duplicates.Contains(node.Name))
                 plan.Duplicates.Add(node.Name);
         }
     }

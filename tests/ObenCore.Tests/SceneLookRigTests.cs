@@ -66,12 +66,51 @@ public class SceneLookRigTests
 
         var look = Look(Biped);
         look.Nodes.Add(SceneLookMathTests.Node(900, 901, "Bip001 Head", 2, 1f));
+        look.Renderers[0].Bones.Add(new SceneLookBone { Name = "Bip001 Head", Transform = new SceneLookRef(0, 901) });
         var duplicate = SceneLookRig.Decide(look, new[] { "Hips" }, "Player", "humanoid");
         Assert.Equal(SceneLookRigPath.Refuse, duplicate.Path);
         Assert.Contains("duplicate", duplicate.Reason);
 
         var generic = SceneLookRig.Decide(Look(Biped), new[] { "Hips" }, "Crate", "generic");
         Assert.Equal(SceneLookRigPath.Refuse, generic.Path);
+    }
+
+    [Fact]
+    public void Clashing_names_outside_the_bones_are_numbered_apart()
+    {
+        // Two footstep objects of one name hang off the root, beside the skeleton.
+        var look = Look(Biped);
+        look.Nodes.Add(SceneLookMathTests.Node(900, 901, "FootStepAudio", 2, 1f));
+        look.Nodes.Add(SceneLookMathTests.Node(902, 903, "FootStepAudio", 2, 1f));
+
+        var plan = SceneLookRig.Decide(look, new[] { "Hips" }, "Player", "humanoid");
+        var chain = SceneLookChain.Bones(look);
+        var names = SceneLookChain.Names(look);
+
+        Assert.Equal(SceneLookRigPath.Retarget, plan.Path);
+        Assert.Contains(2L, chain);
+        Assert.DoesNotContain(901L, chain);
+        Assert.Equal("FootStepAudio", names[901]);
+        Assert.Equal("FootStepAudio (2)", names[903]);
+        Assert.Equal("Bip001 Head", names[108]);
+    }
+
+    [Fact]
+    public void The_blender_rig_fills_every_required_role()
+    {
+        string[] blender =
+        {
+            "Spine", "Spine1", "Spine2", "Neck", "Head", "Hip.L", "Thigh.L", "Shin.L", "Ankle.L", "Foot.L",
+            "Hip.R", "Thigh.R", "Shin.R", "Ankle.R", "Foot.R", "Shoulder.L", "Arm.L", "Forearm.L", "Hand.L",
+            "Shoulder.R", "Arm.R", "Forearm.R", "Hand.R",
+        };
+
+        var plan = SceneLookRig.Decide(Look(blender), Biped, "Npc", "humanoid");
+
+        Assert.Equal(SceneLookRigPath.Retarget, plan.Path);
+        Assert.Equal(15, plan.RequiredCovered);
+        Assert.Equal("Spine", SceneLookRig.Roles(blender)["Hips"]);
+        Assert.Equal("Ankle.L", SceneLookRig.Roles(blender)["LeftFoot"]);
     }
 
     [Fact]

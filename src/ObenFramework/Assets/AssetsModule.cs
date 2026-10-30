@@ -19,6 +19,7 @@ internal static class AssetsModule
             ItemModels.Reset();
             GameText.Reset();
             AssetSets.ReleaseAll();
+            SoundVolumes.Reset();
             ModSounds.Reset();
             ModelMaterials.Reset();
             AssetsLog.Source = null;

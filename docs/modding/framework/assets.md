@@ -71,9 +71,22 @@ The game routes everything through one mixer (`Sounds/MainMixer`). `SoundGroup` 
 | `Ambience` | ambient loops | Sound |
 | `Player`, `Footsteps` | the player's own sounds | Sound |
 
+The slider column was measured in 0.5.13 with a tone on each group. Everything but `Music` (Soundscape, Wasteland and the menus too) follows Sound; the levels' own background music plays through Soundscape, so it follows Sound, not Music.
+
 `ModSounds.Group("Name")` gives any group by name and `ModSounds.GroupNames()` lists all of them (Soundscape, Muffled, Underwater and so on), if you want a sound to be muffled with the rest. Playing goes through the game's own `AudioSourceMaker`, so the output group is resolved the way the game does it, and sources pause with the game. `Play` and `PlayAt` return the `AudioSource` (null if the audio system isn't up yet) and the object is destroyed when the clip ends.
 
 `ModAssets.Clip(owner, name, samples, channels, sampleRate)` makes a clip from samples you generate, as floats from -1 to 1 or as 16-bit `short`s.
+
+### Turning the game's volume down
+
+```csharp
+VolumeLowering quiet = SoundVolumes.Lower(this, VolumeChannel.Music, 0.3f);   // 30% of the player's volume
+quiet.Share = 0.1f;                                                         // change it, e.g. to fade
+quiet.Dispose();                                                            // the player's level again
+float? db = SoundVolumes.Level(VolumeChannel.Sound);                        // what the mixer plays at now
+```
+
+The channels are the game's four sliders: `Master`, `Sound` (which also covers the game's other sounds), `Music` and `Nasty`. A lowering lasts until it is disposed or its mod unloads; with several on one channel the lowest share wins. The player's settings are never touched: the game's volume file keeps the slider values, a slider the player moves still works (the lowering applies on top of the new level), and the options menu, which reads the mixer back into its sliders when it sets itself up, sees the player's own levels. `SoundVolumes.IsAvailable` is false when those hooks failed after a game update; lowerings then have no effect, so the options menu can't save a lowered level as the player's.
 
 ### The game's own sounds
 
@@ -185,7 +198,7 @@ GameText.OnLanguageChanged(this, language => Rebuild());
 
 A language is matched by the game's full name ("English (en)"), the name alone or the code. 18 languages ship with 0.5.13.
 
-Bridge: `items.model` (`item`, `model`, `held`, `clear`) shows a loaded model on an item, owned by the bridge; `items.drawicon` (`item` or `model`, `size`, `yaw`, `pitch`, `margin`, `file`, `apply`, `clear`) draws an icon of an item's pickup model or a loaded model, writes it as a PNG and/or puts it on the item; `text.get` (`key`, `table`) returns a text and the languages.
+Bridge: `sounds.volume` (`channel`, `share`, `clear`) lists the channels with their level and share, or lowers one (owned by the bridge) or gives it back; `items.model` (`item`, `model`, `held`, `clear`) shows a loaded model on an item, owned by the bridge; `items.drawicon` (`item` or `model`, `size`, `yaw`, `pitch`, `margin`, `file`, `apply`, `clear`) draws an icon of an item's pickup model or a loaded model, writes it as a PNG and/or puts it on the item; `text.get` (`key`, `table`) returns a text and the languages.
 
 ## What is tracked
 

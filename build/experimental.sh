@@ -158,8 +158,11 @@ if $numbered; then
     # The changelog hooks would write the file again after the commit; the release writes it itself.
     export OBEN_CHANGELOG_HOOKS=0
     sed -i "s|<Version>[^<]*</Version>|<Version>$label</Version>|" Directory.Build.props
-    git add Directory.Build.props
-    git commit -q -m "chore(release): $label" -m "Sets the version to $label."
+    # The first numbered release is the version the file already has: then the tag goes on this commit.
+    if ! git diff --quiet Directory.Build.props; then
+        git add Directory.Build.props
+        git commit -q -m "chore(release): $label" -m "Sets the version to $label."
+    fi
     build/changelog.sh --release "$label" --quiet
 else
     # The kit's build copies changelog.json into the package, so it should list everything up to this commit.

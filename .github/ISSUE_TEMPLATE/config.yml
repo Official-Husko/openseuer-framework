@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Wiki
+    url: https://github.com/Official-Husko/openseuer-framework/wiki
+    about: Installing, what each mod does, and answers to common problems.
+  - name: Making mods
+    url: https://github.com/Official-Husko/openseuer-framework/tree/main/docs/modding
+    about: Guides for the mod loader, the framework and the tools.

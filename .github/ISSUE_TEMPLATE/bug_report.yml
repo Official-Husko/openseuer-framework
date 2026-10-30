@@ -1,0 +1,102 @@
+name: Bug report
+description: Something in ObenseuerExtended or one of its mods doesn't work.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. The quickest way to fill this in is from the game: open **MODS**, go to the **Report** page, tick what you want to share, press **Make report** and then **Report on GitHub**. The versions below are filled in for you and you only need to drag the zip in.
+
+        Game won't start? Run `oben report` from the folder you installed from (`tool/linux-x64/oben report` on Linux, `tool\win-x64\oben.exe report` on Windows). It makes the same zip.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What were you doing, and what went wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How do we make it happen?
+      description: The steps that lead to it, if you know them.
+      placeholder: |
+        1. Load a save in the Tenement
+        2. Open the inventory
+        3. ...
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part is it about?
+      options:
+        - MODS menu or a mod window
+        - Unofficial ObenPatches
+        - Performance Fixes
+        - Game Tweaks
+        - Cheat Menu
+        - ObenSave
+        - ObenCoop
+        - Installer or mod loader
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: ObenseuerExtended version
+      description: Bottom of the pause menu, for example "0.1.0 (a185d27)".
+    validations:
+      required: true
+
+  - type: input
+    id: game-version
+    attributes:
+      label: Game version
+      description: Bottom of the main menu or the pause menu, for example "Obenseuer 0.5.13".
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: For example Windows 11, Linux through Proton (Steam or Heroic), or a Steam Deck.
+    validations:
+      required: true
+
+  - type: textarea
+    id: specs
+    attributes:
+      label: PC (optional)
+      description: Processor, graphics card and memory, if you think they matter. The report fills in the ones you ticked.
+
+  - type: input
+    id: bepinex
+    attributes:
+      label: BepInEx
+      description: Leave it empty if you don't use BepInEx. The report fills this in when it finds it.
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Report and screenshots
+      description: Drag the report zip in here (the game saves them in the ObenLoader/reports folder of your game), and any screenshots or clips.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: I looked through the open issues and this isn't one of them.
+          required: true
+        - label: It still happens with the newest release.

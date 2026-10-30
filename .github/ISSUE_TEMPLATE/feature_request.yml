@@ -1,0 +1,35 @@
+name: Idea or request
+description: Something you'd like a mod to do, a new mod, or a change to how something works.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why?
+      description: What it would help with in the game. Knowing the reason often leads to a better way to do it.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part is it about?
+      options:
+        - A new mod
+        - MODS menu or mod windows
+        - Unofficial ObenPatches
+        - Performance Fixes
+        - Game Tweaks
+        - Cheat Menu
+        - ObenSave
+        - ObenCoop
+        - The framework, for making mods
+        - Something else
+    validations:
+      required: true

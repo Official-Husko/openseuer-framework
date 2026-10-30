@@ -1,0 +1,62 @@
+name: Bug in the game itself
+description: Something Obenseuer gets wrong even without mods, which Unofficial ObenPatches could fix.
+title: "[Game bug] "
+labels: ["game bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Unofficial ObenPatches fixes bugs in Obenseuer itself, one switchable fix at a time. If you found one, tell us here. Please report it to Loiste Interactive on the [Steam forums](https://steamcommunity.com/app/951240/discussions/) too, so it can be fixed in the game for everyone.
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens?
+      description: What goes wrong, and what should happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: where
+    attributes:
+      label: Where and how?
+      description: The place in the game, the item, quest or character, and what you did right before.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: how-often
+    attributes:
+      label: How often?
+      options:
+        - Every time
+        - Sometimes
+        - Once so far
+    validations:
+      required: true
+
+  - type: dropdown
+    id: without-mods
+    attributes:
+      label: Does it happen without mods too?
+      description: Uninstalling and verifying the game files in Steam gives you the plain game.
+      options:
+        - "Yes"
+        - "No"
+        - Haven't tried
+    validations:
+      required: true
+
+  - type: input
+    id: game-version
+    attributes:
+      label: Game version
+      description: Bottom of the main menu, for example "0.5.13".
+    validations:
+      required: true
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Report, save and screenshots
+      description: A report from MODS > Report with "The save you're playing" ticked helps most. Drag it in here with any screenshots.

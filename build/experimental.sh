@@ -33,6 +33,7 @@ die() {
 dry_run=false
 local_only=false
 bump_flag=()
+notes_ref=refs/notes/changelog
 for arg in "$@"; do
     case $arg in
         --dry-run) dry_run=true ;;
@@ -59,6 +60,10 @@ branch=$(git branch --show-current)
 
 # Releases published from another clone count too.
 git fetch -q --tags origin 2> /dev/null || true
+# So do changelog lines added to pushed commits as notes (docs/modding/changelog.md).
+if git fetch -q origin "+$notes_ref:refs/notes/changelog-origin" 2> /dev/null; then
+    git notes --ref=changelog merge -q -s cat_sort_uniq refs/notes/changelog-origin 2> /dev/null || true
+fi
 read -r next reason < <(build/next-version.sh "${bump_flag[@]}")
 [[ $next =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "can't tell the next version (got '$next')"
 if [ "${next%%.*}" -eq 0 ]; then
@@ -195,7 +200,9 @@ fi
 # Verbatim, or git drops the notes' "## What's new" heading as a comment.
 git tag -a --cleanup=verbatim "$tag" -m "ObenseuerExtended $label ($commit), pre-release" -m "$(cat "$notes")"
 # All or nothing: a failed push leaves nothing half published, and the release is taken back.
-git push --atomic origin "$branch" "$tag" || false
+push_notes=()
+git rev-parse -q --verify "$notes_ref" > /dev/null && push_notes=("$notes_ref")
+git push --atomic origin "$branch" "$tag" "${push_notes[@]}" || false
 trap - ERR
 
 title="ObenseuerExtended v$label ($commit)"

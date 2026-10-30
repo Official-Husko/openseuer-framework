@@ -16,17 +16,23 @@ public enum ChangeKind
     Removed,
 }
 
-/// <summary>Reads commits and their Changelog-* trailers from git.</summary>
+/// <summary>
+/// Reads commits and their Changelog-* trailers from git, plus Changelog-* lines in the commit's note under
+/// <see cref="NotesRef"/>: a pushed commit's message can't change, so a line it lacks is added as a note.
+/// </summary>
 public static partial class CommitLog
 {
+    /// <summary>The notes ref that holds lines added to commits after the fact (<c>git notes --ref=changelog</c>).</summary>
+    public const string NotesRef = "refs/notes/changelog";
+
     private const char FieldSep = '\u001f';
     private const char RecordSep = '\u001e';
 
     /// <summary>Commits in <paramref name="range"/> (e.g. "v0.1.0..HEAD"), oldest first.</summary>
     public static List<CommitEntry> Read(string repo, string range)
     {
-        string format = "%H%x1f%as%x1f%s%x1f%(trailers:only,unfold)%x1e";
-        string raw = Git.Run(repo, "log", "--reverse", $"--format={format}", range);
+        string format = "%H%x1f%as%x1f%s%x1f%(trailers:only,unfold)%x1f%N%x1e";
+        string raw = Git.Run(repo, "log", "--reverse", "--no-notes", $"--notes={NotesRef}", $"--format={format}", range);
 
         var commits = new List<CommitEntry>();
         foreach (string record in raw.Split(RecordSep, StringSplitOptions.RemoveEmptyEntries))
@@ -41,7 +47,7 @@ public static partial class CommitLog
                 DateOnly.Parse(f[1]),
                 subject.Success ? subject.Groups["type"].Value : "other",
                 subject.Success && subject.Groups["scope"].Success ? subject.Groups["scope"].Value : null,
-                ParseTrailers(f[3])));
+                ParseTrailers(f.Length > 4 ? f[3] + "\n" + f[4] : f[3])));
         }
         return commits;
     }

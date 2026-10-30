@@ -28,10 +28,22 @@ Rules for the line:
 - Say what the player notices, not what the code does ("Robbers notice police that can actually see them", not "Fixed the line of sight check").
 - Don't start with the mod's name. The commit scope already puts the line under the right mod, and a leading "Dev bridge:" is dropped anyway.
 - Don't write a `Changed` or `Fixed` line for something that is new in the same release. Players never had the old version.
-- Only trailers count. A plain `feat` or `fix` commit without a trailer (tooling, docs, refactors, research) never appears in the changelog. The same line in two commits is shown once.
+- Only trailers count. A plain `feat` or `fix` commit without a trailer (tooling, docs, refactors, research) never appears in the changelog.
+- Framework features are for mod authors, and they get lines too: `Changelog-Added: Mods can ...` (the `framework` scope shows them under Framework). Players who install a mod built on one should be able to see where it came from. The same line in two commits is shown once.
 - A commit can have several trailers, and mixed kinds.
 
-Trailers in pushed commits can't be changed, so read the lines before pushing (see below).
+Trailers in pushed commits can't be changed, so read the lines before pushing (see below). A line a pushed commit lacks goes into a note instead.
+
+## A line a pushed commit lacks
+
+A git note under `refs/notes/changelog` counts as part of its commit's trailers, so the line lands in the release the commit shipped in:
+
+```sh
+git notes --ref=changelog add -m "Changelog-Added: Mods can draw an item's icon from its 3D model." 09f0e9d
+build/changelog.sh
+```
+
+The note holds trailer lines only, written like the ones in a commit message; `git notes --ref=changelog append` adds another to a commit that has one. `build/experimental.sh` and `build/release.sh` push the notes with the release, and `experimental.sh` fetches and merges the ones another clone pushed first. Notes don't trigger the changelog hooks, so run `build/changelog.sh` after adding one.
 
 ## Which mod a line belongs to
 

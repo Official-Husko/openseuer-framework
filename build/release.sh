@@ -126,7 +126,10 @@ trap - ERR
 echo
 echo "Release $version is committed, packaged ($zip) and tagged v$version. Nothing has been pushed."
 
-push_cmd="git push origin $branch v$version"
+# Changelog lines added to pushed commits as notes go along (docs/modding/changelog.md).
+notes_push=""
+git rev-parse -q --verify refs/notes/changelog > /dev/null && notes_push=" refs/notes/changelog"
+push_cmd="git push origin $branch v$version$notes_push"
 release_cmd="gh release create v$version $zip --title \"ObenseuerExtended $version\" --notes-file <notes>"
 if ! $publish; then
     echo "To publish it:"
@@ -142,6 +145,6 @@ if ! $assume_yes; then
     read -r -p "Publish v$version? [y/N] " answer
     [[ $answer == [yY]* ]] || die "stopped; the commit, package and tag stay local"
 fi
-git push origin "$branch" "v$version"
+$push_cmd
 gh release create "v$version" "$zip" --title "ObenseuerExtended $version" --notes-file "$notes"
 echo "Released v$version."

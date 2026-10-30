@@ -47,13 +47,14 @@ internal static class ConsumePatches
             var data = __instance.ItemData;
             var panel = __instance.itemInfoPanel;
             bool buttonOff = data == null || (!panel.UseButtonEnabled && !secondaryButton) || (!panel.SecondaryUseButtonEnabled && secondaryButton);
-            if (buttonOff || TradePanel.instance.activeTrade != null || __instance.cooldown)
+            // The game refuses the use itself while the last use is still animating.
+            if (buttonOff || TradePanel.instance.activeTrade != null || __instance.cooldown || PlayerCameraAnimations.ItemAnimationPlaying)
                 return true;
 
             var action = __instance.childItem != null
                 ? FirstConsumable(__instance.childItem.item.Actions)
                 : IndexedConsumable(data.item.Actions, index);
-            return action == null || Ask(data);
+            return action == null || Ask(data, action, ConsumeSource.Inventory);
         }
         catch (Exception e)
         {
@@ -72,7 +73,7 @@ internal static class ConsumePatches
             return true;
         try
         {
-            if (TradePanel.instance.activeTrade != null)
+            if (TradePanel.instance.activeTrade != null || PlayerCameraAnimations.ItemAnimationPlaying)
                 return true;
 
             var data = ItemDataOf(__instance);
@@ -81,7 +82,7 @@ internal static class ConsumePatches
             var action = (drink ? liquid.liquidItem.Item.FirstAction : __instance.Item.Item.FirstAction) as ItemConsumable;
             if (action == null || !action.CanUse(data, out _) || !OwnerAllows(data))
                 return true;
-            return Ask(data);
+            return Ask(data, action, ConsumeSource.World);
         }
         catch (Exception e)
         {
@@ -94,14 +95,14 @@ internal static class ConsumePatches
     // the player's behalf (depression drinking, scripted use), and always for the Consumed event.
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ItemConsumable), nameof(ItemConsumable.Invoke), typeof(ItemData), typeof(bool))]
-    private static bool BeforeInvoke(ItemData itemData, out bool __state)
+    private static bool BeforeInvoke(ItemConsumable __instance, ItemData itemData, out bool __state)
     {
         __state = true;
         if (_asked || !ConsumeHooks.HasHandlers)
             return true;
         try
         {
-            __state = ConsumeHooks.Allow(itemData);
+            __state = ConsumeHooks.Allow(itemData, __instance, ConsumeSource.Other);
             return __state;
         }
         catch (Exception e)
@@ -129,10 +130,10 @@ internal static class ConsumePatches
     [HarmonyPatch(typeof(CollectibleItem), nameof(CollectibleItem.InvokeActions))]
     private static void RestoreAfterWorldUse(bool __state) => _asked = __state;
 
-    private static bool Ask(ItemData data)
+    private static bool Ask(ItemData data, ItemConsumable action, ConsumeSource source)
     {
         _asked = true;
-        return ConsumeHooks.Allow(data);
+        return ConsumeHooks.Allow(data, action, source);
     }
 
     private static ItemConsumable FirstConsumable(Item.ItemAction[] actions)

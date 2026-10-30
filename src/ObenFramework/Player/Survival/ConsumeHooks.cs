@@ -6,16 +6,39 @@ using OS.Items;
 
 namespace ObenFramework.Player.Survival;
 
+/// <summary>Where a consumption started.</summary>
+public enum ConsumeSource
+{
+    /// <summary>The use button on an item in the inventory, or a drink from a bottle there.</summary>
+    Inventory,
+
+    /// <summary>An item lying in the world (food on a table, a bottle on a shelf).</summary>
+    World,
+
+    /// <summary>The game consumed something on the player's behalf (a breakdown drinking, a scripted use).</summary>
+    Other,
+}
+
 /// <summary>An item the player is about to eat, drink or otherwise consume.</summary>
 public sealed class ConsumeContext
 {
-    internal ConsumeContext(ItemData data)
+    internal ConsumeContext(ItemData data, ItemConsumable consumable, ConsumeSource source)
     {
         Data = data;
+        Consumable = consumable;
+        Source = source;
     }
 
-    /// <summary>The game's item instance (amount, owner, metadata).</summary>
+    /// <summary>The game's item instance (amount, owner, metadata). For a drink from a bottle or a glass this is the container.</summary>
     public ItemData Data { get; }
+
+    /// <summary>
+    /// The action that will apply its effects: what it does to hunger, thirst and the rest. For a drink
+    /// this is the liquid's, not the container's.
+    /// </summary>
+    public ItemConsumable Consumable { get; }
+
+    public ConsumeSource Source { get; }
 
     public int ItemId => Data.item.ID;
 
@@ -65,12 +88,12 @@ public static class ConsumeHooks
     internal static bool HasHandlers => Handlers.Count > 0;
 
     /// <summary>Runs the handlers; false when one of them cancelled.</summary>
-    internal static bool Allow(ItemData data)
+    internal static bool Allow(ItemData data, ItemConsumable consumable, ConsumeSource source)
     {
         if (Handlers.Count == 0 || data == null || data.item == null)
             return true;
 
-        var context = new ConsumeContext(data);
+        var context = new ConsumeContext(data, consumable, source);
         Handlers.ForEach(h => h(context), GameEvents.Log, "ConsumeHooks");
         return !context.Cancelled;
     }

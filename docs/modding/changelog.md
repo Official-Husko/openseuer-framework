@@ -58,7 +58,7 @@ Inside a release the mods come in alphabetical order, lines without a mod last, 
 
 ## Versions
 
-Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`. Each tag closes a release made of the commits since the previous tag. Commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out. Experimental builds are tagged `vX.Y.Z+<commit>` ([releasing.md](releasing.md)); those tags don't close a release, so their changes stay `Unreleased` until the next stable one.
+Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`. Each tag closes a release made of the commits since the previous tag. Commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out. Experimental builds are tagged `vX.Y.Z-pre.N+<commit>` ([releasing.md](releasing.md)); those tags don't close a release, so their changes stay `Unreleased` until the next stable one.
 
 Don't create a tag to try something out: the tag is the release. Before 1.0, breaking changes bump the minor version, new features the minor version, and fixes and tweaks the patch version.
 

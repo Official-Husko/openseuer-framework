@@ -4,9 +4,14 @@
 #   build/experimental.sh [--dry-run] [--local]
 #
 # The version is the last stable release (the newest vX.Y.Z tag, or <Version> in Directory.Build.props before the
-# first one) and the commit: "0.1.0 (57a4977)", tagged v0.1.0+57a4977 and titled "ObenseuerExtended v0.1.0 (57a4977)",
-# the zip named ObenseuerExtended-0.1.0-57a4977_pre-release.zip. The pause menu shows the same string, so a player
-# can tell which build is installed. Checks that the tree is clean and that something is new since the last
+# first one) and the commit: "0.1.0 (57a4977)", titled "ObenseuerExtended v0.1.0 (57a4977)", the zip named
+# ObenseuerExtended-0.1.0-57a4977_pre-release.zip. The pause menu shows the same string, so a player can tell which
+# build is installed.
+#
+# The tag is numbered, v0.1.0-pre.5+57a4977, because GitHub orders releases by the version in the tag and ignores
+# everything after "+": with the commit alone every pre-release would be the same version and land in any order.
+# A pre-release comes before its version in that order, so the tags name the version the pre-releases lead up to:
+# <Version> before the first stable release, the next patch version after one (v0.1.1-pre.1 follows v0.1.0). Checks that the tree is clean and that something is new since the last
 # release of either kind, runs the tests, writes changelog.json, builds the package from HEAD, tags it, pushes the
 # branch and the tag and creates the pre-release. The notes are the player lines since the previous release and
 # every commit since then.
@@ -61,8 +66,18 @@ fi
 # The same abbreviation build/Revision.targets stamps into the assemblies.
 commit=$(git describe --always --abbrev=7 --exclude='*')
 version="$base ($commit)"
-tag="v$base+$commit"
 name="ObenseuerExtended-$base-${commit}_pre-release"
+
+# Pre-releases published from another clone count too.
+git fetch -q --tags origin 2> /dev/null || true
+if [ -n "$stable" ]; then
+    IFS=. read -r major minor patch <<< "$base"
+    upcoming="$major.$minor.$((patch + 1))"
+else
+    upcoming=$base
+fi
+last_number=$(git tag --list "v$upcoming-pre.*" | sed -nE "s/^v[0-9.]+-pre\.([0-9]+)(\+.*)?$/\1/p" | sort -n | tail -n 1)
+tag="v$upcoming-pre.$((${last_number:-0} + 1))+$commit"
 
 released=$(git tag --points-at HEAD --list 'v*' | head -n 1)
 [ -z "$released" ] || problem "this commit is already released as $released"

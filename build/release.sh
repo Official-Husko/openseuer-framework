@@ -50,7 +50,7 @@ problem() {
 
 [ -z "$(git status --porcelain)" ] || problem "the working tree has uncommitted changes"
 branch=$(git branch --show-current)
-# Only vX.Y.Z tags are releases; experimental builds are tagged vX.Y.Z+<commit>.
+# Only vX.Y.Z tags are releases; experimental builds are tagged vX.Y.Z-pre.N+<commit>.
 last=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 last=${last#v}
 ! git rev-parse -q --verify "refs/tags/v$version" > /dev/null || problem "v$version already exists"

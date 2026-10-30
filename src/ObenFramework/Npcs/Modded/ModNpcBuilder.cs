@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using NPC;
 using ObenFramework.Player.Look;
 using PixelCrushers.DialogueSystem;
@@ -101,14 +102,42 @@ internal static class ModNpcBuilder
         CharacterDatabase.Characters.Remove(npc.Clone);
         if (npc.Root != null)
         {
+            LetGoOfSeat(npc);
             var manager = NPCManager.instance;
             if (manager != null && npc.Info != null)
                 manager.RemoveNpcFromList(npc.Info);
             npc.Root.SetActive(false);
-            UnityEngine.Object.Destroy(npc.Root);
+            // A chair or bed lets go of its NPC 0.2 s after the activity stops (also one an order stopped just
+            // before) and touches its object then.
+            UnityEngine.Object.Destroy(npc.Root, 0.5f);
         }
         if (npc.Clone != null)
             UnityEngine.Object.Destroy(npc.Clone);
+    }
+
+    private static readonly AccessTools.FieldRef<Sleep, NPCController> BedSleeper = AccessTools.FieldRefAccess<Sleep, NPCController>("currentNpc");
+
+    // A sit or sleep keeps its chair or bed taken until the activity stops. A bed only frees itself 0.2 s
+    // later, and a save in between (a level change saves at once) would keep it taken, so it is freed here.
+    private static void LetGoOfSeat(ModNpc npc)
+    {
+        var controller = npc.Info != null ? npc.Info.npcController : null;
+        if (controller == null)
+            return;
+        try
+        {
+            if (controller.Data?.state?.CurrentActivity != null)
+                controller.ForceStopActivity();
+            foreach (var bed in UnityEngine.Object.FindObjectsByType<Sleep>(FindObjectsSortMode.None))
+            {
+                if (BedSleeper(bed) == controller)
+                    bed.SetOccupied(false);
+            }
+        }
+        catch (Exception e)
+        {
+            NpcsLog.Failed("Letting go of a mod NPC's seat", e);
+        }
     }
 
     private static void Configure(GameObject go, NPCInfo info, Character template, Character body, Character clone, bool keepDialogue)

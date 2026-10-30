@@ -47,6 +47,22 @@ internal sealed class NpcOrder
     /// <summary>The game activity a sit or sleep order runs, or null for walking orders.</summary>
     public Activity Activity;
 
+    /// <summary>The sitting or lying pose the order plays once the NPC is in place, or null.</summary>
+    public AnimationPlayback Pose;
+
+    /// <summary>The pose was looked for (found or not), so it isn't looked for every frame.</summary>
+    public bool PoseTried;
+
+    public float PoseStarted;
+
+    /// <summary>A lying body was laid on its bed.</summary>
+    public bool Fitted;
+
+    /// <summary>The body model moved onto the bed, and where it was, to put it back when the order ends.</summary>
+    public Transform Model;
+    public Vector3 ModelPosition;
+    public Quaternion ModelRotation;
+
     /// <summary>Waiting for a freshly spawned NPC's controller to start.</summary>
     public bool Pending;
 

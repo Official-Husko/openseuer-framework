@@ -168,7 +168,10 @@ internal static partial class NpcOrders
         var all = Orders.ToArray();
         Orders.Clear();
         foreach (var order in all)
+        {
+            DropPose(order);
             Report(order, false);
+        }
     }
 
     private static void Advance(NpcOrder order)
@@ -202,6 +205,8 @@ internal static partial class NpcOrders
         {
             if (current != order.Activity || !order.Activity.running)
                 Finish(order, false);
+            else
+                KeepPose(order);
             return;
         }
         if (current != null && current.running)
@@ -233,6 +238,7 @@ internal static partial class NpcOrders
     private static void Finish(NpcOrder order, bool success)
     {
         Orders.Remove(order);
+        DropPose(order);
         Stop(order);
         Report(order, success);
     }

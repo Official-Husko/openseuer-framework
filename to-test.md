@@ -512,3 +512,14 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 - [ ] **Looks:** `PlayerLook.ApplyToPlayer(PlayerLook.Random())` gives a new random look (screenshot); `Random(male: false)` gives a female body.
 - [ ] **Day length:** `TimeControl.DayLengthMinutes` is 96 in the tenement. (The `ModSaves.Peek` half of this item passed on Slot2 on 2026-10-30, see area 13.)
 - [ ] **Conversations:** `Conversations.StartRaw(title, conversant, actor)` with two NPC transforms runs a conversation between them.
+
+## 16. Bug reports (2026-10-30)
+
+Checked on Linux through Proton already: the Report page (screenshots), `report` and `report all` in the F1 console (34 ms on the main thread, the zip on a worker), `report folder` (Wine's file browser opens on ObenLoader/reports), `oben report --all --json`, the last crash and the save in both, no user name, Steam id or address left in any text file, system.json with Wine 11.0 and the Linux kernel. Still open:
+
+- [ ] **Windows:** a report on real Windows says Windows with no Wine line, `report folder` opens Explorer, and the user name in `C:\Users\<name>` is hidden everywhere.
+- [ ] **Report on GitHub:** once the templates are on GitHub, the button opens the bug form with the ObenseuerExtended version, game version, system and the ticked PC parts filled in.
+- [ ] **BepInEx:** with BepInEx 5 and a plugin or two in a test copy of the game, the summary lists them with GUID, version and hash, and the form's BepInEx field is filled.
+- [ ] **A real crash:** after the game crashes, the next report has its Crash_ folder (crash.dmp and Player.log) and the "Last crash" line.
+- [ ] **Too big:** with a big save and long logs, a zip over 25 MB says so on the page and in the console.
+

@@ -42,6 +42,7 @@ public sealed class UIKitMod : ObenMod
         ModMenu.AddPage(this, HotkeysPage.Create());
         ModMenu.AddPage(this, WhatsNewPage.Create());
         ModMenu.AddPage(this, ErrorsPage.Create());
+        ModMenu.AddPage(this, ReportPage.Create());
 
         var config = LoadConfig<KitConfig>();
         Settings = config.Value;

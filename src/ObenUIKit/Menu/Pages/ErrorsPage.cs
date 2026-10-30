@@ -43,12 +43,13 @@ internal static class ErrorsPage
 
         var colors = Colors();
         ui.Label(problems.Count == 0 ? "Nothing has gone wrong this session." : Plural(problems.Count, "problem") + " this session.");
-        ui.Label("Bug report? Attach ObenLoader/logs/errors.log. It holds this list with the game and mod versions.", muted: true);
+        ui.Label("Bug report? Make a report on the Report page and attach it: it holds this list, the logs and the versions.", muted: true);
 
         LabelHandle status = null;
         ui.Row(r =>
         {
-            r.Button("Copy report", () =>
+            r.Button("Make a bug report", () => ModMenu.Open(ReportPage.Title));
+            r.Button("Copy list", () =>
             {
                 GUIUtility.systemCopyBuffer = ErrorReport.Text();
                 status.Text = "Copied. Paste it into your bug report.";

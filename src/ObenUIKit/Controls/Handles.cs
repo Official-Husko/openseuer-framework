@@ -18,6 +18,9 @@ public sealed class LabelHandle
     /// <summary>The label's own rect.</summary>
     public RectTransform Rect => _text.rectTransform;
 
+    /// <summary>False once its window closed or rebuilt; a callback that comes later checks this before writing.</summary>
+    public bool Alive => _text != null;
+
     /// <summary>
     /// The text color, given the usual way (as an image editor shows it); it is drawn to match, even though the
     /// game renders in linear space.

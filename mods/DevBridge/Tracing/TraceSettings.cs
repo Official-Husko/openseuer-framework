@@ -26,11 +26,30 @@ public sealed class TraceSettings
     public bool PatchHandlers;
 
     /// <summary>
+    /// Also trace the mods' non-public methods (their internals: save and event plumbing, helpers), within the
+    /// filter. Many more calls; narrow the filter first.
+    /// </summary>
+    [Description("Also trace the non-public methods of those mods, their internals, within the filter. Many more calls; narrow the filter first.")]
+    public bool NonPublic;
+
+    /// <summary>
     /// Copy every line the mods and the loader log (debug lines too with verbose logging) into the trace as
     /// a mark, so log and calls read in order.
     /// </summary>
     [Description("Copy log lines from the mods and the loader into the trace, so the log and the calls read in order. Debug lines are included when verbose logging is on.")]
     public bool MirrorLog = true;
+
+    /// <summary>At most this many log lines a second are copied into the trace; the rest are counted in a mark.</summary>
+    [Description("At most this many log lines a second are copied into the trace. The rest are counted.")]
+    public int MirrorLinesPerSecond = 200;
+
+    /// <summary>Verbose logging while a trace runs, so debug lines reach the logs and the trace; put back when it stops.</summary>
+    [Description("Turn verbose logging on while a trace runs, so debug lines reach the logs and the trace. It is put back when the trace stops.")]
+    public bool VerboseLog = true;
+
+    /// <summary>Write the trace as text to ObenLoader/logs/trace.log when it stops.</summary>
+    [Description("When a trace stops, write it as text to ObenLoader/logs/trace.log.")]
+    public bool WriteFile = true;
 
     /// <summary>How many records are kept; older ones go first.</summary>
     [Description("How many trace records are kept. Older records are dropped first.")]

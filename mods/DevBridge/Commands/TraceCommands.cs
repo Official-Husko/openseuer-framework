@@ -17,7 +17,7 @@ internal static class TraceCommands
     private const int RefusedShown = 30;
 
     [BridgeCommand("trace.start", "Start (or restart) the framework API call tracer, optionally with a new filter or set of mods.",
-        Params = new[] { "filter?: comma-separated type name or namespace prefixes, e.g. Quest,GlobalFlags; empty traces everything", "mods?: comma-separated mod ids whose API is traced, default ObenFramework", "handlers?: also trace those mods' patch handlers (true/false, kept until changed)" })]
+        Params = new[] { "filter?: comma-separated type name or namespace prefixes, e.g. Quest,GlobalFlags; empty traces everything", "mods?: comma-separated mod ids whose API is traced, default ObenFramework", "handlers?: also trace those mods' patch handlers (true/false, kept until changed)", "internals?: also trace their non-public methods (true/false, kept until changed)" })]
     private static object Start(JObject p)
     {
         var trace = Feature();
@@ -28,6 +28,8 @@ internal static class TraceCommands
             settings.Mods = Split(p.Str("mods", ""));
         if (p["handlers"] != null)
             settings.PatchHandlers = p.Bool("handlers", false);
+        if (p["internals"] != null)
+            settings.NonPublic = p.Bool("internals", false);
         trace.SaveSettings();
 
         if (trace.Enabled)
@@ -45,6 +47,13 @@ internal static class TraceCommands
         var status = Status(trace);
         status["top"] = Top(10);
         return status;
+    }
+
+    [BridgeCommand("trace.save", "Write what the tracer recorded to ObenLoader/logs/trace.log as text, one line per record, calls indented by depth. Stopping a trace does this too.")]
+    private static object Save(JObject p)
+    {
+        string path = Feature().WriteText();
+        return new JObject { ["written"] = path != null, ["path"] = path };
     }
 
     [BridgeCommand("trace.list", "Recorded calls (oldest first), markers and 'more' notes for calls left out, with the most called methods. Pass the returned 'next' as 'after' to get only new records.",
@@ -88,6 +97,7 @@ internal static class TraceCommands
             ["mods"] = new JArray(trace.Settings.Mods?.ToArray() ?? new string[0]),
             ["missingMods"] = new JArray(trace.Missing.ToArray()),
             ["handlers"] = trace.Settings.PatchHandlers,
+            ["internals"] = trace.Settings.NonPublic,
             ["selected"] = trace.Selected,
             ["patched"] = TraceHooks.Patched,
             ["patchMs"] = TraceHooks.PatchMs,

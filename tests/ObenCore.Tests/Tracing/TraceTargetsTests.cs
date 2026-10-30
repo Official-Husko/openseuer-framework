@@ -120,6 +120,27 @@ namespace ObenCore.Tests.Tracing
         }
 
         [Fact]
+        public void NonPublicAddsInternalTypesAndMethods()
+        {
+            var names = TraceTargets.Select(Types, "", nonPublic: true).Select(TraceFormat.Method).ToList();
+            Assert.Contains("SampleClock.Hidden", names);
+            Assert.Contains("SampleInternal.Run", names);
+            Assert.Contains("SampleClock.Add", names);
+            // Compiler-made code, generic types and the instance getters still stay out.
+            Assert.DoesNotContain(names, n => n.IndexOf('<') >= 0);
+            Assert.DoesNotContain("SampleBox.Put", names);
+            Assert.DoesNotContain("SampleTask.Title", names);
+            Assert.DoesNotContain("SampleClock.Hidden", Names(""));
+        }
+
+        [Fact]
+        public void TheTracerNeverTracesItself()
+        {
+            var own = TraceTargets.TypesOf(typeof(TraceTargets).Assembly).Where(t => t.Namespace == typeof(TraceTargets).Namespace);
+            Assert.Empty(TraceTargets.Select(own, "", nonPublic: true));
+        }
+
+        [Fact]
         public void NoAccessorOfAnInstanceTypeButItsSetters()
         {
             var methods = TraceTargets.Select(new[] { typeof(SampleTask) }, "");

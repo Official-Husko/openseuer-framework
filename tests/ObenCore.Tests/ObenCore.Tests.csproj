@@ -169,6 +169,7 @@
     <Compile Include="../../mods/DevBridge/Tracing/TraceBook.cs" Link="Linked/DevBridge/TraceBook.cs" />
     <Compile Include="../../mods/DevBridge/Tracing/TraceTargets.cs" Link="Linked/DevBridge/TraceTargets.cs" />
     <Compile Include="../../mods/DevBridge/Tracing/TraceHooks.cs" Link="Linked/DevBridge/TraceHooks.cs" />
+    <Compile Include="../../mods/DevBridge/Tracing/TraceText.cs" Link="Linked/DevBridge/TraceText.cs" />
     <Compile Include="../../src/ObenLoader/Unpatching.cs" Link="Linked/Unpatching.cs" />
     <!-- ObenUIKit: where mod buttons go on the main menu and how the keyboard moves between them. -->
     <Compile Include="../../src/ObenUIKit/Menu/MainMenu/MainMenuSlots.cs" Link="Linked/Kit/MainMenuSlots.cs" />

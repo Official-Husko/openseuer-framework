@@ -9,27 +9,33 @@ namespace DevBridge.Tracing;
 /// <summary>
 /// Picks the methods to trace: the public API of the given types. That is every public method of a public
 /// type, the setters, and the getters of static classes (GameClock.Hour is an API call; QuestTask.Title is
-/// just data). Left out: generic methods and types, data snapshot types (names ending in Info or Args),
-/// events, operators, ToString/Equals/GetHashCode, abstract and extern methods, and by-ref returns, which
-/// Harmony can't wrap. No Unity types, so it is unit tested on its own.
+/// just data). With non-public on, the internal types and the private and internal methods come too, as the
+/// reference traced the framework's save and event plumbing. Left out: generic methods and types, data
+/// snapshot types (names ending in Info or Args), compiler-made code (lambdas, iterators), events,
+/// operators, ToString/Equals/GetHashCode, abstract and extern methods, by-ref returns, which Harmony can't
+/// wrap, and the tracer itself. No Unity types, so it is unit tested on its own.
 /// </summary>
 public static class TraceTargets
 {
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+    private const BindingFlags AllDeclared = Declared | BindingFlags.NonPublic;
     private static readonly string[] DataSuffixes = { "Info", "Args" };
     private static readonly string[] ObjectMethods = { "ToString", "Equals", "GetHashCode", "GetType", "Finalize" };
 
-    /// <summary>The traceable methods of <paramref name="types"/> whose type matches <paramref name="filter"/>.</summary>
-    public static List<MethodInfo> Select(IEnumerable<Type> types, string filter)
+    /// <summary>
+    /// The traceable methods of <paramref name="types"/> whose type matches <paramref name="filter"/>; with
+    /// <paramref name="nonPublic"/> the internal types and non-public methods too.
+    /// </summary>
+    public static List<MethodInfo> Select(IEnumerable<Type> types, string filter, bool nonPublic = false)
     {
         var found = new List<MethodInfo>();
         var parts = Filter(filter);
         foreach (var type in types)
         {
-            if (type == null || !Eligible(type) || !Matches(type, parts))
+            if (type == null || !Eligible(type, nonPublic) || !Matches(type, parts))
                 continue;
             bool staticClass = type.IsAbstract && type.IsSealed;
-            foreach (var method in type.GetMethods(Declared))
+            foreach (var method in type.GetMethods(nonPublic ? AllDeclared : Declared))
             {
                 if (Traceable(method, staticClass))
                     found.Add(method);
@@ -98,9 +104,11 @@ public static class TraceTargets
         return false;
     }
 
-    private static bool Eligible(Type type)
+    private static bool Eligible(Type type, bool nonPublic)
     {
-        if (!IsPublic(type) || type.IsGenericType || type.IsInterface || type.IsEnum)
+        if ((!nonPublic && !IsPublic(type)) || type.IsGenericType || type.IsInterface || type.IsEnum)
+            return false;
+        if (type.Namespace == typeof(TraceTargets).Namespace)
             return false;
         if (typeof(Delegate).IsAssignableFrom(type) || typeof(Attribute).IsAssignableFrom(type))
             return false;

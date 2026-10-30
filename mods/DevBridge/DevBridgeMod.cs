@@ -1,5 +1,7 @@
+using DevBridge.Commands;
 using DevBridge.Server;
 using DevBridge.Tracing;
+using ObenFramework.Console;
 using ObenFramework.Features;
 using ObenLoader;
 
@@ -31,6 +33,7 @@ public sealed class DevBridgeMod : ObenMod
         trace.Save();
         ApiTrace.Instance = new ApiTrace(trace);
         ModFeatures.Register(this, ApiTrace.Instance);
+        GameConsole.Register(this, TraceConsole.Name, TraceConsole.Usage, TraceConsole.Run);
     }
 
     public override void OnUnload()

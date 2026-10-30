@@ -236,13 +236,17 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
 - [ ] **Items of removed mods [save]:** with a save holding a mod's items and that mod removed, the Player and world part lists the stacks, and removing them (asks first) clears them from the inventory and the open containers.
 - [ ] **NPCs part [save]:** the relationships (pick one, set the disposition, the target follows), and Kill it (asks first; the NPC stays dead in the save).
 - [ ] **Developer menu [save]:** any change made from the menu marks the save in `mods/CheatMenu.dev.json`.
-- [ ] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true).
+- [x] **Reopened task:** finish `DevBridge.test`, then set it Active from the dev menu. `oben eval "TaskController.instance.TaskFinished(\"DevBridge.test\") + \" \" + TaskController.instance.TaskActive(\"DevBridge.test\")"` gives `False True` (fixed: both were true). Passed 2026-10-30: `True False` after Finished, `False True` after Active.
 - [ ] **Third person in a tight spot:** in third person, walk into a real first-person camera trigger. The camera goes in, a "has to stay in first person" toast shows once, and the camera goes back out after the trigger.
-- [ ] **Tracer:**
-  - `trace.start filter=Quest,GlobalFlags`: `patched` about 58, `refused` 0.
-  - Use the dev menu's quest and flag parts; `trace.list` shows records with `from: "CheatMenu"`.
-  - `trace.stop`, then `trace.start` with no filter: `patched` about 1618. Note `patchMs`.
-  - `trace.stop` says `active: false`, and the earlier records are still readable.
+- [x] **Tracer:** passed 2026-10-30.
+  - `trace on Quest,GlobalFlags` in the F1 console: 58 methods, 0 refused, 121 ms.
+  - The dev menu's flag and quest buttons show up in `trace.list` with `from: "CheatMenu"` (`QuestLog.Available` takes 15 to 17 ms a call).
+  - The trace opens with marks for the mods loaded, what was patched before it (485 methods, the tracer's own left out) and the state (`day 0 18:13, player at (97.5, -89.9, 23.5), saving no, loading no`).
+  - `LogHub.Verbose` is true while it runs and false after; `trace off` writes `ObenLoader/logs/trace.log` with nested calls indented.
+  - `trace.start filter=ObenFramework.Clock internals=true`: 79 methods instead of 41, `TimeControlPatches.Prefix` x1636 collapsed into "more" records.
+  - With `MirrorLinesPerSecond` at 20, 50 log lines give 20 marks and "30 log lines left out of the trace (more than 20 a second)".
+  - No filter: 1853 methods in 4886 ms; `trace.stop` says `active: false` and the earlier records are still readable.
+- [ ] **Tracer marks on a real save:** with a trace on, save and load a game: the "game saved" and "save loaded" marks carry the day, the position and the save gate.
 - [x] **Tracer, patches:** (2026-10-29: all as expected.)
   - `trace.start filter=ObenFramework.Clock handlers=true` picks one more method than `handlers=false` (42 and 41), and `trace.list` shows `TimeControlPatches.Prefix` called every frame.
   - With a trace running, `features.set mod=PerformanceFixes id=TimerSnapshot enabled=false`, then `enabled=true`: `trace.list` has the mark `patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`.

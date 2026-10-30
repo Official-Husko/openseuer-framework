@@ -110,28 +110,33 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `housing.apartments`, `housing.evict`, `tenants.list`, `tenants.check`, `tenants.rent`, `tenants.event`, `hotels.list`, `hotels.rent`, `renovations.list`, `mailboxes.list`, `lockers.list`, `trash.list` | see [framework/housing.md](framework/housing.md) | the tenement, tenants, hotels, renovations, mail boxes, trash |
 | `coop.status`, `coop.presence`, `coop.lobbies` | | see [coop.md](coop.md): the co-op session with roster, ping, traffic, lobby and Steam; every other player's area and pose now; the last lobby list |
 | `script.run`, `script.reset`, `script.list` | | used by `oben run` / `oben eval` |
-| `trace.start`, `trace.stop`, `trace.list` | `filter?`, `mods?`, `handlers?`; `after?`, `max?`, `method?`, `top?`, `clear?` | the API call tracer (below) |
+| `trace.start`, `trace.stop`, `trace.list`, `trace.save` | `filter?`, `mods?`, `handlers?`, `internals?`; `after?`, `max?`, `method?`, `top?`, `clear?` | the API call tracer (below) |
 | `patches.list` | `mod?`, `method?` | how many methods each mod (Harmony id) patches; with `mod`, each of its patched methods with its handlers and who else patches it |
 
 Other mods can add commands: `ModRegistry.Get<DevBridgeMod>().Commands.Add(this, "my.command", "What it does", new[] { "param: meaning" }, p => ...)`. They're removed when that mod unloads.
 
 ### API call tracer
 
-The bridge can record every call into the framework's public API: arguments, result or exception, time taken, nesting depth, thread, and the mod that made the call, with markers for scene loads, saves, loads, every patch that goes on or fails (`patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`) and every line the mods log (`log Warning [MyMod] ...`, like the reference's debug mode mirrors its log; `MirrorLog` in `trace.json` switches that off) in between. It is the `DevBridge/ApiTrace` feature, off by default, ported from the reference framework's `CoreDebugTrace` (NomadsReach, MIT). While it is off nothing is patched.
+The bridge can record every call into the framework's public API: arguments, result or exception, time taken, nesting depth, thread, and the mod that made the call, with markers in between for scene loads, saves and loads (each with the day and time, the player's position and whether a save or load runs), every patch that goes on or fails (`patch on: PerformanceFixes TimeOfDayAzure.UpdateTimers (prefix)`) and every line the mods log (`log Warning [MyMod] ...`, like the reference's debug mode mirrors its log; `MirrorLog` in `trace.json` switches that off, and at most `MirrorLinesPerSecond`, 200, get in, the rest counted in a mark). A trace starts with marks for the mods loaded, what each Harmony id had patched already (the reference's plugin list and patch dump) and the game's state. It is the `DevBridge/ApiTrace` feature, off by default, ported from the reference framework's `CoreDebugTrace` (NomadsReach, MIT). While it is off nothing is patched.
 
 ```sh
 oben call trace.start filter=Quest,GlobalFlags     # trace QuestLog, QuestAuthoring, GlobalFlags...; no filter traces everything
 oben call trace.list max=50                        # what was recorded; pass the returned "next" as after= to get only new records
 oben call trace.list method=QuestLog.Start after=120
-oben call trace.stop                               # takes the patches off; trace.list still reads what was recorded
+oben call trace.stop                               # takes the patches off and writes ObenLoader/logs/trace.log; trace.list still reads what was recorded
 ```
 
-- `filter` is a comma-separated list of type name or namespace prefixes (`Quest`, `ObenFramework.Housing`). Without one the whole public API is traced: about 1600 framework methods, which takes a few seconds to patch. `mods` picks whose API is traced (mod ids, default `ObenFramework`; `ObenFramework,ObenUIKit` adds the kit). Both are kept in `Mods/DevBridge/trace.json`, with the buffer size and the per-method limit.
+In the F1 console: `trace on [filter]` starts it (no filter traces everything), `trace off` stops it, `trace status` says what runs and what is called most, `trace save` writes the file without stopping.
+
+- `filter` is a comma-separated list of type name or namespace prefixes (`Quest`, `ObenFramework.Housing`). Without one the whole public API is traced: about 1850 framework methods, which takes about 5 seconds to patch. `mods` picks whose API is traced (mod ids, default `ObenFramework`; `ObenFramework,ObenUIKit` adds the kit). Both are kept in `Mods/DevBridge/trace.json`, with the buffer size and the per-method limit.
 - What counts as API: public methods of public types, property setters, and the getters of static classes (`GameClock.Hour`). Instance getters (data like `QuestTask.Title`), events, operators, generic methods and types, and types whose names end in Info or Args are left out. Methods Harmony refuses are listed in `refusedNames`.
+- `internals=true` also traces the traced mods' non-public methods and internal types (the save and event plumbing the reference traced too), within the filter. Many more calls: narrow the filter first. It stays set until `internals=false`.
 - `handlers=true` also traces the traced mods' patch handlers, the prefixes and postfixes they put on game methods (private ones too, the filter applying to the handler's class), and adds handlers that go on while the trace runs. `trace.start filter=ObenFramework.Clock handlers=true` shows `TimeControlPatches.Prefix` running every frame. It stays set until `handlers=false`.
 - A method's first 20 calls in each 10 seconds are kept in full; the rest are counted, and a `"kind": "more"` record says how many were left out and shows the last one's arguments and result, so something called every frame can't flood the buffer (2000 records, oldest dropped first). Calls that throw are always kept. `top` lists the most called methods with average and longest time.
 - Records are flat JSON: `seq`, `kind` (`call`, `more`, `mark`), `t` (seconds since the tracer's clock started), `frame`, `method`, `args`, `result` or `error`, `ms`, `depth` (0 for a call made from outside the traced API), `thread` (only off the main thread) and `from` (the mod that made a top-level call).
 - Starting and stopping switch the feature, so the choice shows on the Mods page and survives a restart (the next launch traces again until `trace.stop`). Hot reloading the framework or the bridge patches the new copy.
+- While a trace runs, verbose logging is on (`VerboseLog` in `trace.json`), so debug lines reach the logs and the trace and repeated errors aren't held back; it is put back when the trace stops, unless it was switched on by hand meanwhile.
+- When a trace stops (`WriteFile`), or on `trace.save`, the records go to `ObenLoader/logs/trace.log` as text, one line each like the reference's debug log: time and frame, calls indented two spaces per nesting level with `[thread N]` off the main thread and `from Mod`, marks after `---`, and the most called methods at the end.
 - Unity objects in arguments are shown by type and name on the main thread and by type alone elsewhere. Tracing slows every traced call a little; leave it off for normal play.
 
 ## Scripts

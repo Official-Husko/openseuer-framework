@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using ObenFramework.Events;
 using ObenFramework.Features;
@@ -15,10 +16,13 @@ namespace DevBridge.Tracing;
 /// <summary>
 /// The API call tracer: while this feature is on, every call into the public API of the chosen mods (the
 /// framework by default) is recorded with its arguments, result or exception, time taken, nesting depth,
-/// thread and the mod that made it, and scene loads, saves, loads and every patch that goes on or fails are
-/// marked in between. With PatchHandlers on, the mods' patch handlers are traced too. trace.start,
-/// trace.stop and trace.list drive and read it over the bridge. Off by default: patching the whole framework
-/// takes a few seconds, and every traced call costs a little while it is on. Off, nothing is patched.
+/// thread and the mod that made it, and scene loads, saves and loads (with the day, the player's position and
+/// the save gate), every patch that goes on or fails and the log lines are marked in between; a trace starts
+/// with the mods loaded and what was patched already. With PatchHandlers on, the mods' patch handlers are
+/// traced too, with NonPublic their internals. Verbose logging is on while it runs, and stopping writes the
+/// trace as text to logs/trace.log. trace.start, trace.stop, trace.list and trace.save drive and read it over
+/// the bridge, "trace" in the F1 console too. Off by default: patching the whole framework takes a few seconds,
+/// and every traced call costs a little while it is on. Off, nothing is patched.
 /// </summary>
 internal sealed class ApiTrace : ModFeature
 {
@@ -28,6 +32,8 @@ internal sealed class ApiTrace : ModFeature
     private readonly ConfigFile<TraceSettings> _settings;
     private double _nextSweep;
     private List<Assembly> _assemblies;
+    private LogLevel? _levelBefore;
+    private static LineGate _lines;
 
     public ApiTrace(ConfigFile<TraceSettings> settings) => _settings = settings;
 
@@ -57,7 +63,7 @@ internal sealed class ApiTrace : ModFeature
         _assemblies = assemblies;
         var methods = new List<MethodInfo>();
         foreach (var assembly in assemblies)
-            methods.AddRange(TraceTargets.Select(TraceTargets.TypesOf(assembly), settings.Filter));
+            methods.AddRange(TraceTargets.Select(TraceTargets.TypesOf(assembly), settings.Filter, settings.NonPublic));
         if (settings.PatchHandlers)
             methods.AddRange(TraceTargets.Handlers(PatchEvents.InstalledHandlers(), assemblies, settings.Filter));
         Selected = methods.Count;
@@ -72,19 +78,29 @@ internal sealed class ApiTrace : ModFeature
         var book = new TraceBook(settings.Capacity, settings.LinesPerWindow, settings.WindowSeconds);
         TraceHooks.Start(methods, assemblies, book, Owner.Log.Warn);
         string summary = $"tracing {TraceHooks.Patched} methods of {string.Join(", ", settings.Mods)}"
+            + (settings.NonPublic ? " with their internals" : "")
             + (settings.PatchHandlers ? " with their patch handlers" : "")
             + (string.IsNullOrWhiteSpace(settings.Filter) ? "" : $" matching '{settings.Filter}'")
             + $", patched in {TraceHooks.PatchMs} ms, {TraceHooks.Refused.Count} refused";
         book.AddMark(summary, TraceHooks.Now, Time.frameCount);
+        foreach (string line in TraceMarks.Snapshot())
+            Mark(line);
+        Mark("state: " + TraceMarks.State());
         Owner.Log.Info("API trace on: " + summary + ".");
+        if (settings.VerboseLog && !LogHub.Verbose)
+        {
+            _levelBefore = LogHub.MinFileLevel;
+            LogHub.MinFileLevel = LogLevel.Debug;
+        }
 
-        GameEvents.SceneLoaded.Subscribe(this, scene => Mark("scene loaded: " + scene));
-        GameEvents.Saved.Subscribe(this, folder => Mark("game saved"));
-        GameEvents.Loaded.Subscribe(this, () => Mark("save loaded"));
+        GameEvents.SceneLoaded.Subscribe(this, scene => Mark($"scene loaded: {scene} ({TraceMarks.State()})"));
+        GameEvents.Saved.Subscribe(this, folder => Mark($"game saved ({TraceMarks.State()})"));
+        GameEvents.Loaded.Subscribe(this, () => Mark($"save loaded ({TraceMarks.State()})"));
         PatchEvents.Installed += OnPatch;
         Track(Disposable.Create(() => PatchEvents.Installed -= OnPatch));
         if (settings.MirrorLog)
         {
+            _lines = new LineGate(settings.MirrorLinesPerSecond);
             LogHub.LineWritten += OnLogLine;
             Track(Disposable.Create(() => LogHub.LineWritten -= OnLogLine));
         }
@@ -95,6 +111,9 @@ internal sealed class ApiTrace : ModFeature
     private static void OnLogLine(LogLevel level, string source, string message)
     {
         if (!TraceHooks.Active || level < LogHub.MinFileLevel || message == null)
+            return;
+        var gate = _lines;
+        if (gate != null && !gate.Take(TraceHooks.Now))
             return;
         int end = message.IndexOf('\n');
         string first = end < 0 ? message : message.Substring(0, end);
@@ -121,6 +140,9 @@ internal sealed class ApiTrace : ModFeature
             return;
         _nextSweep = now + SweepSeconds;
         TraceHooks.Book?.Sweep(now);
+        long dropped = _lines?.TakeDropped() ?? 0;
+        if (dropped > 0)
+            Mark($"{dropped} log lines left out of the trace (more than {_settings.Value.MirrorLinesPerSecond} a second)");
     }
 
     protected override void OnDisable()
@@ -128,6 +150,13 @@ internal sealed class ApiTrace : ModFeature
         int patched = TraceHooks.Patched;
         TraceHooks.Stop();
         TraceHooks.Book?.AddMark("trace stopped", TraceHooks.Now, Time.frameCount);
+        _lines = null;
+        // Put back only what the trace changed: verbose logging switched on by hand in the meantime stays.
+        if (_levelBefore.HasValue && LogHub.MinFileLevel == LogLevel.Debug)
+            LogHub.MinFileLevel = _levelBefore.Value;
+        _levelBefore = null;
+        if (_settings.Value.WriteFile)
+            WriteText();
         TraceFormat.Describe = null;
         var top = TraceHooks.Book?.Top(5);
         var lines = new List<string>();
@@ -140,6 +169,31 @@ internal sealed class ApiTrace : ModFeature
     }
 
     private void Mark(string text) => TraceHooks.Book?.AddMark(text, TraceHooks.Now, Time.frameCount);
+
+    /// <summary>Writes what the trace holds to logs/trace.log (trace-2.log for a second copy of the game). Returns the path, or null.</summary>
+    internal string WriteText()
+    {
+        var book = TraceHooks.Book;
+        if (book == null)
+            return null;
+        string path = Path.Combine(LoaderPaths.LogsDir, "trace" + ObenLoader.Runtime.Instance.Suffix + ".log");
+        try
+        {
+            book.Sweep(TraceHooks.Now);
+            using (var writer = new StreamWriter(path, false))
+            {
+                TraceText.Write(writer, $"API trace, written {System.DateTime.Now:yyyy-MM-dd HH:mm:ss}; times are seconds on the tracer's clock, which starts with the first trace of the session.",
+                    book.Read(0, int.MaxValue), book.Top(20));
+            }
+            Owner.Log.Info("Wrote the trace to " + path + ".");
+            return path;
+        }
+        catch (System.Exception e)
+        {
+            Owner.Log.Warn($"Couldn't write {path}: {e.Message}");
+            return null;
+        }
+    }
 
     private List<Assembly> Assemblies(TraceSettings settings)
     {

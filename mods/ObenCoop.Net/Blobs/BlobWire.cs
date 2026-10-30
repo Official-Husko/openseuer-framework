@@ -6,7 +6,7 @@ namespace ObenCoop.Net.Blobs;
 // session envelope already says who sent them. Every packet starts with a kind byte and the
 // transfer id (the sender's number). Changing any of this changes Protocol.Version.
 //
-//   Open            sender to receiver  channel, flags, size, wire size, chunk size, window, crc, name
+//   Open            sender to receiver  channel key, flags, size, wire size, chunk size, window, crc, name
 //   Chunk           sender to receiver  index, bytes
 //   Ack             receiver to sender  chunks received so far (0 means "accepted, go ahead")
 //   Done            receiver to sender  the data arrived and checked out
@@ -43,7 +43,7 @@ internal static class BlobWire
 
     public static void WriteOpen(MessageWriter w, BlobStatus s, uint crc)
     {
-        w.WriteByte(s.Channel);
+        w.WriteUInt32(s.Key);
         w.WriteByte(s.Compressed ? FlagCompressed : (byte)0);
         w.WriteInt32((int)s.BytesTotal);
         w.WriteInt32(s.WireLength);

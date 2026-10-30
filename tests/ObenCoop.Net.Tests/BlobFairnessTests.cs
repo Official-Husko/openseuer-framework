@@ -54,4 +54,27 @@ public class BlobFairnessTests
         Rig.Until(() => toA.IsFinished, "A's transfer times out", host);
         Assert.Equal(BlobFailure.TimedOut, toA.Failure);
     }
+
+    [Fact]
+    public void OnePlayerCantTakeAllTheRoomForIncomingBlobs()
+    {
+        using var host = Rig.StartHost();
+        using var a = Rig.JoinedClient(host, "A");
+        using var b = Rig.JoinedClient(host, "B", a);
+        a.Options.Blobs.MaxIncomingBytesPerPlayer = 300 * 1024;
+        var log = BlobRig.Listen(a, BlobRig.Files);
+        var toA = BlobRig.Remote(host, a);
+
+        // Noise doesn't compress, so each holds its own 200 KB at A: the second from the host is over A's limit per player.
+        var first = host.Session.Blobs.Send(toA, BlobRig.Files, BlobRig.Noise(200 * 1024, 1));
+        var second = host.Session.Blobs.Send(toA, BlobRig.Files, BlobRig.Noise(200 * 1024, 2));
+        var fromB = b.Session.Blobs.Send(BlobRig.Remote(b, a), BlobRig.Files, BlobRig.Noise(200 * 1024, 3));
+
+        Rig.Until(() => first.IsFinished && second.IsFinished && fromB.IsFinished, "all three answered", host, a, b);
+
+        Assert.True(first.Succeeded);
+        Assert.Equal(BlobFailure.Busy, second.Failure);
+        Assert.True(fromB.Succeeded);
+        Assert.Equal(2, log.Received.Count);
+    }
 }

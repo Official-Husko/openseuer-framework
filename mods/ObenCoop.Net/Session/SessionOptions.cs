@@ -15,6 +15,12 @@ public sealed class SessionOptions
     /// <summary>The game's own version. Host and clients must match.</summary>
     public string GameVersion { get; set; } = "";
 
+    /// <summary>
+    /// What tells builds of one game version apart (the game code's hash). Host and clients must match
+    /// when both know it; "" when unknown.
+    /// </summary>
+    public string GameBuild { get; set; } = "";
+
     /// <summary>The mods everyone must share. Null means none.</summary>
     public ModSet Mods { get; set; } = ModSet.Empty;
 

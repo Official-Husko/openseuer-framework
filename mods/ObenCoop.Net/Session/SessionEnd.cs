@@ -22,6 +22,9 @@ public enum RejectReason : byte
 
     /// <summary>The Hello was damaged or never came.</summary>
     BadHello = 6,
+
+    /// <summary>The same game version, but different game files (a beta branch, another store's build, a patched game).</summary>
+    GameBuild = 7,
 }
 
 /// <summary>How a session ended for this game.</summary>
@@ -85,7 +88,7 @@ public static class RejectText
         if (string.IsNullOrEmpty(text))
             return false;
         int colon = text.IndexOf(':');
-        if (colon < 1 || colon > 3 || !int.TryParse(text.Substring(0, colon), out int code) || code < 1 || code > (int)RejectReason.BadHello)
+        if (colon < 1 || colon > 3 || !int.TryParse(text.Substring(0, colon), out int code) || code < 1 || code > (int)RejectReason.GameBuild)
             return false;
         reason = (RejectReason)code;
         message = text.Substring(colon + 1);

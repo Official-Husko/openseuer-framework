@@ -8,7 +8,7 @@ public static class Protocol
     /// starts with its kind byte and this number, so a host can refuse a different version before
     /// trying to read anything else.
     /// </summary>
-    public const int Version = 1;
+    public const int Version = 2;
 
     /// <summary>The default UDP port for a hosted game.</summary>
     public const int DefaultPort = 27890;

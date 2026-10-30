@@ -15,7 +15,7 @@ public sealed class LobbyInfo
     /// <summary>Longest lobby name in characters.</summary>
     public const int MaxNameLength = 32;
 
-    private const byte Format = 1;
+    private const byte Format = 2;
     private const int MaxVersionLength = 64;
 
     /// <summary>Random per hosted lobby, so a list can tell two answers from the same game apart from two games.</summary>
@@ -25,6 +25,9 @@ public sealed class LobbyInfo
     public int Protocol { get; set; } = Session.Protocol.Version;
 
     public string GameVersion { get; set; } = "";
+
+    /// <summary>The host's game build (<see cref="SessionOptions.GameBuild"/>), "" when unknown.</summary>
+    public string GameBuild { get; set; } = "";
 
     /// <summary>The host's <see cref="ModSet.Fingerprint"/>.</summary>
     public uint ModsFingerprint { get; set; }
@@ -61,6 +64,7 @@ public sealed class LobbyInfo
         writer.WriteInt32(Protocol);
         writer.WriteInt64(Id);
         writer.WriteString(Cut(GameVersion, MaxVersionLength));
+        writer.WriteString(Cut(GameBuild, MaxVersionLength));
         writer.WriteUInt32(ModsFingerprint);
         writer.WriteByte((byte)Clamp(ModCount));
         writer.WriteString(Cut(Name, MaxNameLength));
@@ -89,6 +93,7 @@ public sealed class LobbyInfo
                 Protocol = protocol,
                 Id = reader.ReadInt64(),
                 GameVersion = Cut(reader.ReadString(), MaxVersionLength),
+                GameBuild = Cut(reader.ReadString(), MaxVersionLength),
                 ModsFingerprint = reader.ReadUInt32(),
                 ModCount = reader.ReadByte(),
                 Name = Clean(reader.ReadString(), MaxNameLength),

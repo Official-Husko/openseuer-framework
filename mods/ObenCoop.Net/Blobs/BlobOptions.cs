@@ -39,6 +39,12 @@ public sealed class BlobOptions
     /// </summary>
     public long MaxIncomingBytes { get; set; } = 96L * 1024 * 1024;
 
+    /// <summary>
+    /// The part of <see cref="MaxIncomingBytes"/> one player's transfers may hold, so one sender can't
+    /// keep everyone else's blobs out. Big enough for one compressed blob of <see cref="MaxBlobBytes"/>.
+    /// </summary>
+    public long MaxIncomingBytesPerPlayer { get; set; } = 64L * 1024 * 1024;
+
     /// <summary>A transfer that makes no progress for this long fails with a timeout. 0 turns it off.</summary>
     public int StallTimeoutMs { get; set; } = 30000;
 

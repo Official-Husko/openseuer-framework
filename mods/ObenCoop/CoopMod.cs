@@ -65,10 +65,12 @@ public sealed partial class CoopMod : ObenMod
         {
             PlayerId = CoopIdentity.LoadOrCreate(PathTo(CoopIdentity.FileName(Instance.Suffix)), Log),
             GameVersion = Application.version,
+            GameBuild = GameBuild(),
             Log = message => Log.Info(message),
         };
         Direct = new DirectTransport { Log = message => Log.Warn(message) };
         Session = new CoopSession(Direct, options);
+        Session.Router.Error += (channel, e) => Log.Error($"A co-op message on channel {channel} couldn't be handled", e);
         Lobby = new CoopLobby(Session);
         DirectLobby = new DirectLobbyBackend(Direct, options.Clock);
         Lobby.AddBackend(DirectLobby);
@@ -184,6 +186,13 @@ public sealed partial class CoopMod : ObenMod
             return;
         if (!GameSteam.StartAs(this, wanted, out string problem))
             Log.Warn(problem);
+    }
+
+    // The game code's hash tells builds of one version apart (a beta branch, another store's copy).
+    private static string GameBuild()
+    {
+        string hash = Loader.GameCodeHash ?? "";
+        return hash.Length > 16 ? hash.Substring(0, 16) : hash;
     }
 
     private static LobbyVisibility ParseVisibility(string text)

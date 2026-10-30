@@ -105,6 +105,28 @@ public class DirectLobbyTests
     }
 
     [Fact]
+    public void AskingForTheLobbyThisGameIsInAlreadyChangesNothing()
+    {
+        using var host = Host();
+        using var client = new LobbyNode("Client");
+        string code = JoinCode.ForAddress("127.0.0.1", PortOf(host));
+        Assert.True(client.Lobby.Join(code), client.Lobby.Error);
+        Rig.Until(() => client.Lobby.Status == LobbyStatus.Joined, "joined", host.Node, client.Node);
+        var address = host.Lobby.Address;
+
+        Assert.True(host.Lobby.Host(LobbyKind.Direct, "Another name", 0), host.Lobby.Error);
+        Assert.True(client.Lobby.Join(code), client.Lobby.Error);
+        Rig.Settle(200, host.Node, client.Node);
+
+        Assert.Equal(LobbyStatus.Hosting, host.Lobby.Status);
+        Assert.Equal(address, host.Lobby.Address);
+        Assert.Equal("Test game", host.Lobby.Info.Name);
+        Assert.Equal(LobbyStatus.Joined, client.Lobby.Status);
+        Assert.Equal(2, host.Session.Roster.Count);
+        Assert.Empty(host.Node.Left);
+    }
+
+    [Fact]
     public void ADifferentGameVersionIsTurnedDownBeforeConnecting()
     {
         using var host = Host();
@@ -159,7 +181,8 @@ public class DirectLobbyTests
         using var host = Host();
         Assert.False(host.Lobby.Join("127.0.0.1:1"));
         Assert.Contains("hosting", host.Lobby.Error);
-        Assert.False(host.Lobby.Host(LobbyKind.Direct, "again", 0));
+        // The same kind again is what is open already; another kind would be a second game.
+        Assert.True(host.Lobby.Host(LobbyKind.Direct, "again", 0));
         Assert.False(host.Lobby.Host(LobbyKind.Steam, "steam", 0));
         Assert.Contains("Steam", host.Lobby.Error);
         using var other = new LobbyNode("Other");

@@ -41,12 +41,14 @@ public sealed partial class CoopSession
         }
 
         string gameVersion;
+        string gameBuild;
         Guid id;
         string name;
         ModSet mods;
         try
         {
             gameVersion = reader.ReadString();
+            gameBuild = reader.ReadString();
             id = reader.ReadGuid();
             name = reader.ReadString();
             mods = ModSet.Read(reader);
@@ -61,6 +63,13 @@ public sealed partial class CoopSession
         {
             Reject(peer, RejectReason.GameVersion,
                 $"Different game versions: the host runs {Options.GameVersion}, you run {gameVersion}.");
+            return;
+        }
+
+        if (!BuildsMatch(gameBuild, Options.GameBuild))
+        {
+            Reject(peer, RejectReason.GameBuild,
+                $"Different builds of Obenseuer {Options.GameVersion}: the game files differ (a beta branch, another store's copy or a changed file). Both need the same game files.");
             return;
         }
 
@@ -194,4 +203,7 @@ public sealed partial class CoopSession
                 return candidate;
         }
     }
+
+    /// <summary>Builds only count when both sides know theirs.</summary>
+    internal static bool BuildsMatch(string a, string b) => string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b) || a == b;
 }

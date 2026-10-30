@@ -23,8 +23,9 @@ public delegate void BlobHandler(CoopPlayer sender, byte[] data, BlobStatus blob
 /// runs in <see cref="CoopSession.Poll"/>.
 ///
 /// A blob goes to one player (a client's blob to another client is relayed by the host). Receivers
-/// register a handler per blob channel with <see cref="Register"/>; blob channels are their own
-/// numbering, separate from message channels. Any number of transfers can run at once, each with
+/// register a handler per blob channel with <see cref="Register(byte, BlobHandler, Action{BlobStatus}, Action{BlobStatus})"/>;
+/// blob channels are their own numbering, separate from message channels. Mods use named channels
+/// (<see cref="ChannelNames"/>) instead, the same names as for their messages if they like. Any number of transfers can run at once, each with
 /// its id. A transfer fails with a <see cref="BlobFailure"/> when it is cancelled, times out, is
 /// refused or arrives damaged, or when either player leaves; both sides are told. Transfers do not
 /// survive a hot reload of the session.
@@ -35,7 +36,7 @@ public sealed partial class BlobTransfer
     private const int MaxNameLength = 100;
 
     private readonly CoopSession _session;
-    private readonly BlobListener[] _listeners = new BlobListener[256];
+    private readonly Dictionary<uint, BlobListener> _listeners = new Dictionary<uint, BlobListener>();
     private readonly List<BlobStatus> _outgoing = new List<BlobStatus>();
     private readonly Dictionary<long, BlobStatus> _incoming = new Dictionary<long, BlobStatus>();
     private int _lastId;
@@ -66,18 +67,33 @@ public sealed partial class BlobTransfer
     /// result to stop (hand it to the mod's tracker); blobs still arriving on the channel are cancelled.
     /// </summary>
     /// <exception cref="InvalidOperationException">The channel already has a listener.</exception>
-    public IDisposable Register(byte channel, BlobHandler received, Action<BlobStatus> progress = null, Action<BlobStatus> failed = null)
+    public IDisposable Register(byte channel, BlobHandler received, Action<BlobStatus> progress = null, Action<BlobStatus> failed = null) =>
+        Register(channel, "", received, progress, failed);
+
+    /// <summary>The same for a named channel (<see cref="ChannelNames"/>).</summary>
+    /// <exception cref="ArgumentException">The name isn't a valid channel name.</exception>
+    /// <exception cref="InvalidOperationException">The channel already has a listener, or another name has the same key.</exception>
+    public IDisposable Register(string channel, BlobHandler received, Action<BlobStatus> progress = null, Action<BlobStatus> failed = null) =>
+        Register(ChannelNames.Key(channel), channel, received, progress, failed);
+
+    public bool IsRegistered(byte channel) => _listeners.ContainsKey(channel);
+
+    public bool IsRegistered(string channel) => _listeners.ContainsKey(ChannelNames.Key(channel));
+
+    private IDisposable Register(uint key, string name, BlobHandler received, Action<BlobStatus> progress, Action<BlobStatus> failed)
     {
         if (received == null)
             throw new ArgumentNullException(nameof(received));
-        if (_listeners[channel] != null)
-            throw new InvalidOperationException($"Blob channel {channel} already has a listener.");
-        var listener = new BlobListener(this, channel, received, progress, failed);
-        _listeners[channel] = listener;
+        if (_listeners.TryGetValue(key, out var taken))
+        {
+            throw new InvalidOperationException(taken.Name == name
+                ? $"Blob channel {Describe(key, name)} already has a listener."
+                : $"Blob channel '{name}' has the same key as '{taken.Name}'; pick another name.");
+        }
+        var listener = new BlobListener(this, key, name, received, progress, failed);
+        _listeners[key] = listener;
         return listener;
     }
-
-    public bool IsRegistered(byte channel) => _listeners[channel] != null;
 
     /// <summary>Cancels a transfer on both sides. False when it had already finished.</summary>
     public bool Cancel(BlobStatus blob)
@@ -98,9 +114,9 @@ public sealed partial class BlobTransfer
 
     internal void Unregister(BlobListener listener)
     {
-        if (_listeners[listener.Channel] != listener)
+        if (!_listeners.TryGetValue(listener.Key, out var current) || current != listener)
             return;
-        _listeners[listener.Channel] = null;
+        _listeners.Remove(listener.Key);
         // A fresh list: the failure callbacks run user code that may change the transfers.
         var affected = new List<BlobStatus>();
         foreach (var blob in _incoming.Values)
@@ -201,6 +217,8 @@ public sealed partial class BlobTransfer
 
     private static long Key(CoopPlayer sender, int id) => ((long)sender.Slot << 32) | (uint)id;
 
+    private static string Describe(uint key, string name) => name.Length > 0 ? "'" + name + "'" : key.ToString(CultureInfo.InvariantCulture);
+
     private static string Trim(string text) =>
         text != null && text.Length > 300 ? text.Substring(0, 300) : text ?? "";
 
@@ -213,16 +231,18 @@ internal sealed class BlobListener : IDisposable
 {
     private readonly BlobTransfer _owner;
 
-    public BlobListener(BlobTransfer owner, byte channel, BlobHandler received, Action<BlobStatus> progress, Action<BlobStatus> failed)
+    public BlobListener(BlobTransfer owner, uint key, string name, BlobHandler received, Action<BlobStatus> progress, Action<BlobStatus> failed)
     {
         _owner = owner;
-        Channel = channel;
+        Key = key;
+        Name = name;
         Received = received;
         Progress = progress;
         Failed = failed;
     }
 
-    public byte Channel { get; }
+    public uint Key { get; }
+    public string Name { get; }
     public BlobHandler Received { get; }
     public Action<BlobStatus> Progress { get; }
     public Action<BlobStatus> Failed { get; }

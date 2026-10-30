@@ -19,7 +19,7 @@ public sealed partial class BlobTransfer
 
     private void OnOpen(CoopPlayer sender, int id, MessageReader reader)
     {
-        byte channel = reader.ReadByte();
+        uint channel = reader.ReadUInt32();
         byte flags = reader.ReadByte();
         int rawLength = reader.ReadInt32();
         int wireLength = reader.ReadInt32();
@@ -34,11 +34,12 @@ public sealed partial class BlobTransfer
 
         var options = _session.Options.Blobs;
         bool compressed = (flags & BlobWire.FlagCompressed) != 0;
-        var listener = _listeners[channel];
-
-        if (listener == null)
+        if (!_listeners.TryGetValue(channel, out var listener))
         {
-            Refuse(sender, id, BlobFailure.NoHandler, $"Nothing on the other side is listening for blob channel {channel}.");
+            // The receiver can't name a channel it doesn't know: it only has the key.
+            Refuse(sender, id, BlobFailure.NoHandler, channel < 256
+                ? $"Nothing on the other side is listening for blob channel {channel}."
+                : "Nothing on the other side is listening on that channel (a mod missing or switched off there?).");
             return;
         }
         if (rawLength < 0 || wireLength < 0 || window < 1 || chunkSize < 1 || chunkSize > TransportLimits.MaxReliableBytes - ChunkOverhead
@@ -56,13 +57,14 @@ public sealed partial class BlobTransfer
 
         // The compressed bytes are held while they arrive; unpacking needs a second array of the full size.
         long reserve = compressed ? (long)wireLength + rawLength : rawLength;
-        if (_incoming.Count >= options.MaxIncoming || _incomingBytes + reserve > options.MaxIncomingBytes)
+        if (_incoming.Count >= options.MaxIncoming || _incomingBytes + reserve > options.MaxIncomingBytes
+            || HeldFor(sender) + reserve > options.MaxIncomingBytesPerPlayer)
         {
             Refuse(sender, id, BlobFailure.Busy, "The receiver is busy with other transfers; try again in a moment.");
             return;
         }
 
-        var blob = new BlobStatus(this, BlobDirection.Receiving, id, sender, channel, name)
+        var blob = new BlobStatus(this, BlobDirection.Receiving, id, sender, channel, listener.Name, name)
         {
             BytesTotal = rawLength,
             WireBytes = wireLength,
@@ -231,5 +233,17 @@ public sealed partial class BlobTransfer
         {
             _session.Log("A blob handler threw: " + e);
         }
+    }
+
+    // Memory one player's incoming transfers hold right now.
+    private long HeldFor(CoopPlayer sender)
+    {
+        long held = 0;
+        foreach (var blob in _incoming.Values)
+        {
+            if (blob.Peer == sender)
+                held += blob.Reserved;
+        }
+        return held;
     }
 }

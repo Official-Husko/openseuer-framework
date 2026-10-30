@@ -13,6 +13,9 @@ public enum LobbyVerdict
     /// <summary>A different game version.</summary>
     GameVersion,
 
+    /// <summary>The same game version with different game files.</summary>
+    GameBuild,
+
     /// <summary>
     /// The mod fingerprints differ. Joining still goes ahead, because the host's handshake then names
     /// exactly which mods are missing or different; a list shows the mark so nobody is surprised.
@@ -48,6 +51,11 @@ public static class LobbyCheck
             message = $"That game runs Obenseuer {Shown(lobby.GameVersion)}, you run {local.GameVersion}.";
             return LobbyVerdict.GameVersion;
         }
+        if (!CoopSession.BuildsMatch(lobby.GameBuild, local.GameBuild))
+        {
+            message = $"That game runs a different build of Obenseuer {local.GameVersion} (other game files: a beta branch, another store's copy or a changed file).";
+            return LobbyVerdict.GameBuild;
+        }
         if (lobby.IsFull)
         {
             message = "The game is full.";
@@ -76,6 +84,7 @@ public static class LobbyCheck
         LobbyVerdict.Ok => "",
         LobbyVerdict.ProtocolVersion => "other ObenCoop",
         LobbyVerdict.GameVersion => "other game version",
+        LobbyVerdict.GameBuild => "other game build",
         LobbyVerdict.ModSet => "different mods",
         LobbyVerdict.Full => "full",
         LobbyVerdict.Closed => "closed",

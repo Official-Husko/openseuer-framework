@@ -32,7 +32,17 @@ public sealed partial class BlobTransfer
     /// <param name="finished">Called once, in a poll, when the transfer is done or has failed (check the status).</param>
     /// <param name="timeoutMs">Fail the whole transfer after this long; 0 for no limit besides the stall timeout.</param>
     public BlobStatus Send(CoopPlayer target, byte channel, byte[] data, string name = "",
-        Action<BlobStatus> progress = null, Action<BlobStatus> finished = null, int timeoutMs = 0)
+        Action<BlobStatus> progress = null, Action<BlobStatus> finished = null, int timeoutMs = 0) =>
+        Send(target, channel, "", data, name, progress, finished, timeoutMs);
+
+    /// <summary>The same on a named channel (<see cref="ChannelNames"/>): the receiver's listener for that name gets it.</summary>
+    /// <exception cref="ArgumentException">The channel name isn't valid, or the label is too long.</exception>
+    public BlobStatus Send(CoopPlayer target, string channel, byte[] data, string name = "",
+        Action<BlobStatus> progress = null, Action<BlobStatus> finished = null, int timeoutMs = 0) =>
+        Send(target, ChannelNames.Key(channel), channel, data, name, progress, finished, timeoutMs);
+
+    private BlobStatus Send(CoopPlayer target, uint key, string channelName, byte[] data, string name,
+        Action<BlobStatus> progress, Action<BlobStatus> finished, int timeoutMs)
     {
         if (data == null)
             throw new ArgumentNullException(nameof(data));
@@ -40,7 +50,7 @@ public sealed partial class BlobTransfer
             throw new ArgumentException($"A blob name can be at most {MaxNameLength} characters.", nameof(name));
 
         var options = _session.Options.Blobs;
-        var blob = new BlobStatus(this, BlobDirection.Sending, ++_lastId, target, channel, name)
+        var blob = new BlobStatus(this, BlobDirection.Sending, ++_lastId, target, key, channelName, name)
         {
             BytesTotal = data.Length,
             OnProgress = progress,

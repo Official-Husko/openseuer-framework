@@ -62,7 +62,16 @@ session.SendToHost(channel, w);           // the host only
 MessagePool.Return(w);
 ```
 
-Channel ids in use: `Chat = 1`, `Blob = 2` (the session's), `Presence = 3`.
+Channel ids in use: `Chat = 1`, `Blob = 2` (the session's), `Presence = 3`, `Named = 4`.
+
+**Named channels** are for mods: a channel named by a string (`"mymod.doors"`, up to 64 characters, no spaces), so two mods can't pick the same byte by accident. They work the same, with a string where the byte was:
+
+```csharp
+Track(session.Router.Register("mymod.doors", (sender, reader) => { ... }));
+session.Broadcast("mymod.doors", w);     // also SendTo(player, "mymod.doors", w) and SendToHost("mymod.doors", w)
+```
+
+They all travel on `ChannelIds.Named` with the name's 32-bit key in front (`ChannelNames.Key`, FNV-1a over the name, never below 256), so the name itself never goes over the wire and costs 4 bytes a message. Both sides work the key out from the name. Registering a name that is taken, or whose key another name already has, throws. A message for a name nobody here listens on (the other player has a mod feature this one hasn't) is counted in `Router.Dropped` and otherwise ignored; a handler that throws is reported through `Router.Error` with the channel's name. Other mods reach the session through `Coop` (see "For other mods").
 
 `MessageWriter` and `MessageReader` are little-endian binary with byte, bool, uint16, int32, uint32, int64, float, GUID, string (length-prefixed UTF-8, at most 4096 bytes) and raw bytes. Writers and readers come from `MessagePool`, so a steady-state send or receive allocates nothing (a test pins this; reading a string necessarily creates the string). Every read is bounds checked and throws `MessageFormatException` on a short or damaged message; the session drops such packets. The pool is per thread.
 
@@ -71,7 +80,8 @@ Channel ids in use: `Chat = 1`, `Blob = 2` (the session's), `Presence = 3`.
 A reliable packet is at most 64 KB; the host's world is megabytes. `session.Blobs` (`BlobTransfer`, in `Blobs/`) sends a `byte[]` of any size to one player and hands it to a listener on the other side. It is the idea of the reference's `NetBlob` (compress, chunk, CRC, acks, progress) reworked for bytes instead of base64 text, per-player instead of Steam ids, and owned by the session so it dies with it.
 
 ```csharp
-// Receiving: one listener per blob channel (blob channels are their own numbering, not message channels).
+// Receiving: one listener per blob channel (blob channels are their own numbering, not message channels;
+// mods use a name instead: session.Blobs.Register("mymod.world", ...) and Send(player, "mymod.world", ...)).
 Track(session.Blobs.Register(WorldChannel,
     (sender, data, blob) => LoadWorld(data),                       // complete and CRC-checked; data is yours
     blob => ShowProgress(blob.BytesDone, blob.BytesTotal),         // optional
@@ -87,11 +97,11 @@ send.Cancel();                                                     // either sid
 
 `Send` returns at once. The `BlobStatus` it returns is updated in place (`State`, `BytesDone`, `BytesTotal`, `WireBytes`, `Progress`, `Failure`, `Message`) and is the same kind of object the receiver's callbacks get, with `Direction` and `Peer` telling which end you are. `bytes` must not change until the transfer finished. If it can't start (not in the session, over the size limit, too many transfers) the status comes back already `Failed` and `finished` has run.
 
-**How it works.** The data is deflated on a worker thread (sent as it is when that doesn't make it smaller), together with a CRC-32 of the original. An `Open` message says size, chunk size, window, CRC and a label; the receiver checks it (is anyone listening on that channel, size limit, how many transfers and how much memory it already holds) and answers with an ack of 0 chunks or an abort. Then the sender keeps up to `WindowChunks` (16) chunks of `ChunkBytes` (16 KB) unacknowledged; the receiver acknowledges every `AckEveryChunks` (4) and at the end, so a slow receiver is never handed more than about 256 KB at a time (its acks also wait behind its own receive budget). When the last chunk is in, the receiver inflates and CRC-checks on a worker thread, replies `Done` or aborts with `Corrupt`, and calls the listener. Chunks are plain reliable messages on `ChannelIds.Blob` (2), which the session owns; the host relays them between clients like any other message.
+**How it works.** The data is deflated on a worker thread (sent as it is when that doesn't make it smaller), together with a CRC-32 of the original. An `Open` message says the channel (a number, or a name's key), size, chunk size, window, CRC and a label; the receiver checks it (is anyone listening on that channel, size limit, how many transfers and how much memory it already holds, in all and from that player) and answers with an ack of 0 chunks or an abort. Then the sender keeps up to `WindowChunks` (16) chunks of `ChunkBytes` (16 KB) unacknowledged; the receiver acknowledges every `AckEveryChunks` (4) and at the end, so a slow receiver is never handed more than about 256 KB at a time (its acks also wait behind its own receive budget). When the last chunk is in, the receiver inflates and CRC-checks on a worker thread, replies `Done` or aborts with `Corrupt`, and calls the listener. Chunks are plain reliable messages on `ChannelIds.Blob` (2), which the session owns; the host relays them between clients like any other message.
 
 **Failures.** Every end state other than success is a `BlobFailure` plus a sentence in `Message`, delivered to both sides where they can still be reached: `Cancelled`, `TimedOut` (nothing acknowledged for `StallTimeoutMs`, 30 s, or the `timeoutMs` passed to `Send`), `PeerLeft` (the other player left; raised on the host from `PlayerLeft`), `SessionEnded` (this game left or the connection to the host dropped), `NoHandler` (nobody listens on that channel there, or the listener was disposed), `TooLarge`, `Busy` (too many transfers or too much memory in flight), `Corrupt` (did not unpack, wrong size or CRC), `Protocol`, `NotConnected`, `Internal`. A failure on one transfer never affects another.
 
-**Limits** are `SessionOptions.Blobs` (`BlobOptions`): `MaxBlobBytes` 32 MB, `ChunkBytes`, `WindowChunks`, `AckEveryChunks`, `MaxOutgoing` 16, `MaxIncoming` 16, `MaxIncomingBytes` 96 MB, `StallTimeoutMs`, `Compression` (Fastest). They are read when a transfer starts or an offer arrives. Several transfers can run at once, each with its own id (the sender's counter; the receiver keys by sender and id). Everything is driven by `Poll()`; callbacks run there, never on the worker threads. Chunk handling reuses the pooled writers and reader, so steady state allocates about 70 bytes per chunk on both ends together (a test pins it under 1 KB per 16 KB chunk); each transfer allocates its compressed array and, on the receiver, the result, which is what the data costs. A transfer does not survive a hot reload of the session.
+**Limits** are `SessionOptions.Blobs` (`BlobOptions`): `MaxBlobBytes` 32 MB, `ChunkBytes`, `WindowChunks`, `AckEveryChunks`, `MaxOutgoing` 16, `MaxIncoming` 16, `MaxIncomingBytes` 96 MB, `MaxIncomingBytesPerPlayer` 64 MB (so one sender can't keep everyone else's blobs out), `StallTimeoutMs`, `Compression` (Fastest). They are read when a transfer starts or an offer arrives. Several transfers can run at once, each with its own id (the sender's counter; the receiver keys by sender and id). Everything is driven by `Poll()`; callbacks run there, never on the worker threads. Chunk handling reuses the pooled writers and reader, so steady state allocates about 70 bytes per chunk on both ends together (a test pins it under 1 KB per 16 KB chunk); each transfer allocates its compressed array and, on the receiver, the result, which is what the data costs. A transfer does not survive a hot reload of the session.
 
 ## Flood control
 
@@ -108,12 +118,12 @@ The topology is a star: clients only talk to the host, and the host passes on wh
 
 | Kind | Direction | Content |
 |---|---|---|
-| `Hello` | client to host | protocol version (int), game version, player GUID, name, mod set |
+| `Hello` | client to host | protocol version (int), game version, game build, player GUID, name, mod set |
 | `Welcome` | host to client | protocol version, the client's slot, the roster |
 | `Roster` | host to clients | the full roster, sent whenever it changes |
 | `Data` / `DataUnreliable` | both | channel, slot, payload. From a client the slot is the target (a slot, or 255 for "everyone else"); from the host it is the sender |
 
-**Handshake.** After the transport connects, the client sends `Hello`. The host checks, in this order: protocol version (read first, before anything else in the packet, so a future format change still gets a clean refusal), game version (`Application.version`), mod set, duplicate player GUID, free slot. Any failure sends the client away with a `RejectReason` and a sentence in the disconnect text (`"<code>:<message>"`, see `RejectText`), so the joiner's `SessionEnd` says, for example, `Your mods don't match the host's. You are missing: X. Different versions: Y (host 0.2.0, you 0.1.0).` A connection that sends no valid Hello within 5 s is dropped; a client gives up after 10 s without a `Welcome`. The host accepts a few more transport connections than it has slots, so a joiner to a full game gets "The game is full." instead of a bare refusal.
+**Handshake.** After the transport connects, the client sends `Hello`. The host checks, in this order: protocol version (read first, before anything else in the packet, so a future format change still gets a clean refusal), game version (`Application.version`), game build (the first 16 hex digits of the game code's hash, `Loader.GameCodeHash`: one version from a beta branch, another store or a patched file is refused, unless one side doesn't know its build), mod set, duplicate player GUID, free slot. Any failure sends the client away with a `RejectReason` and a sentence in the disconnect text (`"<code>:<message>"`, see `RejectText`), so the joiner's `SessionEnd` says, for example, `Your mods don't match the host's. You are missing: X. Different versions: Y (host 0.2.0, you 0.1.0).` A connection that sends no valid Hello within 5 s is dropped; a client gives up after 10 s without a `Welcome`. The host accepts a few more transport connections than it has slots, so a joiner to a full game gets "The game is full." instead of a bare refusal.
 
 **Mod set.** The mod builds the set from the loaded mods (`ModRegistry`), by id and version, minus the ids in `IgnoredMods` of `config.json` (default `DevBridge` and `ScriptRunner`, which don't change the game for anyone else). Host and client sets must be equal.
 
@@ -158,10 +168,11 @@ lobby.Poll();                                         // every frame, after sess
 ```
 
 - **Status:** `Offline`, `Pending` (creating, or looking up and connecting), `Hosting`, `Joined`, with `StatusChanged`, `Error` (a sentence) and `JoinRequested` (an invite accepted outside the game). A request still Pending after 20 s is given up. A generation counter makes answers to an abandoned request harmless (a Steam lobby created after giving up is left at once).
-- **What a lobby advertises:** `LobbyInfo` (format byte, protocol version first, then a random lobby id, game version, the mod set's fingerprint and count, name, host name, players, max players, open flag, port). The fingerprint is a 32-bit FNV-1a over the sorted mod ids and versions (`ModSet.Fingerprint`).
-- **Version checks before connecting** (`LobbyCheck`, same order as the handshake): a different protocol, game version, a full or closed game is refused with a sentence and no connection is made. Different mods are only marked: the join goes ahead so the host's handshake can name exactly which mods are missing or different. The handshake stays the real gate.
+- **What a lobby advertises:** `LobbyInfo` (format byte, protocol version first, then a random lobby id, game version, game build, the mod set's fingerprint and count, name, host name, players, max players, open flag, port). The fingerprint is a 32-bit FNV-1a over the sorted mod ids and versions (`ModSet.Fingerprint`).
+- **Version checks before connecting** (`LobbyCheck`, same order as the handshake): a different protocol, game version or game build, a full or closed game is refused with a sentence and no connection is made. Different mods are only marked: the join goes ahead so the host's handshake can name exactly which mods are missing or different. The handshake stays the real gate.
 - **Join codes** (`JoinCode`): Crockford base32 with an 8-bit CRC, grouped by four. A direct code (12 characters, `7K2Q-9MXA-B4C1`) holds an IPv4 address and port; a Steam code (16 characters) holds a lobby id. Case, dashes and spaces don't matter, O/I/L read as 0/1/1, and every single wrong character is caught (a typo is reported as one). `LobbyAddress.TryParse` reads codes, `ip`, `ip:port`, host names, `steam:<id>` and bare Steam ids.
-- **Lists** (`LobbyBrowser`): one scan at a time, results with a verdict and a mark (`different mods`, `other game version`, `full`...), deduplicated by lobby id, the host's own lobby left out.
+- **Asking again** for what is open already is fine: `Host` of the kind being hosted, or `Join` of the lobby this game is in, returns true and changes nothing.
+- **Lists** (`LobbyBrowser`): one scan at a time, results with a verdict and a mark (`different mods`, `other game version`, `other game build`, `full`...), deduplicated by lobby id, the host's own lobby left out.
 - **Hot reload:** `SaveState`/`RestoreState` carry an open lobby (hosting or joined) next to the session; the backend picks it up again (`Resume`).
 
 ### Direct play

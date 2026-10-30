@@ -70,7 +70,7 @@ public enum BlobFailure
 }
 
 /// <summary>
-/// One transfer, as seen from this game: the object <see cref="BlobTransfer.Send"/> returns and the
+/// One transfer, as seen from this game: the object <c>BlobTransfer.Send</c> returns and the
 /// one receivers get in their callbacks. The same instance is updated as the transfer goes on, so it
 /// can be kept and read later. Everything is updated from <see cref="CoopSession.Poll"/>.
 /// </summary>
@@ -78,13 +78,14 @@ public sealed class BlobStatus
 {
     private readonly BlobTransfer _owner;
 
-    internal BlobStatus(BlobTransfer owner, BlobDirection direction, int id, CoopPlayer peer, byte channel, string name)
+    internal BlobStatus(BlobTransfer owner, BlobDirection direction, int id, CoopPlayer peer, uint key, string channelName, string name)
     {
         _owner = owner;
         Direction = direction;
         Id = id;
         Peer = peer;
-        Channel = channel;
+        Key = key;
+        ChannelName = channelName ?? "";
         Name = name ?? "";
     }
 
@@ -96,8 +97,14 @@ public sealed class BlobStatus
     /// <summary>The other end: the receiver when sending, the sender when receiving.</summary>
     public CoopPlayer Peer { get; }
 
-    /// <summary>The blob channel the data is for.</summary>
-    public byte Channel { get; }
+    /// <summary>The numbered blob channel the data is for; 0 on a named channel (see <see cref="ChannelName"/>).</summary>
+    public byte Channel => Key < 256 ? (byte)Key : (byte)0;
+
+    /// <summary>The named channel the data is for, "" on a numbered one.</summary>
+    public string ChannelName { get; }
+
+    // The channel as it travels: a numbered channel's number, or a name's key (256 and up).
+    internal uint Key { get; }
 
     /// <summary>A label the sender chose, for the receiver to tell blobs on one channel apart.</summary>
     public string Name { get; }

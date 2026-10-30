@@ -19,6 +19,7 @@ public sealed partial class CoopSession
             writer.WriteByte((byte)PacketKind.Hello);
             writer.WriteInt32(Protocol.Version);
             writer.WriteString(Options.GameVersion);
+            writer.WriteString(Options.GameBuild ?? "");
             writer.WriteGuid(Options.PlayerId);
             writer.WriteString(CleanName(Options.PlayerName));
             (Options.Mods ?? ModSet.Empty).Write(writer);

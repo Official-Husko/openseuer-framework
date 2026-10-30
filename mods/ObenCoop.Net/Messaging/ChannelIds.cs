@@ -15,6 +15,12 @@ public static class ChannelIds
     /// <summary>Where each player is (<see cref="Presence.CoopPresence"/>): samples at a low rate, unreliable.</summary>
     public const byte Presence = 3;
 
+    /// <summary>
+    /// Messages on named channels (<see cref="ChannelNames"/>): other mods' traffic. Each starts with the
+    /// name's key; the router hands it to whoever registered that name.
+    /// </summary>
+    public const byte Named = 4;
+
     /// <summary>First id free for experiments and tests.</summary>
     public const byte FirstFree = 16;
 }

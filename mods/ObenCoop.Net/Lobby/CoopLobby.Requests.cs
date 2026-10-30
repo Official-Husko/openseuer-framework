@@ -10,10 +10,13 @@ public sealed partial class CoopLobby
     /// <summary>
     /// Hosts a game and opens a lobby for it. Returns false with <see cref="Error"/> set when that
     /// can't start; otherwise the lobby is Pending until the backend has opened it (at once for
-    /// direct play), then Hosting.
+    /// direct play), then Hosting. True straight away when this kind of lobby is open already.
     /// </summary>
     public bool Host(LobbyKind kind, string name, int port)
     {
+        // Asking again for what is already open is fine: the lobby stays as it is.
+        if (Status == LobbyStatus.Hosting && Session.IsHost && Kind == kind)
+            return true;
         if (Status == LobbyStatus.Pending)
             return Refuse("A lobby request is already running. Wait for it, or leave first.");
         string unavailable = Unavailable(kind);
@@ -60,12 +63,15 @@ public sealed partial class CoopLobby
     /// Looks a lobby up, checks it against this game, and joins it. Returns false with
     /// <see cref="Error"/> set when that can't start; otherwise the lobby is Pending until the host
     /// let this game in (Joined) or something failed (Offline, with <see cref="Error"/>).
-    /// Leaves the current game first, unless this game hosts one.
+    /// Leaves the current game first, unless this game hosts one. True straight away when this game
+    /// is in that lobby already.
     /// </summary>
     public bool Join(LobbyAddress address)
     {
         if (!address.IsValid)
             return Refuse("That is not a lobby address.");
+        if (Status == LobbyStatus.Joined && Session.State == SessionState.Joined && Address.Equals(address))
+            return true;
         if (Status == LobbyStatus.Pending)
             return Refuse("A lobby request is already running. Wait for it, or leave first.");
         string unavailable = Unavailable(address.Kind);
@@ -137,6 +143,7 @@ public sealed partial class CoopLobby
             Id = ((long)random.Next() << 32) | (uint)random.Next(),
             Protocol = Protocol.Version,
             GameVersion = options.GameVersion ?? "",
+            GameBuild = options.GameBuild ?? "",
             ModsFingerprint = mods.Fingerprint,
             ModCount = mods.Entries.Count,
             Name = LobbyInfo.Clean(name, LobbyInfo.MaxNameLength),

@@ -39,6 +39,60 @@ public sealed partial class CoopSession
     public bool SendToHost(byte channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered) =>
         State == SessionState.Joined && SendToHostPeer(CoopPlayer.HostSlot, channel, payload, mode, true);
 
+    /// <summary>Sends a message on a named channel (<see cref="ChannelNames"/>) to every other player.</summary>
+    /// <exception cref="ArgumentException">The name isn't a valid channel name.</exception>
+    public bool Broadcast(string channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
+    {
+        var named = NamedPayload(channel, payload);
+        try
+        {
+            return Broadcast(ChannelIds.Named, named, mode);
+        }
+        finally
+        {
+            MessagePool.Return(named);
+        }
+    }
+
+    /// <summary>Sends a message on a named channel to one player.</summary>
+    /// <exception cref="ArgumentException">The name isn't a valid channel name.</exception>
+    public bool SendTo(CoopPlayer target, string channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
+    {
+        var named = NamedPayload(channel, payload);
+        try
+        {
+            return SendTo(target, ChannelIds.Named, named, mode, true);
+        }
+        finally
+        {
+            MessagePool.Return(named);
+        }
+    }
+
+    /// <summary>Sends a message on a named channel to the host only. False on the host itself.</summary>
+    /// <exception cref="ArgumentException">The name isn't a valid channel name.</exception>
+    public bool SendToHost(string channel, MessageWriter payload, DeliveryMode mode = DeliveryMode.ReliableOrdered)
+    {
+        var named = NamedPayload(channel, payload);
+        try
+        {
+            return SendToHost(ChannelIds.Named, named, mode);
+        }
+        finally
+        {
+            MessagePool.Return(named);
+        }
+    }
+
+    private static MessageWriter NamedPayload(string channel, MessageWriter payload)
+    {
+        uint key = ChannelNames.Key(channel);
+        var writer = MessagePool.RentWriter();
+        writer.WriteUInt32(key);
+        writer.WriteBytes(payload.Buffer, 0, payload.Length);
+        return writer;
+    }
+
     // Host: to one player or, with null, to everyone else. The slot byte says who sent it (the host).
     private bool SendFromHost(CoopPlayer only, byte channel, MessageWriter payload, DeliveryMode mode, bool limited)
     {

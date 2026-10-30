@@ -77,7 +77,7 @@ internal sealed class SteamSupport : IDisposable
     private static string AppText()
     {
         uint app = GameSteam.AppId;
-        return app == GameSteam.GameAppId ? "" : app == GameSteam.SpacewarAppId ? " as Spacewar (480)" : $" as app {app}";
+        return app == GameSteam.GameAppId ? "" : " as " + SteamApps.Describe(app);
     }
 
     /// <summary>Call every frame: starts once Steam is up. Cheap when started, off or failed.</summary>

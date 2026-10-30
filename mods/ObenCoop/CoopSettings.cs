@@ -47,12 +47,13 @@ public sealed class CoopSettings
     public bool Steam = true;
 
     /// <summary>
-    /// Which Steam app the game starts as: "obenseuer", or "spacewar" (Valve's test app 480, which every
+    /// Which Steam app the game starts as: "obenseuer", "spacewar" (Valve's test app 480, which every
     /// Steam account has: copies from GOG and other stores can play over Steam, and testing needs no
-    /// second copy of the game). Everyone in a game needs the same. Takes effect when the game starts.
+    /// second copy of the game), "toxikk" (324810, a free game) or any app id. Everyone in a game needs
+    /// the same. Takes effect when the game starts.
     /// </summary>
-    [Setting("Steam app", Choices = new[] { "obenseuer", "spacewar" },
-        Description = "Which Steam app the game runs as: obenseuer, or spacewar (Valve's free test app 480, so copies from GOG and other stores can play over Steam). Everyone needs the same. While on spacewar, Steam shows you in Spacewar and Obenseuer's achievements and play time don't count. Takes effect when the game starts.")]
+    [Setting("Steam app", Choices = new[] { "obenseuer", "spacewar", "toxikk" },
+        Description = "Which Steam app the game runs as: obenseuer, spacewar (Valve's free test app 480) or toxikk (324810, a free game), so copies from GOG and other stores can play over Steam; an app id in config.json works too. Everyone needs the same. On another app, Steam shows you in that app and Obenseuer's achievements and play time don't count. Takes effect when the game starts.")]
     public string SteamApp = "obenseuer";
 
     /// <summary>Who sees a hosted Steam lobby: "friends", "public" or "private" (invite only).</summary>

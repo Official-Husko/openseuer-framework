@@ -190,7 +190,17 @@ The logic is in the library, behind two interfaces shaped after Steamworks so it
 
 Hosting creates a lobby (`SteamLobbyType`: friends only by default, `public` or `private`), writes `game=obencoop` and the `LobbyInfo` (base64) into its data, sets rich presence `connect = "+connect_lobby <id>"` so friends can "Join game", and lets only lobby members connect over P2P; members who leave the Steam lobby are dropped. Joining enters the lobby, waits up to 3 s for its data, refuses lobbies that aren't ObenCoop (and leaves them), runs the version checks, then connects to the owner's Steam id. Lists show the lobbies friends playing the same Steam app are in plus public ObenCoop lobbies. `coop invite` opens the overlay's invite dialog. Accepted invites, "Join game" clicks and a `+connect_lobby <id>` on the game's command line (Steam starts the game that way from an invite) come out as `JoinRequested`; with `JoinInvites` on, the mod joins at once.
 
-**Obenseuer or Spacewar.** `SteamApp` in `config.json` (or the Settings page) picks the Steam app the game runs as: `obenseuer` (the default) or `spacewar`, Valve's free test app 480. Every Steam account has Spacewar, so with it copies from GOG and other stores can play over Steam (with the Steam client running), and two test accounts don't need two copies of the game. Lobbies and P2P sessions only meet within one app, so everyone in a game needs the same choice; public lobbies are told apart from other people's Spacewar tests by `game=obencoop`. The switch goes through the framework's `GameSteam.StartAs` in the mod's `OnLoad`, which runs before the game starts Steam in its first scene: it sets `SteamAppId`/`SteamGameId` for the process and skips the game's `RestartAppIfNecessary(951240)`, which would otherwise relaunch it through Steam as Obenseuer. A change takes effect at the next start of the game. While the game runs as Spacewar, Steam shows the player in Spacewar, and Obenseuer's achievements, stats and play time don't count. `coop status` says "ready as Spacewar (480)".
+**Which Steam app.** `SteamApp` in `config.json` (or the Settings page) picks the Steam app the game runs as: `obenseuer` (the default), `spacewar` (Valve's free test app 480, which every Steam account has), `toxikk` (324810, a free game, for when Spacewar's lobbies misbehave) or any app id as a number. With anything but Obenseuer, copies from GOG and other stores can play over Steam (with the Steam client running), and two test accounts don't need two copies of the game. Lobbies and P2P sessions only meet within one app, so everyone in a game needs the same choice; public lobbies are told apart from other people's by `game=obencoop`. The switch goes through the framework's `GameSteam.StartAs` in the mod's `OnLoad`, which runs before the game starts Steam in its first scene: it sets `SteamAppId`/`SteamGameId` for the process and skips the game's `RestartAppIfNecessary(951240)`. That check closes the game at once in a copy that isn't on the player's Steam account (it asks Steam to start Obenseuer instead), so for such a copy another app is the only way to Steam play. A change takes effect at the next start of the game. While the game runs as another app, Steam shows the player in it, and Obenseuer's achievements, stats and play time don't count. `coop status` says "ready as Spacewar (480)" or "ready as TOXIKK (324810)".
+
+**On Linux the game has to reach the Steam client.** Proton only connects a game to the running Steam client when it knows where Steam is installed (`STEAM_COMPAT_CLIENT_INSTALL_PATH`). Steam sets it for what it starts; umu (which Heroic and `oben launch` use) deliberately leaves it empty, so a copy started from Heroic can't use Steam at all, on any app. Add the game to Steam as a non-Steam game and start it from there, or start Proton yourself with the variable set:
+
+```sh
+cd <game folder>
+STEAM_COMPAT_CLIENT_INSTALL_PATH="$HOME/.local/share/Steam" STEAM_COMPAT_DATA_PATH=<prefix> WINEPREFIX=<prefix> \
+  "$HOME/.local/share/Steam/steamapps/common/Proton - Experimental/proton" waitforexitandrun ./Obenseuer.exe
+```
+
+(`<prefix>` is the Wine prefix with a `pfx` link to itself, as umu makes them.) The overlay isn't there either way outside a Steam launch, so *Invite friends* can't open it; join codes work.
 
 This install's `steam_api64.dll` is replaced (an emulator answers with a fixed id), so Steam play could not be tried here; two copies on one machine would also share that id. The fake Steam in the tests (`FakeSteam.cs`) runs the whole flow instead: create, list, join, refusals, invites, members leaving, the host leaving, reloads.
 
@@ -260,7 +270,7 @@ Settings in `config.json` are re-read each time you host, join or list, so editi
 | `PublicAddress` | `""` | IPv4 put in join codes; empty is this machine's network address |
 | `ScanPorts` | 4 | ports a lobby list asks, from `Port` up |
 | `Steam` | true | offer Steam lobbies when the game's Steam is running |
-| `SteamApp` | `obenseuer` | the Steam app the game runs as: `obenseuer`, or `spacewar` (480) for GOG copies and testing; at the next start |
+| `SteamApp` | `obenseuer` | the Steam app the game runs as: `obenseuer`, `spacewar` (480), `toxikk` (324810) or an app id, for copies from other stores and testing; at the next start |
 | `SteamLobbyType` | `friends` | `friends`, `public` or `private` (invite only) |
 | `JoinInvites` | true | accepting a Steam invite joins at once |
 | `HideJoinCodes` | true | streamer mode: codes, addresses and Steam ids show as stars on screen (above) |
@@ -329,7 +339,7 @@ Both copies share the `Mods` folder, so they share `config.json` (port, name) an
 
 ## Not done yet
 
-- Steam play is untested in a real Steam: this install's `steam_api64.dll` is replaced. Everything above the two thin Steamworks wrappers is tested on the fake. It uses legacy P2P (deprecated by Valve but in the game's Steamworks.NET); moving to `SteamNetworkingSockets` means a new `IP2PNetwork`, nothing else.
+- Steam play between two real Steam accounts is untested. On this machine (one account, a copy that isn't on it) the real `steam_api64.dll` started Steam as Spacewar and as TOXIKK and opened a Steam lobby on each, and Obenseuer closed itself as described above; the install's own `steam_api64.dll` is an emulator that can't create lobbies at all. Everything above the two thin Steamworks wrappers is tested on the fake. It uses legacy P2P (deprecated by Valve but in the game's Steamworks.NET); moving to `SteamNetworkingSockets` means a new `IP2PNetwork`, nothing else.
 - No NAT help for direct play. Forward the UDP port, use a VPN, or play on a LAN; or use Steam.
 - No request/ack helper (`Shared.NextReqId` in the reference), no timers for periodic state (`HST` announces, digests).
 - Blobs are not resumable and don't survive a hot reload; there is no per-message rate window for features (the reference's `BuildHost` and friends), only the per-peer budget and queue limits.

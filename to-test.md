@@ -248,23 +248,23 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
 
 ## 4. Co-op [2 copies]
 
-1. [ ] Copy 1: `oben call console.exec command="coop lobby create Test"` prints "Hosting for up to 4 players." and "Lobby open: Test. Join code XXXX-XXXX-XXXX (192.168.x.x:27890)". `coop.status` shows lobby Hosting with that code.
-2. [ ] Copy 2: `console.exec command="coop lobby list"`, wait 2 s, then `oben call coop.lobbies --instance 2`. results[0] is "Test", verdict Ok, 1 player.
-3. [ ] Copy 2: `coop lobby join 1`. `coop.status` on both shows 2 players, lobby Hosting / Joined. `coop say hello` arrives on the other copy.
-4. [ ] Copy 1: `coop invite` prints the code. Copy 2: `coop leave`, then `coop join <code>` joins again.
-5. [ ] **Presence:** load a level in both copies (`new_scene Interior Player Tenement`) and wait 10 s.
-   - `coop.presence --instance 2` shows remotes[0] in "Interior Player Tenement".
-   - Teleport copy 1 by 2 m: copy 2's `latest` follows within about 1 s.
-   - A teleport of more than 8 m sets the Teleported flag.
-   - `coop presence off` on copy 1 empties copy 2's remotes at once; `on` brings it back.
-6. [ ] **Hot reload while connected:** rebuild ObenCoop while connected.
-   - Both copies keep 2 players and the lobby.
-   - The log says "Carried the session over a reload" and "Carried the lobby over a reload".
-   - `coop lobby list` from copy 2 still finds 2/4.
-   - With presence on in both, rebuild ObenCoop on copy 1 only: copy 2's `coop.presence` keeps copy 1 in its remotes, with no 5 s gap (fixed: restarted sample numbers were dropped as late).
-7. [ ] Copy 2: `coop leave`, then `coop join 127.0.0.1:27999`. A failure notice appears within 10 s, and `coop.status` lobby.error is set.
-8. [ ] `coop status` says "Steam: ready, signed in as ..." with no errors. A Steam join between two copies doesn't count here, because they share the emulator's id; that needs two real Steam accounts.
-9. [ ] Blob transfer: send a big payload (over 1 MB) from host to guest through a script. It arrives intact and flood control doesn't drop the connection.
+Passed on 2026-10-30 with two copies on this machine (protocol 2), direct play:
+
+1. [x] Copy 1: `coop lobby create Test` prints "Hosting for up to 4 players." and "Lobby open: Test. Join code ****-****-**** (***.***.***.***:27890)" (codes are stars with `HideJoinCodes` on, the default). `coop.status` shows lobby Hosting with the code.
+2. [x] Copy 2: `coop lobby list`, then `coop.lobbies --instance 2`: results[0] "Test", verdict Ok, 1 player, 29 ms.
+3. [x] Joining: from the co-op window's list (below) and with `coop join`; both copies show 2 players, Hosting / Joined. `coop say hello from one` arrives on copy 2.
+4. [x] `coop invite` copies the real code (read back from the clipboard: KDE's and the other copy's) while the text shows stars. `coop leave`, then `coop join <code>` joins again.
+5. [x] **Presence** in Interior Player Tenement: copy 2 lists copy 1 in the same area; a 2.5 m teleport is followed within a second; a 12 m one shows `Teleported` for about half a second and snaps (no slide); `coop presence off` empties copy 2's remotes at once, `on` brings it back.
+6. [x] **Hot reload while connected:** both copies keep 2 players and the lobby; the log says "Carried the session over a reload" and "Carried the lobby over a reload"; `coop lobby list` from copy 2 still finds Test 2/4. (Fixed: ObenCoop failed to load on the reload, "Failed to resolve assembly ObenCoop.Net-r2", a loader bug with enum default values from a reloaded DLL; and after a reload the host refused joiners with "The host doesn't have: ObenCoop", its mod set was made before it counted as loaded.) The presence part (copy 1 reloaded alone, no gap) wasn't repeated.
+7. [x] `coop join 127.0.0.1:27999`: "Nobody answered at that address." after 8.6 s, in `coop.status` lobby.error, shown once (fixed: it was shown twice).
+8. [x] `coop status` says "Steam: ready, signed in as Account Name (*****)" (the emulator's account; the id is stars in streamer mode).
+9. [x] **Blob transfer and named channels through `Coop`** (scripts/coop-*.cs in the session's scratch, the same calls another mod makes): `Coop.Listen` and `ListenBlobs` in copy 2, `Coop.Broadcast` and `SendBlob` from copy 1. The message arrives with its sender, a 3 MB blob arrives intact (same checksum, 1.58 MB on the wire), the sender sees Done.
+10. [x] **Co-op window** (screenshots): not in a game it shows Host a game (name, Direct or Steam, the port hint), Join a game (masked field) and Find games (Search, the list with name, players and ping); in a game the join code line, Copy join code, Show, the players with host, you and ping, Leave. Show reveals the code and address and turns into Hide.
+11. [x] **Spacewar on the emulator:** `SteamApp: spacewar` in config.json and a restart: the log says "Steam will start as app 480", `GameSteam.AppId` is 480, the game doesn't relaunch, `coop status` says "ready as Spacewar (480)". Back to `obenseuer` and a restart: 951240. The emulator can't create Steam lobbies on either.
+12. [x] **Real Steam, one account** (Valve's `steam_api64.dll.original` swapped in for the test and the emulator put back; this copy isn't on the Steam account; Proton started directly with `STEAM_COMPAT_CLIENT_INSTALL_PATH`, since umu leaves it empty and Steam then can't start on any app): as `spacewar` Steam is ready on 480 with the real account and `coop lobby create steam` opens a lobby (Hosting, a Steam code); as `toxikk` the same on 324810; as `obenseuer` the game closes itself a second after the main menu (its relaunch check). The overlay isn't available that way.
+13. [ ] **Real Steam, two accounts:** host a Steam lobby (Spacewar on both), find it as a friend, join by the friend list's "Join game", by an invite and by the code, P2P traffic, the host leaving. Then the same started from Steam as a non-Steam game (overlay, Invite friends).
+14. [ ] With a pad and the keyboard only: the co-op window's fields, choices, list and buttons can all be reached.
+15. [x] Mod events through `Coop.OnStarted/OnPlayerJoined/OnPlayerLeft/OnEnded` from a script: hosting, a join, a leave and stopping each raise theirs once.
 
 ## 5. Story, quests, dialogue, law, new game (M14, M28, M29c)
 

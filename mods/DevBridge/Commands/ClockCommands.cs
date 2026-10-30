@@ -40,7 +40,7 @@ internal static class ClockCommands
         return ClockGet(p);
     }
 
-    [BridgeCommand("clock.setdate", "Set the calendar date, keeping the time of day.", Params = new[] { "year", "month: 1-12", "day: 1-31" })]
+    [BridgeCommand("clock.setdate", "Set the calendar date, keeping the time of day.", Params = new[] { "year", "month: 1-12", "day: 3-31 (the game skips the 1st and 2nd)" })]
     private static object ClockSetDate(JObject p)
     {
         RequireClock();

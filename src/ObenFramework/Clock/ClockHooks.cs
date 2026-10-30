@@ -1,5 +1,6 @@
 using System;
 using ObenFramework.Events;
+using ObenFramework.Saves;
 using ObenLoader;
 using ObenLoader.Runtime;
 
@@ -9,6 +10,7 @@ namespace ObenFramework.Clock;
 /// Connects <see cref="GameClock"/>'s events to TimeOfDayAzure's static events. A game event is only
 /// subscribed to while a mod listens to the matching clock event, and all of them are removed when the
 /// framework unloads. The game invokes its handlers inside one try/catch, so nothing here may throw.
+/// Ticks while a save is written or loaded (<see cref="SaveGate.IsBusy"/>) are not passed on.
 /// </summary>
 internal static class ClockHooks
 {
@@ -18,6 +20,9 @@ internal static class ClockHooks
 
     public static void Init(ObenMod framework)
     {
+        // A new scene starts on its own time and a load sets the save's: neither is time passing.
+        GameEvents.SceneLoaded.Subscribe(framework, ForgetLastTick);
+        GameEvents.Loaded.Subscribe(framework, ForgetLastTick);
         framework.Track(Disposable.Create(() =>
         {
             TimeOfDayAzure.SecondsPassed -= OnSeconds;
@@ -43,6 +48,13 @@ internal static class ClockHooks
         Sync(ref _minuteHooked, wantMinute, () => TimeOfDayAzure.MinutePassed += OnMinute, () => TimeOfDayAzure.MinutePassed -= OnMinute);
     }
 
+    // The next minute tick only records the time (no hour change, one minute for countdowns).
+    private static void ForgetLastTick()
+    {
+        _lastHour = -1;
+        _lastMinuteOfDay = -1;
+    }
+
     private static void Sync(ref bool hooked, bool wanted, Action hook, Action unhook)
     {
         if (wanted == hooked)
@@ -56,7 +68,11 @@ internal static class ClockHooks
 
     private static void OnSeconds(int seconds)
     {
-        try { GameClock.SecondPassed.Raise(seconds, GameEvents.Log); }
+        try
+        {
+            if (!SaveGate.IsBusy)
+                GameClock.SecondPassed.Raise(seconds, GameEvents.Log);
+        }
         catch (Exception e) { GameEvents.Log.Error("SecondPassed failed", e); }
     }
 
@@ -66,6 +82,14 @@ internal static class ClockHooks
         {
             if (!GameClock.IsAvailable)
                 return;
+            // A level change or load moves the clock: the new scene runs on its own time for a few frames
+            // before the save sets it. Those ticks aren't time passing, so skip them and count again from
+            // the restored time without an hour change.
+            if (SaveGate.IsBusy)
+            {
+                ForgetLastTick();
+                return;
+            }
 
             // The game's own currentTimeAndDay is a minute behind in here; the controller is current.
             int hour = GameClock.Hour;

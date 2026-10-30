@@ -1,4 +1,5 @@
 using System;
+using ObenFramework.Saves;
 using ObenLoader;
 
 namespace ObenFramework.Clock;
@@ -50,7 +51,10 @@ public static partial class GameClock
     /// </summary>
     public static int Day => Azure.dayCounter;
 
-    /// <summary>Day of the month in the game's calendar, starting at 1.</summary>
+    /// <summary>
+    /// Day of the month in the game's calendar. The game skips the 1st and 2nd: after the last day of a
+    /// month comes the 3rd (<see cref="FirstDayOfMonth"/>).
+    /// </summary>
     public static int DayOfMonth => Azure.GetDay();
 
     public static int Month => Azure.GetMonth();
@@ -78,12 +82,16 @@ public static partial class GameClock
         set => Azure.timeSpeedOverrideFactor = Math.Max(0f, value);
     }
 
-    /// <summary>Sets the time of day, keeping the date. Hours 0-24 as a fraction, like the console's change_time.</summary>
+    /// <summary>
+    /// Sets the time of day, keeping the date. Hours 0-24 as a fraction, like the console's change_time.
+    /// Throws while a save is written or loaded (<see cref="SaveGate.IsBusy"/>): the load sets the clock
+    /// itself and would undo it.
+    /// </summary>
     public static void SetTime(float hours)
     {
         if (hours < 0f || hours > 24f)
             throw new ArgumentOutOfRangeException(nameof(hours), "Time must be between 0 and 24.");
-        Azure.SetTimeline(hours);
+        Settable.SetTimeline(hours);
     }
 
     /// <summary>Sets the time of day, keeping the date.</summary>
@@ -113,6 +121,18 @@ public static partial class GameClock
             Countdowns.Clear();
             CountdownOwners.Clear();
         }));
+    }
+
+    // The clock, when it may be changed now.
+    private static TimeOfDayAzure Settable
+    {
+        get
+        {
+            var azure = Azure;
+            if (SaveGate.IsBusy)
+                throw new InvalidOperationException("The clock can't be changed while a save is being written or loaded.");
+            return azure;
+        }
     }
 
     private static TimeOfDayAzure Azure

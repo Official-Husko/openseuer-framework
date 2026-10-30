@@ -65,7 +65,7 @@ The game saves the map's landmark lists itself. Right before `SaveController.Sav
 
 ## Where the player has been
 
-`WorldLocation.CurrentScene`, `KnownScenes()` (every scene by the game's own list) and `VisitedScenes()`: what the game records (`SaveSceneManager.visitedScenes`), the scene now, the levels the loaded save holds a file for, and the scenes entered since it loaded, each once, without the main menu and the intro.
+`WorldLocation.CurrentScene`, `KnownScenes()` (every scene by the game's own list) and `VisitedScenes()`: what the game records (`SaveSceneManager.visitedScenes`), the scene now, the levels the loaded save holds a file for, and the scenes entered since it loaded (loading another save starts that list again), each once, without the main menu and the intro.
 
 ## Dev bridge
 

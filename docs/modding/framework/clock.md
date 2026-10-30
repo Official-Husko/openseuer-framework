@@ -18,9 +18,13 @@ Both only exist in gameplay scenes. `GameClock.IsAvailable` and `GameWeather.IsA
 | `IsDaytime` | the game's own rule, 06:00 to 20:00 |
 | `TimeSpeed` | the game's speed factor, 1 is normal (a day takes `dayLenghtInMinutes` real minutes, 96 in 0.5.13), 0 stops time |
 | `SetTime(float hours)`, `SetTime(int hours, int minutes)` | jump to a time of day, same ranges as the console's `change_time` |
-| `SetDate(year, month, day)` | set the calendar date, keeping the time; `Day` doesn't change |
+| `SetDate(year, month, day)` | set the calendar date, keeping the time; `Day` doesn't change. The day starts at 3 (`FirstDayOfMonth`): the game's months skip the 1st and 2nd |
 | `Now` | a `ClockTime` with all of the above read at once |
 | `After(owner, minutes, action)` | run `action` once that many in-game minutes have passed; dispose the result to cancel |
+
+`SetTime` and `SetDate` throw while a save is written or loaded (`SaveGate.IsBusy`): the load sets the clock itself and would undo the change.
+
+The game's calendar has no 1st or 2nd: after the last day of a month its clock rolls to the 1st, and the game moves it on to the 3rd at the next minute (`TimeOfDayAzure.IncreaseDayCounter`). A date set to the 1st or 2nd would stay until the next midnight, so `SetDate` refuses them.
 
 `After` counts the game's minute tick, so sleeping and waiting count and frozen time doesn't. What a mod scheduled is dropped when it unloads, when another game is loaded or a new one starts, and at the main menu; level changes keep it. `WaitingCount` says how many actions wait.
 
@@ -46,7 +50,7 @@ TimeControl.ClearSpeed(this);
 | `Holders()` | who holds a freeze or a speed, for tools |
 
 - Any freeze stops time; it runs again once every freezing mod has let go. Of the speeds the newest wins, and when its mod clears it the one set before applies again.
-- Everything a mod holds goes when it unloads, and all overrides end when the player returns to the main menu. Level changes keep them.
+- Everything a mod holds goes when it unloads, and all overrides end when the player returns to the main menu, loads another save or starts a new game. Level changes keep them.
 - It doesn't touch the game's own speed factor (`GameClock.TimeSpeed`). It shortens or stops the day length the game hands the Azure time controller each frame, so while the game speeds time up for sleeping, waiting or a crafting wait the overrides stand aside and those always finish; they apply again afterwards. Slowdowns the game makes (card games run at 0.25) are combined with them.
 - Frozen time means no `MinutePassed`, `HourChanged` or `DayChanged`, and no timers of the game that count in-game time.
 
@@ -67,7 +71,7 @@ GameClock.SecondPassed.Subscribe(this, seconds => ...);
 - The game's events are only hooked while somebody subscribes. `MinutePassed` and `HourChanged` share one hook on the game's `MinutePassed`; `DayChanged` and `SecondPassed` each have their own. The hooks are removed again when the framework unloads. Nothing runs per frame unless a mod subscribes to `SecondPassed`.
 - `SecondPassed` is the game's per-frame event (about 60 in-game seconds per real second). About 35 vanilla classes already use it. Prefer `MinutePassed` or `HourChanged`, and keep a `SecondPassed` handler trivial.
 - `HourChanged` is derived from the minute event, so a time jump (`SetTime`, sleeping) raises it when the hour differs. The first minute after the hook starts only records the hour, it doesn't raise.
-- Nothing fires while the game holds the clock still (loading, the first frames of a scene).
+- Nothing fires while a save is written or loaded (`SaveGate.IsBusy`). After a level change the new scene runs on its own time for a moment before the save sets the clock, so those ticks would look like hours passing. The first minute after a load only records the hour, like the first minute after subscribing.
 
 ## GameWeather
 
@@ -83,7 +87,7 @@ GameClock.SecondPassed.Subscribe(this, seconds => ...);
 
 ## Dev bridge
 
-`clock.get`, `clock.set` (`hours`, `minutes`, optional `speed`), `clock.setdate` (`year`, `month`, `day`), `clock.after` (`minutes`, logs a line when they passed), `weather.get`, `weather.list`, `weather.set` (`name` as name or index, optional `transition`). At the main menu or in a scene without the system they return an error saying so.
+`clock.get`, `clock.set` (`hours`, `minutes`, optional `speed`), `clock.setdate` (`year`, `month`, `day` from 3), `clock.after` (`minutes`, logs a line when they passed), `weather.get`, `weather.list`, `weather.set` (`name` as name or index, optional `transition`). At the main menu or in a scene without the system they return an error saying so.
 
 `time.control` shows the overrides; `time.freeze` (`on`, default true) and `time.speed` (`speed`, or `clear=true`) hold them in the bridge's name.
 

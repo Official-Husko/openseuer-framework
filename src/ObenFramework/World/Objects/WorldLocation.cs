@@ -27,7 +27,8 @@ public static class WorldLocation
 
     /// <summary>
     /// The places the player has been in this game: what the game records, the scene now, the levels the
-    /// loaded save has state for, and the scenes entered since it loaded. The menu and the intro are left out.
+    /// loaded save has state for, and the scenes entered since it loaded (loading another save starts that
+    /// list again). The menu and the intro are left out.
     /// </summary>
     public static List<string> VisitedScenes()
     {
@@ -41,6 +42,12 @@ public static class WorldLocation
         Session.Add(CurrentScene);
         SceneManager.activeSceneChanged += OnActiveSceneChanged;
         GameEvents.MainMenu.Subscribe(framework, Reset);
+        // Another save loaded from the pause menu: the scenes entered belong to the game before it.
+        NewGames.Sessions.Starting.Subscribe(framework, _ =>
+        {
+            Reset();
+            Session.Add(CurrentScene);
+        });
         GameEvents.Loaded.Subscribe(framework, () => _fileScenes = null);
         GameEvents.Saved.Subscribe(framework, _ => _fileScenes = null);
         framework.Track(Disposable.Create(() =>

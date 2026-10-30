@@ -11,7 +11,8 @@ namespace ObenFramework.Clock;
 /// <summary>
 /// Freezing the in-game clock and changing its speed, held per mod. Any mod's freeze stops time until
 /// every freezing mod lets go; of the speeds the newest wins, and the one before applies again when its
-/// mod clears it. Everything a mod holds goes when it unloads, and all overrides end at the main menu.
+/// mod clears it. Everything a mod holds goes when it unloads, and all overrides end at the main menu and
+/// when another save is loaded or a new game starts; level changes keep them.
 /// Unlike <see cref="GameClock.TimeSpeed"/> this doesn't touch the game's own speed factor: sleeping,
 /// waiting and crafting waits still run time fast (the overrides stand aside meanwhile) and the
 /// overrides apply again afterwards.
@@ -99,7 +100,9 @@ public static class TimeControl
     {
         Overrides.Clear();
         Tracked.Clear();
-        GameEvents.MainMenu.Subscribe(framework, ReleaseAll);
+        GameEvents.MainMenu.Subscribe(framework, () => ReleaseAll("Back at the main menu"));
+        // Another save or a new game: what the mods held belonged to the game that was running.
+        NewGames.Sessions.Starting.Subscribe(framework, kind => ReleaseAll($"A new session ({kind})"));
         framework.Track(Disposable.Create(() =>
         {
             Overrides.Clear();
@@ -116,10 +119,10 @@ public static class TimeControl
         return azure != null ? azure.timeSpeedOverrideFactor : 1f;
     }
 
-    private static void ReleaseAll()
+    private static void ReleaseAll(string why)
     {
         if (Overrides.Any)
-            GameEvents.Log?.Info("Back at the main menu: clock overrides cleared");
+            GameEvents.Log?.Info($"{why}: clock overrides cleared");
         Overrides.Clear();
     }
 

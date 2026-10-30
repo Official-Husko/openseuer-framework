@@ -56,9 +56,13 @@ public static partial class GameClock
         ClockHooks.Refresh();
     }
 
+    /// <summary>The first day of a month in the game's calendar: after the last day of a month the game moves straight to the 3rd.</summary>
+    public const int FirstDayOfMonth = 3;
+
     /// <summary>
-    /// Sets the calendar date, keeping the time of day. Year 1 to 9999, month 1 to 12, day 1 to the
-    /// month's length. <see cref="Day"/> (days since the game began) doesn't change.
+    /// Sets the calendar date, keeping the time of day. Year 1 to 9999, month 1 to 12, day
+    /// <see cref="FirstDayOfMonth"/> to the month's length. <see cref="Day"/> (days since the game began)
+    /// doesn't change. Throws while a save is written or loaded, like <see cref="SetTime(float)"/>.
     /// </summary>
     public static void SetDate(int year, int month, int day)
     {
@@ -67,9 +71,9 @@ public static partial class GameClock
         if (month < 1 || month > 12)
             throw new ArgumentOutOfRangeException(nameof(month), "Month must be between 1 and 12.");
         int days = DateTime.DaysInMonth(year, month);
-        if (day < 1 || day > days)
-            throw new ArgumentOutOfRangeException(nameof(day), $"Day must be between 1 and {days} for that month.");
-        Azure.SetDate(year, month, day);
+        if (day < FirstDayOfMonth || day > days)
+            throw new ArgumentOutOfRangeException(nameof(day), $"Day must be between {FirstDayOfMonth} and {days} for that month (the game's months start on the 3rd).");
+        Settable.SetDate(year, month, day);
     }
 
     /// <summary>The whole date and time read at once.</summary>

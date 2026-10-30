@@ -76,3 +76,8 @@ gh release create vX.Y.Z dist/ObenseuerExtended-X.Y.Z.zip --title "ObenseuerExte
 `build/release.sh X.Y.Z --publish` runs them for you after the local part, asking first (`--yes` skips the question). It needs `gh` logged in, checked before anything is changed.
 
 Stable releases only happen when the owner asks; experimental ones go out through `experimental.sh` as described above. Never tag or push by hand to try something out: the tag is the release.
+
+## The wiki
+
+The [GitHub wiki](https://github.com/Official-Husko/openseuer-framework/wiki) is for players: installing, each mod, reporting bugs, troubleshooting. Its pages live in `wiki/` (`Home.md`, `_Sidebar.md`, `_Footer.md` and a file per page, named like the page with dashes for spaces) and are edited there with the code. `build/wiki.sh` replaces the wiki's pages with them and pushes (`--dry-run` shows the changes first). Run it after a release, or when a page changed; a page that describes something new should go out with the release that brings it.
+

@@ -1,0 +1,1 @@
+ObenseuerExtended is a fan project and isn't made or endorsed by Loiste Interactive. [Report a bug](https://github.com/Official-Husko/openseuer-framework/issues/new/choose) · [Releases](https://github.com/Official-Husko/openseuer-framework/releases)

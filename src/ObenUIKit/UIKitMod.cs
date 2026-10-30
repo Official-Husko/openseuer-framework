@@ -1,5 +1,7 @@
+using ObenFramework.SceneLook;
 using ObenFramework.Ui;
 using ObenLoader;
+using ObenLoader.Mods;
 using ObenUIKit.Computer;
 using ObenUIKit.Controls;
 using ObenUIKit.Input;
@@ -53,6 +55,10 @@ public sealed class UIKitMod : ObenMod
             ModMenu.Open(WhatsNewPage.Title);
             return null;
         }, "Opens the release notes of every mod.");
+        // Shown with the framework, whose check it is; tracked here too, as the button's code is the kit's.
+        Track(ModActions.Register(ModRegistry.Find("ObenFramework")?.Instance ?? this, "Run scene looks checks", SceneLooks.Checks,
+            "Read only. Lists the character looks of the scene you're in, then every body and the NPC and character names, in the framework log.",
+            group: "Scene looks"));
         ChangelogFeed.Init(this);
         WhatsNewPrompt.Init(this, config);
         MainMenuEntry.Init(this);

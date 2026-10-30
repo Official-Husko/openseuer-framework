@@ -17,7 +17,7 @@ SceneLookInfo rita = SceneLooks.FindByName("Open Sewer Bazaar", "Rita Korjus"); 
 
 A `SceneLookInfo` tells the body's name and hierarchy path, the file it is in (`levelN`), how many skinned renderers and bones it has, the rig (`Bip001` for the game's characters), the avatar (`humanoid`, `generic`, `none`), whether it is an NPC and which of the game's characters it is, and whether it is `Clean` (every mesh, material and texture can be rebuilt from the files; a look that isn't clean won't load, and `Problems` says why).
 
-The first call for a scene reads its file once, which takes a fraction of a second (a second and a half for the biggest levels), and the result is kept for the session. `FindByCharacter(id)` without a scene may scan many scenes. Do these at a loading moment, not every frame. The F1 console has a read-only `scenelooks` command with the same lookups (`list`, `listall`, `find`, `findchar`, `here`, `status`).
+The first call for a scene reads its file once, which takes a fraction of a second (a second and a half for the biggest levels), and the result is kept for the session. `FindByCharacter(id)` without a scene may scan many scenes. Do these at a loading moment, not every frame. The F1 console has a read-only `scenelooks` command with the same lookups (`list`, `listall`, `find`, `findchar`, `here`, `status`), and `checks`: the looks of the scene you're in, characters and then every body, with the NPC and character names among them. `SceneLooks.Checks()` writes the same to the framework log and returns a one-line summary; the MODS menu's Settings page has it as "Run scene looks checks" under ObenFramework.
 
 ## Loading and applying
 
@@ -41,7 +41,7 @@ The game's characters use two rigs: the 3ds Max biped (`Bip001 ...`, the slider 
 
 - `Reskin(owner, look, npc, out reason, skeleton: false)` is for a live NPC: the game switches an NPC's own renderers back on now and then, so they are checked twice a second and hidden again.
 - `Remove(owner, body, out reason)` takes the look off and shows the body's own renderers again.
-- `RigOf(owner, body, out reason)` gives the holder object, the avatar, the path taken and, for retargeted looks, `AutoPose` and `SyncPose()` for the pose driver. `SyncPose(owner, body, out reason)` and `SetAutoPose(owner, body, on, out reason)` do the same directly.
+- `RigOf(owner, body, out reason)` gives the holder object, the avatar, the path taken and, for retargeted looks, `AutoPose` and `SyncPose()` for the pose driver. `SyncPose(owner, body, out reason)` and `SetAutoPose(owner, body, on, out reason)` do the same directly; each of the three also comes without the `out reason`.
 - `Describe(look, body?)` is a text report (node tree with file poses, renderers with bones, blend shapes and bind pose scales, and the rig path for a body) for working out why a look comes out wrong.
 - `Applied()` lists every body wearing a look; `Status()` counts looks, scans, bodies and open files.
 

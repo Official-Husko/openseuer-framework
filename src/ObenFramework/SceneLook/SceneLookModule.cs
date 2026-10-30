@@ -14,7 +14,7 @@ namespace ObenFramework.SceneLook;
 /// </summary>
 internal static class SceneLookModule
 {
-    private const string Usage = "scenelooks list|listall <scene> | find \"<scene>\" <name> | findchar <id> | here | status";
+    private const string Usage = "scenelooks list|listall <scene> | find \"<scene>\" <name> | findchar <id> | here | checks | status";
 
     public static void Init(ObenMod framework)
     {
@@ -41,6 +41,11 @@ internal static class SceneLookModule
             return ListText(Join(args, 1), false);
         if (mode == "here")
             return ListText(SceneManager.GetActiveScene().name, true);
+        if (mode == "checks")
+        {
+            string summary = Checks(out string full);
+            return full ?? summary;
+        }
         if (mode == "find" && args.Length >= 3)
             return One(SceneLooks.FindByName(args[1], Join(args, 2)), "no look named " + Join(args, 2) + " in " + args[1]);
         if (mode == "findchar" && args.Length >= 2)
@@ -52,9 +57,41 @@ internal static class SceneLookModule
         return Usage;
     }
 
-    private static string ListText(string scene, bool charactersOnly)
+    /// <summary>
+    /// The looks of the active scene, characters and then every body, with the NPC and character names among them
+    /// in <paramref name="full"/>; returns a one-line summary, or why it can't run (then <paramref name="full"/> is null).
+    /// </summary>
+    internal static string Checks(out string full)
     {
-        var looks = SceneLooks.List(scene, charactersOnly);
+        full = null;
+        string problem = SceneLooks.Unavailable;
+        if (problem != null)
+            return problem;
+        string scene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(scene))
+            return "there is no active scene";
+        var characters = SceneLooks.List(scene, true);
+        var roots = SceneLooks.List(scene, false);
+        var npcs = new List<string>();
+        var named = new List<string>();
+        foreach (var look in roots)
+        {
+            if (look.IsNpc)
+                npcs.Add(look.Name);
+            if (look.HasCharacter)
+                named.Add(look.CharacterId + " " + look.CharacterName);
+        }
+        full = ListText(scene, true, characters) + "\n\n" + ListText(scene, false, roots) +
+            "\n\nnpcs: " + Listed(npcs) + "\ncharacters: " + Listed(named);
+        return scene + ": " + characters.Length + " characters, " + roots.Length + " bodies";
+    }
+
+    private static string Listed(List<string> names) => names.Count == 0 ? "none" : string.Join(", ", names.ToArray());
+
+    private static string ListText(string scene, bool charactersOnly) => ListText(scene, charactersOnly, SceneLooks.List(scene, charactersOnly));
+
+    private static string ListText(string scene, bool charactersOnly, SceneLookInfo[] looks)
+    {
         var lines = new List<string> { "scene=" + scene + " mode=" + (charactersOnly ? "characters only" : "all bodies") };
         foreach (var look in looks)
             lines.Add(Line(look));

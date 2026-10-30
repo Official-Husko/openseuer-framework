@@ -98,6 +98,18 @@ public static partial class SceneLooks
         Free(look.Key);
     }
 
+    /// <summary>
+    /// Read-only checks of the active scene: writes its looks (characters, then every body) and the NPC and
+    /// character names among them to the framework log, and returns a one-line summary or why it can't run.
+    /// </summary>
+    public static string Checks()
+    {
+        string summary = SceneLookModule.Checks(out string full);
+        if (full != null)
+            Log.Info(full);
+        return summary;
+    }
+
     /// <summary>How many looks are loaded, scenes scanned and bodies wear a look, for diagnostics.</summary>
     public static string Status() =>
         $"{Loaded.Count} looks loaded, {(_index != null ? _index.ScannedCount : 0)} scenes scanned, {SceneLookApply.Count} bodies wearing one, {(_files != null ? _files.OpenCount : 0)} files open";

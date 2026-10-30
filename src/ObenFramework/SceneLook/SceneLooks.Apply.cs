@@ -61,6 +61,9 @@ public static partial class SceneLooks
     }
 
     /// <summary>Copies the body's pose onto a retargeted look once (useful with auto pose off).</summary>
+    public static bool SyncPose(ObenMod owner, GameObject body) => SyncPose(owner, body, out _);
+
+    /// <summary>Copies the body's pose onto a retargeted look once (useful with auto pose off).</summary>
     public static bool SyncPose(ObenMod owner, GameObject body, out string reason)
     {
         if (owner == null) throw new ArgumentNullException(nameof(owner));
@@ -71,6 +74,9 @@ public static partial class SceneLooks
     }
 
     /// <summary>Turns the per-frame pose copy of a retargeted look on or off.</summary>
+    public static bool SetAutoPose(ObenMod owner, GameObject body, bool enabled) => SetAutoPose(owner, body, enabled, out _);
+
+    /// <summary>Turns the per-frame pose copy of a retargeted look on or off.</summary>
     public static bool SetAutoPose(ObenMod owner, GameObject body, bool enabled, out string reason)
     {
         if (owner == null) throw new ArgumentNullException(nameof(owner));
@@ -79,6 +85,9 @@ public static partial class SceneLooks
         driver.Auto = enabled;
         return true;
     }
+
+    /// <summary>The rig of a look the mod put on a body, or null.</summary>
+    public static SceneLookRigView RigOf(ObenMod owner, GameObject body) => RigOf(owner, body, out _);
 
     /// <summary>The rig of a look the mod put on a body, or null with the reason.</summary>
     public static SceneLookRigView RigOf(ObenMod owner, GameObject body, out string reason)

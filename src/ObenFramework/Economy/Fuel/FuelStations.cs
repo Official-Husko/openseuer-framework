@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenFramework.World.Addressing;
@@ -17,6 +18,9 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class FuelStations
 {
+    /// <summary>True when the fuel hooks are in place, so the station events are raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Economy");
+
     /// <summary>A station's price per litre changed (the game's own change, a mod's, or loading a save).</summary>
     public static readonly WorldEvent<FuelStationInfo> PriceChanged = new WorldEvent<FuelStationInfo>(nameof(PriceChanged));
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using ObenFramework.World.Addressing;
 using UnityEngine;
@@ -14,6 +15,9 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class Shops
 {
+    /// <summary>True when the framework's shop hooks are in place: the deal and restock events, and price modifiers taking effect.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Shops");
+
     /// <summary>The player bought something. Raised after the game finished the purchase, whichever way it was made.</summary>
     public static readonly WorldEvent<ShopDeal> Bought = new WorldEvent<ShopDeal>(nameof(Bought));
 

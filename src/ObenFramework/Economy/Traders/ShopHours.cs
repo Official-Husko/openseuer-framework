@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using ObenFramework.Patching;
 using ObenFramework.World;
 
 namespace ObenFramework.Economy;
@@ -39,6 +40,9 @@ public readonly struct ShopDay
 /// </summary>
 public static class ShopHours
 {
+    /// <summary>True when the opening hours hook is in place, so mods' hours take effect.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Economy");
+
     /// <summary>A trader opened for the day.</summary>
     public static readonly WorldEvent<ShopInfo> Opened = new WorldEvent<ShopInfo>(nameof(Opened));
 

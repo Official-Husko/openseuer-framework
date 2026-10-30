@@ -39,7 +39,7 @@ internal static class ShopCommands
             ["stock"] = new JArray(Shops.Stock(shop).Select(line => new JObject
             {
                 ["id"] = line.Item.ID,
-                ["item"] = line.Item.Title,
+                ["item"] = line.Title,
                 ["amount"] = line.Amount,
                 ["price"] = line.Price,
                 ["currency"] = line.Currency.ToString(),

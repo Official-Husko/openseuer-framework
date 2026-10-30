@@ -27,8 +27,10 @@ var open = Shops.Open;                   // the trader whose trade window is ope
 var shop = Shops.Of(someComponent);      // null when the component isn't a shop
 
 foreach (var line in Shops.Stock(trader)) // traders and vending machines
-    Log.Info($"{line.Item.Title} x{line.Amount} for {line.Price} {line.Currency}");
+    Log.Info($"{line.Title} x{line.Amount} for {line.Price} {line.Currency}");
 ```
+
+A trader's stacks of one item can differ in quality and so in price (Brom's Kalja: 7 at 11 OC, 6 at 13); each price is a line of its own, as the trade window shows them. `StockLine.Title` is a vending machine's own name for an entry when it has one, else the item's title.
 
 `ShopInfo.Id` is the shop's [`ObjectAddress`](world.md) as text (`scene|Type|guid|path`). The game gives traders, vending machines, checkouts and furniture shops a GUID in the editor, so the address survives restarts and is the same on every machine. Names are not unique: all vending machines are called "Vending Machine". `ShopInfo.Matches(key)` is true for the address, the GUID or the name.
 
@@ -61,11 +63,15 @@ ShopStock.AddToTrader(this, traderAddress, itemId, 5);
 
 // sell an item from every vending machine named "Vending Machine" for 8 OC, up to 10 in stock
 ShopStock.AddToVending(this, "Vending Machine", item, stock: 10, price: 8f);
+
+// one rare piece at Brom's, once per save, never restocked
+ShopStock.AddToTraderOnce(this, "Brom's", rareItemId, 1);
 ```
 
 Both take an address, GUID or name; a name applies to every shop that has it. They return a handle and are removed when your mod unloads (the game never sees stale mod items after a hot reload). You can add before the scene with the shop is loaded; the stock is placed when the shop appears. Adding the same item to the same shop again replaces the earlier entry. Invalid arguments (unknown item, amount below 1) throw.
 
 - **Traders** hold goods in their storage's slots, so the stock fills empty slots only, and a full trader skips the rest (a warning is logged once). Stock goes in once per save, then every time the trader restocks it is topped back up to your amount. What the player buys in between stays bought. Removing the stock takes back up to what this session put in.
+- **One-off trader stock** (`AddToTraderOnce`) goes in once per save, the first time the trader is loaded with it registered, on top of whatever the trader has of the item, and is never topped up. Removing it, or unloading the mod, only stops it reaching traders not stocked yet; what was put in stays.
 - **Vending machines** get a real entry in the machine's list: it refills with the machine and sells at your fixed price (price 0 or less uses the game's default). If the machine already sells the item, its own entry is kept and a warning is logged. The remaining stock is saved with the save in the framework's mod data, not in the game's file, because the game saves the list by position.
 - `ShopStock.Remove(this, shop, itemId)` removes one entry now; `ShopStock.Entries()` lists everything registered.
 
@@ -105,9 +111,23 @@ Traders.ClearPriceFactors(this, "Brom's");
 
 - Price factors are per mod and per trader: a name covers every trader of that name, also in scenes loaded later; an address, GUID or path covers that one trader; `null` covers every trader. They are kept in the framework's shared factor table: different mods' factors multiply, the same mod and trader again replaces its pair, and a mod's factors go when it unloads. They scale the game's price first; `Prices` modifiers then see the scaled price. They are not saved: set them in `OnLoad`.
 - `SetMoney` does nothing (and returns false) while the difficulty gives traders infinite wealth.
+- Some traders pay from a furniture shop's till (the game's "same money as furniture shop" link); `RestockMoney` refills that till, since the game's own refill writes money such a trader never reads.
 - `TraderInfo` also has the categories a trader takes or refuses, whether it buys stolen goods and at what factor, and whether it is a scripted trader (`Special`).
 
-## Opening hours
+### Trading from code
+
+```csharp
+TradeResult bought = Traders.Buy("Brom's", kaljaId, 3);   // the player buys 3, as through the window
+TradeResult sold = Traders.Sell("Brom's", kaljaId, 2);    // and sells 2 back
+if (bought != TradeResult.Ok)
+    Log.Info("no deal: " + bought);                         // CannotAfford, OutOfStock, NoRoom, Closed...
+```
+
+- The money goes through the game's own `Trade.Buy`/`Sell`, so the player pays and is paid what the window shows, in the trader's currency, with mods' factors and `Prices` modifiers; the trader's money and trade balance move as with the window, and `Shops.Bought`/`Sold` are raised (one per stack, `WorldChanges.Current` is `Mod`).
+- Buying takes the trader's stacks in the order of its slots, each at its own price. Only its own goods are sold: nobody's, not stolen, nothing poured in. Selling takes from the inventory grid and the bag, never from what the player wears or holds, and skips stacks the trader won't take (stolen goods it doesn't buy, categories it doesn't deal in). Liquids and filled containers are refused both ways.
+- All or nothing. The goods are moved first and counted on both sides; if they don't fit (the player's inventory, the trader's storage) or don't add up, every stack is put back and nothing is paid (`NoRoom`, `Failed`).
+- It works with the trade window open, which updates at once. Certificate traders (`TraderInfo.Special`) are `Unsupported`; a closed trader is `Closed`. Nothing happens while a save is written or loaded (`Busy`).
+
 
 NPC traders open and close by their hours, checked every game minute (and not while the player is standing at the counter). Vending machines and furniture shops follow no clock; a checkout can be locked.
 
@@ -134,9 +154,18 @@ foreach (var f in FurnitureShops.All())
     Log.Info($"{f.Shop.Name}: can pay {f.Coins} OC / {f.RealMoney} RM");
 FurnitureShops.SetMoney(shopId, coins: 20000, realMoney: 2000);
 FurnitureShops.Restock(shopId);          // new goods and money now; RestockMoney for money only
+
+foreach (var line in FurnitureShops.Stock("Ankea"))
+    Log.Info($"{line.Title} x{line.Amount}: {line.Coins} OC + {line.RealMoney} RM ({line.Id})");
+FurnitureShops.Buy("Ankea", "Red Metal Chair", 2);    // by the game's furniture id or the title
+FurnitureShops.Sell("Ankea", "Red Metal Chair");      // an unplaced piece back
 ```
 
 `MarketShops.Paid` is one event per payment with the charged total; `Shops.Bought` has the goods line by line.
+
+Furniture bought from code goes to the player's unplaced furniture and is paid in both currencies at the shop's prices; the shop's till and stock move as with its window, and one `Shops.Bought`/`Sold` is raised. Selling needs an unplaced piece the shop takes (free pieces never sell) and a till that can pay. Train shops, and frames or posters the game asks a picture for first (`FurnitureStockLine.NeedsPicture`), are `Unsupported`. Both return a `TradeResult`.
+
+`Shops`, `ShopStock`, `Traders`, `FurnitureShops`, `MarketShops`, `ShopHours` and `FuelStations` have `IsAvailable`: false when the hooks they rely on are switched off (the "Shops" or "Economy" patch area failed or was turned off), in which case events aren't raised and prices or stock aren't changed.
 
 ## Fuel stations
 
@@ -180,8 +209,10 @@ PlayerShops.CollectEarnings("kiosk");                    // the till goes to the
 
 - `shops.list` (`kind?`): shops of the scene with their address.
 - `shops.stock` (`address`): the stock and current prices of a trader or vending machine.
+- `shops.addstock` (`shop`, `item`, `amount?`, `vending?`, `once?`, `price?`, `clear?`): stock owned by the bridge; lists every registration.
 - `traders.list`, `traders.money` (`shop`, `amount?`, `restock?`), `traders.factor` (`shop?`, `buy`, `sell`: the bridge's own factors; 1 and 1 remove them), `shops.hours` (`shop`)
-- `economy.events` (`clear?`): recorded money, ledger, invoice, legal, checkout, opening hours, fuel and player shop events
-- `markets.list`, `markets.lock` (`shop`, `locked`), `furnitureshops.list`
+- `traders.buy`, `traders.sell` (`shop`, `item`, `count?`): trade without the window; the result and the wallet.
+- `economy.events` (`clear?`): recorded money, shop deal, ledger, invoice, legal, checkout, opening hours, fuel and player shop events
+- `markets.list`, `markets.lock` (`shop`, `locked`), `furnitureshops.list`, `furnitureshops.stock` (`shop`), `furnitureshops.buy`, `furnitureshops.sell` (`shop`, `furniture`, `count?`)
 - `fuel.stations`, `fuel.price` (`station`, `price`)
 - `playershops.list`, `playershops.create` (`id`, `name?`, `currency?`), `playershops.set` (`id`, `open?`, `markup?`, `area?`, `addContainer?`, `removeContainer?`, `item?` + `price?`), `playershops.stock` (`id`), `playershops.sell` (`id`, `container`, `slot`, `item`, `count?`), `playershops.collect` (`id`), `playershops.delete` (`id`, `force?`)

@@ -7,19 +7,23 @@ namespace ObenFramework.Economy;
 /// <summary>One line of a shop's stock: an item, how many are there and what one costs the player.</summary>
 public sealed class StockLine
 {
-    internal StockLine(Item item, int amount, float price, Currency currency)
+    internal StockLine(Item item, int amount, float price, Currency currency, string title = null)
     {
         Item = item;
         Amount = amount;
         Price = price;
         Currency = currency;
+        Title = string.IsNullOrEmpty(title) ? item.Title : title;
     }
 
     public Item Item { get; }
 
+    /// <summary>The name the shop shows: a vending machine's own title for the entry when it has one, else the item's.</summary>
+    public string Title { get; }
+
     public int Amount { get; internal set; }
 
-    /// <summary>The price of one, modifiers from <see cref="Prices"/> included.</summary>
+    /// <summary>The price of one, modifiers from <see cref="Prices"/> included. A trader's stacks of one item can differ by quality, each a line of its own.</summary>
     public float Price { get; }
 
     public Currency Currency { get; }
@@ -60,7 +64,7 @@ internal static class ShopLines
             if (item == null)
                 continue;
 
-            float price = ShopPricing.UnitPrice(shop, item, out var currency) ?? 0f;
+            float price = ShopPricing.StackPrice(shop, trade, item, slot, out var currency);
             // Slots of the same item and price are one line; a trader often has several stacks.
             var same = lines.Find(l => l.Item == item && l.Price == price && l.Currency == currency);
             if (same != null)
@@ -78,7 +82,7 @@ internal static class ShopLines
         {
             var item = entry != null && entry.item != null ? entry.item.Item : null;
             if (item != null)
-                lines.Add(new StockLine(item, entry.currentStock, entry.GetPrice(), entry.currency));
+                lines.Add(new StockLine(item, entry.currentStock, entry.GetPrice(), entry.currency, entry.customTitle));
         }
     }
 }

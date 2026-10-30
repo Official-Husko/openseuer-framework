@@ -15,6 +15,7 @@ public sealed class StockEntry
         Amount = record.Amount;
         Price = record.Price;
         Currency = record.Currency;
+        Once = record.Once;
     }
 
     /// <summary>Id of the mod that added it.</summary>
@@ -35,6 +36,9 @@ public sealed class StockEntry
     public float Price { get; }
 
     public Currency Currency { get; }
+
+    /// <summary>Trader stock put in once per save and never topped up.</summary>
+    public bool Once { get; }
 }
 
 /// <summary>One registration. The same record serves trader and vending stock.</summary>
@@ -47,6 +51,7 @@ internal sealed class StockRecord
     internal int Amount;
     internal float Price;
     internal Currency Currency;
+    internal bool Once;
 
     /// <summary>Trader stock this record put into storages since it was added, so removing it takes back that much at most.</summary>
     internal int Placed;
@@ -54,7 +59,7 @@ internal sealed class StockRecord
     internal readonly List<Placement> Placements = new List<Placement>();
     internal bool Warned;
 
-    internal string PlacedKey(ShopInfo shop) => OwnerId + "|" + shop.Id + "|" + ItemId;
+    internal string PlacedKey(ShopInfo shop) => OwnerId + "|" + shop.Id + "|" + ItemId + (Once ? "|once" : "");
 }
 
 /// <summary>An entry this record added to one vending machine.</summary>

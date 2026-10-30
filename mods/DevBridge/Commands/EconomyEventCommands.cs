@@ -22,6 +22,8 @@ internal static class EconomyEventCommands
         Invoices.Expired.Subscribe(owner, e => recorder.Add("InvoiceExpired", Invoice(e)));
         LegalServices.Queued.Subscribe(owner, e => recorder.Add("LegalQueued", new JObject { ["name"] = e.Name, ["kind"] = e.Kind.ToString() }));
         LegalServices.Completed.Subscribe(owner, e => recorder.Add("LegalCompleted", new JObject { ["name"] = e.Name, ["kind"] = e.Kind.ToString() }));
+        Shops.Bought.Subscribe(owner, d => recorder.Add("Bought", Deal(d)));
+        Shops.Sold.Subscribe(owner, d => recorder.Add("Sold", Deal(d)));
         MarketShops.Paid.Subscribe(owner, e => recorder.Add("CheckoutPaid", new JObject { ["shop"] = e.Shop.Name, ["total"] = e.Total, ["currency"] = e.Currency.ToString() }));
         ShopHours.Opened.Subscribe(owner, s => recorder.Add("ShopOpened", new JObject { ["shop"] = s.Name }));
         ShopHours.Closed.Subscribe(owner, s => recorder.Add("ShopClosed", new JObject { ["shop"] = s.Name }));
@@ -55,7 +57,7 @@ internal static class EconomyEventCommands
         Contests.WinningsCollected.Subscribe(owner, b => recorder.Add("RatWinnings", new JObject { ["amount"] = b.Amount, ["currency"] = b.Currency.ToString() }));
     });
 
-    [BridgeCommand("economy.events", "Money, bank ledger, invoice, legal, checkout, opening hours, fuel and player shop events since recording started.",
+    [BridgeCommand("economy.events", "Money, shop deal, bank ledger, invoice, legal, checkout, opening hours, fuel and player shop events since recording started.",
         Params = new[] { "clear?: forget what was returned, default true" })]
     private static object MoneyEvents(JObject p) => MoneyRecorder.Read(p.Bool("clear", true));
 
@@ -86,5 +88,16 @@ internal static class EconomyEventCommands
     private static JObject Machine(CasinoEvent e) => new JObject
     {
         ["kind"] = e.Machine.Kind.ToString(), ["machine"] = e.Machine.Id, ["amount"] = e.Amount, ["before"] = e.Before,
+    };
+
+    private static JObject Deal(ShopDeal d) => new JObject
+    {
+        ["shop"] = d.Shop.Name,
+        ["item"] = d.Item != null ? d.Item.ID : (int?)null,
+        ["furniture"] = d.Furniture != null ? d.Furniture.title : null,
+        ["amount"] = d.Amount,
+        ["oc"] = d.Oc,
+        ["rm"] = d.Rm,
+        ["source"] = ObenFramework.World.WorldChanges.Current.ToString(),
     };
 }

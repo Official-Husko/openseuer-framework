@@ -46,9 +46,11 @@ internal static class ShopStockTraders
         }
     }
 
-    /// <summary>Takes back, from loaded traders, up to what the record put in.</summary>
+    /// <summary>Takes back, from loaded traders, up to what the record put in. One-off stock stays where it is.</summary>
     internal static void Undo(StockRecord record)
     {
+        if (record.Once)
+            return;
         var save = ShopStock.Save;
         foreach (var trade in Object.FindObjectsByType<Trade>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -85,16 +87,18 @@ internal static class ShopStockTraders
             return;
         string key = record.PlacedKey(shop);
         // Outside of a restock the stock goes in once per save; otherwise every load would refill what was bought.
-        if (!restock && save.Placed.Contains(key))
+        // One-off stock never comes back, not even on a restock.
+        if ((!restock || record.Once) && save.Placed.Contains(key))
             return;
 
         var storage = trade.GetComponent<Storage>();
         if (storage == null || storage.storageSlots == null)
             return;
-        if (!restock)
+        if (!restock || record.Once)
             save.Placed.Add(key);
 
-        int missing = record.Amount - Count(storage, record.ItemId);
+        // One-off stock is its own pieces, put in whatever the trader already has of the item.
+        int missing = record.Once ? record.Amount : record.Amount - Count(storage, record.ItemId);
         if (missing > 0)
             record.Placed += Fill(storage, record.ItemId, missing);
     }

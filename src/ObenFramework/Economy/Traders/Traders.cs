@@ -1,6 +1,8 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenFramework.World.Addressing;
@@ -16,6 +18,11 @@ namespace ObenFramework.Economy;
 /// </summary>
 public static class Traders
 {
+    /// <summary>True when the price hooks are in place, so price factors take effect and trades from code raise the deal events.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Shops");
+
+    private static readonly AccessTools.FieldRef<Trade, FurnitureShop> Till = AccessTools.FieldRefAccess<Trade, FurnitureShop>("furniture");
+
     /// <summary>Every trader of the loaded scenes. A scan; not for every frame.</summary>
     public static List<TraderInfo> All()
     {
@@ -50,14 +57,22 @@ public static class Traders
         return true;
     }
 
-    /// <summary>Refills the trader's money now, as the game does on its own schedule (a random amount in the trader's range, scaled by the difficulty).</summary>
+    /// <summary>
+    /// Refills the trader's money now, as the game does on its own schedule (a random amount in the trader's
+    /// range, scaled by the difficulty). A trader that pays from a furniture shop's till refills that till.
+    /// </summary>
     public static bool RestockMoney(string key)
     {
         if (SaveGate.IsBusy || DifficultyController.instance == null || Find(key, out var trade) == null)
             return false;
         try
         {
-            trade.MoneyRestock();
+            // The game's own refill writes the trader's private money, which such a trader never reads.
+            var till = TillShop(trade);
+            if (till != null)
+                till.MoneyRestock();
+            else
+                trade.MoneyRestock();
             return true;
         }
         catch (Exception e)
@@ -65,6 +80,33 @@ public static class Traders
             WorldLog.Failed("Traders.RestockMoney", e);
             return false;
         }
+    }
+
+    /// <summary>
+    /// The player buys <paramref name="count"/> of an item from a trader without the trade window, in the
+    /// trader's currency and at the prices the window shows: stacks are taken in the order of the trader's
+    /// slots, each at its own price (quality and wear change it; mods' factors and <see cref="Prices"/>
+    /// modifiers apply). Only the trader's own goods are taken: nobody's, not stolen, nothing poured in. All or
+    /// nothing: the goods must fit the player's inventory, grid, equipment slots or bag, as in the window.
+    /// Raises <see cref="Shops.Bought"/> for each stack bought from. Works with the window open too.
+    /// </summary>
+    public static TradeResult Buy(string key, int itemId, int count)
+    {
+        Find(key, out var trade);
+        return TraderDeals.Run(trade, itemId, count, buy: true);
+    }
+
+    /// <summary>
+    /// The player sells <paramref name="count"/> of an item to a trader without the trade window, from the
+    /// inventory grid and bag (never what's worn or held in the equipment slots), stacks the trader won't take
+    /// left alone. The trader pays what the window would, and refuses as it would: stolen goods it doesn't
+    /// buy, categories it doesn't deal in, a full storage, not enough money. All or nothing; raises
+    /// <see cref="Shops.Sold"/> for each stack sold from. Liquids and filled containers are refused on both sides.
+    /// </summary>
+    public static TradeResult Sell(string key, int itemId, int count)
+    {
+        Find(key, out var trade);
+        return TraderDeals.Run(trade, itemId, count, buy: false);
     }
 
     /// <summary>
@@ -115,6 +157,13 @@ public static class Traders
             }
         }
         return null;
+    }
+
+    // The furniture shop whose money the trader pays with (the game's "same money as furniture shop" link), or null.
+    private static FurnitureShop TillShop(Trade trade)
+    {
+        var shop = Till(trade);
+        return shop != null ? shop : null;
     }
 
     private static bool ValidFactor(float factor) => !float.IsNaN(factor) && factor > 0f && factor <= TraderFactors.Max;

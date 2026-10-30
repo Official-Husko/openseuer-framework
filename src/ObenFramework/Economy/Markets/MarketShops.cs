@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using Currency = Money.Currency;
@@ -73,6 +74,9 @@ public readonly struct CheckoutPayment
 /// </summary>
 public static class MarketShops
 {
+    /// <summary>True when the checkout hook is in place, so <see cref="Paid"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Economy");
+
     /// <summary>The player paid at a checkout.</summary>
     public static readonly WorldEvent<CheckoutPayment> Paid = new WorldEvent<CheckoutPayment>(nameof(Paid));
 

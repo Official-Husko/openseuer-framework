@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ObenFramework.Events;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -17,12 +18,16 @@ namespace ObenFramework.Economy;
 /// </summary>
 /// <remarks>
 /// Trader stock is put in once per save and topped back up to its amount every time the trader restocks;
-/// what the player buys in between stays bought. Vending entries are real entries of the machine: they
+/// what the player buys in between stays bought. Stock added with <see cref="AddToTraderOnce(ObenMod, string, int, int)"/>
+/// is never topped up. Vending entries are real entries of the machine: they
 /// sell for a fixed price, refill with the machine, and their remaining stock is saved with the game. A
 /// vending machine that already sells the item keeps its own entry.
 /// </remarks>
 public static class ShopStock
 {
+    /// <summary>True when the restock hooks are in place, so added stock is put in and topped up.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Shops");
+
     private static readonly List<StockRecord> Records = new List<StockRecord>();
     private static ModSaveData<ShopStockSave> _save;
 
@@ -49,6 +54,19 @@ public static class ShopStock
     /// <inheritdoc cref="AddToTrader(ObenMod, string, int, int)"/>
     public static IDisposable AddToTrader(ObenMod owner, string shop, Item item, int amount) =>
         AddToTrader(owner, shop, IdOf(item), amount);
+
+    /// <summary>
+    /// Puts <paramref name="amount"/> of an item into a trader once per save, the first time the trader is
+    /// loaded with it registered, and never tops it up: a one-off piece the player can buy and that is then
+    /// gone. Disposing the result, or unloading <paramref name="owner"/>, stops it reaching traders not stocked
+    /// yet; what was put in stays.
+    /// </summary>
+    public static IDisposable AddToTraderOnce(ObenMod owner, string shop, int itemId, int amount) =>
+        Add(owner, shop, itemId, vending: false, amount, 0f, Currency.OC, once: true);
+
+    /// <inheritdoc cref="AddToTraderOnce(ObenMod, string, int, int)"/>
+    public static IDisposable AddToTraderOnce(ObenMod owner, string shop, Item item, int amount) =>
+        AddToTraderOnce(owner, shop, IdOf(item), amount);
 
     /// <summary>
     /// Adds an item to a vending machine with room for <paramref name="stock"/> of it. <paramref name="price"/> is
@@ -91,7 +109,7 @@ public static class ShopStock
         return item.ID;
     }
 
-    private static IDisposable Add(ObenMod owner, string shop, int itemId, bool vending, int amount, float price, Currency currency)
+    private static IDisposable Add(ObenMod owner, string shop, int itemId, bool vending, int amount, float price, Currency currency, bool once = false)
     {
         if (owner == null)
             throw new ArgumentNullException(nameof(owner));
@@ -107,14 +125,14 @@ public static class ShopStock
         // Same mod, shop and item replaces the earlier registration.
         foreach (var old in Records.ToArray())
         {
-            if (old.OwnerId == owner.Info.Id && old.Shop == shop && old.ItemId == itemId && old.Vending == vending)
+            if (old.OwnerId == owner.Info.Id && old.Shop == shop && old.ItemId == itemId && old.Vending == vending && old.Once == once)
                 Drop(old);
         }
 
         var record = new StockRecord
         {
             OwnerId = owner.Info.Id, Shop = shop, ItemId = itemId, Vending = vending,
-            Amount = amount, Price = price, Currency = currency,
+            Amount = amount, Price = price, Currency = currency, Once = once,
         };
         Records.Add(record);
         var handle = Disposable.Create(() => Drop(record));

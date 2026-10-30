@@ -48,6 +48,17 @@ internal static class ShopPricing
     internal static float TraderMinimum(Currency currency) => currency == Currency.RM ? 0.1f : 1f;
 
     /// <summary>
+    /// What one of a trader's stack costs the player, as the trade window prices it: the stack's quality,
+    /// wear and owner, the trader's terms and the mods' factors and modifiers.
+    /// </summary>
+    internal static float StackPrice(ShopInfo shop, Trade trade, Item item, ItemStack stack, out Currency currency)
+    {
+        currency = trade.purchasePriceMode == Trade.PriceMode.OnlyRM ? Currency.RM : Currency.OC;
+        float basePrice = Trade.GetItemPrice(item, stack.ownerId, stack.Meta, currency, trade.basePurchasePrice, trade.stolenPriceFactor);
+        return Apply(shop, item, null, true, currency, basePrice, TraderMinimum(currency), false);
+    }
+
+    /// <summary>
     /// What one <paramref name="item"/> costs the player at a shop that sells it, or null when it doesn't.
     /// Traders sell from storage, so the price is worked out the way the game does; vending machines and
     /// checkouts already carry the modifiers because their own price method is hooked.

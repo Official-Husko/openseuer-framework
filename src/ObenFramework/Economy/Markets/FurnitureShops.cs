@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 
@@ -44,6 +45,9 @@ public sealed class FurnitureShopInfo
 /// </summary>
 public static class FurnitureShops
 {
+    /// <summary>True when the shop hooks are in place: prices follow <see cref="Prices"/> and restocks raise <see cref="Shops.Restocked"/>.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Shops");
+
     /// <summary>Every furniture and train shop of the loaded scenes.</summary>
     public static List<FurnitureShopInfo> All()
     {
@@ -78,6 +82,35 @@ public static class FurnitureShops
 
     /// <summary>Renews the shop's goods and money now, as its own restock does (<see cref="Shops.Restocked"/> is raised).</summary>
     public static bool Restock(string key) => Run(key, "Restock", s => s.Restock());
+
+    /// <summary>The pieces a furniture or train shop has on offer now with their prices, or an empty list for no such shop.</summary>
+    public static List<FurnitureStockLine> Stock(string key)
+    {
+        Find(key, out var baseShop);
+        return baseShop != null ? FurnitureDeals.Stock(baseShop) : new List<FurnitureStockLine>();
+    }
+
+    /// <summary>
+    /// The player buys <paramref name="count"/> of a piece (the game's furniture id or its title) from a furniture
+    /// shop without its window: paid in both currencies at the shop's prices, the pieces go to the player's
+    /// unplaced furniture, the shop's till and stock change as with the window. Raises <see cref="Shops.Bought"/>
+    /// once. Train shops and pieces that ask for a picture first are <see cref="TradeResult.Unsupported"/>.
+    /// </summary>
+    public static TradeResult Buy(string key, string furniture, int count = 1)
+    {
+        var shop = Find(key, out var baseShop);
+        return FurnitureDeals.Buy(shop, baseShop, furniture, count);
+    }
+
+    /// <summary>
+    /// The player sells <paramref name="count"/> unplaced pieces (by id or title) to a furniture shop without its
+    /// window, if the shop takes that piece and can pay; free pieces never sell. Raises <see cref="Shops.Sold"/> once.
+    /// </summary>
+    public static TradeResult Sell(string key, string furniture, int count = 1)
+    {
+        var shop = Find(key, out var baseShop);
+        return FurnitureDeals.Sell(shop, baseShop, furniture, count);
+    }
 
     private static bool Run(string key, string what, Action<BaseShop> action)
     {

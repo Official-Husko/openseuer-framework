@@ -14,9 +14,12 @@ namespace ObenCoop.Lobby;
 internal sealed class LobbyNotices : IDisposable
 {
     private const string Title = "Co-op";
+    private const int RepeatWindowMs = 2000;
 
     private readonly CoopMod _mod;
     private string _lastEnd = "";
+    private string _lastShown;
+    private int _lastShownAt;
 
     public LobbyNotices(CoopMod mod)
     {
@@ -44,7 +47,16 @@ internal sealed class LobbyNotices : IDisposable
         _mod.Lobby.Browser.Finished -= OnScanFinished;
     }
 
-    private void Show(string text) => CoopNotices.Show(_mod.Log, Title, text);
+    // A failed join is told twice, by the lobby and by the session's end, often in the same words.
+    private void Show(string text)
+    {
+        int now = System.Environment.TickCount;
+        if (text == _lastShown && now - _lastShownAt < RepeatWindowMs)
+            return;
+        _lastShown = text;
+        _lastShownAt = now;
+        CoopNotices.Show(_mod.Log, Title, text);
+    }
 
     private void OnStarted()
     {

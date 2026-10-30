@@ -89,6 +89,10 @@ public sealed partial class CoopMod : ObenMod
         Ui.CoopMenu.Init(this);
     }
 
+    // A mod only counts as loaded once its OnLoad is over, so the mod set made in OnLoad leaves this mod (and
+    // any loaded after it) out. After the batch it is complete; a session carried over a reload needs it.
+    public override void OnAllLoaded() => RefreshOptions();
+
     public override void OnUpdate()
     {
         try

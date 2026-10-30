@@ -178,5 +178,6 @@
     <Compile Include="../../tools/ObenTool/Scripting/ScriptSource.cs" Link="Linked/ScriptSource.cs" />
     <Compile Include="../../tools/ObenTool/Checks/*.cs" LinkBase="Linked/Checks" />
     <Compile Include="../../src/Shared/GameCheck/*.cs" LinkBase="Linked/GameCheck" />
+    <Compile Include="../../src/Shared/Reports/*.cs" LinkBase="Linked/Reports" />
   </ItemGroup>
 </Project>

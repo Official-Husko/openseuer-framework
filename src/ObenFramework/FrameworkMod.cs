@@ -84,10 +84,16 @@ public sealed class FrameworkMod : ObenMod
         Start("custom furniture", CustomFurniture.Init);
         Start("media", MediaModule.Init, MediaModule.Update);
         Start("game check", Diagnostics.GameCheck.Init);
+        Start("bug reports", Diagnostics.Reports.BugReports.Init);
         Log.Info(FrameworkModules.Summary());
     }
 
-    public override void OnAllLoaded() => Diagnostics.GameCheck.StartOnce();
+    public override void OnAllLoaded()
+    {
+        Diagnostics.GameCheck.StartOnce();
+        // After the whole batch, so the mod list in it says which mods really loaded.
+        Diagnostics.Reports.BugReports.WriteSnapshot();
+    }
 
     public override void OnUpdate() => FrameworkModules.Update();
 

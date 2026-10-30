@@ -134,6 +134,12 @@ Fixes for the game's own bugs, each a feature the player can switch off. Write-u
 - [x] StrayLightControllers: three lamps carry a `LightController` without a `Light` (Open Sewer Tenement, Interior Bazaar Pontikka Roof, Interior Bazaar Mallment), so `Awake` threw a NullReferenceException on every load of those levels; such a controller is now switched off before `Awake`, as Unity ends up doing anyway
 - [ ] More from playing: check `known-bugs.md`'s "not fixed" list (subscription dates) and Player.log errors during real play
 
+## Crashes and bug reports
+
+- [ ] Crash prompt: the loader marks a session as running and clears the mark when the game quits. At the next start a mark left behind means the game crashed (or was killed): offer a report on the title screen with that crash's Crash_ folder in it. Needs no game files changed.
+- [ ] Crash handler wrapper: Unity starts `UnityCrashHandler64.exe --attach <pid> <handle>` next to the exe and it writes `%TEMP%\Loiste Interactive\Obenseuer\Crashes\Crash_<UTC time>` (crash.dmp, Player.log). A wrapper installed in its place (the original kept as `UnityCrashHandler64.original.exe`, put back by `oben uninstall`) would start the original with the same arguments, so Unity's dumps keep working, then make a report and offer it the moment the game dies. A small native Windows exe; the Go companion app can build it, since Go cross-compiles to Windows. Check first on a copy of the game folder that the player starts with a replaced or missing handler, and what Steam's file check does with it.
+- [ ] Game errors seen 2026-10-30 in Open Sewer Tenement: `[WaypointConnection] nearest.node is null` (four positions), `ArgumentException: no nodes passed` and `Cannot apply GraphUpdateScene, no points defined`. Look for the cause; maybe a fix for ObenPatches.
+
 ## Review follow-ups
 
 Smaller problems found in the code review of the third round (2026-10-29), left for later. The ones that mattered were fixed then.

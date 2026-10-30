@@ -72,4 +72,5 @@ What our stack does that the reference framework doesn't:
 - **Tests.** Unit tests for the loader, framework, tool, save codec and networking, and `oben check` against the installed game.
 - **Mods on top.** Unofficial ObenPatches (game bug fixes, each switchable), Performance Fixes, ObenSave (compressed saves), Cheat Menu, ObenCoop (direct IP, transport-agnostic).
 - **What's New** in game, generated from the commit history.
+- **Bug reports.** One zip from the MODS menu, the F1 console or `oben report` (when the game won't start): versions and game hashes, the system (Wine and the real OS under Proton), logs, mod settings, BepInEx and its plugins, optionally the PC, the save and the last crash dump, with personal details hidden; the GitHub bug form opens with the versions filled in.
 - **Framework extras.** Scene looks also apply the scene's blend shape weights; per-mod skill learning and melee hit multipliers; mod and game skill banners take turns; inventory events report net changes once per frame; mod NPCs the game destroys are noticed and their saved ones come back.

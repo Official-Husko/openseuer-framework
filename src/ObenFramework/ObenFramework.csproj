@@ -20,6 +20,13 @@
     <Compile Include="../Shared/GameCheck/*.cs" Link="Diagnostics/Checks/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- Bug reports (Diagnostics/Reports): the parts without Unity are shared with the oben tool and the tests. The game
+       ships System.IO.Compression.dll in its Managed folder; the zip writer needs it. -->
+  <ItemGroup>
+    <Compile Include="../Shared/Reports/*.cs" Link="Diagnostics/Reports/Shared/%(Filename)%(Extension)" />
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+
   <!-- Ships as a regular mod folder: <game>/Mods/ObenFramework. -->
   <Import Project="$(RepoRoot)build/Mod.targets" />
 </Project>

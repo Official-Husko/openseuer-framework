@@ -2,6 +2,7 @@ using System;
 using CheatMenu.Cheats;
 using CheatMenu.Dev;
 using CheatMenu.Sections;
+using ObenFramework.Console;
 using ObenFramework.Features;
 using ObenLoader;
 using ObenLoader.Config;
@@ -43,6 +44,7 @@ public sealed class CheatMenuMod : ObenMod
 
         DevMarks.Init(this);
         ModFeatures.Register(this, new DevMenuFeature(_context));
+        GameConsole.Register(this, "devmenu", "devmenu [watches]", DevMenuFeature.Command);
     }
 
     public override void OnQuit() => _context.Flush();

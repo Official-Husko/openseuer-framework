@@ -29,6 +29,26 @@ internal sealed class DevMenuFeature : ModFeature
 
     internal void Open() => DevWindow.Toggle(_ctx);
 
+    /// <summary>
+    /// The F1 console's <c>devmenu</c>: opens or closes the menu, <c>devmenu watches</c> shows or hides the
+    /// watches over the game. Registered with the mod, so it answers when the feature is off too.
+    /// </summary>
+    internal static string Command(string[] args)
+    {
+        var feature = Current;
+        if (feature == null)
+            return "The developer menu is off. Switch it on with: features CheatMenu/DevMenu on";
+        if (args.Length > 0 && string.Equals(args[0], "watches", System.StringComparison.OrdinalIgnoreCase))
+        {
+            WatchHud.Toggle();
+            return WatchHud.IsShown ? "The watches show over the game." : "The watches are hidden.";
+        }
+        if (args.Length > 0)
+            return "Usage: devmenu [watches]";
+        feature.Open();
+        return "Developer menu " + (UiKit.Find(DevWindow.WindowId) != null ? "opened." : "closed.");
+    }
+
     protected override void OnEnable()
     {
         DevWindow.Init(this);

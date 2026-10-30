@@ -6,9 +6,9 @@ using ObenUIKit.Controls;
 namespace CheatMenu.Dev;
 
 /// <summary>
-/// The player's tasks: pick one, set its state or an objective's, move a counter, and for tasks made by
-/// mods rewind them (<see cref="QuestRewindRows"/>). Tasks the game has loaded but not started can be
-/// started. Everything goes through the framework's <see cref="QuestLog"/> and <see cref="QuestAuthoring"/>,
+/// The player's tasks, the game's or one mod's at a time: pick one, set its state or an objective's, move or
+/// type a counter, and for tasks made by mods rewind them (<see cref="QuestRewindRows"/>). Tasks the game has
+/// loaded but not started can be started. Everything goes through the framework's <see cref="QuestLog"/> and <see cref="QuestAuthoring"/>,
 /// which refuse with a reason instead of breaking the save.
 /// </summary>
 internal static class QuestsSection
@@ -19,6 +19,10 @@ internal static class QuestsSection
     private static readonly ObjectiveStatus[] ObjectiveValues =
         { ObjectiveStatus.Active, ObjectiveStatus.Finished, ObjectiveStatus.Failed, ObjectiveStatus.Abandoned };
 
+    private const string GameTasks = "The game's tasks";
+    private const string AllTasks = "All tasks";
+
+    private static string _owner = AllTasks;
     private static string _taskId;
     private static string _objectiveId;
     private static int _start;
@@ -34,10 +38,44 @@ internal static class QuestsSection
 
         var tasks = QuestLog.All();
         if (tasks.Count == 0)
+        {
             ui.Label("No task is started in this save.", muted: true);
+        }
         else
-            BuildTask(ui, ctx, tasks);
+        {
+            tasks = BuildOwner(ui, tasks);
+            if (tasks.Count == 0)
+                ui.Label("None of them are started in this save.", muted: true);
+            else
+                BuildTask(ui, ctx, tasks);
+        }
         BuildStart(ui, ctx);
+    }
+
+    // The game's tasks and each mod's in a group of their own: mod task ids start with the mod's id.
+    private static List<QuestTask> BuildOwner(UiBuilder ui, List<QuestTask> tasks)
+    {
+        var owners = new List<string> { AllTasks, GameTasks };
+        foreach (var task in tasks)
+        {
+            string owner = DevRules.TaskOwner(task.Id);
+            if (owner != null && !owners.Contains(owner))
+                owners.Add(owner);
+        }
+        if (owners.Count == 2)
+            return tasks;
+        int index = System.Math.Max(0, owners.IndexOf(_owner));
+        _owner = owners[index];
+        ui.Cycle("Made by", owners.ToArray(), index, i =>
+        {
+            _owner = owners[i];
+            _taskId = null;
+            _objectiveId = null;
+            ui.Window.Rebuild();
+        });
+        if (_owner == AllTasks)
+            return tasks;
+        return tasks.FindAll(t => (DevRules.TaskOwner(t.Id) ?? GameTasks) == _owner);
     }
 
     private static void BuildTask(UiBuilder ui, CheatContext ctx, List<QuestTask> tasks)
@@ -58,6 +96,8 @@ internal static class QuestsSection
             ui.Window.Rebuild();
         });
         ui.Label($"{task.Id}: {DevRules.Cut(task.Description, 200)}", muted: true);
+        var now = System.Array.Find(task.Objectives, o => o.Status == ObjectiveStatus.Active);
+        ui.Label(now != null ? $"Now on: {now.Title}" + (now.HasCounter ? $" ({now.Current}/{now.Target})" : "") : "No objective is active.", muted: true);
 
         ui.Row(r =>
         {
@@ -118,6 +158,13 @@ internal static class QuestsSection
             r.Button("+1", () => DevActions.Quest(ctx, ui, "Counter +1", () => QuestLog.SetObjectiveProgress(task.Id, objective.Id, 1, add: true)));
             r.Button("Fill", () => DevActions.Quest(ctx, ui, "Counter filled", () => QuestLog.SetObjectiveProgress(task.Id, objective.Id, objective.Target)));
             r.Button("Empty", () => DevActions.Quest(ctx, ui, "Counter emptied", () => QuestLog.SetObjectiveProgress(task.Id, objective.Id, 0)));
+        });
+        ui.TextField("Set the counter to (Enter)", objective.Current.ToString(), t => { }, t =>
+        {
+            if (int.TryParse((t ?? "").Trim(), out int value) && value >= 0)
+                DevActions.Quest(ctx, ui, $"Counter to {value}", () => QuestLog.SetObjectiveProgress(task.Id, objective.Id, value));
+            else
+                ctx.Say("The counter takes a whole number, 0 or more.");
         });
     }
 

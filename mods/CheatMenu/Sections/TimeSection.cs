@@ -4,7 +4,7 @@ using ObenUIKit.Controls;
 
 namespace CheatMenu.Sections;
 
-/// <summary>The hour, how fast time runs, and the weather.</summary>
+/// <summary>The time of day, how fast time runs, and the weather.</summary>
 internal static class TimeSection
 {
     private static readonly string[] SpeedNames = { "Stopped", "0.5x", "Normal", "2x", "5x", "10x", "30x" };
@@ -30,11 +30,13 @@ internal static class TimeSection
     private static void BuildHour(UiBuilder ui, CheatContext ctx)
     {
         int hour = GameClock.Hour;
+        int minute = 0;
         ui.Slider("Hour", 0, 23, hour, v => hour = (int)v, "0", wholeNumbers: true);
+        ui.Slider("Minute", 0, 59, minute, v => minute = (int)v, "0", wholeNumbers: true);
         ui.Button("Set the time", () => ctx.Run("Set time", () =>
         {
-            GameClock.SetTime(hour, 0);
-            ctx.Say($"It is {hour:00}:00.");
+            GameClock.SetTime(hour, minute);
+            ctx.Say($"It is {hour:00}:{minute:00}.");
         }));
     }
 

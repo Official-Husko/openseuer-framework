@@ -40,10 +40,10 @@ internal static class QuestRewindRows
                 $"{task.Title} goes from the task list and, at the next save, from the save.",
                 () => DevActions.Quest(ctx, ui, "Remove " + id, () => QuestAuthoring.Remove(owner, id)), yes: "Remove"));
         });
+        if (objectiveId != null)
+            ui.Button("Jump to this objective", () => DevActions.Quest(ctx, ui, "Jump to " + objectiveId, () => QuestAuthoring.JumpTo(owner, id, objectiveId)));
         ui.Row(r =>
         {
-            if (objectiveId != null)
-                r.Button("Jump to objective", () => DevActions.Quest(ctx, ui, "Jump to " + objectiveId, () => QuestAuthoring.JumpTo(owner, id, objectiveId)));
             r.Button("Keep checkpoint", () => DevActions.Quest(ctx, ui, "Checkpoint kept", () => QuestAuthoring.SaveCheckpoint(owner, id, Checkpoint), marks: false));
             r.Button("Go back to it", () => DevActions.Quest(ctx, ui, "Checkpoint restored", () => QuestAuthoring.RestoreCheckpoint(owner, id, Checkpoint)));
         });

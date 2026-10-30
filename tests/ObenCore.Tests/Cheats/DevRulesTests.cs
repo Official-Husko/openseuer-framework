@@ -81,4 +81,31 @@ public class DevRulesTests
     [InlineData("a bit too long", 10, "a bit t...")]
     [InlineData(null, 10, "")]
     public void CutKeepsTheLimit(string? text, int max, string expected) => Assert.Equal(expected, DevRules.Cut(text, max));
+
+    [Theory]
+    [InlineData("12.5", 12.5f)]
+    [InlineData(" -3,25 ", -3.25f)]
+    [InlineData("1e2", 100f)]
+    public void NumbersTakeAPointOrAComma(string text, float expected)
+    {
+        Assert.True(DevRules.TryParseNumber(text, out float value));
+        Assert.Equal(expected, value);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("abc")]
+    [InlineData("NaN")]
+    [InlineData("Infinity")]
+    [InlineData("1.2.3")]
+    public void NumbersRefuseTheRest(string? text) => Assert.False(DevRules.TryParseNumber(text!, out _));
+
+    [Fact]
+    public void AVectorNeedsAllThree()
+    {
+        Assert.True(DevRules.TryParseVector("1", "2.5", "-3", out float x, out float y, out float z));
+        Assert.Equal((1f, 2.5f, -3f), (x, y, z));
+        Assert.False(DevRules.TryParseVector("1", "", "3", out _, out _, out _));
+    }
 }

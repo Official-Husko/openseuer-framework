@@ -95,6 +95,24 @@ public static class DevRules
         return type.Length > 0 && SplitPath(path, out _) != null;
     }
 
+    /// <summary>
+    /// Reads three typed coordinates. A point or a comma both work as the decimal mark; anything that isn't a
+    /// finite number makes it false.
+    /// </summary>
+    public static bool TryParseVector(string x, string y, string z, out float a, out float b, out float c)
+    {
+        b = c = 0f;
+        return TryParseNumber(x, out a) & TryParseNumber(y, out b) & TryParseNumber(z, out c);
+    }
+
+    /// <summary>A typed number, with a point or a comma as the decimal mark.</summary>
+    public static bool TryParseNumber(string text, out float value)
+    {
+        string trimmed = (text ?? "").Trim().Replace(',', '.');
+        return float.TryParse(trimmed, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value)
+            && !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
     /// <summary>Cuts long text to <paramref name="max"/> characters with "..." at the end.</summary>
     public static string Cut(string text, int max)
     {

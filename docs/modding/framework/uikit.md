@@ -127,7 +127,7 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | `Cycle(label, options, index, onChange)` | a header and a `< value >` row; arrows step, the row lights up dark red under the cursor | `CycleHandle` (`Index`, `Set`, `SetOptions`) |
 | `Toggle(label, value, onChange)` | a cycle between Off and On; the game has no checkboxes | `ToggleHandle` (`Value`, `Set`) |
 | `Slider(label, min, max, value, onChange, format, wholeNumbers)` | a header and a slider with its value on the left (written the same in every language); `onChange` runs at most once a frame, with the latest value | `SliderHandle` (`Value`, `Set`) |
-| `TextField(label, value, onChange, onEnd)` | a header and a box styled like the developer console's input field | `FieldHandle` (`Text`, `Set`, `Enabled`, `Focus()`) |
+| `TextField(label, value, onChange, onEnd)` | a header and a box styled like the developer console's input field | `FieldHandle` (`Text`, `Set`, `Enabled`, `Focus()`, `Masked`: stars instead of the text, for join codes and keys on a stream) |
 | `KeyBind(label, key, onChange)` | a header and a row showing the key; click or Enter, then press the new key | `KeyBindHandle` (`Key`, `Chord`, `Set`) |
 | `KeyBind(label, chord, onChange)` | the same for a `KeyChord`: hold Ctrl, Shift or Alt and press the key | `KeyBindHandle` |
 | `Segmented(label, options, index, onChange)` | a header and a row with every option side by side; the picked one is lit and underlined | `ChoiceHandle` (`Index`, `Set`) |

@@ -32,6 +32,22 @@ public sealed class FieldHandle
             _input.SetTextWithoutNotify(text ?? "");
     }
 
+    /// <summary>
+    /// Shows the text as stars, for join codes, keys and passwords on a stream or a screenshot. The text
+    /// itself (<see cref="Text"/>, the callbacks) stays as typed.
+    /// </summary>
+    public bool Masked
+    {
+        get => _input != null && _input.contentType == TMP_InputField.ContentType.Password;
+        set
+        {
+            if (_input == null)
+                return;
+            _input.contentType = value ? TMP_InputField.ContentType.Password : TMP_InputField.ContentType.Standard;
+            _input.ForceLabelUpdate();
+        }
+    }
+
     /// <summary>Puts the cursor in the field, as if it had been clicked.</summary>
     public void Focus()
     {

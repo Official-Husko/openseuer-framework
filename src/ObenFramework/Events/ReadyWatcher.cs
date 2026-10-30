@@ -1,11 +1,12 @@
 using ObenFramework.Game;
+using ObenFramework.Saves;
 using ObenLoader;
 using UnityEngine;
 
 namespace ObenFramework.Events;
 
 /// <summary>
-/// Decides when the world is ready: a gameplay scene, no save load in progress, the player exists,
+/// Decides when the world is ready: a gameplay scene, no save load announced or in progress, the player exists,
 /// and a short settle time has passed (the game moves the player to the entry point about 0.1 s
 /// after LoadingDone). The component is only enabled while waiting, so it costs nothing otherwise.
 /// </summary>
@@ -42,7 +43,9 @@ internal sealed class ReadyWatcher : MonoBehaviour
             enabled = false;
             return;
         }
-        if (WorldState.IsLoadingSave || !WorldState.InWorld || PlayerLocator.instance == null)
+        // SaveGate covers the frames between the new scene opening and the game's LoadingStarted: the
+        // loading screen holds the load back there, and the level still has its own state, not the save's.
+        if (WorldState.IsLoadingSave || SaveGate.IsLoading || !WorldState.InWorld || PlayerLocator.instance == null)
             return;
         if (--_framesLeft > 0 || Time.realtimeSinceStartup < _readyAt)
             return;

@@ -62,9 +62,10 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 - [ ] **Freeze and sleep [save]:** freeze the clock, then sleep in a bed. Time passes while sleeping (`time.control` shows `suspended: true`) and is frozen again afterwards.
 - [ ] **`clock.after`:** `oben call clock.after minutes=2` logs "clock.after: 2 in-game minutes passed" about 8 s later.
 - [ ] **`clock.after` while sleeping [save]:** note `clock.get`, run `clock.after minutes=60`, then sleep. The log line comes about one in-game hour after the noted time, not two or three (fixed: it counted minute ticks, and a sleeping frame covers several minutes).
-- [ ] **Load aborted:**
+- [x] **Load aborted:** (2026-10-30, in a second copy on a test character: logged "didn't happen; still in Open Sewer Tenement (ready: True)", IsReady true.)
   - `oben eval 'SaveController.ChangeLevel("", "")'`. A few seconds later the log says "The level change the game announced didn't happen ... (ready: True)".
   - `oben eval "ObenFramework.Game.WorldState.IsReady"` is true.
+- [x] **WorldReady after a save load:** load a save and watch `GameEvents.Loading`, `Loaded` and `WorldReady` from a script. `WorldReady` comes once, after `Loaded`, with the save's time on the clock, and `Sessions.Started` says `SaveLoad`. (2026-10-30: before the fix it also fired about 0.1 s before `Loading`, with the level's default time, and the real one then reported `Direct`.)
 - [ ] **Missing items, quick check:** `oben eval "new ItemReference(1234567).ID"` gives `1234567`; it gave `0` before. `oben call registry.placeholders` lists it under `active`.
 - [ ] **Missing items [save], full check:**
   1. `oben run scripts/examples/missing-item.cs`.

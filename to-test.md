@@ -416,6 +416,8 @@ Already checked:
 
 Already checked: speed and jump multipliers (also over a reload), `clear=true`, a 30-minute "Reading" wait, the Cooking skill banner, seats sit and leave, the wasteland held and stopped, teleport facing and pitch.
 
+- [x] **Survival (M11), 2026-10-30, in a second copy on a test character:** a hunger threshold at 50 fired once going up (45 to 55, and again 49.99 to 50.1 after an apple took it down). A thirst drain multiplier of 0 held thirst at 29 for an in-game hour while hunger rose by its rate of 5. A damage hook halved a hunger hit (10 became 5, `Damaged` said 5) and cancelled a fall (no health lost, no `Damaged`). Consume hooks cancelled a sausage from the world and let an apple through (hunger 55 to 45, `Consumed`, `Source` World). With depression at 100 and a dirty player the game rolled a breakdown: drinking, then self-harm, both cancelled, no bleeding. Tiredness 100 raised `PassedOut`, a 300 hit raised `Died` (Hunger) once. Setting a stat from a `Loading` handler was refused.
+  - To repeat it: the loaded slot had `PlayerStats.Active` off (saved during the start menu), so set it on first or no need changes. A breakdown is only rolled while depression is still moving toward its target, and a clean player's hygiene keeps effective depression under 100.
 - [ ] **Sleeping:** `player.sleep action=sleep` when tired; WokeUp fires.
 - [ ] **Clock label:** the wait clock shows the mod's label, e.g. "Reading" (screenshot during a wait).
 - [ ] **Custom skill [save]:** register one from a script.

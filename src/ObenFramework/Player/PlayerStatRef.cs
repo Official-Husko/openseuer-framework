@@ -1,4 +1,5 @@
 using System;
+using ObenFramework.Saves;
 
 namespace ObenFramework.Player;
 
@@ -67,13 +68,19 @@ public sealed class PlayerStatRef
         return false;
     }
 
-    /// <summary>Writes the value, clamped to <see cref="Min"/> and <see cref="Max"/>, and refreshes the stat bars.</summary>
+    /// <summary>
+    /// Writes the value, clamped to <see cref="Min"/> and <see cref="Max"/>, and refreshes the stat bars.
+    /// Throws while a save is written or loaded (<see cref="SaveGate.IsBusy"/>): the load puts the saved
+    /// value back, and a write during a save would change what is saved.
+    /// </summary>
     /// <returns>The value that was stored.</returns>
     public float Set(float value)
     {
         var stats = PlayerStats.instance;
         if (stats == null)
             throw NoPlayer();
+        if (SaveGate.IsBusy)
+            throw new InvalidOperationException($"'{Name}' can't be changed while a save is being written or loaded.");
 
         if (float.IsNaN(value) || float.IsInfinity(value))
             throw new ArgumentOutOfRangeException(nameof(value), $"'{Name}' can't be set to {value}.");

@@ -68,7 +68,7 @@ foreach (var s in PlayerStat.All)
 PlayerStatRates.HungerRate.Value = 5f;          // tuning rates live in PlayerStatRates
 ```
 
-Each `PlayerStatRef` has `Name`, `Group`, `Description`, `Min`, `Max`, `Value`, `TryGet`, `Set` and `Add`. Writes are clamped to `Min` and `Max` (for example health 0 to 100) and the stat bars refresh afterwards. They go straight to the game's fields like the console does, so side effects of eating or drinking (cravings, skill XP) do not happen; use items for that.
+Each `PlayerStatRef` has `Name`, `Group`, `Description`, `Min`, `Max`, `Value`, `TryGet`, `Set` and `Add`. Writes are clamped to `Min` and `Max` (for example health 0 to 100) and the stat bars refresh afterwards. They go straight to the game's fields like the console does, so side effects of eating or drinking (cravings, skill XP) do not happen; use items for that. `Set` and `Add` throw while a save is written or loaded (`SaveGate.IsBusy`), since the load would put the saved value back.
 
 Scales: health 0-100 (100 full), hunger and thirst -100 to 100 (100 starving), bladder and bowel 0-100, tiredness -100 to 100 (100 passes out), hygiene 0-100 (100 clean), depression 0-100 (100 worst), alcohol in blood above 15 shows drunk effects and above 100 passes out.
 

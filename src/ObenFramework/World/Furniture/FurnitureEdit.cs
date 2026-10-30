@@ -57,6 +57,12 @@ public struct FurniturePlacement
 
     /// <summary>Id of the piece this one hangs on (a shelf on a wall unit).</summary>
     public string AttachedToId;
+
+    /// <summary>
+    /// Refuse a piece the build menu doesn't offer and no mod defined (<see cref="FurnitureKinds.IsKnown"/>), such
+    /// as an asset path only a scene uses. For placing what another machine asks for.
+    /// </summary>
+    public bool KnownOnly;
 }
 
 /// <summary>A building zone: one of the game's furniture managers (an apartment, a workshop, a shop).</summary>

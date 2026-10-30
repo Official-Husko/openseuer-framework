@@ -9,15 +9,41 @@ namespace ObenFramework.Building;
 /// <summary>
 /// Makes custom furniture known to the developer console's furniture list (which <c>add_furniture</c>,
 /// <c>find_furniture</c> and the framework's own furniture lookups read), so a defined piece can be added by
-/// its title like any other. Built pieces are added on the console's next use; pieces whose mod unloaded are
-/// taken out again.
+/// its title like any other. New pieces are built and added on the list's next use (the console, or
+/// <c>FurnitureKinds</c> listing or missing a piece); pieces whose mod unloaded are taken out again.
 /// </summary>
 internal static class FurnitureMenus
 {
     private static readonly List<global::Furniture> Added = new List<global::Furniture>();
     private static bool _dirty = true;
+    private static bool _syncing;
 
     public static void Changed() => _dirty = true;
+
+    /// <summary>
+    /// Syncs when pieces were defined or dropped since the last time, and says whether it did. A build looks up
+    /// its template in the same list, so a call from inside a sync does nothing.
+    /// </summary>
+    public static bool SyncIfChanged()
+    {
+        if (!_dirty || _syncing)
+            return false;
+        _syncing = true;
+        try
+        {
+            Sync();
+            return true;
+        }
+        catch (Exception e)
+        {
+            FurnitureRegistry.Log.Error("Console furniture list", e);
+            return false;
+        }
+        finally
+        {
+            _syncing = false;
+        }
+    }
 
     /// <summary>Brings the console's list in line with the defined pieces. Builds them, so call it when they're wanted.</summary>
     public static void Sync()
@@ -68,12 +94,6 @@ internal static class FurnitureMenus
         }
 
         [HarmonyPrefix]
-        private static void Before()
-        {
-            if (!_dirty)
-                return;
-            try { Sync(); }
-            catch (Exception e) { FurnitureRegistry.Log.Error("Console furniture hook", e); }
-        }
+        private static void Before() => SyncIfChanged();
     }
 }

@@ -15,7 +15,8 @@ internal static class BuildingCommands
         Params = new[] { "kind: furniture id (asset path), short name or title, see furniture.kinds", "x, y, z or pos: [x,y,z] world position",
             "yaw?: degrees around the up axis, default 0", "zone?: zone GUID (furniture.zones), default the zone the player builds in",
             "skin?: 1 and up", "alternative?: 1 and up", "modelYaw?: local yaw of the part the rotate key turns", "id?: id to give the piece",
-            "parent?: id of the piece it stands on", "attachedTo?: id of the piece it hangs on", "source?: mod (default), game or player" })]
+            "parent?: id of the piece it stands on", "attachedTo?: id of the piece it hangs on", "known?: refuse pieces the build menu doesn't offer, default false",
+            "source?: mod (default), game or player" })]
     private static object FurniturePlace(JObject p)
     {
         var position = p.Position() ?? throw new ArgumentException("Give x, y and z or pos.");
@@ -26,6 +27,7 @@ internal static class BuildingCommands
             Id = p.Str("id", null),
             ParentId = p.Str("parent", null),
             AttachedToId = p.Str("attachedTo", null),
+            KnownOnly = p.Bool("known", false),
         };
         if (p["modelYaw"] != null)
             options.ModelRotation = Quaternion.Euler(0f, p.Float("modelYaw"), 0f);
@@ -52,10 +54,11 @@ internal static class BuildingCommands
         Result(FurnitureBuilder.Remove(p.Str("id"), Source(p), p.Bool("withPieces", false), p.Bool("force", false)));
 
     [BridgeCommand("furniture.kinds", "Furniture the game knows, to find the kind for furniture.place.",
-        Params = new[] { "text?: only kinds whose id, name or title contains this", "max?: default 50" })]
+        Params = new[] { "text?: only kinds whose id, name or title contains this", "max?: default 50", "known?: also says whether this kind is one the build menu offers" })]
     private static object FurnitureKindList(JObject p)
     {
         string text = p.Str("text", null);
+        string asked = p.Str("known", null);
         int max = Math.Max(1, p.Int("max", 50));
         var found = text != null ? ObenFramework.World.FurnitureKinds.Search(text, max) : new List<Furniture>(ObenFramework.World.FurnitureKinds.All);
 
@@ -69,12 +72,16 @@ internal static class BuildingCommands
                 ["kind"] = furniture.Id,
                 ["name"] = furniture.name,
                 ["title"] = furniture.title,
-                ["category"] = furniture.category.ToString(),
+                ["category"] = ObenFramework.Building.FurnitureCategories.NameOf(furniture.category),
                 ["skins"] = furniture.skins.Length,
                 ["alternatives"] = furniture.AlternativePrefabs.Length,
+                ["custom"] = ObenFramework.Building.CustomFurniture.IsCustom(furniture),
             });
         }
-        return new JObject { ["total"] = found.Count, ["kinds"] = list };
+        var result = new JObject { ["total"] = found.Count, ["kinds"] = list };
+        if (asked != null)
+            result["known"] = ObenFramework.World.FurnitureKinds.IsKnown(asked);
+        return result;
     }
 
     [BridgeCommand("furniture.zones", "Building zones (apartments, workshops, shops) of the loaded scenes.",

@@ -20,6 +20,7 @@ public static class FurnitureCategories
     {
         if (string.IsNullOrWhiteSpace(name))
             return fallback;
+        name = name.Trim();
         foreach (global::Furniture.Category value in Enum.GetValues(typeof(global::Furniture.Category)))
         {
             if (string.Equals(value.ToString(), name, StringComparison.OrdinalIgnoreCase) || string.Equals(GameName(value), name, StringComparison.OrdinalIgnoreCase))
@@ -28,7 +29,7 @@ public static class FurnitureCategories
         int index = Names.FindIndex(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
         if (index < 0)
         {
-            Names.Add(name.Trim());
+            Names.Add(name);
             index = Names.Count - 1;
         }
         return (global::Furniture.Category)(FirstCustom + index);

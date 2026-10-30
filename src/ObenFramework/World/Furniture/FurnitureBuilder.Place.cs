@@ -14,7 +14,7 @@ public static partial class FurnitureBuilder
     /// <param name="position">World position of the piece's root.</param>
     /// <param name="rotation">World rotation of the root.</param>
     /// <param name="zone">GUID of the building zone (see <see cref="Zones"/>); null uses the zone the local player is building in.</param>
-    /// <param name="options">Skin, alternative prefab, model rotation, the id to use and parent links.</param>
+    /// <param name="options">Skin, alternative prefab, model rotation, the id to use, parent links and whether only known pieces go.</param>
     /// <param name="source">Who is placing it, as the <see cref="PlacedFurniture.FurniturePlaced"/> event reports it.</param>
     public static FurnitureEdit Place(string kind, Vector3 position, Quaternion rotation, string zone = null,
         FurniturePlacement options = default, ChangeSource source = ChangeSource.Mod)
@@ -25,6 +25,8 @@ public static partial class FurnitureBuilder
         if (!IsFinite(position) || !IsFinite(rotation) || (options.ModelRotation.HasValue && !IsFinite(options.ModelRotation.Value)))
             return FurnitureEdit.Fail("Position or rotation is NaN or infinite.");
 
+        if (options.KnownOnly && !FurnitureKinds.IsKnown(kind))
+            return FurnitureEdit.Fail($"'{kind}' isn't a piece the build menu offers.");
         var furniture = FurnitureKinds.Find(kind);
         if (furniture == null)
             return FurnitureEdit.Fail($"Unknown furniture '{kind}'.");

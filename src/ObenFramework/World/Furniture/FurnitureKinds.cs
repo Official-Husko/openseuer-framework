@@ -16,14 +16,55 @@ public static class FurnitureKinds
     private static readonly Dictionary<string, Furniture> Index = new Dictionary<string, Furniture>(StringComparer.OrdinalIgnoreCase);
     private static int _indexedCount = -1;
 
-    /// <summary>The furniture the developer console lists, which is every piece in the build menu. Don't modify the list.</summary>
+    /// <summary>
+    /// The furniture the developer console lists, which is every piece in the build menu, mods' pieces
+    /// included (asking builds the ones not built yet). Don't modify the list.
+    /// </summary>
     public static IReadOnlyList<Furniture> All
+    {
+        get
+        {
+            Building.FurnitureMenus.SyncIfChanged();
+            return GameList;
+        }
+    }
+
+    // The console's list as it stands, without building mods' new pieces into it.
+    private static IReadOnlyList<Furniture> GameList
     {
         get
         {
             var console = DeveloperConsole.Instance;
             return console != null && console.furniture != null ? console.furniture.furnitures : (IReadOnlyList<Furniture>)Array.Empty<Furniture>();
         }
+    }
+
+    /// <summary>True once the game's furniture list is there.</summary>
+    internal static bool Ready => GameList.Count > 0;
+
+    /// <summary>
+    /// True for a piece the build menu offers or a mod defined (by id, short name or title), false for anything
+    /// else, such as an asset path only a scene uses. For a machine that places what another one asks for.
+    /// </summary>
+    public static bool IsKnown(string kind)
+    {
+        if (string.IsNullOrWhiteSpace(kind))
+            return false;
+        kind = kind.Trim();
+        if (Building.FurnitureIds.IsModId(kind))
+            return Building.FurnitureRegistry.Find(kind) != null;
+        var found = Lookup(kind);
+        if (found == null && Building.FurnitureMenus.SyncIfChanged())
+            found = Lookup(kind);
+        // The index also remembers pieces found in scenes or loaded by path; only the list counts.
+        if (found == null)
+            return false;
+        foreach (var listed in GameList)
+        {
+            if (listed == found)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -39,8 +80,11 @@ public static class FurnitureKinds
         // A mod's piece by its id (oben:modId/key), defined or a stand-in.
         if (Building.FurnitureIds.IsModId(kind))
             return Building.CustomFurniture.Get(kind);
-        Refresh();
-        if (Index.TryGetValue(kind, out var known) && known != null)
+        // A mod's piece by its title is only in the list once synced, which builds the new ones.
+        var known = Lookup(kind);
+        if (known == null && Building.FurnitureMenus.SyncIfChanged())
+            known = Lookup(kind);
+        if (known != null)
             return known;
 
         // Pieces standing in a zone that the list lacks still tell their id; match them first.
@@ -80,6 +124,12 @@ public static class FurnitureKinds
         return exact;
     }
 
+    private static Furniture Lookup(string kind)
+    {
+        Refresh();
+        return Index.TryGetValue(kind, out var known) && known != null ? known : null;
+    }
+
     internal static void Reset()
     {
         Index.Clear();
@@ -105,7 +155,7 @@ public static class FurnitureKinds
     // The list is a scene object that is rebuilt with the scene; rebuild the index when it changes.
     private static void Refresh()
     {
-        var all = All;
+        var all = GameList;
         if (all.Count == _indexedCount && Index.Count > 0)
             return;
 

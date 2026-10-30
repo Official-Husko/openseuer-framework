@@ -21,8 +21,9 @@ internal static class CustomFurnitureCommands
     });
 
     [BridgeCommand("furniture.custom", "Custom furniture: the defined pieces and the ids that loaded as stand-ins. With 'key' and 'template' defines a test piece owned by the bridge.",
-        Params = new[] { "key?: defines oben:DevBridge/<key>", "template?: game piece to copy, e.g. Red Metal Chair", "title?: its title",
-            "priceOC?: price", "category?: build menu group", "model?: a loaded model's full name (see assets.list)", "shop?: a furniture shop to sell it" })]
+        Params = new[] { "key?: defines oben:DevBridge/<key>", "template?: game piece to copy, e.g. Red Metal Chair", "title?: its title", "details?: its description",
+            "priceOC?: price", "category?: build menu group", "model?: a loaded model's full name (see assets.list)", "shop?: a furniture shop to sell it",
+            "blueprint?: also a blueprint (1 scrap metal, 60 s) found in this pool: general, Start or a level's category" })]
     private static object Custom(JObject p)
     {
         string defined = null;
@@ -31,7 +32,8 @@ internal static class CustomFurnitureCommands
         {
             var definition = new FurnitureDefinition
             {
-                Template = p.Str("template"), Title = p.Str("title", null), PriceOC = p.Int("priceOC", -1), Category = p.Str("category", null),
+                Template = p.Str("template"), Title = p.Str("title", null), Details = p.Str("details", null), PriceOC = p.Int("priceOC", -1),
+                Category = p.Str("category", null),
             };
             string model = p.Str("model", null);
             if (model != null)
@@ -40,6 +42,14 @@ internal static class CustomFurnitureCommands
             if (shop != null)
                 definition.Shops.Add(shop);
             defined = CustomFurniture.Define(DevBridgeMod.Instance, key, definition);
+            string pool = p.Str("blueprint", null);
+            if (pool != null)
+            {
+                CustomFurniture.DefineBlueprint(DevBridgeMod.Instance, defined, new BlueprintDefinition
+                {
+                    Items = { [35180] = 1 }, Seconds = 60f, Pools = { pool == "general" ? CustomFurniture.GeneralPool : pool },
+                });
+            }
         }
 
         var list = new JArray();
@@ -50,11 +60,12 @@ internal static class CustomFurnitureCommands
             {
                 ["id"] = id, ["built"] = built != null, ["title"] = built != null ? built.title : null,
                 ["category"] = built != null ? FurnitureCategories.NameOf(built.category) : null,
-                ["priceOC"] = built != null ? built.priceOC : (int?)null, ["blueprint"] = CustomFurniture.BlueprintOf(id) != null,
+                ["details"] = built != null ? built.details : null, ["priceOC"] = built != null ? built.priceOC : (int?)null,
+                ["standIn"] = CustomFurniture.IsStandIn(built), ["blueprint"] = CustomFurniture.BlueprintOf(id) != null,
                 ["blueprintKnown"] = CustomFurniture.IsBlueprintKnown(id),
             });
         }
-        return new JObject { ["defined"] = defined, ["pieces"] = list, ["missing"] = new JArray(CustomFurniture.Missing) };
+        return new JObject { ["defined"] = defined, ["available"] = CustomFurniture.IsAvailable, ["pieces"] = list, ["missing"] = new JArray(CustomFurniture.Missing) };
     }
 
     [BridgeCommand("furniture.give", "Gives a custom piece to the building inventory, or as flatpack items.",
@@ -122,5 +133,6 @@ internal static class CustomFurnitureCommands
         return result;
     }
 
-    private static JObject Area(BuildingAreaInfo a) => new JObject { ["id"] = a.Id, ["removeOnly"] = a.RemoveOnly, ["menuDisabled"] = a.MenuDisabled };
+    private static JObject Area(BuildingAreaInfo a) =>
+        new JObject { ["id"] = a.Id, ["removeOnly"] = a.RemoveOnly, ["menuDisabled"] = a.MenuDisabled, ["notFullyExamined"] = a.NotFullyExamined };
 }

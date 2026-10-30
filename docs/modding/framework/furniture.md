@@ -34,7 +34,7 @@ public override void OnLoad()
 }
 ```
 
-`Define` returns the piece's id, `oben:<modId>/<key>`. Keep the key the same between versions: the id is what saves find the piece by. Defining throws on a bad definition (unknown template, a group the game keeps for itself such as All, Items, None, Wallpaper or Surfaces, colliders without a model) and when the id is already taken. The piece is built on first use: the build menu, a shop, a save that has one, or `Get`.
+`Define` returns the piece's id, `oben:<modId>/<key>`. Keep the key the same between versions: the id is what saves find the piece by. Defining throws on a bad definition (unknown template, a group name over 40 characters or one the game keeps for itself such as All, Items, None, Wallpaper or Surfaces, colliders without a model) and when the id is already taken. The piece is built on first use: the build menu, a shop, a save that has one, or `Get`.
 
 The definition fields:
 
@@ -59,7 +59,9 @@ List<string> ids = CustomFurniture.Ids;
 List<string> missing = CustomFurniture.Missing;      // ids that loaded as stand-ins this session
 ```
 
-Defined pieces are added to the developer console's furniture list, so `add_furniture Mushroom Stool` works, and `FurnitureKinds.Find` and `FurnitureBuilder.Place` accept the id.
+Defined pieces are added to the developer console's furniture list, so `add_furniture Mushroom Stool` works, `FurnitureKinds.All` and `furniture.kinds` list them, and `FurnitureKinds.Find` and `FurnitureBuilder.Place` accept the id.
+
+`CustomFurniture.IsAvailable` is false when the framework's custom furniture hooks failed to apply after a game update; pieces may then not save, sell, drop as loot or craft as they should.
 
 ## Saves, and when a mod goes away
 
@@ -79,7 +81,7 @@ A furniture shop that lists the piece (`Shops`, by shop name or GUID as in [shop
 
 ## Loot
 
-`AddFlatpackLoot(owner, id, category, weight)` lets a loot category hold the piece as a flatpack. The framework puts the flatpack item into the category's pool (through `LootPools`, with the summed weight of every mod piece in it, at most 100) and fills each flatpack the category spawns with one of the pieces, picked by weight. Containers, ground spawners and packages rolled from the category are covered. The entry ends when the owner unloads or you dispose the result.
+`AddFlatpackLoot(owner, id, category, weight)` lets a loot category hold the piece as a flatpack. The framework puts the flatpack item into the category's pool (through `LootPools`, with the summed weight of every mod piece in it, at most 100) and fills each flatpack the category spawns with one of the pieces, picked by weight. Containers, ground spawners and packages rolled from the category are covered, as well as flatpacks a package of the category holds. A ground flatpack gets the item data the spawner would give any item. A flatpack whose pieces all failed to build is left out rather than spawned empty; empty flatpacks from categories without mod pieces are the game's business and left alone. The entry ends when the owner unloads or you dispose the result.
 
 ## Blueprints
 
@@ -92,7 +94,7 @@ A furniture shop that lists the piece (`Shops`, by shop name or GUID as in [shop
 | `Seconds`, `Amount` | Crafting time in game seconds; pieces per craft (1-100). |
 | `Skill`, `MinimumSkill` | The skill it trains and needs. |
 | `Pools` | Where players find it: `CustomFurniture.GeneralPool` (""), `CustomFurniture.StartPool` ("Start"), or a blueprint category of the level. Empty: only through code or mail. |
-| `Title`, `Details`, `Icon` | Null: "&lt;title&gt; Blueprint", empty, the piece's icon. |
+| `Title`, `Details`, `Icon` | Null: "&lt;title&gt; Blueprint", empty, the piece's icon. A title is 1 to 200 characters, details at most 2000. |
 
 ```csharp
 CustomFurniture.GiveBlueprint(id);              // with the game's notification; quiet: true for none
@@ -108,22 +110,23 @@ The game's pools are shared assets; the framework adds one list of its own to ea
 ## Building areas
 
 ```csharp
-BuildingAreaInfo? here = BuildingAreas.Current;     // Id (zone GUID), RemoveOnly, MenuDisabled
+BuildingAreaInfo? here = BuildingAreas.Current;     // Id (zone GUID), RemoveOnly, MenuDisabled, NotFullyExamined
 BuildingAreas.Entered.Subscribe(this, area => ...);
 BuildingAreas.Exited.Subscribe(this, area => ...);
 ```
 
-Raised from the game's own area triggers when the player walks into or out of a building zone. The zones themselves are listed by `FurnitureBuilder.Zones()`.
+Raised from the game's own area triggers when the player walks into or out of a building zone (`BuildingAreas.IsAvailable` is false when those hooks failed). The zones themselves are listed by `FurnitureBuilder.Zones()`. `MenuDisabled` is the game's own answer (the zone is switched off, or not fully examined); `NotFullyExamined` is a tenement apartment the player hasn't examined all of yet. A zone can also need a task item before it can be entered at all: the player's apartment needs the "Tenement blueprint".
 
 ## Dev bridge
 
 | Command | Does |
 |---|---|
-| `furniture.custom` | defined pieces (built, title, group, price, blueprint) and the ids that loaded as stand-ins; with `key` and `template` (and `title`, `priceOC`, `category`, `model`, `shop`) defines a test piece owned by the bridge |
+| `furniture.custom` | defined pieces (built, title, description, group, price, stand-in, blueprint) and the ids that loaded as stand-ins; with `key` and `template` (and `title`, `details`, `priceOC`, `category`, `model`, `shop`, and `blueprint` with a pool: `general`, `Start` or a category) defines a test piece owned by the bridge |
 | `furniture.give` | gives `id` (`amount`, `flatpack`) |
 | `furniture.loot` | adds `id` to loot `category` as flatpacks (`weight`), or `clear` |
 | `furniture.blueprints` | blueprints of the level, game and mod (`text`, `max`); `give` hands one over |
 | `building.area` | the zone the player is in; `events=true` returns entered/exited/loaded events |
+| `furniture.kinds` | (see [world.md](world.md)) lists mod pieces too, with `custom`; `known=<kind>` says whether the build menu offers it |
 
 ```sh
 oben call furniture.custom key=test template="Red Metal Chair" title="Test Chair" category="Mod Furniture"

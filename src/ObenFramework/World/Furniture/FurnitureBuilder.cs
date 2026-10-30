@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Game;
+using ObenFramework.Patching;
 using UnityEngine;
 
 namespace ObenFramework.World;
@@ -19,6 +20,12 @@ namespace ObenFramework.World;
 /// </remarks>
 public static partial class FurnitureBuilder
 {
+    /// <summary>
+    /// The framework's furniture hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); changes made here still happen, but their events and the pieces' ids may not.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
+
     /// <summary>The building zones of the loaded scenes.</summary>
     public static List<FurnitureZone> Zones(string scene = null)
     {

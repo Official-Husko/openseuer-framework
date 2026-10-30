@@ -32,6 +32,10 @@ public static partial class CustomFurniture
         if (target.Blueprint != null)
             throw new ArgumentException($"Furniture {furnitureId} already has a blueprint.", nameof(furnitureId));
 
+        if (definition.Title != null && (definition.Title.Length == 0 || definition.Title.Length > 200))
+            throw new ArgumentException("A blueprint title is 1 to 200 characters.");
+        if (definition.Details != null && definition.Details.Length > 2000)
+            throw new ArgumentException("Blueprint details are at most 2000 characters.");
         if (!Enum.IsDefined(typeof(PlayerStats.PlayerSkillType), definition.Skill))
             throw new ArgumentException("Skill is not a skill.");
         string problem = FurnitureIds.CheckBlueprint(definition.Seconds, definition.Amount, definition.Skill != PlayerStats.PlayerSkillType.None,

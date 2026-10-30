@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
 using ObenLoader.Runtime;
+using OS.Items;
 using UnityEngine;
 
 namespace ObenFramework.Building;
@@ -12,7 +13,7 @@ namespace ObenFramework.Building;
 /// Custom furniture as loot: a mod adds its piece to a loot category with a weight, the framework puts the
 /// game's flatpack item into that category's pool (with the summed weight of every piece in it) and fills each
 /// flatpack the category spawns with one of the pieces, picked by weight. Covers containers, ground spawners
-/// and packages rolled from the category.
+/// and packages rolled from the category, as well as flatpacks a package of the category holds.
 /// </summary>
 internal static class FurnitureLoot
 {
@@ -81,9 +82,13 @@ internal static class FurnitureLoot
         return index >= 0 ? FurnitureRegistry.Resolve(records[index].FurnitureId) : null;
     }
 
+    private static bool Holds(string category) => category != null && Categories.TryGetValue(category, out var records) && records.Count > 0;
+
+    // False when the flatpack has to go: the category holds mod pieces but none of them built. An empty
+    // flatpack from a category without mod pieces is the game's own business.
     private static bool Fill(string category, object[] meta)
     {
-        if (!FurnitureFlatpacks.IsEmpty(meta))
+        if (!FurnitureFlatpacks.IsEmpty(meta) || !Holds(category))
             return true;
         var piece = Pick(category);
         if (piece == null)
@@ -118,16 +123,19 @@ internal static class FurnitureLoot
     private static class GroundPatch
     {
         [HarmonyPrefix]
-        private static bool Before(Item item, StorageSpawnCategory category, ref object[] savedMeta)
+        private static bool Before(CollectibleItemSpawner __instance, Item item, StorageSpawnCategory category, ref object[] savedMeta)
         {
-            if (item == null || item.ID != FurnitureFlatpacks.ItemId || savedMeta != null || category == null || Categories.Count == 0)
+            if (item == null || item.ID != FurnitureFlatpacks.ItemId || savedMeta != null || category == null || !Holds(category.Name))
                 return true;
             try
             {
                 var piece = Pick(category.Name);
                 if (piece == null)
-                    return true;
-                savedMeta = FurnitureFlatpacks.Fill(item.CloneMeta(), piece);
+                    return false;
+                // The item data the spawner would make itself (its owner, its spawn values), holding the piece.
+                var values = __instance.useSpawnInfo ? __instance.itemSpawnInfo : category.MetaValues;
+                int owner = __instance.owner != null ? __instance.owner.ID : 0;
+                savedMeta = FurnitureFlatpacks.Fill(ItemMetaUtilities.GetMetaForItem(new ItemReference(item), values, owner), piece);
             }
             catch (Exception e) { FurnitureRegistry.Log.Error("Ground loot hook", e); }
             return true;
@@ -144,6 +152,32 @@ internal static class FurnitureLoot
                 return;
             try { Fill(__instance.Name, __result.Item2); }
             catch (Exception e) { FurnitureRegistry.Log.Error("Package loot hook", e); }
+        }
+    }
+
+    // A package rolled from a category without the category's item data gets fresh data for each item it
+    // holds, so a flatpack in it comes out empty; fill those from the package's category.
+    [HarmonyPatch(typeof(ItemMetaUtilities), nameof(ItemMetaUtilities.GetMetaForItem))]
+    private static class PackageContentsPatch
+    {
+        [HarmonyPostfix]
+        private static void After(StorageMetaValuesBase metaValues, object[] __result)
+        {
+            if (Categories.Count == 0 || __result == null || !(metaValues is StorageMetaValues values) || values.package == null || !values.package.spawnFromCategory)
+                return;
+            try
+            {
+                var contents = Item.GetMetaOfType<ItemPackageData>(__result)?.containedItems;
+                if (contents == null)
+                    return;
+                for (int i = contents.Count - 1; i >= 0; i--)
+                {
+                    var child = contents[i];
+                    if (child != null && child.item != null && child.item.ID == FurnitureFlatpacks.ItemId && !Fill(values.package.spawnCategoroyName, child.meta))
+                        contents.RemoveAt(i);
+                }
+            }
+            catch (Exception e) { FurnitureRegistry.Log.Error("Package contents loot hook", e); }
         }
     }
 }

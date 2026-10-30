@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Events;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -20,6 +21,12 @@ namespace ObenFramework.World;
 /// </remarks>
 public static class PlacedFurniture
 {
+    /// <summary>
+    /// The framework's furniture hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and ids may not be kept over a save.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
+
     private const string PreplacedPrefix = "pre:";
 
     /// <summary>

@@ -86,6 +86,7 @@ internal static class FurnitureRegistry
             return;
         Entries.Remove(entry.Id);
         FurnitureBlueprints.Withdraw(entry);
+        FurnitureMenus.Changed();
         if (entry.Built != null)
             Retired[entry.Id] = entry.Built;
     }

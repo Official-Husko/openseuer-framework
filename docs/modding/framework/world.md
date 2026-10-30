@@ -223,6 +223,8 @@ FurnitureInfo info = PlacedFurniture.Describe(p);
 
 The game gives placed furniture a GUID only at save time (`manager GUID + n`, counted over the list in reverse), so a freshly placed piece has none and removing one piece renames others. The ids here are our own: 12 random hex characters handed out the first time a piece is asked about. They are kept with the save: before each game save the framework records, per scene, each piece's id with its kind, zone and position (`mods/ObenFramework.furniture.json` in the save folder, through `ModSaves`), and after a load a piece gets its old id back when the same kind of furniture stands in the same zone within 2 cm of where it was. Furniture that came with the scene uses `pre:` plus its prefab GUID, which is stable already. A moved piece keeps its id. Ids also hold when the player changes level (the level change's own save records them before the next level loads) and over a hot reload of the framework (the ids are kept by the pieces' objects, which outlive the reload), so a piece placed or moved since the last load keeps its id too. `PlacedFurniture.Adopt(placeable, id)` sets an id on purpose, for a guest that must use the host's ids.
 
+`PlacedFurniture.IsAvailable` (and `FurnitureBuilder.IsAvailable`, the same check) is false when the framework's furniture hooks failed to apply after a game update; the events then stay quiet and ids may not be kept over a save.
+
 ### Events
 
 ```csharp
@@ -257,9 +259,9 @@ FurnitureBuilder.Remove(id);
 | `Remove(id, source = Mod, withPieces = false, force = false)` | Does what `FurniturePlaceable.Take` does (stand up a sitter, unlink, the piece's taken relay, janitor actions, destroy) but never calls `BuildingSystem.Take`, so nothing goes into the local player's furniture inventory. Refused for a piece that carries others unless `withPieces` (those are removed first, each with its own event), for one that holds items, liquid or crafting progress unless `force` (the contents are lost), and for pieces the game marks `cantTake`. |
 | `Zones(scene = null)`, `FindZone(guid)` | The building zones: GUID, scene, position, how many placed pieces, which one is active. |
 
-`kind` is what `FurnitureInfo.TypeId` reports, the asset path (`Assets/Content/Prefabs/Building System/Furniture/Chairs/Red Metal Chair.asset`); `FurnitureKinds.Find` also takes the short name (`Red Metal Chair`) and, last, the title, ignoring case. `FurnitureKinds.All` lists the 655 pieces the build menu knows and `FurnitureKinds.Search(text)` filters them. An asset path the list lacks is loaded from the game's assets. Furniture added by other mods' own systems is not covered.
+`kind` is what `FurnitureInfo.TypeId` reports, the asset path (`Assets/Content/Prefabs/Building System/Furniture/Chairs/Red Metal Chair.asset`); `FurnitureKinds.Find` also takes the short name (`Red Metal Chair`) and, last, the title, ignoring case. `FurnitureKinds.All` lists the 655 pieces the build menu knows plus the pieces mods defined with `CustomFurniture` (asking builds the ones not built yet), and `FurnitureKinds.Search(text)` filters them. An asset path the list lacks is loaded from the game's assets. `FurnitureKinds.IsKnown(kind)` tells the two apart: true only for pieces in the list. For a machine that places what another one asks for, `FurniturePlacement.KnownOnly` makes `Place` refuse anything else. Furniture added by other mods' own systems is not covered.
 
-Every call returns a `FurnitureEdit`: `Success`, `Error` (a plain sentence) and `Furniture` (the `FurnitureInfo` after a place or move, as it stood for a remove). `FurniturePlacement` carries the optional parts: `Skin`, `Alternative`, `ModelRotation`, `ParentId`, `AttachedToId` and `Id`, an id to give the piece so a guest can use the host's ids (the id is set before the piece is registered, so the placed event already carries it).
+Every call returns a `FurnitureEdit`: `Success`, `Error` (a plain sentence) and `Furniture` (the `FurnitureInfo` after a place or move, as it stood for a remove). `FurniturePlacement` carries the optional parts: `Skin`, `Alternative`, `ModelRotation`, `ParentId`, `AttachedToId`, `KnownOnly` and `Id`, an id to give the piece so a guest can use the host's ids (the id is set before the piece is registered, so the placed event already carries it).
 
 The events come out as with the build menu: `FurniturePlaced`, `FurnitureMoved` and `FurnitureRemoved` with `Source` set to what you passed (default `Mod`). Place runs inside a `WorldChanges.Enter(source)` scope; move and remove raise their events directly with the given source. Nothing checks that the spot is free: that is the build menu's preview and not a game rule. Every call returns an error while a save is loading or when no world is loaded.
 
@@ -355,10 +357,10 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 | `computers.list` | computers with e-mail and file counts; `id` for one with its documents |
 | `interact.target` | the crosshair target: id, address, title, type, and state for doors and switches |
 | `furniture.list` | placed furniture with ids; filters `type`, `manager`, `preplaced`, `max` |
-| `furniture.place` | `kind`, `x`/`y`/`z` or `pos`, `yaw`, `zone`, `skin`, `alternative`, `modelYaw`, `id`, `parent`, `attachedTo`, `source` |
+| `furniture.place` | `kind`, `x`/`y`/`z` or `pos`, `yaw`, `zone`, `skin`, `alternative`, `modelYaw`, `id`, `parent`, `attachedTo`, `known` (refuse pieces the build menu lacks), `source` |
 | `furniture.move` | `id`, `x`/`y`/`z` or `pos`, `yaw`, `modelYaw`, `source` |
 | `furniture.remove` | `id`, `withPieces`, `force`, `source` (nothing goes into the furniture inventory) |
-| `furniture.kinds` | the kinds the game knows; `text`, `max` |
+| `furniture.kinds` | the kinds the game knows, mod pieces marked `custom`; `text`, `max`, `known=<kind>` (is it one the build menu offers) |
 | `furniture.zones` | building zones with GUID, placed count and which is active |
 | `containers.list` | containers nearest first; `radius`, `text`, `empty`, `inactive`, `max`; also the edit locks held |
 | `containers.get` | one container by `id` with its stacks |

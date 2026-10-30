@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -17,6 +18,12 @@ namespace ObenFramework.Building;
 /// </summary>
 public static partial class CustomFurniture
 {
+    /// <summary>
+    /// The framework's custom furniture hooks are in place. False when they failed to apply (a game update
+    /// changed what they patch); defined pieces may then not save, sell, drop as loot or craft as they should.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Building");
+
     private static readonly string[] ReservedCategories = { "All", "Items", "None", "Wallpaper", "Surfaces" };
 
     internal static ITracker Owner { get; private set; }
@@ -62,7 +69,7 @@ public static partial class CustomFurniture
 
         var snapshot = Snapshot(definition);
         // Checked now when the game's furniture list is there; otherwise at the first build.
-        if (World.FurnitureKinds.All.Count > 0)
+        if (World.FurnitureKinds.Ready)
             FurnitureBuild.Template(snapshot.Template);
         FurnitureRegistry.Add(owner, new FurnitureEntry(id, owner.Info.Id, snapshot));
         FurnitureMenus.Changed();
@@ -163,6 +170,8 @@ public static partial class CustomFurniture
             throw new ArgumentException("ShopStock must be 1 or more.");
         if (!Enum.IsDefined(typeof(FurniturePlacement), d.Placement))
             throw new ArgumentException("Placement is not a defined value.");
+        if (d.Category != null && d.Category.Trim().Length > 40)
+            throw new ArgumentException("A build menu group's name is at most 40 characters.");
         if (d.Category != null && Array.Exists(ReservedCategories, r => string.Equals(r, d.Category.Trim(), StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"'{d.Category}' is a build menu group the game keeps for itself; use another name.");
         if (d.Model != null && !d.Model.IsAlive)

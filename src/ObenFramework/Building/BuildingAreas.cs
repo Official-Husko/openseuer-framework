@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using HarmonyLib;
+using ObenFramework.Patching;
 using ObenFramework.World;
 
 namespace ObenFramework.Building;
@@ -9,11 +10,17 @@ namespace ObenFramework.Building;
 public readonly struct BuildingAreaInfo
 {
     public BuildingAreaInfo(FurnitureManager manager, string id, bool removeOnly, bool menuDisabled)
+        : this(manager, id, removeOnly, menuDisabled, false)
+    {
+    }
+
+    public BuildingAreaInfo(FurnitureManager manager, string id, bool removeOnly, bool menuDisabled, bool notFullyExamined)
     {
         Manager = manager;
         Id = id;
         RemoveOnly = removeOnly;
         MenuDisabled = menuDisabled;
+        NotFullyExamined = notFullyExamined;
     }
 
     public FurnitureManager Manager { get; }
@@ -24,8 +31,11 @@ public readonly struct BuildingAreaInfo
     /// <summary>Pieces can only be taken here, not placed (a place the player doesn't own).</summary>
     public bool RemoveOnly { get; }
 
-    /// <summary>The build menu is off here for now (the place isn't fully examined yet).</summary>
+    /// <summary>The build menu is off here: the zone is switched off, or the place isn't fully examined yet.</summary>
     public bool MenuDisabled { get; }
+
+    /// <summary>A tenement apartment the player hasn't examined all of yet, which keeps the build menu off.</summary>
+    public bool NotFullyExamined { get; }
 }
 
 /// <summary>
@@ -34,6 +44,12 @@ public readonly struct BuildingAreaInfo
 /// </summary>
 public static class BuildingAreas
 {
+    /// <summary>
+    /// The framework's building area hooks are in place. False when they failed to apply (a game update changed
+    /// what they patch); the events then stay quiet.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Building");
+
     private static FurnitureManager _last;
 
     /// <summary>The player walked into a building zone.</summary>
@@ -56,7 +72,7 @@ public static class BuildingAreas
     {
         if (manager == null)
             throw new ArgumentNullException(nameof(manager));
-        return new BuildingAreaInfo(manager, manager.GUID, manager.areaType == BuildingArea.AreaType.RemoveOnly, manager.BuildMenuDisabled);
+        return new BuildingAreaInfo(manager, manager.GUID, manager.areaType == BuildingArea.AreaType.RemoveOnly, manager.BuildMenuDisabled, manager.notFullyExamined);
     }
 
     /// <summary>Takes the zone as it is now as the starting point, without events (after a load or a reload).</summary>

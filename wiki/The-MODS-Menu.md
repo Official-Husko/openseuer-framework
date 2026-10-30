@@ -20,4 +20,4 @@ Other mods can add their own pages. The [Cheat Menu](Cheat-Menu), for example, a
 
 ## Co-op
 
-The main menu and the pause menu also have a **Co-op** button. Co-op isn't playable yet; see [ObenCoop](ObenCoop).
+The main menu and the pause menu also have a **Co-op** button: it opens the co-op window to host, join and find games. Co-op isn't playable yet; see [ObenCoop](ObenCoop).

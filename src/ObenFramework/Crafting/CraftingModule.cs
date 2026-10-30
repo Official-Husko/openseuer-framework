@@ -1,4 +1,5 @@
 using ObenFramework.Events;
+using ObenFramework.Patching;
 using ObenLoader;
 using ObenLoader.Runtime;
 
@@ -17,6 +18,9 @@ internal static class CraftingModule
         GameEvents.MainMenu.Subscribe(framework, ForgetScene);
         framework.Track(Disposable.Create(ForgetScene));
     }
+
+    /// <summary>The crafting patches applied; false once a game update broke one and the area was switched off.</summary>
+    internal static bool HooksInPlace => PatchAreas.IsAvailable(PatchAreas.Framework, "Crafting");
 
     private static void ForgetScene()
     {

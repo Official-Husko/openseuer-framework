@@ -40,6 +40,12 @@ public readonly struct DishwasherInfo
 /// <summary>Dishwashers (a kind of crafting station that washes dishes over time): listing them, their contents, and hearing a wash finish.</summary>
 public static class Dishwashers
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     private static readonly AccessTools.FieldRef<manufacturing, List<CraftInProgress>> Running =
         AccessTools.FieldRefAccess<manufacturing, List<CraftInProgress>>("craftsInProgresses");
 

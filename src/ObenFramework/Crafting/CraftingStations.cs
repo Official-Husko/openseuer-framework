@@ -72,8 +72,9 @@ public static partial class CraftingStations
 
     /// <summary>
     /// Starts a station the way its own button does: stills and similar process their loaded batch,
-    /// workbench-like stations craft their selected recipe (unless they need the player present), and grow
-    /// boxes plant their selected seed in one free spot. Returns true when something started.
+    /// workbench-like stations craft their selected recipe (unless they need the player present), dishwashers
+    /// wash their selected item, and grow boxes plant their selected seed in one free spot. Returns true when
+    /// something started.
     /// </summary>
     public static bool Start(string stationId)
     {
@@ -87,8 +88,8 @@ public static partial class CraftingStations
                 return StartProcess(process);
             if (station is Growing growing)
                 return StartGrow(growing);
-            if (station.GetType() == typeof(manufacturing))
-                return StartCraft((manufacturing)station);
+            if (station is manufacturing crafting)
+                return StartCraft(crafting);
         }
         return false;
     }

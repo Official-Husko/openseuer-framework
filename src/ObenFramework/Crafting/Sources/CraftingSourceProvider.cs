@@ -10,7 +10,7 @@ namespace ObenFramework.Crafting;
 internal sealed class CraftingSourceProvider
 {
     private readonly Func<StationInfo, IEnumerable<Storage>> _provider;
-    private readonly Func<Storage, int, StorageSlot, bool> _slotFilter;
+    private Func<Storage, int, StorageSlot, bool> _slotFilter;
 
     public CraftingSourceProvider(ITracker owner, Func<StationInfo, IEnumerable<Storage>> provider, int priority,
         Func<Storage, int, StorageSlot, bool> slotFilter, int order)
@@ -24,9 +24,16 @@ internal sealed class CraftingSourceProvider
 
     public string OwnerName { get; }
 
-    public int Priority { get; }
+    public int Priority { get; set; }
 
     public int Order { get; }
+
+    /// <summary>What <see cref="CraftingSources.Register"/> handed back; it identifies this registration.</summary>
+    public IDisposable Handle { get; set; }
+
+    public bool HasFilter => _slotFilter != null;
+
+    public void SetFilter(Func<Storage, int, StorageSlot, bool> slotFilter) => _slotFilter = slotFilter;
 
     /// <summary>The provider's containers for a station, or null when it threw.</summary>
     public IEnumerable<Storage> Ask(StationInfo station)

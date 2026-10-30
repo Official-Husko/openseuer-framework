@@ -4,6 +4,8 @@
 
 All calls are for the main thread and need a loaded world. Everything a mod registers (speeds, quality factors, filters, sources, subscriptions) is owner-tracked and leaves with the mod.
 
+`IsAvailable` on `CraftingEvents`, `CraftingSources`, `CraftingSpeed`, `CraftingQuality`, `RecipeFilter`, `Recipes`, `Plants`, `Dishwashers`, `Recycling` and `Autofarms` says whether the framework's crafting hooks applied. When a game update breaks one, the whole crafting area is switched off: the events stay quiet and the factors, filters and sources do nothing.
+
 ## Events
 
 ```csharp
@@ -20,7 +22,7 @@ Every station takes ingredients and makes its output through the same two game m
 foreach (var s in CraftingStations.All())      // a scan; not every frame
     Log.Info($"{s.Id} {s.Kind} {s.Name} busy={s.Busy} powered={s.Powered} q={s.EquipmentQuality}");
 
-CraftingStations.Start(id);    // still: process the loaded batch; workbench-like: craft the selected recipe; grow box: plant one
+CraftingStations.Start(id);    // still: process the loaded batch; workbench-like: craft the selected recipe; dishwasher: wash the selected item; grow box: plant one
 CraftingStations.Stop(id);     // a still's batch with liquid output fails, as when opening the lid early
 CraftingStations.Pause(id);
 CraftingStations.Resume(id);
@@ -50,15 +52,20 @@ CraftingSpeed.Remove(this, "Stove");
 `CraftingSources` lets a station use containers as if their contents were in its input slots: a pantry next to the stove, a crate beside the workbench.
 
 ```csharp
-CraftingSources.Register(this, station => ContainersNear(station.Position, 3f), priority: 10,
+var pantry = CraftingSources.Register(this, station => ContainersNear(station.Position, 3f), priority: 10,
     slotFilter: (storage, index, stack) => stack.ownerId <= 0);     // optional: never use other people's stacks
 CraftingSources.Consumed.Subscribe(this, t => Log.Info($"took {t.Amount} of {t.ItemId} from {t.Storage.name}"));
+
+CraftingSources.SetPriority(pantry, 20);           // change a registration in place
+CraftingSources.SetSlotFilter(pantry, null);       // or its filter; null lets it use every slot
+pantry.Dispose();                                  // or leave it to the mod's unload
 ```
 
 - While a station lists, checks or takes ingredients, its input storage's slot list is swapped for its own slots plus the extra ones, and swapped back right after. The game's own recipe rules (item groups, liquids in bottles, ammo, variants, multiples) apply unchanged, and the station's own slots are used first, then the extra containers in priority order (higher first, then registration order).
 - The game only checks ingredients when a window refreshes, and a container next to the station can be emptied in the meantime, so starting a craft at a station with extra sources checks again and refuses when they no longer hold enough.
 - The provider is asked once per station and frame; keep it quick and return an empty list for stations it doesn't serve. Dishwashers never use extra sources.
-- `CraftingSources.For(station)` lists the containers a station would use now.
+- `SetPriority` and `SetSlotFilter` take what `Register` returned and apply from the next check on; a changed priority keeps its place among equal priorities. Both return false once the registration has ended.
+- `CraftingSources.For(station)` lists the containers a station would use now, `Entries()` every registration with its owner, priority and whether it has a filter.
 
 ## Recipes
 
@@ -108,4 +115,4 @@ Autofarms.All(); Autofarms.SetGrowPercent(id, 20, 60); Autofarms.Replanted.Subsc
 
 ## Checking in game
 
-Bridge commands: `crafting.stations`, `crafting.control`, `crafting.speed`, `crafting.quality`, `crafting.events` (craft, source, recipe, plant, dishwasher, recycling and autofarm events), `recipes.find`, `recipes.unlock`, `worlditems.list kind=plants|growing|autofarms|dishwashers|recyclers|upgrades`.
+Bridge commands: `crafting.stations`, `crafting.control`, `crafting.speed`, `crafting.quality`, `crafting.events` (craft, source, recipe, plant, dishwasher, recycling and autofarm events), `crafting.sources` (the bridge's own sources: a container or every container near the station, priority and an item slot filter changed in place), `recipes.filter` (the bridge's own name filter), `recipes.find`, `recipes.unlock`, `worlditems.list kind=plants|growing|autofarms|dishwashers|recyclers|upgrades`.

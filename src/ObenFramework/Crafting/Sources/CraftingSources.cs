@@ -24,6 +24,12 @@ namespace ObenFramework.Crafting;
 /// </remarks>
 public static class CraftingSources
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     private static readonly List<CraftingSourceProvider> Providers = new List<CraftingSourceProvider>();
     private static readonly List<CraftingSourceScope> Open = new List<CraftingSourceScope>();
 
@@ -66,8 +72,47 @@ public static class CraftingSources
             Providers.Remove(entry);
             Forget();
         });
+        entry.Handle = registration;
         owner.Track(registration);
         return registration;
+    }
+
+    /// <summary>
+    /// Changes the priority of a registration in place (pass what <see cref="Register"/> returned). Among equal
+    /// priorities it keeps its place from registering. False when the registration has ended.
+    /// </summary>
+    public static bool SetPriority(IDisposable registration, int priority)
+    {
+        var entry = Find(registration);
+        if (entry == null)
+            return false;
+        entry.Priority = priority;
+        SourceOrder.Sort(Providers, p => p.Priority, p => p.Order);
+        Forget();
+        return true;
+    }
+
+    /// <summary>
+    /// Replaces the slot filter of a registration in place; null lets the station use every slot of its
+    /// containers. False when the registration has ended.
+    /// </summary>
+    public static bool SetSlotFilter(IDisposable registration, Func<Storage, int, StorageSlot, bool> slotFilter)
+    {
+        var entry = Find(registration);
+        if (entry == null)
+            return false;
+        entry.SetFilter(slotFilter);
+        Forget();
+        return true;
+    }
+
+    /// <summary>Every registration now, in the order stations use them: owner, priority and whether it has a slot filter.</summary>
+    public static List<(string Owner, int Priority, bool Filtered)> Entries()
+    {
+        var list = new List<(string, int, bool)>();
+        foreach (var entry in Providers)
+            list.Add((entry.OwnerName, entry.Priority, entry.HasFilter));
+        return list;
     }
 
     /// <summary>The extra containers a station would use right now.</summary>
@@ -79,6 +124,18 @@ public static class CraftingSources
         foreach (var source in Sources(station))
             list.Add(source.Storage);
         return list;
+    }
+
+    private static CraftingSourceProvider Find(IDisposable registration)
+    {
+        if (registration == null)
+            return null;
+        foreach (var entry in Providers)
+        {
+            if (ReferenceEquals(entry.Handle, registration))
+                return entry;
+        }
+        return null;
     }
 
     /// <summary>Drops the per-frame cache. Called on scene changes and when providers change.</summary>

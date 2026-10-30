@@ -14,6 +14,12 @@ namespace ObenFramework.Crafting;
 /// </summary>
 public static class RecipeFilter
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     private static readonly List<Func<RecipeContext, bool>> Filters = new List<Func<RecipeContext, bool>>();
     private static readonly Action<Exception> Failed = e => ItemsLog.Failed("A recipe filter", e);
 

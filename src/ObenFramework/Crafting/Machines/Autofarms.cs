@@ -70,6 +70,12 @@ public readonly struct ReplantInfo
 /// <summary>Autofarms in the loaded scenes: listing them, changing how grown new plants start, and hearing them replant.</summary>
 public static class Autofarms
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     /// <summary>An autofarm put new plants in.</summary>
     public static readonly WorldEvent<ReplantInfo> Replanted = new WorldEvent<ReplantInfo>(nameof(Replanted));
 

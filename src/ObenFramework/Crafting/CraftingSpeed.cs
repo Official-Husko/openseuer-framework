@@ -14,6 +14,12 @@ namespace ObenFramework.Crafting;
 /// </summary>
 public static class CraftingSpeed
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     public const string AllStations = FactorTable.All;
     public const float MinSpeed = 0.01f;
     public const float MaxSpeed = 100f;

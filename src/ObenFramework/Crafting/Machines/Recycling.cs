@@ -49,6 +49,12 @@ public readonly struct RecycledInfo
 /// <summary>Bottle recycling machines: listing them, reading and setting what they owe, and hearing bottles go in.</summary>
 public static class Recycling
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     /// <summary>Items went into a recycling machine.</summary>
     public static readonly WorldEvent<RecycledInfo> Recycled = new WorldEvent<RecycledInfo>(nameof(Recycled));
 

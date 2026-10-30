@@ -10,6 +10,12 @@ namespace ObenFramework.Crafting;
 /// </summary>
 public static class CraftingEvents
 {
+    /// <summary>
+    /// The framework's crafting hooks are in place. False when they failed to apply (a game update changed what
+    /// they patch); the events then stay quiet and what this class changes may not take.
+    /// </summary>
+    public static bool IsAvailable => CraftingModule.HooksInPlace;
+
     /// <summary>A station took the ingredients and started a recipe.</summary>
     public static readonly WorldEvent<CraftStart> CraftStarted = new WorldEvent<CraftStart>(nameof(CraftStarted));
 

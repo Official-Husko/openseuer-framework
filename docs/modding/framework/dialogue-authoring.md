@@ -124,6 +124,12 @@ oben call dialogue.responses
 oben call dialogue.remove key=<key from the answer>
 oben call dialogue.clear                     # everything DevBridge added
 oben call dialogue.narrate text="It is quiet. Too quiet."
+
+# talking from the bridge
+oben call dialogue.start npc="Jens Brom"
+oben call dialogue.state                      # line, speaker, waitingForContinue, choices
+oben call dialogue.continue
+oben call dialogue.pick text="ducks"
 ```
 
 Picking a DevBridge response or topic writes "Dialogue response picked" or "Dialogue topic picked" to the DevBridge log (`oben logs`).

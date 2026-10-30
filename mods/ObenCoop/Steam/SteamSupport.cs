@@ -116,7 +116,7 @@ internal sealed class SteamSupport : IDisposable
             Transport = new P2PTransport(_p2p, _clock);
             _backend = new MatchmakingBackend(_lobbies, Transport, _clock) { Visibility = Visibility };
             _lobby.AddBackend(_backend);
-            _log.Info($"Steam is up (signed in as {_p2p.LocalId}); Steam lobbies are available.");
+            _log.Info($"Steam is up{AppText()}; Steam lobbies are available.");
             HandleConnectLine();
         }
         catch (Exception e)

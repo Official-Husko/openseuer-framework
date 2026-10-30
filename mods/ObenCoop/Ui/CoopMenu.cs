@@ -1,14 +1,16 @@
+using System;
 using ObenCoop.Net.Lobby;
 using ObenCoop.Net.Session;
 using ObenUIKit;
-using ObenUIKit.Controls;
 using ObenUIKit.Menu;
+using ObenUIKit.Windows;
 
 namespace ObenCoop.Ui;
 
 /// <summary>
-/// Co-op on the main menu and in the pause menu. For now both open a small window with the co-op state and where to
-/// host and join (the F1 console); hosting, joining and the lobby list move into it as co-op grows.
+/// Co-op on the main menu and in the pause menu: a window to host, join by code or address, find games
+/// on the network or on Steam, and see who is in the game. It builds itself again whenever the lobby or
+/// the roster changes, so it always shows the current state.
 /// </summary>
 internal static class CoopMenu
 {
@@ -20,36 +22,60 @@ internal static class CoopMenu
         PauseMenuButtons.Add(mod, "coop", "Co-op", () => Open(mod), order: 10);
     }
 
-    public static void Open(CoopMod mod) => UiKit.Open(mod, WindowId, "Co-op", ui => Build(ui, mod));
-
-    private static void Build(UiBuilder ui, CoopMod mod)
+    public static void Open(CoopMod mod)
     {
-        ui.Header("Status");
-        ui.Live(() => Status(mod));
-        ui.Space(10f);
-        ui.Label("Co-op is still being built: playing in one shared world comes later, and for now everyone loads the "
-            + "same save. Hosting and joining go through the F1 console:", muted: true);
-        ui.Label("coop host  ·  coop join [address or join code]  ·  coop lobby list  ·  coop status", muted: true);
+        // Opening it again only brings the open one forward; it follows the changes already.
+        if (UiKit.Find(WindowId) != null)
+        {
+            UiKit.Open(mod, WindowId, "Co-op", ui => CoopPage.Build(ui, mod));
+            return;
+        }
+        var window = UiKit.Open(mod, WindowId, "Co-op", ui => CoopPage.Build(ui, mod),
+            new WindowOptions { KeepOnLevelChange = true });
+        Follow(mod, window);
     }
 
-    private static string Status(CoopMod mod)
+    // Rebuilds the window on every change it shows, until it closes.
+    private static void Follow(CoopMod mod, UiWindow window)
     {
+        var lobby = mod.Lobby;
         var session = mod.Session;
-        if (session == null)
-            return "Co-op isn't running.";
-        int players = session.Roster.Count;
-        string count = players == 1 ? "1 player" : players + " players";
-        switch (session.State)
+        var browser = lobby.Browser;
+        // At the end of the frame, once however many changes came in: a change can come from inside a
+        // click on the window itself, whose button the rebuild would take away mid-call.
+        bool due = false;
+        Action rebuild = () =>
         {
-            case SessionState.Hosting:
-                return $"Hosting {(mod.Lobby.Info != null ? mod.Lobby.Info.DisplayName : "a game")}, {count}.";
-            case SessionState.Connecting:
-                return $"Joining {mod.Lobby.Address}...";
-            case SessionState.Joined:
-                var host = session.Roster.Host;
-                return $"In {(host != null ? host.Name + "'s" : "a")} game, {count}.";
-            default:
-                return mod.Lobby.Status == LobbyStatus.Pending ? "Setting up a game..." : "Not in a co-op game.";
-        }
+            if (due || !window.IsOpen)
+                return;
+            due = true;
+            window.Defer(() =>
+            {
+                due = false;
+                window.Rebuild();
+            });
+        };
+        Action<LobbyStatus> status = _ => rebuild();
+        Action<CoopPlayer> joined = _ => rebuild();
+        Action<CoopPlayer, string> left = (_, __) => rebuild();
+        Action<SessionEnd> ended = _ => rebuild();
+        Action<LobbyListing> found = _ => rebuild();
+
+        lobby.StatusChanged += status;
+        session.PlayerJoined += joined;
+        session.PlayerLeft += left;
+        session.Ended += ended;
+        browser.Found += found;
+        browser.Finished += rebuild;
+        window.Closed += () =>
+        {
+            CoopPage.Forget();
+            lobby.StatusChanged -= status;
+            session.PlayerJoined -= joined;
+            session.PlayerLeft -= left;
+            session.Ended -= ended;
+            browser.Found -= found;
+            browser.Finished -= rebuild;
+        };
     }
 }

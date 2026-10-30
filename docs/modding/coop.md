@@ -211,8 +211,19 @@ Files in `mods/ObenCoop/`:
 | `Chat/CoopChat.cs`, `CoopNotices.cs` | chat on `ChannelIds.Chat`; shows text as a game notification in a level and in the console otherwise |
 | `Commands/CoopCommands.cs`, `LobbyCommands.cs`, `PresenceCommands.cs`, `CoopStatus.cs`, `LobbyText.cs` | the `coop` console command |
 | `Bridge/CoopMod.Bridge.cs` | `BridgeStatus`, `BridgePresence`, `BridgeLobbies`: JSON for the dev bridge's `coop.*` commands |
-| `Ui/CoopMenu.cs` | Co-op on the main menu and in the pause menu (ObenUIKit's `MainMenuButtons` and `PauseMenuButtons`): a window with the co-op state and the console commands for now; hosting, joining and the lobby list move into it later |
+| `Ui/CoopMenu.cs`, `CoopPage.cs`, `LobbyListPart.cs`, `PlayerListPart.cs` | Co-op on the main menu and in the pause menu (ObenUIKit's `MainMenuButtons` and `PauseMenuButtons`): the co-op window (below) |
+| `Ui/HiddenText.cs` | streamer mode: join codes, IP addresses and Steam ids in a text become stars |
 | `Api/Coop.cs` | the entry point for other mods (below) |
+
+### The co-op window
+
+Co-op on the main menu or in the pause menu opens it. It always shows the current state (it builds itself again when the lobby, the roster or a search changes):
+
+- **Not in a game:** *Host a game* (a name, direct play or Steam, and a line on what that means: the port to forward, or the Steam app), *Join a game* (a join code, an address or `steam:<id>`), *Find games* (search the network and this PC, or Steam; the list shows name, players, ping, and a mark such as "other game build" for games that can't be joined; picking one joins it).
+- **In a game:** the join code and address, *Copy join code* (to the clipboard), *Invite friends* for a Steam lobby (the overlay's dialog), the players with who hosts, who is you and each one's ping, and *Leave*.
+- A line under the state says what the last button did, until the lobby moves on.
+
+**Streamer mode.** `HideJoinCodes` (on by default) shows join codes, IP addresses and Steam ids as stars everywhere co-op prints them: the window, notices in a level, the console's answers and the log lines it mirrors (`****-****-**** (***.***.***.***:27890)`; ports stay). *Copy join code* still copies the real code, and *Show* next to it reveals codes and addresses in the window until it closes; the join field shows stars while typing too. The bridge's `coop.*` JSON is a developer tool and keeps them.
 
 ### For other mods
 
@@ -252,6 +263,7 @@ Settings in `config.json` are re-read each time you host, join or list, so editi
 | `SteamApp` | `obenseuer` | the Steam app the game runs as: `obenseuer`, or `spacewar` (480) for GOG copies and testing; at the next start |
 | `SteamLobbyType` | `friends` | `friends`, `public` or `private` (invite only) |
 | `JoinInvites` | true | accepting a Steam invite joins at once |
+| `HideJoinCodes` | true | streamer mode: codes, addresses and Steam ids show as stars on screen (above) |
 | `SharePresence` | true | share where you are |
 
 ### Console commands (F1)
@@ -296,7 +308,7 @@ Anything parked must be plain data or a type from a never-reloaded assembly; a t
 dotnet test tests/ObenCoop.Net.Tests
 ```
 
-It covers the handshake, slots and roster, rejection by game version, mod set, protocol version, full game and duplicate GUID, a silent connection being dropped, reliable ordering both ways, relay between clients, directed sends, leave and host shutdown, a hot reload handover of a host and a client session, the codec and the zero-allocation pool, and the blob and flood control behaviour: a 5 MB blob intact, CRC and damaged-chunk detection, a disconnect mid-transfer failing both sides, concurrent transfers, cancel, timeouts and refusals, the receive budget spreading a burst over polls in order, the overflow disconnect and the send queue limit. No game is needed.
+It covers the handshake, slots and roster, rejection by game version, game build, mod set, protocol version, full game and duplicate GUID, a silent connection being dropped, reliable ordering both ways, relay between clients, directed sends, leave and host shutdown, a hot reload handover of a host and a client session, the codec and the zero-allocation pool, named channels for messages and blobs (relayed, unknown names dropped quietly, one handler per name), and the blob and flood control behaviour: a 5 MB blob intact, a small blob not held up behind a big one or by a silent player, one sender's share of the receive memory, CRC and damaged-chunk detection, a disconnect mid-transfer failing both sides, concurrent transfers, cancel, timeouts and refusals, the receive budget spreading a burst over polls in order, the overflow disconnect and the send queue limit. No game is needed.
 
 It also covers presence (codec, interpolation, late samples, extrapolation, jumps and level changes, restarts, idle rate, withdraw, timeouts, relay to a third player), lobbies for direct play (a scan finding a game on this machine, joining by code, refusing a different game version before connecting, the host leaving, nobody answering, a lobby carried over a reload, join codes catching every single wrong character), and Steam on an in-memory fake (`FakeSteam.cs`): the session over P2P with relay, refusals with their reason, timeouts, Steam failures, pings, handover; lobby create, list, join by code, version and foreign-lobby refusal, invites, non-members turned away, members leaving the lobby, the host leaving, reloads.
 
@@ -309,6 +321,7 @@ It also covers presence (codec, interpolation, late samples, extrapolation, jump
 5. Presence: load a level in both (`oben call console.exec command="new_scene Interior Player Tenement"`, and the same with `--instance 2`). After the world is ready, `coop presence` in copy 2 lists Player in Interior Player Tenement with a position and distance. `oben call player.get` in copy 1, then `oben call player.teleport x=<x+3> y=<y> z=<z>`; within a second `oben call coop.presence --instance 2` shows the new position under `latest`. A teleport of over 8 m shows `Teleported` in `flags`. `coop presence off` in copy 1 removes it from copy 2's list at once; `coop presence on` brings it back.
 6. A dead address: in copy 2 (offline) `coop join 127.0.0.1:27999`. Nobody answers the lookup (2.5 s), the connect is tried anyway and fails; within about 10 s a notice says so and `coop lobby info` shows it as the last problem. (A real version or mod mismatch needs two different installs, since both copies share the game and the `Mods` folder; the unit tests cover those.)
 7. Hot reload while connected: rebuild the mod (`OBENSEUER_DIR=... dotnet build mods/ObenCoop/ObenCoop.csproj -c Release`, auto reload on). `coop status` still shows both players and the lobby, the log says "Carried the session over a reload" and "Carried the lobby over a reload", and `coop lobby list` in copy 2 still finds copy 1's game.
+8. The co-op window (Co-op in the main or pause menu) does the same with buttons: host, join with a code, *Find games* and pick one, *Copy join code*, *Show*, *Leave*. With `HideJoinCodes` on, codes and addresses are stars in it and in every notice.
 
 **The `single-instance=` entry.** The game's `Obenseuer_Data/boot.config` contains the line `single-instance=` (empty value). Unity's single-instance switch may make a second launch exit at once or just focus the first window. This has not been verified here. If the second copy does not stay up: close both, make a backup of `boot.config`, delete that line, and launch again. If it still refuses, the alternative is a second copy of the whole game folder run as a separate install. (The TODO item "Second game instance on one machine" is exactly this check.)
 
@@ -318,7 +331,6 @@ Both copies share the `Mods` folder, so they share `config.json` (port, name) an
 
 - Steam play is untested in a real Steam: this install's `steam_api64.dll` is replaced. Everything above the two thin Steamworks wrappers is tested on the fake. It uses legacy P2P (deprecated by Valve but in the game's Steamworks.NET); moving to `SteamNetworkingSockets` means a new `IP2PNetwork`, nothing else.
 - No NAT help for direct play. Forward the UDP port, use a VPN, or play on a LAN; or use Steam.
-- No lobby UI yet (ObenUIKit page with the list, codes and invites); everything is console commands.
 - No request/ack helper (`Shared.NextReqId` in the reference), no timers for periodic state (`HST` announces, digests).
 - Blobs are not resumable and don't survive a hot reload; there is no per-message rate window for features (the reference's `BuildHost` and friends), only the per-peer budget and queue limits.
 - The host is the only authority and there is no host migration (a Steam lobby whose owner leaves ends the session, as in the reference).

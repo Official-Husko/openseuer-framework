@@ -67,7 +67,7 @@ public sealed partial class CoopMod : ObenMod
             PlayerId = CoopIdentity.LoadOrCreate(PathTo(CoopIdentity.FileName(Instance.Suffix)), Log),
             GameVersion = Application.version,
             GameBuild = GameBuild(),
-            Log = message => Log.Info(message),
+            Log = message => Log.Info(Shown(message)),
         };
         Direct = new DirectTransport { Log = message => Log.Warn(message) };
         Session = new CoopSession(Direct, options);
@@ -87,7 +87,7 @@ public sealed partial class CoopMod : ObenMod
         if (SessionKeeper.TryResume(this, Log))
             CoopNotices.Show(Log, "Co-op", "The session carried on after a mod reload.");
 
-        GameConsole.Register(this, CoopCommands.Name, CoopCommands.Usage, args => CoopCommands.Run(this, args));
+        GameConsole.Register(this, CoopCommands.Name, CoopCommands.Usage, args => Shown(CoopCommands.Run(this, args)));
         Ui.CoopMenu.Init(this);
     }
 
@@ -171,6 +171,10 @@ public sealed partial class CoopMod : ObenMod
             return Settings.LobbyName.Trim();
         return Session.Options.PlayerName + "'s game";
     }
+
+    /// <summary>A text as it may be shown: with join codes, addresses and Steam ids as stars while HideJoinCodes is on.</summary>
+    internal string Shown(string text) => Settings.HideJoinCodes ? Ui.HiddenText.Scrub(text) : text;
+
 
     /// <summary>True when config.json asks for Steam as Spacewar (480) instead of Obenseuer.</summary>
     internal bool WantsSpacewar

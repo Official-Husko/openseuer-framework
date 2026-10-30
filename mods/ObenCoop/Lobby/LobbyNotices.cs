@@ -55,7 +55,7 @@ internal sealed class LobbyNotices : IDisposable
             return;
         _lastShown = text;
         _lastShownAt = now;
-        CoopNotices.Show(_mod.Log, Title, text);
+        CoopNotices.Show(_mod.Log, Title, _mod.Shown(text));
     }
 
     private void OnStarted()
@@ -115,6 +115,7 @@ internal sealed class LobbyNotices : IDisposable
         PrintNextScan = false;
         // A list is too long for a notification; it goes to the console (F1) and the log.
         string text = LobbyText.List(_mod.Lobby.Browser);
+        text = _mod.Shown(text);
         _mod.Log.Info(text);
         GameConsole.Print(text);
     }

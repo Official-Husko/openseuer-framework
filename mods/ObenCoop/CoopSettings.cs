@@ -64,6 +64,14 @@ public sealed class CoopSettings
     [Description("Accepting a Steam invite, or Join game on a friend, joins the game at once.")]
     public bool JoinInvites = true;
 
+    /// <summary>
+    /// Streamer mode: join codes, addresses and Steam ids show as stars in co-op's notices, console answers
+    /// and window. Copy join code still copies the real code, and the window's Show reveals it.
+    /// </summary>
+    [Setting("Hide join codes",
+        Description = "Streamer mode: join codes, IP addresses and Steam ids show as stars on screen. Copy join code in the Co-op window still copies the real code, and Show there reveals it until the window closes.")]
+    public bool HideJoinCodes = true;
+
     /// <summary>Share where you are with the other players (presence). Others can't see you without it.</summary>
     [Description("Share where you are with the other players. Others can't see you without it.")]
     public bool SharePresence = true;

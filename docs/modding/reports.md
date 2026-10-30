@@ -53,8 +53,8 @@ Written by the game to `ObenLoader/system.json` at every start (after all mods h
 | --- | --- |
 | `Format` | `1` |
 | `Written` | `"2026-10-30T01:04:07"` (local time) |
-| `Build` | `"0.1.0-pre.5 (6e6bac1)"` for a pre-release, `"0.1.0 (6e6bac1)"` for a stable release or a build from the repo, as the pause menu shows it |
-| `Loader`, `Game`, `GameBuild`, `Unity` | `"0.1.0-pre.5"` (the loader's version without the commit), `"0.5.13"`, `"26179069"`, `"6000.0.77f1"` |
+| `Build` | `"0.2.1 (6e6bac1)"`, as the pause menu shows it (`"1.1.0-pre.3 (6e6bac1)"` for a test build after 1.0.0) |
+| `Loader`, `Game`, `GameBuild`, `Unity` | `"0.2.1"` (the loader's version without the commit), `"0.5.13"`, `"26179069"`, `"6000.0.77f1"` |
 | `GameCodeHash`, `GameExeHash` | SHA-256 of `Assembly-CSharp.dll` and of the exe, lowercase hex |
 | `Os`, `Wine`, `Host` | `"Windows 10 (10.0.19045) 64bit"`, `"11.0"`, `"Linux 7.2.3-arch1-2"` (`Wine` and `Host` are null on Windows) |
 | `Language` | `"English"` |

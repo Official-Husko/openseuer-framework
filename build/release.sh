@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Prepares a release of ObenseuerExtended.
+# Prepares a stable release of ObenseuerExtended, 1.0.0 or later, only when the owner asks for one.
 #
 #   build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes]
 #
+# build/next-version.sh says which version the commits since the last release call for.
 # Checks that the tree is clean, runs the tests, sets <Version> in Directory.Build.props, commits
 # "chore(release): X.Y.Z", writes changelog.json with that version released (build/changelog.sh), builds
 # the package from that commit and tags vX.Y.Z. Nothing leaves the machine: pushing and the GitHub
@@ -36,6 +37,8 @@ for arg in "$@"; do
     esac
 done
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "$version isn't a version (Major.Minor.Patch)"
+# Versions before 1.0.0 are pre-releases from build/experimental.sh (the versioning rule in docs/modding/releasing.md).
+[ "${version%%.*}" -ge 1 ] || die "$version is before 1.0.0: those are pre-releases, published with build/experimental.sh"
 
 # A real run stops at a problem; a dry run lists them and carries on so the notes can still be read.
 problems=0
@@ -50,7 +53,7 @@ problem() {
 
 [ -z "$(git status --porcelain)" ] || problem "the working tree has uncommitted changes"
 branch=$(git branch --show-current)
-# Only vX.Y.Z tags are releases; experimental builds are tagged vX.Y.Z-pre.N+<commit>.
+# Numbered releases are vX.Y.Z tags (0.x ones are pre-releases); test builds after 1.0.0 are vX.Y.Z-pre.N+<commit>.
 last=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 last=${last#v}
 ! git rev-parse -q --verify "refs/tags/v$version" > /dev/null || problem "v$version already exists"

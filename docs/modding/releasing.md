@@ -1,11 +1,18 @@
 # Releasing
 
-A release is a git tag, a zip players unpack and install from, and release notes made from the commit trailers. There are two kinds:
+A release is a git tag, a zip players unpack and install from, and release notes made from the commit trailers.
 
-- **Experimental** builds, GitHub pre-releases from `build/experimental.sh`: every few commits, or when a milestone is done. Numbered and titled with the commit, "ObenseuerExtended v0.1.0-pre.5 (57a4977)" (players see "pre-release" on GitHub, never "experimental"), tagged `v0.1.0-pre.5+57a4977`, the zip named `ObenseuerExtended-0.1.0-57a4977_pre-release.zip`.
-- **Stable** releases from `build/release.sh X.Y.Z`, tagged `vX.Y.Z`: only when the owner says so.
+## Versions
 
-`build/package.sh` makes the zip for both. The pause menu shows the same `ObenseuerExtended v0.1.0-pre.5 (57a4977)` for the installed build (a build straight from the repo shows `v0.1.0 (57a4977)`, without a number), read from the kit's assembly (`build/Revision.targets` stamps the commit into every assembly, with `-dirty` for uncommitted changes), so a player's report or a screenshot says which build it was, and after a hot reload the line tells whether the change loaded.
+Versions are `Major.Minor.Patch`, and every release gets its own:
+
+- **Before 1.0.0** (now) every release is a GitHub pre-release from `build/experimental.sh`, every few commits or when a milestone is done. The major version stays 0. A release with a new feature (any `feat` commit) or a breaking change (`type!:`, or a `BREAKING CHANGE` line in the body) bumps the minor version, 0.2.0 to 0.3.0; one with only fixes, performance, docs, build or other work bumps the patch version, 0.2.0 to 0.2.1. Commit types decide it, so keep them honest.
+- **1.0.0** is the first stable release: when every module in PROGRESS.md is at 100%, and only when the owner says so, with `build/release.sh 1.0.0`.
+- **From 1.0.0 on** a breaking change bumps the major version, a feature the minor version, the rest the patch version. Stable releases come from `build/release.sh` when the owner asks; `build/experimental.sh` publishes test builds of the coming version in between, tagged `v1.1.0-pre.N+<commit>`.
+
+`build/next-version.sh` prints the version the commits since the last numbered release call for, and why (`0.2.0 new features`); `--minor` or `--patch` overrides it, and the release scripts take the same flags. The first numbered release is 0.1.0: the five pre-releases before the rule were tagged `v0.1.0-pre.1` to `pre.5` (GitHub orders releases by the version in the tag and ignores what follows `+`, so they needed a number), and their titles read `v0.1.0 (<commit>)` or `v0.1.0-pre.5 (<commit>)`.
+
+`<Version>` in `Directory.Build.props` is never set by hand: the release scripts commit it ("chore(release): X.Y.Z"). `build/package.sh` makes the zip. The pause menu shows `ObenseuerExtended` and `v0.2.1 (6e6bac1)`, the version and the commit read from the kit's assembly (`build/Revision.targets` stamps the commit into every assembly, with `-dirty` for uncommitted changes), so a player's report or a screenshot says which build it was, and after a hot reload the line tells whether the change loaded. Release titles use the same "ObenseuerExtended v0.2.1 (6e6bac1)".
 
 ## The player package
 
@@ -39,30 +46,32 @@ The payload (`ObenLoader.dll`, `0Harmony.dll`, `Mono.Cecil.dll`) is looked up in
 
 To try the installer without touching a real game, make a folder with an empty `Obenseuer.exe`, an `Obenseuer_Data/Managed` folder and copies of `ScriptingAssemblies.json` and `RuntimeInitializeOnLoads.json` in `Obenseuer_Data`, unpack the zip and run `install.sh --game <that folder>`.
 
-## Experimental builds
+## Pre-releases
 
 ```sh
+build/next-version.sh             # the version the commits call for
 build/experimental.sh --dry-run   # what it would do, and the notes
-build/experimental.sh             # test, package, tag, push and publish the pre-release
-build/experimental.sh --local     # test and package only
+build/experimental.sh             # test, commit the version, package, tag, push and publish
+build/experimental.sh --local     # test and package only (the version commit is taken back)
+build/experimental.sh --patch     # a patch version even though there are feat commits
 ```
 
-Publish one every few commits, or when a milestone is done, from a clean tree on `main`. The script:
+Publish one every few commits, or when a milestone is done, from a clean tree on `main`. Before 1.0.0 the script:
 
-1. Works out the version: the coming version with the next pre-release number, `0.1.0-pre.5`, and the commit as `git describe --abbrev=7` writes it, the same one the assemblies carry.
-2. Stops when the tree has uncommitted changes, the commit is already released, or nothing is new since the previous release of either kind.
-3. Runs the tests, writes `changelog.json` (its new lines stay `Unreleased`), and builds `dist/ObenseuerExtended-X.Y.Z-<commit>_pre-release.zip` from that commit with the version `X.Y.Z-pre.N`, so the game shows it.
-4. Tags `vX.Y.Z-pre.N+<commit>`, pushes the branch and the tag, and creates a GitHub pre-release titled "ObenseuerExtended vX.Y.Z-pre.N (<commit>)". If the push fails the tag is taken back; if only the release fails it prints the command to make it.
+1. Works out the version with `build/next-version.sh`.
+2. Stops when the tree has uncommitted changes, the commit is already released, the tag exists, or nothing is new since the previous release.
+3. Runs the tests, sets `<Version>` and commits "chore(release): X.Y.Z", writes `changelog.json` with that version released (`build/changelog.sh --release X.Y.Z`), and builds `dist/ObenseuerExtended-X.Y.Z-<commit>_pre-release.zip` from that commit.
+4. Tags `vX.Y.Z`, pushes the branch and the tag in one go (`--atomic`), and creates a GitHub pre-release titled "ObenseuerExtended vX.Y.Z (<commit>)". Until the push succeeds everything is local, and a failed step takes the version commit and the tag back; if only the GitHub release fails it prints the command to make it.
 
-The tags are numbered because GitHub orders releases by the version in the tag and ignores everything after `+`: tagged with the commit alone (as the first four were, until they were renamed to `pre.1` to `pre.4`), every pre-release was the same version 0.1.0 and the newest landed anywhere in the list. `N` is one more than the highest number already used for that version. A pre-release ranks below its version, so the tag names the version the pre-releases lead up to: `<Version>` before the first stable release (`v0.1.0-pre.N`), and after a stable `vX.Y.Z` the next patch version (`vX.Y.(Z+1)-pre.N`). The title and the pause menu use the same `X.Y.Z-pre.N`. The first four pre-releases were built before the number existed, so their titles and their pause menu line read `v0.1.0 (<commit>)`.
+After 1.0.0 it publishes test builds of the coming version without a version commit: `X.Y.Z-pre.N` (one more than the highest number used for that version), built with that version so the game shows it, tagged `vX.Y.Z-pre.N+<commit>`. Those tags don't count as releases in `changelog.json` or for `release.sh`.
 
-The notes start with a warning to back up saves, then the player lines since the previous release (`oben changelog --since <tag>`) and every commit since then (the newest 300) in a folded list. Experimental tags never count as releases in `changelog.json` or for `release.sh`, which only look at `vX.Y.Z`.
+The notes start with a warning to back up saves, then the player lines since the previous release (`oben changelog --since <tag>`) and every commit since then (the newest 300) in a folded list.
 
-## Making a release
+## Making a stable release
 
-Only when the owner asks for one.
+Only when the owner asks for one, and from 1.0.0 on (`release.sh` refuses a 0.x version: those are pre-releases).
 
-1. Look at what changed (`git log v<last>..HEAD`, or the whole history before the first tag) and decide `Major.Minor.Patch`. Before 1.0, breaking changes and new features bump the minor version, fixes and tweaks the patch version.
+1. Look at what changed (`git log v<last>..HEAD`) and decide `Major.Minor.Patch`; `build/next-version.sh` says what the commit types call for. The first one is 1.0.0, when everything in PROGRESS.md is at 100%.
 2. Preview: `build/release.sh X.Y.Z --dry-run`. It changes nothing, lists what would stop a real release (dirty tree, a tag that exists, a version that isn't newer) and prints the release notes (`oben changelog --release X.Y.Z --notes`).
 3. Read every line of the notes the way a player would (the checklist is in [changelog.md](changelog.md)): duplicates, a mod's name repeated in its line, "Changed" or "Fixed" for something new in this release, code names, typos. Fix problems in the builder (`tools/ObenTool/Changelog/`) or, for commits that aren't pushed yet, by rewording them, then dry-run again.
 4. Release: `build/release.sh X.Y.Z`. It runs `dotnet test ObenseuerExtended.slnx`, sets `<Version>` in `Directory.Build.props`, commits `chore(release): X.Y.Z`, writes `changelog.json` with that version released (`build/changelog.sh --release X.Y.Z`; the changelog hooks skip that commit), builds the package from that commit and tags `vX.Y.Z`. If a step fails before the tag exists, the release commit is taken back.
@@ -77,7 +86,7 @@ gh release create vX.Y.Z dist/ObenseuerExtended-X.Y.Z.zip --title "ObenseuerExte
 
 `build/release.sh X.Y.Z --publish` runs them for you after the local part, asking first (`--yes` skips the question). It needs `gh` logged in, checked before anything is changed.
 
-Stable releases only happen when the owner asks; experimental ones go out through `experimental.sh` as described above. Never tag or push by hand to try something out: the tag is the release.
+Stable releases (1.0.0 and later) only happen when the owner asks; pre-releases go out through `experimental.sh` as described above. Never tag or push by hand to try something out: the tag is the release.
 
 ## The wiki
 

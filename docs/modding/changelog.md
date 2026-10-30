@@ -58,9 +58,9 @@ Inside a release the mods come in alphabetical order, lines without a mod last, 
 
 ## Versions
 
-Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`. Each tag closes a release made of the commits since the previous tag. Commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out. Experimental builds are tagged `vX.Y.Z-pre.N+<commit>` ([releasing.md](releasing.md)); those tags don't close a release, so their changes stay `Unreleased` until the next stable one.
+Versions are `Major.Minor.Patch` and every release is a git tag `vX.Y.Z`: each one closes a release made of the commits since the previous tag, and the commits after the newest tag are listed as `Unreleased` (`"released": false` in the file). Releases with no trailer lines are left out. Before 1.0.0 every pre-release is a version of its own: a feature bumps the minor version, fixes and other work the patch version (see [releasing.md](releasing.md#versions)). The test builds between stable releases after 1.0.0, and the five pre-releases before 0.1.0, are tagged `vX.Y.Z-pre.N+<commit>`; those tags don't close a release, so their changes count toward the next numbered version.
 
-Don't create a tag to try something out: the tag is the release. Before 1.0, breaking changes bump the minor version, new features the minor version, and fixes and tweaks the patch version.
+Don't create a tag to try something out: the tag is the release. The commit types decide the version (`feat` bumps the minor version), so a commit that adds something players or modders can use is a `feat`, not a `fix` or a `chore`.
 
 ## Commands
 

@@ -12,8 +12,10 @@ namespace ObenFramework.Npcs;
 /// Plays an <see cref="AnimationClip"/> on a character over what its Animator does (a wave, a dance, a
 /// pose), blended in and out so the character returns to its own animation afterwards. Works on any
 /// Animator: a puppet, a mod NPC's body, or a game NPC through its claim (<see cref="NpcClaim.PlayAnimation"/>).
-/// One playback per Animator; a second mod's playback is refused until the first ends. Everything a mod
-/// started stops when it unloads, and all of it stops when the level changes.
+/// One playback per Animator; a second mod's playback is refused until the first ends. On a humanoid body
+/// (most of the game's) the clip must be humanoid too: the game's controllers hold many clips twice, generic
+/// and humanoid, under one name, and a generic one puts the hips at the feet. Everything a mod started stops
+/// when it unloads, and all of it stops when the level changes.
 /// </summary>
 public static class NpcAnimation
 {
@@ -69,6 +71,9 @@ public static class NpcAnimation
             throw new ArgumentException("The fade must be a finite number of seconds, 0 or more.", nameof(fadeSeconds));
         if (animator == null || !animator.gameObject.activeInHierarchy || Saves.SaveGate.IsBusy)
             return null;
+        // The game's controllers hold many clips twice, generic and humanoid, under one name.
+        if (animator.isHuman && !clip.humanMotion)
+            NpcsLog.WarnOnce("generic-clip:" + clip.name, $"{owner} plays the generic clip '{clip.name}' on a humanoid body, which puts the hips down at the feet. Use the humanoid clip (AnimationClip.humanMotion).");
 
         // A game NPC another mod has claimed is that mod's to animate.
         var npc = animator.GetComponentInParent<NPCInfo>();

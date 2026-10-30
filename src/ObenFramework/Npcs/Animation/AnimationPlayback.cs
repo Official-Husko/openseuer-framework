@@ -38,7 +38,7 @@ public sealed class AnimationPlayback : IDisposable
             _output.SetSourcePlayable(_clip);
             SetClip(clip, loop, fadeSeconds);
             _blend = _fadeSeconds <= 0f ? 1f : 0f;
-            _output.SetWeight(_blend);
+            Weigh(_blend);
             _graph.Play();
         }
         catch
@@ -99,7 +99,7 @@ public sealed class AnimationPlayback : IDisposable
         _clip.Destroy();
         _clip = next;
         _blend = 1f;
-        _output.SetWeight(_blend);
+        Weigh(_blend);
     }
 
     // One frame of fading and clip bookkeeping. False when the playback is over.
@@ -129,7 +129,7 @@ public sealed class AnimationPlayback : IDisposable
             }
         }
         _blend = Approach(_blend, Ending ? 0f : 1f, _fadeSeconds, deltaTime);
-        _output.SetWeight(_blend);
+        Weigh(_blend);
         return !(Ending && _blend <= 0f);
     }
 
@@ -139,12 +139,35 @@ public sealed class AnimationPlayback : IDisposable
         Ending = true;
         try
         {
+            if (Animator != null)
+                WeighOwn(1f);
             if (_graph.IsValid())
                 _graph.Destroy();
         }
         catch (Exception e)
         {
             NpcsLog.Failed("Destroying an animation graph", e);
+        }
+    }
+
+    // The Animator's own controller output is applied after ours whatever the sorting order, so it would
+    // hide the clip; it fades out as far as the clip fades in, and is put back when the playback ends.
+    private void Weigh(float blend)
+    {
+        _output.SetWeight(blend);
+        WeighOwn(1f - blend);
+    }
+
+    private void WeighOwn(float weight)
+    {
+        var own = Animator.playableGraph;
+        if (!own.IsValid() || own.Equals(_graph))
+            return;
+        for (int i = 0; i < own.GetOutputCount(); i++)
+        {
+            var output = own.GetOutput(i);
+            if (output.IsPlayableOutputOfType<AnimationPlayableOutput>())
+                output.SetWeight(weight);
         }
     }
 

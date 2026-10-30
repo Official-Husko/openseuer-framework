@@ -212,6 +212,30 @@ Files in `mods/ObenCoop/`:
 | `Commands/CoopCommands.cs`, `LobbyCommands.cs`, `PresenceCommands.cs`, `CoopStatus.cs`, `LobbyText.cs` | the `coop` console command |
 | `Bridge/CoopMod.Bridge.cs` | `BridgeStatus`, `BridgePresence`, `BridgeLobbies`: JSON for the dev bridge's `coop.*` commands |
 | `Ui/CoopMenu.cs` | Co-op on the main menu and in the pause menu (ObenUIKit's `MainMenuButtons` and `PauseMenuButtons`): a window with the co-op state and the console commands for now; hosting, joining and the lobby list move into it later |
+| `Api/Coop.cs` | the entry point for other mods (below) |
+
+### For other mods
+
+`Coop` (namespace `ObenCoop`) is how another mod plays along: add `"ObenCoop"` to its dependencies in mod.json and reference `ObenCoop.dll` and `ObenCoop.Net.dll`.
+
+```csharp
+Coop.Listen(this, "mymod.doors", (sender, reader) => OpenDoor(reader.ReadString()));
+Coop.ListenBlobs(this, "mymod.world", (sender, data, blob) => LoadWorld(data));
+Coop.OnPlayerJoined(this, player => Log.Info(player.Name + " joined"));
+
+var w = MessagePool.RentWriter();
+w.WriteString("Kitchen door");
+Coop.Broadcast("mymod.doors", w);                         // also SendTo(player, ...) and SendToHost(...)
+MessagePool.Return(w);
+Coop.SendBlob(Coop.Host, "mymod.world", bytes, "world");  // a byte array of any size up to 32 MB
+```
+
+- **State:** `IsAvailable`, `InGame`, `IsHost`, `Me`, `Host`, `Players`, `PingOf(player)`.
+- **Events:** `OnStarted`, `OnPlayerJoined`, `OnPlayerLeft(player, reason)`, `OnEnded(end)`. Each handler runs in its own try/catch; an error is logged against the mod it came from.
+- **Messages and blobs** on named channels (see "Named channels" above). Senders return false when not in a game.
+- **The rest:** `Coop.Session`, `Coop.Lobby` and `Coop.Presence` are the objects underneath (roster, flood control counters, lobby lists and invites, where the others are).
+
+Everything takes the mod as owner (`this`): subscriptions and listeners go away when the mod unloads. When ObenCoop reloads, the mods that depend on it reload with it and subscribe again. Everything runs on the main thread, from ObenCoop's update.
 
 Settings in `config.json` are re-read each time you host, join or list, so editing it does not need a reload:
 

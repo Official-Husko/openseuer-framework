@@ -25,6 +25,7 @@ namespace ObenCoop;
 /// ObenCoop. Owns one co-op session with its lobby (direct play always, Steam lobbies when the
 /// game's Steam is up), presence and chat, and pumps the network in OnUpdate. Nothing else touches
 /// game state yet. The session and lobby survive a hot reload of the mod (see <see cref="SessionKeeper"/>).
+/// Other mods reach it through <see cref="Coop"/>.
 /// </summary>
 public sealed partial class CoopMod : ObenMod
 {
@@ -81,6 +82,7 @@ public sealed partial class CoopMod : ObenMod
 
         Notices = new LobbyNotices(this);
         Chat = new CoopChat(this, Session, Log);
+        Coop.Attach(this);
 
         if (SessionKeeper.TryResume(this, Log))
             CoopNotices.Show(Log, "Co-op", "The session carried on after a mod reload.");
@@ -122,6 +124,7 @@ public sealed partial class CoopMod : ObenMod
         // Park first (it needs the transports and the lobby as they are), then let go of everything
         // without leaving: a reload carries the session and lobby over.
         SessionKeeper.Park(this, Log);
+        Coop.Detach(this);
         Notices.Dispose();
         Presence.Dispose();
         Lobby.Dispose();

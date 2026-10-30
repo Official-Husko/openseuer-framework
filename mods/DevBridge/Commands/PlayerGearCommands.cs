@@ -11,18 +11,26 @@ namespace DevBridge.Commands;
 internal static class PlayerGearCommands
 {
     [BridgeCommand("player.weapons", "Tools in both hands, the flashlight, and melee hit multipliers; set the bridge's own.",
-        Params = new[] { "target?: Other, Mining, Chopping, Breakable or Animal", "multiplier?: 0-10 on target", "flashlight?: true or false", "reload?: true reloads the main hand" })]
+        Params = new[] { "target?: Other, Mining, Chopping, Breakable or Animal", "multiplier?: 0-10 on target", "rounding?: Chance (default) or Nearest",
+            "flashlight?: true or false", "reload?: true reloads the main hand" })]
     private static object WeaponsCommand(JObject p)
     {
         if (p["target"] != null && p["multiplier"] != null)
-            Weapons.SetHitMultiplier(Owner(), ParseEnum<HitTarget>(p.Str("target")), p.Float("multiplier"));
+        {
+            var rounding = p["rounding"] != null ? ParseEnum<HitRounding>(p.Str("rounding")) : HitRounding.Chance;
+            Weapons.SetHitMultiplier(Owner(), ParseEnum<HitTarget>(p.Str("target")), p.Float("multiplier"), rounding);
+        }
         if (p["flashlight"] != null && !Weapons.SetFlashlight(p.Bool("flashlight")))
             throw new InvalidOperationException("No flashlight in hand, or items can't be used now.");
         bool reloaded = p.Bool("reload", false) && Weapons.Reload();
 
         var multipliers = new JObject();
+        var roundings = new JObject();
         foreach (HitTarget target in Enum.GetValues(typeof(HitTarget)))
+        {
             multipliers[target.ToString()] = Weapons.HitMultiplier(target);
+            roundings[target.ToString()] = Weapons.HitRoundingOf(target).ToString();
+        }
 
         return new JObject
         {
@@ -32,6 +40,7 @@ internal static class PlayerGearCommands
             ["flashlightCharge"] = Weapons.FlashlightCharge,
             ["reloaded"] = reloaded,
             ["hitMultipliers"] = multipliers,
+            ["hitRoundings"] = roundings,
         };
     }
 

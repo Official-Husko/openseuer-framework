@@ -26,7 +26,13 @@ public static class Weapons
     internal static readonly MultiplierTable HitMultipliers =
         new MultiplierTable(Enum.GetValues(typeof(HitTarget)).Length, PlayerMovement.MaxMultiplier);
 
-    private static readonly OwnerWatch Owners = new OwnerWatch(id => HitMultipliers.RemoveOwner(id));
+    private static readonly HitRoundings Roundings = new HitRoundings();
+
+    private static readonly OwnerWatch Owners = new OwnerWatch(id =>
+    {
+        HitMultipliers.RemoveOwner(id);
+        Roundings.RemoveOwner(id);
+    });
 
     /// <summary>The detonator was pressed with a charge loaded.</summary>
     public static readonly GameEvent<WeaponInfo> Fired = new GameEvent<WeaponInfo>(nameof(Fired));
@@ -109,19 +115,36 @@ public static class Weapons
     /// 0.5 makes crates sturdier. Fractions round up by chance, so averages stay right. Mods' multipliers
     /// combine by multiplying. Dispose the result to take it away; it also goes when the mod unloads.
     /// </summary>
-    public static IDisposable SetHitMultiplier(ObenMod owner, HitTarget target, float multiplier, string key = null)
+    public static IDisposable SetHitMultiplier(ObenMod owner, HitTarget target, float multiplier, string key = null) =>
+        SetHitMultiplier(owner, target, multiplier, HitRounding.Chance, key);
+
+    /// <summary>
+    /// The same with a choice of how the scaled damage is rounded. When mods ask for different roundings on
+    /// one target, the multiplier set most recently decides.
+    /// </summary>
+    public static IDisposable SetHitMultiplier(ObenMod owner, HitTarget target, float multiplier, HitRounding rounding, string key = null)
     {
         if (!Enum.IsDefined(typeof(HitTarget), target))
             throw new ArgumentOutOfRangeException(nameof(target));
+        if (!Enum.IsDefined(typeof(HitRounding), rounding))
+            throw new ArgumentOutOfRangeException(nameof(rounding));
         if (!HitMultipliers.Accepts(multiplier))
             throw new ArgumentOutOfRangeException(nameof(multiplier), $"A multiplier must be a number from 0 to {HitMultipliers.Max}.");
         string id = Owners.Watch(owner);
         HitMultipliers.Set(id, (int)target, key, multiplier);
-        return Disposable.Create(() => HitMultipliers.Remove(id, (int)target, key));
+        Roundings.Set(id, (int)target, key, rounding);
+        return Disposable.Create(() =>
+        {
+            HitMultipliers.Remove(id, (int)target, key);
+            Roundings.Remove(id, (int)target, key);
+        });
     }
 
     /// <summary>The combined multiplier on a target (1 when none).</summary>
     public static float HitMultiplier(HitTarget target) => HitMultipliers.Product((int)target);
+
+    /// <summary>How hits on a target are rounded right now (<see cref="HitRounding.Chance"/> when no mod chose).</summary>
+    public static HitRounding HitRoundingOf(HitTarget target) => Roundings.For((int)target);
 
     /// <summary>Every hit multiplier mods have set. <see cref="MultiplierEntry.Channel"/> is a <see cref="HitTarget"/>.</summary>
     public static MultiplierEntry[] ActiveHitMultipliers => HitMultipliers.Entries;
@@ -129,6 +152,7 @@ public static class Weapons
     internal static void Init(ObenMod framework) => framework.Track(Disposable.Create(() =>
     {
         HitMultipliers.Clear();
+        Roundings.Clear();
         Owners.Clear();
     }));
 

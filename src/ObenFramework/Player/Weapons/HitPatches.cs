@@ -81,7 +81,7 @@ internal static class HitPatches
             int baseDamage = damage;
             float multiplier = Weapons.HitMultiplier(target);
             if (multiplier != 1f)
-                damage = DamageMath.Scale(damage, multiplier, UnityEngine.Random.value);
+                damage = DamageMath.Scale(damage, multiplier, UnityEngine.Random.value, Weapons.HitRoundingOf(target));
 
             var weapon = Weapons.Describe(_hitter, false);
             if (weapon != null)

@@ -10,7 +10,13 @@ internal static class DamageMath
     /// the fraction is the chance to round up, decided by <paramref name="roll"/> (0 to 1). A pickaxe hit of
     /// 1 at 1.5x is 1 or 2, half the time each. Never below 0.
     /// </summary>
-    public static int Scale(int damage, float multiplier, float roll)
+    public static int Scale(int damage, float multiplier, float roll) => Scale(damage, multiplier, roll, HitRounding.Chance);
+
+    /// <summary>
+    /// The same with a choice of rounding: <see cref="HitRounding.Chance"/> as above, or
+    /// <see cref="HitRounding.Nearest"/>, halves up, which ignores <paramref name="roll"/>.
+    /// </summary>
+    public static int Scale(int damage, float multiplier, float roll, HitRounding rounding)
     {
         if (damage <= 0 || multiplier == 1f)
             return Math.Max(0, damage);
@@ -20,6 +26,8 @@ internal static class DamageMath
         double exact = damage * (double)multiplier;
         if (exact >= int.MaxValue)
             return int.MaxValue;
+        if (rounding == HitRounding.Nearest)
+            return (int)Math.Round(exact, MidpointRounding.AwayFromZero);
         int whole = (int)Math.Floor(exact);
         return roll < exact - whole ? whole + 1 : whole;
     }

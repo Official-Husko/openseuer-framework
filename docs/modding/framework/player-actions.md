@@ -140,7 +140,7 @@ The object needs a collider of its own and must not be one of the game's interac
 
 `Wardrobe.WornOn("Head")` (also `Face`, `Watch`, `Backpack`) gives the item id worn or -1. `Equip(itemId)` puts an item on from the bag in the slot its category says; `Unequip(slot)` takes it off. Items that belong to someone else are left alone. `Changed` (`Slot`, `Before`, `After`) fires once per slot for every change, also for items dragged between slots.
 
-`Weapons.Held()` and `HeldLeft()` describe the tools in hand (`ItemId`, `Kind` Melee/Explosive/None, ammo loaded and capacity). `Reload()`, `FlashlightOn`, `FlashlightCharge` and `SetFlashlight(on)` do what the keys do. Events: `Fired` (detonator), `MeleeSwung`, `Reloaded`, `Hit` (target kind, receiver, damage before and after). `SetHitMultiplier(this, HitTarget.Mining, 2f)` doubles the damage of the player's swings on rock; the targets are `Mining`, `Chopping`, `Other` (nodes), `Breakable` and `Animal`. Fractions round up by chance so averages stay right, and only hits from the player's own swing are scaled.
+`Weapons.Held()` and `HeldLeft()` describe the tools in hand (`ItemId`, `Kind` Melee/Explosive/None, ammo loaded and capacity). `Reload()`, `FlashlightOn`, `FlashlightCharge` and `SetFlashlight(on)` do what the keys do. Events: `Fired` (detonator), `MeleeSwung`, `Reloaded`, `Hit` (target kind, receiver, damage before and after). `SetHitMultiplier(this, HitTarget.Mining, 2f)` doubles the damage of the player's swings on rock; the targets are `Mining`, `Chopping`, `Other` (nodes), `Breakable` and `Animal`. Fractions round up by chance so averages stay right (a hit of 1 at 1.5x does 1 or 2); pass `HitRounding.Nearest` (`SetHitMultiplier(this, target, 1.5f, HitRounding.Nearest)`) for the same damage every time, halves up. When mods choose differently on one target, the multiplier set most recently decides; `HitRoundingOf(target)` says which applies. Only hits from the player's own swing are scaled.
 
 `PlayerNotes.Held()` lists the notes and books the player holds (`Id`, `Title`, `IsBook`, pages collected, `Read`). `Has`, `IsRead` and `Give(idOrPath)` take the game's id, which for most notes is the asset path (`Assets/Content/Notes/.../Note.asset`); a note that isn't loaded yet can still be given by its path. `Loaded()` lists the notes the game has in memory (not all of them: the rest load on demand). Events: `Collected` (a note, a new book or a new page) and `Read`.
 
@@ -167,7 +167,7 @@ The object needs a collider of its own and must not be one of the game's interac
 | `player.seats [sit=address] [leave=true] [limit=]` | Seats nearest first; sit or stand. |
 | `player.wardrobe [equip=itemId] [unequip=slot]` | What is worn per slot. |
 | `player.notes [give=idOrPath]` | Notes and books held. |
-| `player.weapons [target= multiplier=] [flashlight=] [reload=true]` | Tools in hand, flashlight, hit multipliers. |
+| `player.weapons [target= multiplier= [rounding=Nearest]] [flashlight=] [reload=true]` | Tools in hand, flashlight, hit multipliers and their rounding. |
 | `player.jobs`, `player.medical`, `player.achievements [unlocked=]` | Work spots, doctors' treatments, achievements (read-only). |
 
 Multipliers set through the bridge belong to the bridge mod: they stay until cleared or the bridge reloads.

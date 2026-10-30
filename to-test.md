@@ -316,24 +316,32 @@ Already checked in Open Sewer Bazaar:
 - **Traders:** the list, Brom's hours, a ×2 price factor and back.
 - **Also:** junk mail senders, the casino machine and table lists, `gambling.payout clear`.
 
-- [ ] `bank.ledger` keeps its entries after a framework hot reload.
-- [ ] While an account is frozen, `legal.list` shows UnfreezeAccount_Stalburg Bank with `canTrigger` true.
-- [ ] `traders.factor "shop=Brom's" buy=2` also doubles the prices in the trade window itself (screenshot), and `buy=1` resets them.
-- [ ] **Interior Tenement Kolhola**, "Money exchange": `bank.exchange "bank=Money exchange" amount=100 to=rm` takes 100 OC and gives 6 RM. `amount=1` gives TooSmall.
-- [ ] **Open Sewer Mines:** `fuel.stations` lists the station; `fuel.price station=<id> price=10` sets it; filling up and paying records FuelBought.
+- [x] `bank.ledger` keeps its entries after a framework hot reload. (2026-10-31: all 3 entries after a reload of every mod.)
+- [x] While an account is frozen, `legal.list` shows UnfreezeAccount_Stalburg Bank with `canTrigger` true. (2026-10-31; the unfreeze then booked an `Unfrozen` entry.)
+- [x] `traders.factor "shop=Brom's" buy=2` also doubles the prices in the trade window itself (screenshot), and `buy=1` resets them. (2026-10-31: Kalja 4 for 104 instead of 52, feathers 14 for 56; back after `buy=1`.)
+- [x] **Interior Tenement Kolhola**, "Money exchange": `bank.exchange "bank=Money exchange" amount=100 to=rm` takes 100 OC. `amount=1` gives TooSmall. (2026-10-31: it pays 5 RM, not the 6 expected here, and the quote says 5 too: the game cuts `100 * 0.06f` = 5.99999 to 5. Logged as ExchangeCreditTruncation in TODO.md.)
+- [x] **Open Sewer Mines:** `fuel.stations` lists the station; `fuel.price station=<id> price=10` sets it; filling up and paying records FuelBought. (2026-10-31: price 10 raised `FuelPrice`; 3 litres metered on the pump and paid through the game's `GasStation.PayFuelOc` took 30 OC and raised `FuelBought` with 3 l for 30. Filling a real minitrain wasn't tried.)
 - [ ] **Interior Bazaar Casino:**
   - With `gambling.payout game=slotmachine multiplier=2`, a slot win shows doubled in `gambling.events` and in the wallet.
   - The pajatso tray text shows the scaled win.
   - With `game=chinahand multiplier=2`, first place pays 4× the stake.
 - [ ] **Interior Bazaar Ratfighting Arena:** RatBet, ContestStarted, ContestFinished (scaled winOc), then RatWinnings.
 - [ ] **Interior Bazaar Bar:** the drinking contest raises ContestStarted and ContestFinished, and `contests.list` shows the opponent and tolerance mid-contest.
-- [ ] **Interior Tenement O Market:** `markets.list`, then buy something; CheckoutPaid fires.
-- [ ] **Player shop [save], in Interior Player Tenement:**
+- [x] **Interior Tenement O Market:** `markets.list`, then buy something; CheckoutPaid fires. (2026-10-31: two cups carrying the market's ownership, run through the conveyor, scan and `Pay` from code; the game charged its 1 OC minimum and `CheckoutPaid` fired. The game's own pay loop saw Paper Trash on the conveyor, so the scan totalled 0; a cup picked from the shelf by hand would tell whether that is the made-up cup.)
+- [x] **Player shop [save], in Interior Player Tenement:** (2026-10-31: 5 apples in the apartment's locker, 3 sold for 12 OC into the till and collected; 1 more left 4 OC in the till over a save and load, with the shop open on its area and the ledger's 4 entries.)
   1. `furniture.zones placed=true`.
   2. `playershops.create id=test`, then `playershops.set id=test area=<zone> open=true`.
   3. Put an item in a container there.
   4. `playershops.stock`, then `playershops.sell` fills the till, and `playershops.collect` moves it to the wallet.
   5. Save and reload: the shop and the ledger are still there.
+- [x] **Trading from code, Open Sewer Bazaar and Interior Bazaar Ankea:** (2026-10-31, on a copy of Slot1)
+  - `traders.buy "shop=Brom's" item=19010 count=9` bought 7 Kalja at 11 and 2 at 13 (their quality), 103 OC; Brom's till +103, two `Bought` events from `Mod`; the quality came along.
+  - `traders.sell` of 5 paid 4 OC each (Brom's buys at 0.598), one `Sold`; the Kalja went back on his shelf.
+  - Refusals: `CannotAfford`, `OutOfStock`, `BadInput` (money), `UnknownShop`, `NotEnoughItems`, `NotAccepted` (Kalja to SellOil, bricks to Brom's, who doesn't deal in Hardware). With the inventory full, feathers came back `NoRoom` and everything stayed as it was; Kalja still fit onto the player's Kalja stacks.
+  - With the trade window open a buy updated both sides at once.
+  - `furnitureshops.buy shop=Ankea "furniture=Test Chair" count=2` paid 162 OC (81 each at 117%), `sell` paid 70 (100%), the till and stock followed; `ShopCannotAfford` with the till at 10, `CannotAfford` with 19 OC.
+- [x] **One-off trader stock:** `shops.addstock "shop=Brom's" item=14 amount=2 once=true` put 2 sausages in; bought out, a restock (`Storage.SpawnItems`) left them out while normal apple stock came back to 3, and they stayed out after a framework reload and after a save and load. (2026-10-31)
+- [x] **Vending titles:** a vending entry's own title reaches `StockLine.Title`; the Bazaar's machines have none, so they show the item's title. (2026-10-31)
 
 ## 7. Environment and housing (M25, M25b)
 

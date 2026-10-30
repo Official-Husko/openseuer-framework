@@ -285,18 +285,18 @@ Passed on 2026-10-30 with two copies on this machine (protocol 2), direct play:
 
 Already checked without a save: quest create, edit, counter, reveal, hand-in, checkpoint, finish, restore and jump; the duplicate-title refusal; Lua `Oben_QuestState`; dialogue lines and adding a response; law commit, fine and clear; `difficulty.get`; `tutorial.state`; `session.info`.
 
-- [ ] `oben call story.queue` in a loaded save shows `session` SaveLoad, `ready` true and nothing pending. Going through a door doesn't change that.
-- [ ] **Mod quest save [save]:**
-  - Create the test quest (see `docs/modding/framework/quest-authoring.md`), then save and reload.
-  - `quests.list task=DevBridge.test` has unchanged texts and states, and `<save>/mods/ObenFramework.quests.json` exists.
-  - `modquest list` in F1 lists it.
-  - Then disable DevBridge and load again: the quest stays frozen in the log and the save isn't broken.
-- [ ] **Quest notification:** a New Task notification appears on create, and the task shows in the task panel (screenshot).
-- [ ] **Added response:** `dialogue.respond conversation="Bazaar/Trader/Jens Brom" anchorId=1 playerText="Seen any ducks?" npcReply="No."`, and the same for anchorIds 4, 5 and 6.
-  - Talk to Jens in the Bazaar: the choice shows, and picking it logs "Dialogue response picked".
-  - Hot reload DevBridge: the choice is gone.
-- [ ] **Branch:** `dialogue.branch conversation="Bazaar/Trader/Jens Brom" playerLine="Any work?" 'npcLines=["Maybe.","Later."]'` shows after greeting 1. Then `dialogue.narrate text="Test"`.
-- [ ] **Interception:** `oben run scripts/examples/story-intercept.cs`, then commit a crime. It goes on record at half severity, and conversation starts are logged.
+- [x] `oben call story.queue` in a loaded save shows `session` SaveLoad, `ready` true and nothing pending. Going through a door doesn't change that. (2026-10-30, on a copy of a real save, also after a level change to the Bazaar.)
+- [x] **Mod quest save [save]:** passed 2026-10-30.
+  - The test quest at counter 2 of 3, saved and loaded: texts, states and counter unchanged, `ObenFramework.quests.json` written, `modquest list` lists it, and a jump and reset after the load work from the saved definition.
+  - The removed-mod case, with a quest owned by Cheat Menu (DevBridge can't be switched off without losing the bridge): with Cheat Menu unloaded, the quest stays in the log as it was and `modquest reset` refuses it. Saving and loading without the mod works and keeps its lines in `ObenFramework.quests.json`. Once the mod is loaded again, the quest moves again.
+- [x] **Quest notification:** "New Task" and "New Objective Step one 0/3" show on create, and both mod tasks are listed on the game's Tasks page (screenshots, 2026-10-30).
+- [x] **Added response:** passed 2026-10-30 in the Bazaar (Jens is hidden more than 20 m away, so teleport next to him first).
+  - Added on anchors 1, 4, 5 and 6, the choice shows under the game's own two choices for greetings 1 and 4. Picking it logs "Dialogue response picked", Jens answers "No." and the talk ends.
+  - After a DevBridge hot reload, nothing is registered and greeting 5 has only the game's choices.
+- [x] **Branch:** "Any work?" shows after greeting 1 and plays "Maybe." and "Later.", logging "Dialogue topic picked". `dialogue.narrate text="Test"` shows on the black screen (2026-10-30).
+- [x] **Interception:** with `story-intercept.cs`, a severity-40 crime goes on the record as 20 and the conversation start is logged; after `--reset` a crime counts in full (2026-10-30).
+- [x] **Clearing a mod's dialogue:** `dialogue.clear` removes nothing while a conversation is open (one warning in the log), and after it closes removes a branch, a response and two conversations (4) at once; Jens shows only his own choices again (2026-10-30).
+- [x] **Game variables and early removal:** `lua.set name=Day` and `name=DREAM_1` are refused, and a mod variable saves and loads. From a script, a mod's Lua function is removed by its own mod but not by another; `StopIntercepting` takes out a scope's conversation and crime interceptors at once (2026-10-30).
 - [ ] **Difficulty:** `difficulty.set factor=NeedsSpeed value=0.5` makes needs drain at half speed (`player.stats` over a minute).
 - [ ] **New Game screen:**
   - At the main menu, run `newgame.testoptions` and `difficulty.presets add=harsh name=Harsh needs=1.5`.

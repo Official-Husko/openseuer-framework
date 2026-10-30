@@ -32,11 +32,12 @@ internal static class RecipePatches
     [HarmonyPatch(typeof(manufacturingProcess), nameof(manufacturingProcess.SetSelectedRecipe), new[] { typeof(string) })]
     private static bool ProcessSelectingByIndex(manufacturingProcess __instance, string index) => Redirect(__instance, index);
 
+    // A dishwasher's craft makes up a recipe (id -1) and the game files it as learned; that's no recipe to report.
     [HarmonyPostfix]
     [HarmonyPatch(typeof(RecipeController), nameof(RecipeController.AddRecipe), new[] { typeof(Recipe), typeof(bool), typeof(bool) })]
     private static void RecipeAdded(Recipe recipe, bool learned, bool __result)
     {
-        if (!__result || recipe == null || !Recipes.Unlocked.HasSubscribers || !WorldChanges.Active)
+        if (!__result || recipe == null || recipe.ID < 0 || !Recipes.Unlocked.HasSubscribers || !WorldChanges.Active)
             return;
         try { Recipes.Unlocked.Raise(new RecipeUnlock(recipe.ID, recipe.Name, learned)); }
         catch (Exception e) { ItemsLog.Failed("Recipe unlocked hook", e); }

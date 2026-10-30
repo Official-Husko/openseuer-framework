@@ -20,7 +20,10 @@ public static class Recipes
     /// </summary>
     public static bool IsAvailable => CraftingModule.HooksInPlace;
 
-    /// <summary>The player found or learned a recipe. Not raised while a save loads.</summary>
+    /// <summary>
+    /// The player found or learned a recipe. Not raised while a save loads, nor for the recipes a dishwasher
+    /// makes up for each wash (id -1), which the game also files as learned.
+    /// </summary>
     public static readonly WorldEvent<RecipeUnlock> Unlocked = new WorldEvent<RecipeUnlock>(nameof(Unlocked));
 
     /// <summary>Every recipe the game has.</summary>

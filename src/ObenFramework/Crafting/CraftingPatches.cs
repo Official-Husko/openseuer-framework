@@ -26,7 +26,7 @@ internal static class CraftingPatches
             return;
         try
         {
-            CraftingEvents.CraftStarted.Raise(new CraftStart(recipe.ID, CraftingStations.Describe(__instance), multiples));
+            CraftingEvents.CraftStarted.Raise(new CraftStart(recipe.ID, recipe.Name, CraftingStations.Describe(__instance), multiples));
         }
         catch (Exception e)
         {
@@ -43,7 +43,7 @@ internal static class CraftingPatches
         try
         {
             var results = ItemCount.From(__result ? recipe.output : recipe.outputFail, multiples);
-            CraftingEvents.Crafted.Raise(new CraftDone(recipe.ID, CraftingStations.Describe(__instance), __result, multiples, results));
+            CraftingEvents.Crafted.Raise(new CraftDone(recipe.ID, recipe.Name, CraftingStations.Describe(__instance), __result, multiples, results));
         }
         catch (Exception e)
         {

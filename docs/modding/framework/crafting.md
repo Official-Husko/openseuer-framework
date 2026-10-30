@@ -9,12 +9,14 @@ All calls are for the main thread and need a loaded world. Everything a mod regi
 ## Events
 
 ```csharp
-CraftingEvents.CraftStarted.Subscribe(this, s => Log.Info($"{s.Station.Name} started recipe {s.RecipeId} x{s.Multiples}"));
-CraftingEvents.Crafted.Subscribe(this, d => Log.Info($"recipe {d.RecipeId} {(d.Success ? "made" : "failed")}: {string.Join(", ", d.Results)}"));
+CraftingEvents.CraftStarted.Subscribe(this, s => Log.Info($"{s.Station.Name} started {s.Name} ({s.RecipeId}) x{s.Multiples}"));
+CraftingEvents.Crafted.Subscribe(this, d => Log.Info($"{d.Name} {(d.Success ? "made" : "failed")}: {string.Join(", ", d.Results)}"));
 Recipes.Unlocked.Subscribe(this, u => ...);    // found (a note, a book) or learned (crafted the first time)
 ```
 
 Every station takes ingredients and makes its output through the same two game methods, so the events cover the player's own crafts and stations that run by themselves (stills, grow boxes, autocrafting machines). The quality and time previews a window shows are not crafts. Nothing is raised while a save loads, which also skips crafts the game finishes offline during the load.
+
+A dishwasher makes up a recipe for each wash (named after the washed item), so its crafts carry `RecipeId` -1: use `Name` there. The game files such a recipe as learned, but `Recipes.Unlocked` leaves it out.
 
 ## Stations
 
@@ -110,7 +112,7 @@ Autofarms.All(); Autofarms.SetGrowPercent(id, 20, 60); Autofarms.Replanted.Subsc
 
 ## Machines
 
-- `Dishwashers`: list with progress, `Contents(id)`, `Finished`.
+- `Dishwashers`: list with progress, `Contents(id)`, `Finished`. The game's dishwasher washes the owner off stolen items (it takes washing powder and power); each wash takes the item's value times 10 game seconds, at least 100.
 - `Recycling`: bottle machines with the deposit they owe, `SetOwed`, `Recycled`.
 
 ## Checking in game

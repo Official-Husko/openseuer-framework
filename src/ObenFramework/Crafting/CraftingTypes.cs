@@ -87,13 +87,26 @@ public sealed class StationInfo
 public readonly struct CraftStart
 {
     public CraftStart(int recipeId, StationInfo station, int multiples)
+        : this(recipeId, null, station, multiples)
+    {
+    }
+
+    public CraftStart(int recipeId, string name, StationInfo station, int multiples)
     {
         RecipeId = recipeId;
+        Name = name;
         Station = station;
         Multiples = multiples;
     }
 
+    /// <summary>
+    /// The recipe's id; -1 for a recipe the station made up for this one craft (a dishwasher makes one per item
+    /// it washes), which <see cref="Recipes.ById"/> doesn't know.
+    /// </summary>
     public int RecipeId { get; }
+
+    /// <summary>The recipe's name, also for made-up ones (a dishwasher's is the washed item's title).</summary>
+    public string Name { get; }
 
     public StationInfo Station { get; }
 
@@ -105,15 +118,24 @@ public readonly struct CraftStart
 public readonly struct CraftDone
 {
     public CraftDone(int recipeId, StationInfo station, bool success, int multiples, List<ItemCount> results)
+        : this(recipeId, null, station, success, multiples, results)
+    {
+    }
+
+    public CraftDone(int recipeId, string name, StationInfo station, bool success, int multiples, List<ItemCount> results)
     {
         RecipeId = recipeId;
+        Name = name;
         Station = station;
         Success = success;
         Multiples = multiples;
         Results = results;
     }
 
+    /// <summary>The recipe's id; -1 for a recipe the station made up for this one craft (see <see cref="CraftStart.RecipeId"/>).</summary>
     public int RecipeId { get; }
+
+    public string Name { get; }
 
     public StationInfo Station { get; }
 

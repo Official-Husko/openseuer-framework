@@ -16,11 +16,11 @@ internal static class CraftingCommands
         var owner = DevBridgeMod.Instance;
         CraftingEvents.CraftStarted.Subscribe(owner, e => recorder.Add("CraftStarted", new JObject
         {
-            ["recipe"] = e.RecipeId, ["name"] = RecipeName(e.RecipeId), ["station"] = e.Station.Id, ["kind"] = e.Station.Kind, ["multiples"] = e.Multiples,
+            ["recipe"] = e.RecipeId, ["name"] = e.Name, ["station"] = e.Station.Id, ["kind"] = e.Station.Kind, ["multiples"] = e.Multiples,
         }));
         CraftingEvents.Crafted.Subscribe(owner, e => recorder.Add("Crafted", new JObject
         {
-            ["recipe"] = e.RecipeId, ["name"] = RecipeName(e.RecipeId), ["station"] = e.Station.Id, ["success"] = e.Success,
+            ["recipe"] = e.RecipeId, ["name"] = e.Name, ["station"] = e.Station.Id, ["success"] = e.Success,
             ["multiples"] = e.Multiples, ["results"] = ItemJson.Counts(e.Results),
         }));
         CraftingSources.Consumed.Subscribe(owner, e => recorder.Add("SourceConsumed", new JObject
@@ -117,6 +117,4 @@ internal static class CraftingCommands
             list.Add(new JObject { ["owner"] = ItemJson.Owner(entry.Owner), ["key"] = entry.Key, [valueName] = Math.Round(entry.Factor, 4) });
         return new JObject { ["factors"] = list };
     }
-
-    private static string RecipeName(int id) => Recipes.ById(id) is Recipe recipe ? recipe.Name : null;
 }

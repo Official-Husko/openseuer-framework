@@ -138,14 +138,16 @@ public static partial class DialogueBranches
         catch (Exception e) { StoryLog.Failed("Branch OnPicked of " + record.Owner.Info.Id, e); }
     }
 
-    private static void RemoveOwner(ObenMod owner)
+    internal static int RemoveOwner(ObenMod owner)
     {
         TrackedOwners.Remove(owner);
-        foreach (var record in Branches.FindAll(b => b.Owner == owner))
+        var mine = Branches.FindAll(b => b.Owner == owner);
+        foreach (var record in mine)
         {
             Branches.Remove(record);
             Drop(record);
         }
+        return mine.Count;
     }
 
     internal static void Clear()

@@ -29,6 +29,9 @@ public static partial class Conversations
     /// </summary>
     public static readonly GameEvent<ConversationInfo> Ended = new GameEvent<ConversationInfo>(nameof(Ended));
 
+    /// <summary>True when the Dialogue System runs and its database is loaded (from the main menu on).</summary>
+    public static bool IsAvailable => DialogueManager.hasInstance && DialogueManager.masterDatabase != null;
+
     /// <summary>True while any conversation is running.</summary>
     public static bool IsActive => DialogueManager.hasInstance && DialogueManager.isConversationActive;
 

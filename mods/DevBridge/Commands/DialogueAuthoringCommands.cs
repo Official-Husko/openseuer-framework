@@ -90,6 +90,9 @@ internal static class DialogueAuthoringCommands
         return new JObject { ["removed"] = removed };
     }
 
+    [BridgeCommand("dialogue.clear", "Remove everything DevBridge added to the dialogue: its conversations, responses and branches. Nothing while a conversation is open.")]
+    private static object Clear(JObject p) => new JObject { ["removed"] = DialogueAuthoring.Clear(DevBridgeMod.Instance) };
+
     [BridgeCommand("dialogue.responses", "List what mods added to the dialogue: conversations, responses and branches.")]
     private static object Added(JObject p)
     {

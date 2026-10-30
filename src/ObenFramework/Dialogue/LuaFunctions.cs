@@ -72,6 +72,16 @@ public static class LuaFunctions
         owner.Track(Disposable.Create(() => Remove(name, entry)));
     }
 
+    /// <summary>Takes out one of this mod's functions before it unloads. False when the mod didn't register that name.</summary>
+    public static bool Remove(ObenMod owner, string name)
+    {
+        if (owner == null) throw new ArgumentNullException(nameof(owner));
+        if (string.IsNullOrEmpty(name) || !Registered.TryGetValue(name, out var entry) || entry.Owner != owner.Info.Id)
+            return false;
+        Remove(name, entry);
+        return true;
+    }
+
     // Only removes the function when the table still holds ours, in case something replaced it.
     private static void Remove(string name, Entry entry)
     {

@@ -56,7 +56,8 @@ The record is the game's own (`Crime`, saved with the game). Everything needs a 
 | `Clear()`, `Clear(npcId)`, `Clear(kind)`, `Clear(npcId, kind)` | clears lines of the record |
 | `PayFine()` | pays from real money like the desk (stolen goods are taken), raises `Fined` |
 | `Arrest(factor)` | the police arrest: the record is multiplied by `factor` (up to 100), the player passes out and wakes in prison, raises `Arrested` |
-| `Intercept(owner, handler)` | sees each crime before it goes on the record: change `Kind`, `Severity`, `Silent`, or `Cancel` it |
+| `Intercept(owner, handler)` | sees each crime before it goes on the record: change `Kind`, `Severity`, `Silent`, or `Cancel` it; removed when the owner unloads |
+| `StopIntercepting(owner)` | takes the owner's interceptors out sooner, returns how many |
 | `Committed`, `Fined`, `Arrested`, `Released` | events, raised through the story queue at the end of the frame |
 
 Edits are refused during a save, while an arrest or level change runs and while the loading screen is up. `Arrest` is also refused during a conversation and in prison. `CrimeKind.None` is the game's "every kind" for clearing and is never a crime.

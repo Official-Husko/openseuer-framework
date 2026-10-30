@@ -66,6 +66,25 @@ public static class DialogueAuthoring
         return RemoveTitle(owner, title);
     }
 
+    /// <summary>
+    /// Takes out everything the mod added to the dialogue, the way unloading it does: its branches, its
+    /// responses on game lines and its own conversations. Returns how many there were. Nothing is removed
+    /// while a save or load runs or a conversation is open (it returns 0 then). Lua functions and
+    /// interceptors stay; they go when the mod unloads.
+    /// </summary>
+    public static int Clear(ObenMod owner)
+    {
+        if (owner == null) throw new ArgumentNullException(nameof(owner));
+        if (SaveGate.IsBusy || Conversations.IsActive)
+        {
+            StoryLog.Refused("DialogueAuthoring.Clear", SaveGate.IsBusy ? "a save or load is running" : "a conversation is open");
+            return 0;
+        }
+        // Branches first: each takes its own conversation with it.
+        int removed = DialogueBranches.RemoveOwner(owner) + DialogueResponses.RemoveOwner(owner);
+        return removed + RemoveOwner(owner);
+    }
+
     internal static DialogueEditResult AddWith(ObenMod owner, ConversationDefinition definition, int speakerOverride)
     {
         string problem = DialoguePlan.Check(owner.Info.Id, definition);
@@ -160,7 +179,7 @@ public static class DialogueAuthoring
             owner.Track(Disposable.Create(() => RemoveOwner(owner)));
     }
 
-    private static void RemoveOwner(ObenMod owner)
+    private static int RemoveOwner(ObenMod owner)
     {
         TrackedOwners.Remove(owner);
         var titles = new List<string>();
@@ -171,6 +190,7 @@ public static class DialogueAuthoring
         }
         foreach (string title in titles)
             Drop(title, AddedConversations[title]);
+        return titles.Count;
     }
 
     internal static void Clear()

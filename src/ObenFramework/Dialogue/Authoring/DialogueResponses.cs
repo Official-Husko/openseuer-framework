@@ -212,14 +212,16 @@ public static class DialogueResponses
         record.Linked = false;
     }
 
-    private static void RemoveOwner(ObenMod owner)
+    internal static int RemoveOwner(ObenMod owner)
     {
         TrackedOwners.Remove(owner);
-        foreach (var record in Responses.FindAll(r => r.Owner == owner))
+        var mine = Responses.FindAll(r => r.Owner == owner);
+        foreach (var record in mine)
         {
             Responses.Remove(record);
             Detach(record);
         }
+        return mine.Count;
     }
 
     private static string Check(ResponseDefinition r)

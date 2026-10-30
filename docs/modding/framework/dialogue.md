@@ -75,7 +75,7 @@ public override void OnLoad()
 
 Usable in a conversation as `MyMod_Greeting("Pentti")` in text or `MyMod_Reward(5)` in a script.
 
-- The function is removed when the mod unloads, only if the Lua table still holds that exact function.
+- The function is removed when the mod unloads, or sooner with `LuaFunctions.Remove(this, name)`, and only if the Lua table still holds that exact function.
 - Parameters are `float`, `double`, `string` or `bool` (the Dialogue System hands numbers over as floats; an `int` parameter would fail to bind and is refused). Return nothing, one of those types, or an `int`.
 - The Dialogue System ignores a registration under a name that already exists, without telling anyone. `Register` checks first and throws `InvalidOperationException` instead, naming the mod that has it. `LuaFunctions.Exists(name)` and `ModFunctions` let you look.
 - An exception in the function is logged by the Dialogue System and fails the Lua call that used it.
@@ -90,7 +90,7 @@ var result = Conversations.StartRaw("My Narration");                       // no
 
 `Start` goes through the NPC's `InteractableTalk.CheckStartDialogueInterrupt`, the same path as pressing Use. The NPC stops and looks at the player, its relays and conditions are registered, and everything is undone when the talk ends. `StartRaw` calls `DialogueManager.StartConversation` with the player as speaker, which locks and unlocks the player's controls by itself but leaves the NPC alone.
 
-The result is a `ConversationStart`: `Started`, `NotInWorld`, `Busy`, `UnknownNpc`, `UnknownConversation`, `CannotTalk` (the NPC refuses: player in the air, a contest, waiting, an NPC using a door), or `NoValidEntry` (the conversation exists but every entry's condition failed, so nothing opened). `force: true` talks regardless and stops a running conversation first. `FindNpc(name)` finds the loaded `InteractableTalk` by the name shown on the Talk prompt or the character's full name; `Exists(title)`, `IsActive`, `CurrentTitle` and `Stop()` are what they sound like.
+The result is a `ConversationStart`: `Started`, `NotInWorld`, `Busy`, `UnknownNpc`, `UnknownConversation`, `CannotTalk` (the NPC refuses: player in the air, a contest, waiting, an NPC using a door), or `NoValidEntry` (the conversation exists but every entry's condition failed, so nothing opened). `force: true` talks regardless and stops a running conversation first. `FindNpc(name)` finds the loaded `InteractableTalk` by the name shown on the Talk prompt or the character's full name; `IsAvailable` (the Dialogue System and its database are loaded, from the main menu on), `Exists(title)`, `IsActive`, `CurrentTitle` and `Stop()` are what they sound like.
 
 Why `StartRaw` clears a callback: the game stores the end-of-talk handler in the single field `DialogueController.onDialogueClosed`, never clears it, and calls it without a null check. After an NPC talk it still points at that NPC, so any later conversation would run that NPC's end-of-talk code again. `StartRaw` replaces it with an empty one (and clears `currentInteractableTalk`) before starting.
 

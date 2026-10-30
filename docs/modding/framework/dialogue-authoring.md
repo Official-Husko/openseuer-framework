@@ -77,6 +77,10 @@ Conversations.StartRaw(result.Key);   // "MyMod.greeting"
 
 The title is "modId.key". Lines: 1 to 200, keys unique, texts up to 1000 characters, `Condition` and `Script` Lua up to 500. `Next` lists the lines that can follow; several player lines after one line form a choice menu. `TextCallback` is asked each time the line shows (the `Text` is the fallback). `Speaker` is a dialogue database actor name (`dialogue.lines` shows them), or null for a nameless voice. `DialogueEditResult` has `Key`, `Refusal` (`NotReady`, `Busy`, `BadInput`, `AlreadyExists`, `UnknownSpeaker`, `NoPlayerActor`, `NoAnchor`, `Failed`) and a `Reason`. Mod conversations get ids from 1,000,000 up; the game's go to 487 on 0.5.13.
 
+## Taking it all out
+
+`DialogueAuthoring.Clear(this)` removes everything the mod added here in one call, as unloading it does: its branches, its responses on game lines and its own conversations (narration's too). It returns how many there were. While a save or load runs or a conversation is open it removes nothing and returns 0. Lua functions and interceptors stay until the mod unloads.
+
 ## Narration
 
 ```csharp
@@ -95,7 +99,7 @@ Conversations.Intercept(this, start =>
 });
 ```
 
-Every conversation start goes through the interceptors first (NPC talks, phone calls, narration, scripted scenes). A handler may set `Title` to another conversation of the database, or `Cancel` it; once cancelled it stays cancelled. A redirect to an unknown title is ignored with a log line. For an NPC, a cancelled talk gives the player control back about a second later, the game's own safety check.
+Every conversation start goes through the interceptors first (NPC talks, phone calls, narration, scripted scenes). A handler may set `Title` to another conversation of the database, or `Cancel` it; once cancelled it stays cancelled. A redirect to an unknown title is ignored with a log line. For an NPC, a cancelled talk gives the player control back about a second later, the game's own safety check. Interceptors go when their owner unloads; `Conversations.StopIntercepting(owner)` takes them out sooner.
 
 ## Lua functions from the framework
 
@@ -118,6 +122,7 @@ oben call dialogue.branch conversation="Bazaar/Trader/Jens Brom" playerLine="Any
 oben call dialogue.add '{"key":"hello","speaker":"Bazaar/Trader/Jens Brom","lines":[{"key":"a","text":"Hello from the bridge."}]}'
 oben call dialogue.responses
 oben call dialogue.remove key=<key from the answer>
+oben call dialogue.clear                     # everything DevBridge added
 oben call dialogue.narrate text="It is quiet. Too quiet."
 ```
 

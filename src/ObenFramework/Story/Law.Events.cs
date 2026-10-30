@@ -53,6 +53,18 @@ public static partial class Law
         }));
     }
 
+    /// <summary>
+    /// Takes out the interceptors <paramref name="owner"/> added, without waiting for it to unload. Returns how many.
+    /// </summary>
+    public static int StopIntercepting(ITracker owner)
+    {
+        if (owner == null) throw new ArgumentNullException(nameof(owner));
+        int removed = Interceptors.RemoveAll(i => i.Owner == owner);
+        if (removed > 0)
+            _snapshot = Interceptors.ToArray();
+        return removed;
+    }
+
     internal static bool HasInterceptors => _snapshot.Length > 0;
 
     internal static void RunInterceptors(CrimeAttempt attempt)

@@ -72,6 +72,18 @@ public static partial class Conversations
         }));
     }
 
+    /// <summary>
+    /// Takes out the interceptors <paramref name="owner"/> added, without waiting for it to unload. Returns how many.
+    /// </summary>
+    public static int StopIntercepting(ITracker owner)
+    {
+        if (owner == null) throw new ArgumentNullException(nameof(owner));
+        int removed = Interceptors.RemoveAll(i => i.Owner == owner);
+        if (removed > 0)
+            _snapshot = Interceptors.ToArray();
+        return removed;
+    }
+
     /// <summary>Runs the interceptors. Returns false to stop the start.</summary>
     internal static bool RunInterceptors(ref string title, Transform actor, Transform conversant)
     {

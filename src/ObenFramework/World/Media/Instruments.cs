@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenLoader.Runtime;
 using UnityEngine;
 using WieldableItem;
@@ -31,7 +33,8 @@ public readonly struct GuitarComment
 /// <summary>
 /// The guitar: strum it from code, play a song (a list of waits between strums), hold one of its long notes, and
 /// hear strums and the NPCs' comments. The guitar must be in the player's hands. Songs and held notes stop when
-/// the guitar is put away, a menu or conversation opens, the level changes or their mod unloads.
+/// the guitar is put away, a menu or conversation opens, the level changes or their mod unloads. A held note
+/// counts as the player holding the key: bystanders comment on it like on the player's own long notes.
 /// </summary>
 public static class Instruments
 {
@@ -49,6 +52,12 @@ public static class Instruments
 
     private static readonly List<Song> Songs = new List<Song>();
     internal static WieldableGuitar Holding;
+
+    // Set by the guitar's update hook when it found the key it reads; without it a held note would stop at once.
+    internal static bool HoldHooked;
+
+    /// <summary>False when the framework's guitar hooks failed to apply after a game update.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>The player strummed (or a mod did) and the guitar sounded.</summary>
     public static readonly WorldEvent<WieldableGuitar> Strummed = new WorldEvent<WieldableGuitar>(nameof(Strummed));
@@ -70,9 +79,9 @@ public static class Instruments
         }
     }
 
-    /// <summary>The guitar can sound now: in hand, past its cooldown, and no menu or conversation open.</summary>
+    /// <summary>The guitar can sound now: in hand, past its cooldown, the hands free, no menu or conversation open and no save running.</summary>
     public static bool CanPlay(WieldableGuitar guitar) =>
-        guitar != null && guitar.isActiveAndEnabled && guitar.equipped && !CooldownField(guitar) && StrumAudioField(guitar) != null && !InputBlocked();
+        guitar != null && guitar.isActiveAndEnabled && guitar.equipped && !CooldownField(guitar) && StrumAudioField(guitar) != null && !Blocked();
 
     /// <summary>How many long notes the guitar has for <see cref="Hold"/>.</summary>
     public static int HoldNotes(WieldableGuitar guitar)
@@ -118,15 +127,20 @@ public static class Instruments
         }
     }
 
-    /// <summary>Plays one of the guitar's long notes until <see cref="StopHold"/>, the guitar is put away or a menu opens.</summary>
+    /// <summary>
+    /// Plays one of the guitar's long notes until it ends, <see cref="StopHold"/>, the player plays the guitar
+    /// themselves, the guitar is put away or a menu opens. True when the note is playing (also when it already was).
+    /// </summary>
     public static bool Hold(WieldableGuitar guitar, int note)
     {
-        if (!CanPlay(guitar) || note < 0 || note >= HoldNotes(guitar))
+        if (!HoldHooked || !CanPlay(guitar) || note < 0 || note >= HoldNotes(guitar))
             return false;
         var source = SourceField(guitar);
         var clip = HoldAudioField(guitar)[note] != null ? HoldAudioField(guitar)[note].Clip : null;
         if (source == null || clip == null)
             return false;
+        if (Holding == guitar && source.clip == clip && source.isPlaying)
+            return true;
         source.clip = clip;
         source.Play();
         Holding = guitar;
@@ -144,7 +158,7 @@ public static class Instruments
     // Songs advance with the frame; nothing runs without one.
     internal static void Update()
     {
-        if (Holding != null && (!Holding.equipped || InputBlocked()))
+        if (Holding != null && (!Holding.equipped || Blocked() || !Sounding(Holding)))
             StopHold();
         if (Songs.Count == 0)
             return;
@@ -174,11 +188,20 @@ public static class Instruments
         Holding = null;
     }
 
-    private static bool InputBlocked()
+    // The note ended, or the player took the guitar over (their own key stops it).
+    private static bool Sounding(WieldableGuitar guitar)
+    {
+        var source = SourceField(guitar);
+        return source != null && source.clip != null && source.isPlaying;
+    }
+
+    private static bool Blocked()
     {
         var game = GameController.instance;
         var ui = GameUIController.instance;
         var dialogue = DialogueController.instance;
-        return (game != null && game.GameIsPaused) || (ui != null && ui.IsMenuVisible) || (dialogue != null && dialogue.DialogueActive);
+        var hands = PlayerHandItems.instance;
+        return SaveGate.IsBusy || (game != null && game.GameIsPaused) || (ui != null && ui.IsMenuVisible) || (dialogue != null && dialogue.DialogueActive)
+            || (hands != null && hands.itemUseDisabled);
     }
 }

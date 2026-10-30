@@ -1,5 +1,8 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using WieldableItem;
@@ -31,12 +34,34 @@ internal static class InstrumentPatches
         }
     }
 
-    // The guitar stops a long note as soon as the player lets go of the key; a note a mod holds has no key.
+    // The guitar stops a long note as soon as the player lets go of the key, and only a note held that way
+    // draws the bystanders' comments. A note a mod holds counts as the key held down.
     [HarmonyPatch(typeof(WieldableGuitar), "Update")]
     private static class HoldPatch
     {
-        [HarmonyPrefix]
-        private static bool Before(WieldableGuitar __instance) => Instruments.Holding != __instance;
+        private static readonly MethodInfo GetKey = AccessTools.Method(typeof(InputManager), nameof(InputManager.GetKey), new[] { typeof(string) });
+
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> code)
+        {
+            bool found = false;
+            foreach (var instruction in code)
+            {
+                if (!found && instruction.Calls(GetKey))
+                {
+                    found = true;
+                    yield return new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(instruction).MoveBlocksFrom(instruction);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HoldPatch), nameof(KeyHeld)));
+                    continue;
+                }
+                yield return instruction;
+            }
+            Instruments.HoldHooked = found;
+            if (!found)
+                FrameworkMod.Instance?.Log.Warn("The guitar no longer reads its key the way the framework expects; mods can't hold its long notes.");
+        }
+
+        private static bool KeyHeld(InputManager input, string key, WieldableGuitar guitar) => Instruments.Holding == guitar || input.GetKey(key);
     }
 
     [HarmonyPatch(typeof(NPCRandomTalk), nameof(NPCRandomTalk.OnGuitarPlayed))]

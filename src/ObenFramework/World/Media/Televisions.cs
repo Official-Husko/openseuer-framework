@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 
 namespace ObenFramework.World;
 
@@ -35,6 +36,10 @@ public static class Televisions
     private static readonly AccessTools.FieldRef<TelevisionNoise, bool> PowerField = AccessTools.FieldRefAccess<TelevisionNoise, bool>("powerOn");
     private static readonly AccessTools.FieldRef<TelevisionNoise, bool> LockedField = AccessTools.FieldRefAccess<TelevisionNoise, bool>("locked");
 
+    /// <summary>False when the framework's television hooks failed to apply after a game update; <see cref="Changed"/> then stays quiet.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
+
+    /// <summary>A television was switched on or off, or lost or got power.</summary>
     public static readonly WorldEvent<TelevisionInfo> Changed = new WorldEvent<TelevisionInfo>(nameof(Changed));
 
     public static List<TelevisionNoise> All() => ObjectIds.Active<TelevisionNoise>();

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 
 namespace ObenFramework.World;
 
@@ -40,6 +41,9 @@ public readonly struct RadioInfo
 public static class Radios
 {
     private static readonly AccessTools.FieldRef<Radio, int> StatesField = AccessTools.FieldRefAccess<Radio, int>("states");
+
+    /// <summary>False when the framework's radio hooks failed to apply after a game update; <see cref="Changed"/> then stays quiet.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>A radio was tuned, switched on or off, or lost or got power.</summary>
     public static readonly WorldEvent<RadioInfo> Changed = new WorldEvent<RadioInfo>(nameof(Changed));

@@ -180,10 +180,12 @@ Televisions.SetOn(tv, true);                // false without power or when the l
 ```csharp
 Instruments.Strum(guitar);
 Instruments.PlaySong(this, guitar, new[] { 0f, 0.5f, 0.5f, 0.25f, 0.25f, 1f });   // seconds before each strum
-Instruments.Hold(guitar, 0);                // one of its long notes, until StopHold
+Instruments.Hold(guitar, 0);                // one of its long notes (it loops), until StopHold
 ```
 
-Songs and held notes stop when the guitar is put away, a menu or conversation opens, the level changes or the mod unloads; at most four strums fall on one frame. `Instruments.Strummed` and `Instruments.Commented` (an NPC's comment, with `Positive` from the game's music skill roll) report what happened.
+Songs and held notes stop when the guitar is put away, a menu or conversation opens, a save runs, the level changes or the mod unloads; at most four strums fall on one frame. `CanPlay` is false while the game holds the player's hands (`itemUseDisabled`) too. A held note counts as the player holding the key: bystanders who see the player comment on it after about 10 seconds, as they do on the player's own long notes (strums alone never draw comments). It ends when the player plays the guitar themselves, and calling `Hold` again with the note that is playing leaves it running. `Instruments.Strummed` and `Instruments.Commented` (an NPC's comment, with `Positive` from the game's music skill roll) report what happened.
+
+`Radios.IsAvailable`, `Televisions.IsAvailable` and `Instruments.IsAvailable` are false when the framework's hooks for them failed to apply after a game update; their events then stay quiet, and without the guitar's hook `Hold` refuses.
 
 ## Lights and switches
 

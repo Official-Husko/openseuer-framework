@@ -6,7 +6,7 @@
 
 Run the installer, start the game, and everything shows up under MODS in the main menu.
 
-[![Latest release](https://img.shields.io/github/v/release/Official-Husko/openseuer-framework?include_prereleases&sort=date&label=latest&style=flat-square)](https://github.com/Official-Husko/openseuer-framework/releases)
+[![Latest release](https://img.shields.io/github/v/release/Official-Husko/openseuer-framework?sort=semver&label=release&style=flat-square)](https://github.com/Official-Husko/openseuer-framework/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Official-Husko/openseuer-framework/total?style=flat-square&color=blue)](https://github.com/Official-Husko/openseuer-framework/releases)
 [![Obenseuer 0.5.13](https://img.shields.io/badge/Obenseuer-0.5.13-6b8e23?style=flat-square)](https://store.steampowered.com/app/951240/Obenseuer/)
 [![Windows and Linux](https://img.shields.io/badge/runs%20on-Windows%20%7C%20Linux%20%28Proton%29-555?style=flat-square)](#installing)
@@ -23,7 +23,7 @@ Run the installer, start the game, and everything shows up under MODS in the mai
 </div>
 
 > [!NOTE]
-> This is early. So far there are only pre-releases: every change is tested in the game, but not every combination of them. Back up your saves before you try it, and please open an issue when something breaks.
+> 1.0.0 is the first stable release. Every change is tested in the game, but not every combination of them, so back up your saves before you install or update, and please open an issue when something breaks. Test builds of what comes next are marked as pre-releases.
 
 ## Features
 

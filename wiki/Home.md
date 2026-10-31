@@ -1,6 +1,6 @@
 **ObenseuerExtended** is a set of mods for [Obenseuer](https://store.steampowered.com/app/951240/Obenseuer/): fixes for bugs in the game, performance fixes, optional tweaks, a cheat menu, compressed saves and, one day, co-op. It brings its own mod loader, so you don't need BepInEx, and everything shows up in a MODS menu inside the game.
 
-It's early: there are only pre-releases so far. Back up your saves before you try it.
+1.0.0 is the first stable release. Test builds of what comes next are marked as pre-releases. Back up your saves before you install or update.
 
 ## Start here
 

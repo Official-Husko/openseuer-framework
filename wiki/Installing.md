@@ -6,7 +6,7 @@
 
 ## Installing
 
-1. Download the newest zip from [Releases](https://github.com/Official-Husko/openseuer-framework/releases). Pre-releases end in `_pre-release.zip`.
+1. Download the zip of the [latest release](https://github.com/Official-Husko/openseuer-framework/releases/latest), for example `ObenseuerExtended-1.0.0.zip`. Test builds of what comes next are marked as pre-releases on the [Releases](https://github.com/Official-Husko/openseuer-framework/releases) page and their zip ends in `_pre-release.zip`; take one only to try something early.
 2. Unpack it anywhere, for example your Downloads folder.
 3. Close the game.
 4. Run `install.bat` on Windows or `install.sh` on Linux.
@@ -29,8 +29,8 @@ It copies the mods into the game's `Mods` folder and the loader into `Obenseuer_
 
 - At start the window stays black for a while longer than usual. A small ObenseuerExtended panel shows how far loading the mods got.
 - The window title says "Obenseuer - ObenseuerExtended".
-- The title screen's bottom left says how many mods loaded and whether they fit your game version.
-- The bottom of the pause menu shows the version you have, for example `ObenseuerExtended v0.1.0 (a185d27)`. The part in brackets says exactly which build it is; mention it when you report a bug.
+- The title screen's bottom left says which version you have, how many mods loaded and whether they fit your game version, for example `ObenseuerExtended v1.0.0 · 7 mods loaded · game check passed`.
+- The bottom of the pause menu shows the version too, with the build it came from, for example `ObenseuerExtended v1.0.0 (a185d27)`. The part in brackets says exactly which build it is; mention it when you report a bug. The Mods page shows the same version for every mod in the pack.
 
 ## Updating
 

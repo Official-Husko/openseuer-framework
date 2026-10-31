@@ -323,12 +323,25 @@ Already checked in Open Sewer Bazaar:
 - [x] `traders.factor "shop=Brom's" buy=2` also doubles the prices in the trade window itself (screenshot), and `buy=1` resets them. (2026-10-31: Kalja 4 for 104 instead of 52, feathers 14 for 56; back after `buy=1`.)
 - [x] **Interior Tenement Kolhola**, "Money exchange": `bank.exchange "bank=Money exchange" amount=100 to=rm` takes 100 OC. `amount=1` gives TooSmall. (2026-10-31: it pays 5 RM, not the 6 expected here, and the quote says 5 too: the game cuts `100 * 0.06f` = 5.99999 to 5. Logged as ExchangeCreditTruncation in TODO.md.)
 - [x] **Open Sewer Mines:** `fuel.stations` lists the station; `fuel.price station=<id> price=10` sets it; filling up and paying records FuelBought. (2026-10-31: price 10 raised `FuelPrice`; 3 litres metered on the pump and paid through the game's `GasStation.PayFuelOc` took 30 OC and raised `FuelBought` with 3 l for 30. Filling a real minitrain wasn't tried.)
-- [ ] **Interior Bazaar Casino:**
-  - With `gambling.payout game=slotmachine multiplier=2`, a slot win shows doubled in `gambling.events` and in the wallet.
-  - The pajatso tray text shows the scaled win.
-  - With `game=chinahand multiplier=2`, first place pays 4× the stake.
-- [ ] **Interior Bazaar Ratfighting Arena:** RatBet, ContestStarted, ContestFinished (scaled winOc), then RatWinnings.
-- [ ] **Interior Bazaar Bar:** the drinking contest raises ContestStarted and ContestFinished, and `contests.list` shows the opponent and tolerance mid-contest.
+- [x] **Interior Bazaar Casino** (2026-10-31, on a copy of Slot1; reels and coin tosses decided by a script hook, the rest through the game's own methods):
+  - **Slot machine, ×2:** 20 coins through the coin slot (wallet 300 → 280, one `CoinsInserted` each), stake raised to 2, a win the game worked out as 6 paid 12 (`Won` 12, statistics +12).
+  - **Doubling:** a won toss 12 → 24; a coin on its edge `Doubled` 24 → 24 with the coins kept in the machine (42); a lost toss 24 → 0.
+  - **Cash-out:** `CashedOut` 40 described the machine before its reset (stake 2, 40 in), wallet +40. `casino.machines` showed `lastWin` 24.
+  - **Pajatso, ×3:** five full-force launches through a 1-coin gate paid 3 each, and the tray read "Collect 15 OC". Collecting paid 15 (`CashedOut`). At ×0 a gate win left the tray at 0, dark, with the button on "Empty".
+  - **China Hand at the casino table, ×2:** sat down, picked "Shittypants" in the dialogue and 25 OC on the slider. `CardGameStarted` came at the deal with stake 25 and `playing` true. The game's own `FinishGame` (first place) paid 100 (wallet 304 → 404, statistics +100), and the framework's net count was +75.
+  - **Giving up:** a Ristiseiska game for 10 left mid-game raised `CardGameGaveUp`, and the net count went back to 0.
+- [x] **Scratch cards, ×2** (2026-10-31): eight OC Pots scratched from the inventory. The draw saw a top prize of 100 000, and the card had 50 000 again afterwards. One won 444: statistics +444, `Scratched` 444, and its receipt carries 444 to cash in. The seven losers left receipts worth 0.
+- [x] **Interior Bazaar Ratfighting Arena, ×2** (2026-10-31):
+  - Through Rosario Rootto's dialogue, the rat selector and the slider: 30 OC on Green (`RatBet`).
+  - A second "(Place Bets)" was offered, but the round started first, so the game refused it.
+  - Green won through `EndRound`: 120 scaled to 240 (`ContestFinished` 240, statistics +240), and collecting paid 240 (`RatWinnings`).
+  - Two bets in one round (30, then 20, through `PlaceOCBet`) cost 50 and left a stake of 20: logged as RatBetOverwrite in TODO.md. A lost round reported Red as the winner.
+- [x] **Interior Bazaar Bar:** Jooseppi's `StartContest` raised `ContestStarted`, and `contests.list` showed him with tolerance 1.0, then 0.958 after two drinks. `Contests.GiveUp()` ended it as a loss. (2026-10-31; his own dialogue only sells beer.)
+- [x] **Interior Bazaar Sauna:** a contest with Timo Löyly started (opponent "Timo") and stopped as a win, `ContestFinished` with `won` true. (2026-10-31)
+- [x] **Free and item tables** (2026-10-31):
+  - The bookshop table plays for nothing (bets 0–0). Its game started with `CardGameStarted` stake 0 (it never fired at free tables before), and getting up raised `CardGameGaveUp`. The table sits in a story memory, so the game was chosen from code.
+  - The Test Map Card Games table, set to play for apples: a stake of 2 paid 8 apples for first place at ×2 (statistics +24, three per apple).
+- [x] `Casino`, `CardGames` and `Contests.IsAvailable` are true; `Payouts.Clear` removed the bridge's 6 multipliers in one call. patches.check: 515 patched, 0 broken; oben check: 800 hooks, 0 broken. (2026-10-31)
 - [x] **Interior Tenement O Market:** `markets.list`, then buy something; CheckoutPaid fires. (2026-10-31: two cups carrying the market's ownership, run through the conveyor, scan and `Pay` from code; the game charged its 1 OC minimum and `CheckoutPaid` fired. The game's own pay loop saw Paper Trash on the conveyor, so the scan totalled 0; a cup picked from the shelf by hand would tell whether that is the made-up cup.)
 - [x] **Player shop [save], in Interior Player Tenement:** (2026-10-31: 5 apples in the apartment's locker, 3 sold for 12 OC into the till and collected; 1 more left 4 OC in the till over a save and load, with the shop open on its area and the ledger's 4 entries.)
   1. `furniture.zones placed=true`.

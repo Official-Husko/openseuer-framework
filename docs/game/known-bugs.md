@@ -107,6 +107,12 @@ Fix: a postfix moves the answer back one day (Monday becomes Sunday). Tested on 
 
 Fix: a postfix on `getFilename` returns the full path of the folder the game created. Tested on 0.5.13: a faked F11 and F12 a few seconds apart wrote `Screenshots/Interior Player Tenement_10_31_2026_2.png` and `_3.png` next to the exe, the F11 one with the HUD and the F12 one without. Two shots within a few frames still get the same number (the game checks for the file before Unity has written the first one), as before.
 
+### ScreenshotHiddenHud: a screenshot without the HUD leaves the hide-HUD key needing two presses
+
+The no-UI screenshot (F12) runs `ScreenshotNoUICO` (`TakeScreenshot.cs:22-35`): it notes whether the HUD is showing, adds `GameController`'s object to `GameUIController.hiddenUI` (`HideGameUI`, a plain list, `GameUIController.cs:160-164`), takes the shot, and removes the object again only when the HUD was showing before. The hide-HUD key toggles the same object (`GameController.cs:106-108`, `ToggleGameUIVisibility(base.gameObject)`). With the HUD already hidden by the key, the list ends up holding the object twice, and one press of the key takes out only one: the HUD stays hidden until the second press. With the HUD hidden by anything else (a mod, a cutscene), the screenshot's entry was never taken out at all.
+
+Fix: when the HUD is already hidden, `ScreenshotNoUI` takes an ordinary screenshot instead (there is nothing to hide). Tested on 0.5.13: HUD hidden with the key's object, then F12: with the fix off the list held the object twice and one show left the HUD hidden; with it on, once, and one show brought it back.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

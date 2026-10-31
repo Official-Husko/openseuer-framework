@@ -127,9 +127,48 @@ internal static class NewGameOptionRules
         }
     }
 
+    /// <summary>Number options with at most this many values step one value per press on the New Game screen.</summary>
+    public const int MaxScreenStops = 41;
+
+    /// <summary>
+    /// How many of the option's steps one press of the New Game screen's arrows moves: 1, or for a number
+    /// option with more than <see cref="MaxScreenStops"/> values about a twentieth of its range, so a sweep
+    /// stays short.
+    /// </summary>
+    public static int ScreenJump(NewGameOption option)
+    {
+        long count = option.Kind == NewGameOptionKind.Integer ? (long)option.Max - option.Min + 1
+            : option.Kind == NewGameOptionKind.Float ? option.FloatSteps + 1L
+            : 0;
+        return count > MaxScreenStops ? (int)Math.Ceiling((count - 1) / 20.0) : 1;
+    }
+
+    /// <summary>
+    /// The value one press of the New Game screen's arrows moves to: <see cref="Step"/>, or a jump of
+    /// <see cref="ScreenJump"/> steps that stops at the ends and wraps from an end like the cycles do.
+    /// </summary>
+    public static string ScreenStep(NewGameOption option, string value, bool right)
+    {
+        int jump = ScreenJump(option);
+        if (jump == 1)
+            return Step(option, value, right);
+        value = option.Normalize(value);
+        if (option.Kind == NewGameOptionKind.Integer)
+            return Text((int)Jump(int.Parse(value, CultureInfo.InvariantCulture), option.Min, option.Max, jump, right));
+        int index = FloatIndex(option, float.Parse(value, CultureInfo.InvariantCulture));
+        return Text(FloatAt(option, (int)Jump(index, 0, option.FloatSteps, jump, right)));
+    }
+
     public static string Text(int value) => value.ToString(CultureInfo.InvariantCulture);
 
     public static string Text(float value) => value.ToString("0.####", CultureInfo.InvariantCulture);
+
+    private static long Jump(long value, long min, long max, int jump, bool right)
+    {
+        if (right)
+            return value >= max ? min : Math.Min(max, value + jump);
+        return value <= min ? max : Math.Max(min, value - jump);
+    }
 
     private static int Wrap(int value, int min, int max)
     {

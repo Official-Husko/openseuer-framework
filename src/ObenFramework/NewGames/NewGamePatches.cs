@@ -16,17 +16,20 @@ internal static class NewGamePatches
     [HarmonyPatch(typeof(global::NewGame), nameof(global::NewGame.SaveCharacter))]
     private static void AfterSaveCharacter()
     {
-        try
-        {
-            // The framework's newgame record was reset at the main menu; fill it before anyone hears of the new game.
-            var preset = DifficultySelector.Chosen;
-            NewGameOptions.CaptureNewGame();
-            DifficultyPresets.RecordNewGame(preset);
-            NewGameEvents.Raise(NewGameInfo.Capture(preset));
-        }
-        catch (Exception e)
-        {
-            GameEvents.Log.Error("Raising NewGameEvents.Started failed", e);
-        }
+        // Each step on its own, so one failing still lets the session count as a new game and the event fire.
+        // The framework's newgame record was reset at the main menu; fill it before anyone hears of the new game.
+        DifficultyPreset preset = null;
+        Step("reading the difficulty preset", () => preset = DifficultySelector.Chosen);
+        Step("storing the new game options", NewGameOptions.CaptureNewGame);
+        Step("recording the difficulty preset", () => DifficultyPresets.RecordNewGame(preset));
+        NewGameInfo info = null;
+        Step("describing the new game", () => info = NewGameInfo.Capture(preset));
+        NewGameEvents.Raise(info ?? NewGameInfo.Empty(preset));
+    }
+
+    private static void Step(string what, Action action)
+    {
+        try { action(); }
+        catch (Exception e) { GameEvents.Log.Error("New game: " + what + " failed", e); }
     }
 }

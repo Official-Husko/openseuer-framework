@@ -40,6 +40,10 @@ public sealed class NewGameInfo
     /// <summary>The new game option values the game starts with: every registered option, picked or default.</summary>
     public IReadOnlyList<NewGameOptionValue> Options { get; }
 
+    // What is known when describing the new game failed: no character, no options.
+    internal static NewGameInfo Empty(DifficultyPreset preset) =>
+        new NewGameInfo(null, null, 0, null, null, preset?.Key, new List<NewGameOptionValue>());
+
     internal static NewGameInfo Capture(DifficultyPreset preset)
     {
         var identity = PlayerIdentityMainMenu.identity;

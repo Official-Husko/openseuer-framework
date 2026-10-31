@@ -20,6 +20,7 @@ public static class NewGameEvents
     {
         Last = info;
         Sessions.NewGameStarted();
+        NewGameOptions.NewGameCaptured();
         Started.Raise(info, GameEvents.Log);
     }
 

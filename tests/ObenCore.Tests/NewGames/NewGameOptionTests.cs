@@ -89,6 +89,44 @@ public class NewGameOptionRulesTests
     }
 
     [Fact]
+    public void ScreenStepsOneValueInShortRanges()
+    {
+        var option = NewGameOptionRules.Integer(Mod, "count", "Count", null, 0, 40, 3, Below);
+        Assert.Equal(1, NewGameOptionRules.ScreenJump(option));
+        Assert.Equal("4", NewGameOptionRules.ScreenStep(option, "3", true));
+        Assert.Equal("0", NewGameOptionRules.ScreenStep(option, "40", true));
+        var toggle = NewGameOptionRules.Toggle(Mod, "loud", "Loud", null, true, Below);
+        Assert.Equal(1, NewGameOptionRules.ScreenJump(toggle));
+        Assert.Equal("0", NewGameOptionRules.ScreenStep(toggle, "1", false));
+    }
+
+    [Fact]
+    public void ScreenJumpsThroughWideRanges()
+    {
+        var option = NewGameOptionRules.Integer(Mod, "count", "Count", null, 0, 1000, 500, Below);
+        Assert.Equal(50, NewGameOptionRules.ScreenJump(option));
+        Assert.Equal("550", NewGameOptionRules.ScreenStep(option, "500", true));
+        Assert.Equal("1000", NewGameOptionRules.ScreenStep(option, "990", true));
+        Assert.Equal("0", NewGameOptionRules.ScreenStep(option, "1000", true));
+        Assert.Equal("0", NewGameOptionRules.ScreenStep(option, "20", false));
+        Assert.Equal("1000", NewGameOptionRules.ScreenStep(option, "0", false));
+
+        var rate = NewGameOptionRules.Float(Mod, "rate", "Rate", null, 0f, 10f, 0.1f, 1f, Below);
+        Assert.Equal(5, NewGameOptionRules.ScreenJump(rate));
+        Assert.Equal("1.5", NewGameOptionRules.ScreenStep(rate, "1", true));
+        Assert.Equal("10", NewGameOptionRules.ScreenStep(rate, "9.8", true));
+    }
+
+    [Fact]
+    public void ScreenJumpDoesNotOverflow()
+    {
+        var option = NewGameOptionRules.Integer(Mod, "big", "Big", null, int.MinValue, int.MaxValue, 0, Below);
+        Assert.True(NewGameOptionRules.ScreenJump(option) > 1);
+        Assert.Equal(int.MaxValue.ToString(), NewGameOptionRules.ScreenStep(option, (int.MaxValue - 5).ToString(), true));
+        Assert.Equal(int.MinValue.ToString(), NewGameOptionRules.ScreenStep(option, int.MaxValue.ToString(), true));
+    }
+
+    [Fact]
     public void FloatRefusesBadRanges()
     {
         Assert.ThrowsAny<ArgumentException>(() => NewGameOptionRules.Float(Mod, "k", "T", null, 0.5f, 2.5f, 0.5f, 1.6f, Below));

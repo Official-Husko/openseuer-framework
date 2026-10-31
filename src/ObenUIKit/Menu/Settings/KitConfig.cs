@@ -12,6 +12,9 @@ internal sealed class KitConfig
     [Setting("Show mod key prompts", Description = "Key prompts from mods in the middle of the screen. Off keeps them out of sight (their keys do nothing then).")]
     public bool ShowModPrompts = true;
 
+    [Setting("Show mod difficulty presets", Description = "Difficulty presets from mods in the New Game screen's selector, after the game's own levels.")]
+    public bool ShowModDifficultyPresets = true;
+
     /// <summary>Newest changelog version the player has been shown.</summary>
     [Setting(Hidden = true)]
     public string LastSeenVersion = "";

@@ -11,7 +11,9 @@ namespace ObenFramework.NewGames;
 /// Options a mod adds to the New Game screen: a toggle, a choice, a whole number or a decimal. The player
 /// picks them before starting; the values are stored with the save (ObenFramework.newgame.json in its mod
 /// folder) and read with the <c>Get</c> methods for the rest of that game. A registration ends when its
-/// mod unloads; the stored values stay. See docs/modding/framework/new-game.md.
+/// mod unloads; the stored values stay. Register them in <c>OnLoad</c>: an option registered after a game
+/// was started has no stored value in that game and reads its default (a warning is logged).
+/// See docs/modding/framework/new-game.md.
 /// </summary>
 public static partial class NewGameOptions
 {
@@ -64,8 +66,26 @@ public static partial class NewGameOptions
     /// <summary>The value one step left or right of <paramref name="value"/>, wrapping at the ends.</summary>
     public static string Step(NewGameOption option, string value, bool right) => NewGameOptionRules.Step(option, value, right);
 
+    /// <summary>
+    /// What one press of the New Game screen's arrows does: one step, or for a number option with more than
+    /// 41 values a twentieth of its range, stopping at the ends before wrapping.
+    /// </summary>
+    public static string ScreenStep(NewGameOption option, string value, bool right) => NewGameOptionRules.ScreenStep(option, value, right);
+
     /// <summary>Forgets what was picked on the screen, so every option shows its default again.</summary>
     public static void ResetScreen() => Store.ClearDraft();
+
+    // Set when the player confirmed a new character, until the main menu shows again.
+    private static bool _captured;
+
+    internal static void Init(ObenMod framework)
+    {
+        GameEvents.MainMenu.Subscribe(framework, () => _captured = false);
+        // Picks on a New Game screen that was left without starting a game don't carry over past a load.
+        GameEvents.Loading.Subscribe(framework, _ => Store.ClearDraft());
+    }
+
+    internal static void NewGameCaptured() => _captured = true;
 
     // The player confirmed the New Game screen: every registered option is stored, picked or default.
     internal static void CaptureNewGame()
@@ -76,7 +96,11 @@ public static partial class NewGameOptions
         Store.ClearDraft();
     }
 
-    internal static void Reset() => Store.ClearDraft();
+    internal static void Reset()
+    {
+        Store.ClearDraft();
+        _captured = false;
+    }
 
     private static NewGameOption Add(ObenMod owner, NewGameOption option)
     {
@@ -85,6 +109,7 @@ public static partial class NewGameOptions
             GameEvents.Log.Warn($"{option.ModId} registered the new game option '{option.Key}' twice; the first one is kept.");
             return null;
         }
+        WarnIfLate(option);
         owner.Track(Disposable.Create(() =>
         {
             if (Store.Remove(option))
@@ -92,6 +117,18 @@ public static partial class NewGameOptions
         }));
         ListChanged.Raise(GameEvents.Log);
         return option;
+    }
+
+    // An option the running game didn't store when it started reads its default for the whole game; say so
+    // when the registration comes too late for that (a mod reloading an option the game stored is fine).
+    private static void WarnIfLate(NewGameOption option)
+    {
+        if (!_captured && Sessions.Current == SessionKind.None)
+            return;
+        if (NewGameSave.Data?.Get(option.ModId, option.Key) != null)
+            return;
+        GameEvents.Log.Warn($"{option.ModId} registered the new game option '{option.Key}' after this game was started, so the game " +
+            "reads its default. Register new game options in OnLoad.");
     }
 
     private static string Id(ObenMod owner)

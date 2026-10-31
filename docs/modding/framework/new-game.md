@@ -30,7 +30,7 @@ NewGameEvents.Started.Subscribe(this, info =>
     Log.Info($"{info.FullName}, {info.Age}, difficulty {info.Difficulty?.Name}, preset {info.DifficultyPreset}"));
 ```
 
-`NewGameEvents.Started` fires when the player confirms a new character (a postfix on `NewGame.SaveCharacter`), still in the main menu, before the intro loads; there is no world yet. `NewGameInfo` has `FirstName`, `LastName`, `FullName`, `Age`, `Gender`, `Difficulty` (a `DifficultySettings` copy of what the game will start with), `DifficultyPreset` (a mod preset key or null) and `Options` (every new game option value, picked or default). `NewGameEvents.Last` keeps the last one for this run of the game. When the first level is ready, `Sessions.Started` follows with `SessionKind.NewGame`.
+`NewGameEvents.Started` fires when the player confirms a new character (a postfix on `NewGame.SaveCharacter`), still in the main menu, before the intro loads; there is no world yet. Storing the options, recording the preset and describing the character are separate steps: one failing is logged and the others, the event and the session's new-game kind still happen. `NewGameInfo` has `FirstName`, `LastName`, `FullName`, `Age`, `Gender`, `Difficulty` (a `DifficultySettings` copy of what the game will start with), `DifficultyPreset` (a mod preset key or null) and `Options` (every new game option value, picked or default). `NewGameEvents.Last` keeps the last one for this run of the game. When the first level is ready, `Sessions.Started` follows with `SessionKind.NewGame`.
 
 ## New game options
 
@@ -50,15 +50,22 @@ string start = NewGameOptions.GetChoice(this, "start");
 ```
 
 - The kinds are a toggle (stored "1" or "0"), a choice (the chosen id; titles are only shown, so keep ids stable), a whole number from min to max, and a decimal from min to max in steps (at most 1000 steps; the default must be on a step). Keys are 1 to 64 letters, digits, `_` or `-`. Mistakes in a registration throw `ArgumentException`; registering a key twice logs a warning and returns null.
-- A registration ends when its mod unloads; the stored values stay. Options can be registered at any time (a mod reloading registers them again); the screen updates (`NewGameOptions.ListChanged`).
-- `NewGamePlacement` groups options in the window: `BelowDifficulty` first, `CustomPanel` ("custom rules") after.
+- Register options in `OnLoad`. A registration ends when its mod unloads; the stored values stay. Options can be registered at any time and the screen updates (`NewGameOptions.ListChanged`), but one registered after a game was started has no stored value in that game: it reads its default, and the framework logs a warning. A mod reloading an option the game did store gets no warning.
+- `NewGamePlacement` says where the option shows on the screen: `BelowDifficulty` with every difficulty level, `CustomPanel` with the game's custom rules (on Custom only).
+- What the player picks on the screen stays while they go back and forth between its pages; starting the game stores it, and loading a save drops picks from a screen that was left without starting.
 - When the player confirms the new character, every registered option is stored, picked or default, in `<save>/mods/ObenFramework.newgame.json` (with the difficulty preset). The file is written with the first save of the new game.
 - `GetValue/GetBool/GetChoice/GetInteger/GetFloat` read the stored value of the game being played; a stored value that no longer fits the option (an id that was removed, a number out of range) is moved to the nearest valid one. A save started before the option existed reads the option's default, and `WasChosen` tells the two apart. At the main menu they read what the New Game screen shows. `Values()` lists every stored value, including those of mods that aren't loaded.
 - Removing a mod leaves its entries in the file untouched; nothing in the game's own save files is involved.
 
 ### The screen
 
-ObenUIKit puts a **Mod options** button on the New Game screen's difficulty page, just above Back, while at least one option is registered. It opens a kit window with one group per mod: toggles and choices as the game's cycles, small whole-number ranges as a cycle of their numbers, larger ranges and decimals as sliders, and each option's description under it. **Defaults** puts every option back. The button is a copy of the page's own Back button (game font, colours and sounds) with its Relay objects removed; it isn't reachable by the screen's keyboard navigation, the window is. The code is in `src/ObenUIKit/NewGame/`.
+ObenUIKit puts the options on the New Game screen's difficulty page as rows like the game's own custom settings, copied from one of them: the title on the left, the value between two arrows on the right, the game's font, colours, hover and click sounds. Mouse, keyboard and pad reach them the way they reach the game's rows, since they sit in the list the page's navigation walks.
+
+- On **Custom** the list reads: the `BelowDifficulty` options, the game's custom settings, then the `CustomPanel` options.
+- On the other levels the game shows the level's description instead of the list. While there are `BelowDifficulty` options, the list shows there too, holding that description and those options, with the game's own settings hidden.
+- Hovering or selecting a row shows the option's title, description and mod name in the page's description box.
+- Every press of an arrow moves one value, wrapping at the ends like the game's cycles. A number option with more than 41 values moves a twentieth of its range per press and stops at each end before wrapping (`NewGameOptions.ScreenStep`); keep ranges short where an exact value matters.
+- The rows are rebuilt when the option list changes while the page is up, and removed with the game's rows put back when the kit unloads. The code is in `src/ObenUIKit/NewGame/` (`NewGameRows`, `NewGameRow`, `NewGamePage`).
 
 ## Start choices
 
@@ -71,7 +78,7 @@ bool hasCat = StartChoices.Has("Cat");
 StartChoices.Chosen.Subscribe(this, choice => Log.Info("Picked " + choice.Id));
 ```
 
-`Relationship` gives "Single", "Married" or "In a relationship" the way the game works it out (`Family` means married, `Girlfriend`/`Boyfriend` a relationship). The ids in 0.5.13: `DevilsAngels Police CrazyNeighbor NoOne`, `DrinkingAlcohol SmokingMushrooms EveryDay IFeelHealthy`, `MushroomAddict ShroomshineEnjoyer FilthyPoor ShouldntBeHere`, `BlackHallucinations BrightColors CrazyNeighbor2 Nothing`, `Girlfriend Boyfriend GoodFriend SomeoneHere`, `Family Someone Cat Alone`, `WifeKids HusbandKids Wife Husband`. The game's Lua function `HasSelectedStart(id)` answers the same as `Has`.
+`Chosen` fires right after the game applied a pick's addictions; the money (`Oc`, `Rm`), items and furniture a pick carries come with the start package the player takes in the apartment, not at the pick. `Relationship` gives "Single", "Married" or "In a relationship" the way the game works it out (`Family` means married, `Girlfriend`/`Boyfriend` a relationship), from the picks as they are now; the game's own copy, shown on the tenant card, is only worked out when a level loads, so during the first session it can still say "Single". The ids in 0.5.13: `DevilsAngels Police CrazyNeighbor NoOne`, `DrinkingAlcohol SmokingMushrooms EveryDay IFeelHealthy`, `MushroomAddict ShroomshineEnjoyer FilthyPoor ShouldntBeHere`, `BlackHallucinations BrightColors CrazyNeighbor2 Nothing`, `Girlfriend Boyfriend GoodFriend SomeoneHere`, `Family Someone Cat Alone`, `WifeKids HusbandKids Wife Husband`. The game's Lua function `HasSelectedStart(id)` answers the same as `Has`.
 
 ## Bridge commands
 

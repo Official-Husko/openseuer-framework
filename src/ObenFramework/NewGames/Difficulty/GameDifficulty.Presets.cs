@@ -29,6 +29,24 @@ public static partial class GameDifficulty
         return DifficultyPresets.Register(owner, new DifficultyPreset(owner.Info.Id, id, name, description, basedOn, configure));
     }
 
+    /// <summary>
+    /// Whether mod presets are listed in the New Game screen's difficulty selector; on by default. ObenUIKit
+    /// follows its "Show mod difficulty presets" setting with it. Turning it off while the screen is up takes
+    /// them out at once (a selected preset falls back to the game's Custom level); games started with a
+    /// preset keep it either way.
+    /// </summary>
+    public static bool PresetsOnNewGameScreen
+    {
+        get => DifficultySelector.Listed;
+        set
+        {
+            if (DifficultySelector.Listed == value)
+                return;
+            DifficultySelector.Listed = value;
+            DifficultySelector.Refresh();
+        }
+    }
+
     /// <summary>The registered presets, sorted by key.</summary>
     public static List<DifficultyPreset> Presets() => new List<DifficultyPreset>(DifficultyPresets.All());
 

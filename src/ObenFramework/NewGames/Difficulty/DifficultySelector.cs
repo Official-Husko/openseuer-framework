@@ -25,6 +25,9 @@ internal static class DifficultySelector
     private static DifficultyPreset[] _listed = Array.Empty<DifficultyPreset>();
     private static DifficultyPreset _chosen;
 
+    /// <summary>Whether the presets are listed at all (<see cref="GameDifficulty.PresetsOnNewGameScreen"/>).</summary>
+    public static bool Listed = true;
+
     public static void Init(ObenMod framework) => framework.Track(Disposable.Create(Restore));
 
     /// <summary>The preset picked on the New Game screen, if the selected level is still that preset.</summary>
@@ -74,7 +77,7 @@ internal static class DifficultySelector
     {
         var entries = new List<DifficultyInfo>(_original);
         var listed = new List<DifficultyPreset>();
-        foreach (var preset in DifficultyPresets.All())
+        foreach (var preset in Listed ? DifficultyPresets.All() : Array.Empty<DifficultyPreset>())
         {
             DifficultyInfo info = null;
             try { info = DifficultyInfos.Build(preset, _original); }

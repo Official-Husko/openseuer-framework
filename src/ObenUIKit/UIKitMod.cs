@@ -1,3 +1,4 @@
+using ObenFramework.NewGames;
 using ObenFramework.SceneLook;
 using ObenFramework.Ui;
 using ObenLoader;
@@ -48,9 +49,12 @@ public sealed class UIKitMod : ObenMod
 
         var config = LoadConfig<KitConfig>();
         Settings = config.Value;
+        GameDifficulty.PresetsOnNewGameScreen = Settings.ShowModDifficultyPresets;
+        Track(ObenLoader.Runtime.Disposable.Create(() => GameDifficulty.PresetsOnNewGameScreen = true));
         config.Changed += value =>
         {
             Settings = value;
+            GameDifficulty.PresetsOnNewGameScreen = value.ShowModDifficultyPresets;
             // "Off drops them": hints already waiting or showing go too, except forced ones.
             if (!value.ShowModHints)
                 HudRuntime.Current?.DropUnforcedHints();

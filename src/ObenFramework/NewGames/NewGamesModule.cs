@@ -13,6 +13,7 @@ internal static class NewGamesModule
     {
         Sessions.Init(framework);
         NewGameSave.Init(framework);
+        NewGameOptions.Init(framework);
         GameDifficulty.Init(framework);
         TutorialGuide.Init(framework);
         framework.Track(Disposable.Create(NewGameEvents.Reset));

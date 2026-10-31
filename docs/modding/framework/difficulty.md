@@ -28,6 +28,7 @@ GameDifficulty.RemoveFactor(this, DifficultyMultiplier.NeedsSpeed);
 - Factors are 0 to 10; prices and renovation speed can't be 0. Factors from several mods (and several keys of one mod) multiply. Whole-number results (prices, resource costs) are rounded and never go below 1 where the game's value was at least 1.
 - Renovation speed: a factor of 2 halves the time. The game stores an upgrade's time unscaled and divides it when read, so the framework also scales the countdown (`TenementController.UpdateProgesses`, keeping fractions), otherwise the shown time and the real one would differ.
 - Factors aren't saved and go when the mod unloads. Set them again each session (`Sessions.WhenStarted`). `FactorOf` and `FactorList()` read them back.
+- The game's other settings have no factor: item and furniture crafting speed, stack sizes and rent payments can be set in a preset only. The Custom page's "Autosave Mode" is hidden and nothing in 0.5.13 reads it.
 
 ## Presets
 
@@ -44,6 +45,7 @@ GameDifficulty.RegisterPreset(this, "harsh", "Harsh", "Needs drain faster and tr
 - A preset starts from one of the game's levels other than Custom (in 0.5.13 that means `Default` or `Casual`). Its callback gets `DifficultyPresetSettings` filled with that level and changes what it wants; numbers go to the nearest step the game knows (`DifficultyPresetMap`, unit tested), and `float.PositiveInfinity` gives traders unlimited money.
 - A preset that changes values becomes a **Custom** level carrying the preset's name. That is how the game stores it: the save keeps the Custom values in the DifficultyController's own data, so the save keeps working without the mod. A preset without a callback is its base level under another name.
 - The New Game screen lists registered presets (sorted by key, `modId.id`) after the game's levels in its difficulty selector. Only the main menu's controller list is extended, so a level's saved index never points at a mod entry; the game's list is put back when the framework unloads. If the player edits a value on a preset, the game turns it into plain Custom.
+- Players who don't want mod presets in the selector switch them off in MODS, Settings, UI kit, "Show mod difficulty presets". ObenUIKit passes that on to `GameDifficulty.PresetsOnNewGameScreen`; turning it off while the screen is up takes the presets out at once, and a selected preset falls back to the game's Custom level. Games started with a preset keep it either way.
 - When the player confirms the new character, the preset they were on is recorded in the framework's newgame file (`<save>/mods/ObenFramework.newgame.json`). `ActivePreset` returns its key while the mod is loaded and the game's difficulty still matches it.
 - In a running game, `SetPreset("modId.id")` switches to a preset now (it returns null on success, otherwise why not), `SetLevel("Casual")` switches to a game level by name like the console's `set_difficulty`, and `ClearPreset()` forgets the recorded preset. All are refused during a save or load. The change is saved with the game.
 

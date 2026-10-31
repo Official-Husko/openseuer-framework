@@ -4,7 +4,9 @@
 # by the same rule as the pack's version (docs/modding/releasing.md): the commits that touched the mod's folder
 # since its version last changed decide it, a breaking change (type!: or a "BREAKING CHANGE" line) bumps the
 # major version, a feature (feat) the minor version, anything else the patch version. Markdown files don't
-# count. A version raised by hand in a commit counts as the new start, so it isn't raised twice.
+# count. A project whose DLL ships in the mod's folder (a ProjectReference with Private="true", like
+# ObenCoop.Net in ObenCoop) counts as part of the mod. A version raised by hand in a commit counts as the new
+# start, so it isn't raised twice.
 #
 #   build/mod-versions.sh            prints every mod's version and, for the ones that changed, the next one
 #   build/mod-versions.sh --apply    writes the new versions into the mod.json files and prints them
@@ -35,12 +37,16 @@ for manifest in src/*/mod.json mods/*/mod.json; do
     fi
     since=$(git log -1 --format=%H -G'"version"[[:space:]]*:' -- "$manifest")
     range=${since:+$since..}HEAD
-    subjects=$(git log --no-merges --format=%s "$range" -- "$dir" ':(exclude,glob)**/*.md')
+    paths=("$dir")
+    for shipped in $(sed -n 's:.*<ProjectReference Include="\([^"]*\)"[^>]*Private="true".*:\1:p' "$dir"/*.csproj 2>/dev/null); do
+        paths+=("$(realpath --relative-to="$repo" "$dir/$(dirname "$shipped")")")
+    done
+    subjects=$(git log --no-merges --format=%s "$range" -- "${paths[@]}" ':(exclude,glob)**/*.md')
     if [ -z "$subjects" ]; then
         echo "$id $current"
         continue
     fi
-    bodies=$(git log --no-merges --format=%b "$range" -- "$dir" ':(exclude,glob)**/*.md')
+    bodies=$(git log --no-merges --format=%b "$range" -- "${paths[@]}" ':(exclude,glob)**/*.md')
     IFS=. read -r major minor patch <<< "$current"
     if grep -qE '^[a-z]+(\([^)]*\))?!:' <<< "$subjects" || grep -q '^BREAKING CHANGE' <<< "$bodies"; then
         next="$((major + 1)).0.0" reason="a breaking change"

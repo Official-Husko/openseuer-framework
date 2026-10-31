@@ -149,7 +149,11 @@ Call graph:
   `ForceOpen()` `:480`, `ForceOpenOpposite()` `:549`, or `Close()` `:576`.
 - Non-forced `Open*` call `_Lock.Use(...)` first, which checks the local player's task items for the key
   (`Lock.cs:105`, `TaskItemsManager.instance.CheckIfPlayerHasTaskItem`) and may start an unlock delay
-  coroutine, or call `LockedUse()` and play the locked sound. `ForceOpen*` skip the lock.
+  coroutine, or call `LockedUse()` and play the locked sound. `ForceOpen*` skip the lock. With a delay
+  (`UnlockDelay`, or the key sound's length) `Use` returns null and only unlocks; the door opens on the next use.
+  Without the key it starts lockpicking if the lock is pickable and the player has a lockpick.
+- `PlayerLockpicking.ToggleLockpicking` stops a lockpicking already running (static `ActiveLockpicking`) instead of
+  starting the new one.
 - All open paths converge on private `OnOpen()` `:689` (sets `direction=true`, `doorIsOpen=true`, `moving=true`,
   fires `onOpen`). Closing converges on `Close()` which sets `direction=false`, `moving=true`, fires `onClose`.
 - Motion is in `Update()` `:866`: integrates `position` with `Time.deltaTime * OpenSpeed`, rotates or slides
@@ -203,7 +207,13 @@ if closed it opens the keypad UI (`GameUIController.ToggleGameMenu(..., MenuPane
 `KeypadUI.instance.SetKeypad(this, type)`), if open it locks. The code is `code[]` (`[fsIgnore]`, from the prefab).
 The UI validates the code and then calls `TriggerSuccess()` `:151` / `TriggerFailure()`. Hooks: postfix
 `Keypad.TriggerSuccess()`, `Keypad.Lock()` `:133`, `Keypad.SetOpen(bool)` `:146`, `Keypad.ChangePowerState(bool)` `:172`.
+Locking an open keypad by hand runs its own lines in `Use()` (relay, `open = false`), not `Lock()`, so hook `Use` too.
 The keypad UI is local-only, so only the outcome needs syncing.
+
+The private `type` is `Keypad` or `RotaryLock`. A rotary lock's dial reads `round(angle / 11.25)`, 0 counting as 32,
+so its code entries run from 1 to 32 (Kolhola's four rotary locks have codes like 25,3,1,13); a keypad's are 0 to 9.
+`KeypadUI.NumberPressed` checks after 4 entries and `ValidateCode` compares only the code's own length, so codes
+longer than 4 can't be entered.
 
 `InteractableRelay` (`InteractableRelay.cs`): just fires `onInteract` after cooldown/required-item checks. Not saved.
 Sync the Relay fire, or the effects it causes.
@@ -550,6 +560,15 @@ Hooks:
 ```
 
 `SetSpeed` is called every FixedUpdate while a key is held (see above), so rate-limit; sync the target only when it changes by more than a threshold.
+
+Measured in 0.5.13 (Open Sewer Mines): `Crash` runs on both vehicles of a collision (`TrackTrainCrashTrigger` calls both,
+a moving train calls the standing one's, a wagon its driving locomotive's). It ends by starting `CrashBounceback`, which
+sets `currentSpeed` to -0.3 times the impact speed before its first yield, so after `Crash` returns the speed isn't 0:
+the private `crashCooldown` going from null to set is what tells a crash happened. Vehicles meeting slowly couple
+instead (a minitrain at 5 m/s coupled to three standing fuel wagons). `Minitrain.StartMinitrain` sets `isOn` and runs a
+start-up coroutine; the train's `active` comes on a moment later. `MinitrainSwitch.ChangeTrack` swings the lever and
+sets `currentBranchIndex` at the end of its coroutine (`ChangeTrackForce` at once); it does nothing while a train
+is on the segment.
 
 ### 7.2 Elevator (`Elevator.cs`)
 

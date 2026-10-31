@@ -390,15 +390,21 @@ Already checked:
 - [x] **Known gap:** custom pieces don't show in `furniture.kinds`. Decide whether they should, and fix it. (They do now, marked `custom`, without using the console first; `known=` checks the build menu's list.)
 - [x] **Known limitation:** placed furniture gets new ids after a framework hot reload in a session without a save. Check whether ids hold over a hot reload in a real save, where the ledger exists. If not, carry the id map over the reload with `ReloadState`. (2026-10-30: carried over; all 21 ids held, also a chair placed after the load. The check found a second case: a level change cleared the ids before its own save, so pieces placed or moved since the last load got new ids. Fixed; a new and a moved chair kept theirs over two level changes.)
 - [x] Furniture shops sell the custom piece; flatpack loot spawns it; blueprints can be given and mailed. (2026-10-30: Ankea's furniture shop offered a piece once on load, 3 at 77 OC, and bought it back; bought out, it didn't come back on the next load. Flatpacks with the piece came from TrashBin rolls, a trash bin, a ground spawner and package contents, which stayed empty without the new package hook. A blueprint was given, another mailed and delivered; one lying in Tenement B stayed in the world when its mod was gone and crafted the stand-in.)
-- [ ] **Locks:** `locks.set` on one of `locks.list radius=10 lockedOnly=true` locks and unlocks it, and `locks.givekey` lets the player open it.
-- [ ] **Keypads:** `keypads.list` / `keypads.set` where there's a keypad.
-- [ ] **Door hours:** `doors.schedule` changes a door's hours, and they come back on unload.
-- [ ] **Travel:** `levels.use` / `travel.go` changes level through the game's own path; `travel.events` shows Leaving and Arrived. In a real save this saves first, as doors do.
-- [ ] **Open Sewer Mines:** `trains.list segments=true`, `trains.events`, `trains.drive`, `trains.switch`.
-- [ ] **Open Sewer Metro:** `tickets.list price=5` changes the ticket price at the machine.
-- [ ] **Interior Bazaar Mine:** `elevators.list`, `elevators.call`.
-- [ ] **Interior Bazaar Bakery:** `drones.list`, `drones.set`.
-- [ ] **Wait stations:** `waits.list`, `waits.use`.
+All of M24 below was checked on 2026-10-31 on a copy of a real save (Slot1), going Player Tenement, Kolhola, Open Sewer Tenement, Metro, Mines, Mines Management, Bazaar Bank.
+
+- [x] **Locks:** `locks.set` on one of `locks.list radius=10 lockedOnly=true` locks and unlocks it, and `locks.givekey` lets the player open it. (Kolhola's Changing Room door unlocked, made unpickable at 0.5, locked again with Mod events. Kolhola's level door locked, given Pia's keys with `Locks.SetKey`: `Levels.Use` refused without the key; with it the key unlocked the door after its sound, and the next use started the trip.)
+- [x] **Lockpicking:** with the game's own lockpicking running on one door, `Locks.StartLockpick` on another returned false and the game's kept running (before the fix it stopped the player's attempt and the framework stayed busy). After it stopped, a mod's start worked, a second start was refused, and stopping it called back false and freed the framework.
+- [x] **Keypads:** `keypads.list` / `keypads.set` where there's a keypad. (Kolhola: four rotary locks with codes like 25,3,1,13 and one keypad. A rotary code 17,3,22,5 was taken, 33 refused; the keypad took 1234 and refused 13. Opening raised Solved, `refuse=true` WrongCode, and locking it through its interact path Locked with source LocalPlayer.)
+- [x] **Door hours:** `doors.schedule` changes a door's hours, and they come back on unload. (The game's only schedule, the Bazaar bank's front door, open Monday to Saturday 06-23: at 18:33 hours of 06-17 locked it within seconds; `reset` and a DevBridge reload each brought the level's table back and unlocked it.)
+- [x] **Travel:** `levels.use` / `travel.go` changes level through the game's own path; `travel.events` shows Leaving and Arrived. In a real save this saves first, as doors do. (Five trips, each saving into Dev_Test's autosaves; Leaving and Arrived with source Mod. `levels.use` on the mines' Management door reported the exit's id and source Mod; before the fix a door opened by a mod reported Game.)
+- [x] **Entrypoints:** `travel.entrypoint name=Dev.Spot` at the player, `travel.teleport` there from elsewhere, then `remove=true`: removed, a second removal false, the teleport refused and the name gone from the list.
+- [x] **Open Sewer Mines:** `trains.list segments=true`, `trains.events`, `trains.drive`, `trains.switch`. (A minitrain started through its cab, departed, stopped on the brake; at 5 m/s it coupled to three fuel wagons, and a crash into a buffer at 4.6 m/s gave one Crashed event. Before the fix no crash was ever reported: the game's bounce back moves the train again before its crash step returns. A free switch swung to branch 1 a moment after the call; one with a wagon on its segment refused and `force` threw it at once.)
+- [x] **Open Sewer Metro:** `tickets.list price=5` changes the ticket price at the machine. (Both machines 25 to 5, a ×2 factor on one gave 10, reset gave 25. A ticket bought at 5 took 100 to 95 OC, with TicketBought and TicketTaken.)
+- [x] **Elevator** (Kolhola's instead of the Bazaar Mine's): `elevators.call` to floor 3 gave Called (Mod), the car moved 0 to 3 and Arrived came about 14 s later; a call to the floor it stands at gives Arrived again (the game's floor-reached step, doors open).
+- [x] **Drones** (Open Sewer Tenement; the Bazaar Bakery has none): `drones.list nodes=true` gives each node's range and links; `drones.set target=<node> start=true` switched the drone on and each of the five nodes it passed was reported with its id, in route order.
+- [x] **Wait stations:** `waits.list`, `waits.use`. (Interior Mines Management: 13:29 to 18:30 and a Finished event with 18,033 s; a second use during the wait was refused.)
+- [x] **Saves:** during a save started from a script, a tarp, lock, keypad, elevator, door and teleport call each returned false and changed nothing.
+- [ ] **Train on train:** drive a minitrain fast (over its couplers' speed) into a standing wagon: one Crashed event naming the wagon, not two.
 - [ ] **Computer apps, Interior Bazaar Internet Cafe:**
   - Register a test app from a script with `ComputerApps.Register`, then sit at a computer.
   - The tile shows on the desktop, and clicking it opens the app window.
@@ -555,7 +561,7 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 - [ ] **Console:** `oben eval 'return ObenFramework.Console.GameConsole.Open();'` opens the F1 console (screenshot); `Close()` shuts it a frame later and the player can move again.
 - [ ] **Tooltip:** `oben eval 'return ObenUIKit.Hud.ShowTooltip("Test", "Some <b>details</b>");'` shows the game's tooltip box (screenshot); `HideTooltip()` removes it.
 - [ ] **Notes [save]:** with a note held, `PlayerNotes.Open(<id from player.notes>)` opens the menu's notes page at it; for a book, at the page it was left on.
-- [ ] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires.
+- [x] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires. (2026-10-31, Kolhola: `keypads.set refuse=true`.)
 - [ ] **Power devices:** `PowerDevices.Describe(<a stove>).FuelItemIds()` lists wood and other fuels; `BurnTimeFactor` is 1 for most.
 - [ ] **Sounds:** `GameSounds.PlayPickup("Bottle")`, `PlayLibrary("harvest")` and `PlayLibraryAt("scarySounds", <position>)` are heard; `SoundscapeIds()` lists the level's soundscapes and `SetSoundscape(id)` / `ResetSoundscape()` switch the ambience.
 - [ ] **Economy:** `Wallet.RmToOc(1)` gives 10; `Prices.OfSale(<trader>, <item>, out _)` is lower than `Prices.Of` for the same item (base sell price 0.9 against 1.2).

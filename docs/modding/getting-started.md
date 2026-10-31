@@ -224,3 +224,8 @@ GameConsole.Register(this, "heal", "heal [amount]", args =>
 ```
 
 They show up in `help` under "Mod commands" and disappear when the mod unloads.
+
+- A name is one word without quotes (the console splits a line on spaces, keeping `"quoted parts"` whole); anything else throws. Two mods can't register the same name. A mod command with the name of one of the game's replaces it while the mod is loaded.
+- The handler gets the words after the name and returns text to print (rich text works), or null. A handler that throws prints "name failed: ..." in red.
+- `GameConsole.Print(text)` prints at any time, `Open()` and `Close()` open and shut the console as F1 does, `IsOpen` says whether it's up, and `Execute(line)` runs a line as if typed and returns what it printed.
+- `GameConsole.IsAvailable` is false when the console hooks couldn't go on (the game changed); commands still register but nothing runs them.

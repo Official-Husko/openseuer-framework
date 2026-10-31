@@ -53,4 +53,17 @@ public class ConsoleTokensTests
     {
         Assert.Equal(new[] { "a", "", "b" }, ConsoleTokens.Split("a \"\" b"));
     }
+
+    [Theory]
+    [InlineData("report", true)]
+    [InlineData("mod_cmd-2", true)]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("two words", false)]
+    [InlineData("tab\there", false)]
+    [InlineData("say\"", false)]
+    public void CommandNamesAreOneWordWithoutQuotes(string? name, bool valid)
+    {
+        Assert.Equal(valid, ConsoleTokens.IsName(name!));
+    }
 }

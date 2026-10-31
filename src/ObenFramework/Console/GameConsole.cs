@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenLoader;
+using ObenFramework.Patching;
 using ObenLoader.Runtime;
+using UnityEngine;
 
 namespace ObenFramework.Console;
 
@@ -18,30 +20,39 @@ public static class GameConsole
 
     // Set while Execute runs, so everything the console prints is collected.
     private static List<string> _capture;
+    private static int _closeAsked = -10;
+
+    /// <summary>The console hooks are on: mod commands run and show up in help.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Console");
 
     public static bool IsOpen => DeveloperConsole.Instance != null && DeveloperConsole.Instance.consoleOpened;
 
     public static IEnumerable<ConsoleCommand> ModCommands => Commands.Values;
 
-    /// <summary>Opens the console, as F1 does. False when it doesn't exist yet or is already open.</summary>
+    /// <summary>Opens the console, as F1 does. False when it doesn't exist yet, is already open or is still closing.</summary>
     public static bool Open()
     {
         var console = DeveloperConsole.Instance;
-        if (console == null || console.consoleOpened)
+        // The game's toggle reaches Achievements.instance unguarded.
+        if (console == null || console.consoleOpened || Achievements.instance == null)
             return false;
         console.ToggleDevConsole();
         return true;
     }
 
-    /// <summary>Closes the console; the game finishes closing it a frame later. False when it isn't open.</summary>
+    /// <summary>Closes the console; the game finishes closing it a frame later. False when it isn't open or is already closing.</summary>
     public static bool Close()
     {
         var console = DeveloperConsole.Instance;
-        if (console == null || !console.consoleOpened)
+        if (console == null || !console.consoleOpened || Closing)
             return false;
+        _closeAsked = Time.frameCount;
         console.ToggleDevConsole();
         return true;
     }
+
+    // The game closes it from a coroutine on the next frame; a second toggle before that would start another.
+    private static bool Closing => Time.frameCount - _closeAsked <= 1;
 
     /// <summary>
     /// Adds a command owned by a mod. Names can't clash with each other; a mod command with the same
@@ -49,9 +60,15 @@ public static class GameConsole
     /// </summary>
     public static void Register(ObenMod owner, string name, string usage, Func<string[], string> handler)
     {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        if (handler == null)
+            throw new ArgumentNullException(nameof(handler));
+        if (!ConsoleTokens.IsName(name))
+            throw new ArgumentException($"Console command names are one word without quotes; '{name}' isn't.", nameof(name));
         if (Commands.TryGetValue(name, out var existing))
             throw new InvalidOperationException($"Console command '{name}' is already registered by {existing.Owner}.");
-        Commands[name] = new ConsoleCommand(name, usage, owner.Info.Id, handler);
+        Commands[name] = new ConsoleCommand(name, string.IsNullOrEmpty(usage) ? name : usage, owner.Info.Id, handler);
         owner.Track(Disposable.Create(() => Commands.Remove(name)));
     }
 

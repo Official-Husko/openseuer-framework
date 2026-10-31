@@ -80,7 +80,7 @@ public sealed class FrameworkMod : ObenMod
         Start("recipe placeholders", RecipePlaceholders.Init);
         Start("item placeholders", ItemPlaceholders.Init);
         Start("crafting", CraftingModule.Init);
-        Start("environment", EnvironmentModule.Init);
+        Start("environment", EnvironmentModule.Init, EnvironmentModule.Update);
         Start("transport", TransportModule.Init, TransportModule.Update);
         Start("custom furniture", CustomFurniture.Init);
         Start("media", MediaModule.Init, MediaModule.Update);

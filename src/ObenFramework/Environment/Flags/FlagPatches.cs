@@ -53,12 +53,17 @@ internal static class FlagPatches
     }
 }
 
-/// <summary>Keeps forced flags out of the save: the values underneath are written while <c>GlobalState</c> serialises.</summary>
-[HarmonyPatch(typeof(GlobalState), nameof(GlobalState.OnSavingGame))]
+/// <summary>
+/// Keeps forced flags out of the save. <c>GlobalState.OnSavingGame</c> only hands the object to the save; the
+/// file is written at the end of <c>SaveController.SaveGame</c>. So the values underneath go in when the game
+/// collects the flags and the forces come back once <c>SaveGame</c> returns or throws.
+/// </summary>
+[HarmonyPatch]
 internal static class FlagSavePatch
 {
     [HarmonyPrefix]
-    private static void Before(GlobalState __instance)
+    [HarmonyPatch(typeof(GlobalState), nameof(GlobalState.OnSavingGame))]
+    private static void Collecting(GlobalState __instance)
     {
         try
         {
@@ -71,15 +76,17 @@ internal static class FlagSavePatch
     }
 
     [HarmonyFinalizer]
-    private static void After(GlobalState __instance)
+    [HarmonyPatch(typeof(SaveController), nameof(SaveController.SaveGame))]
+    private static Exception Written(Exception __exception)
     {
         try
         {
-            FlagOverrides.ResumeAfterSave(__instance);
+            FlagOverrides.ResumeAfterSave();
         }
         catch (Exception e)
         {
             WorldLog.Failed("Global flag save hook", e);
         }
+        return __exception;
     }
 }

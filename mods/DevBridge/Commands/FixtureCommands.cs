@@ -61,56 +61,57 @@ internal static class FixtureCommands
             case "lantern":
             {
                 var lantern = Lanterns.Find(id) ?? throw Missing(id);
-                if (p.Bool("on"))
-                    Lanterns.Light(lantern);
-                else
-                    Lanterns.Extinguish(lantern);
+                bool ok = p.Bool("on") ? Lanterns.Light(lantern) : Lanterns.Extinguish(lantern);
                 var l = Lanterns.Describe(lantern);
-                return new JObject { ["id"] = l.Id, ["lit"] = l.Lit, ["secondsLeft"] = l.SecondsLeft };
+                return new JObject { ["ok"] = ok, ["id"] = l.Id, ["lit"] = l.Lit, ["secondsLeft"] = l.SecondsLeft };
             }
             case "tank":
             {
                 var tank = Tanks.Find(id) ?? throw Missing(id);
-                if (p["amount"] != null)
-                    Tanks.Fill(tank, p.Int("item", tank.Liquid != null ? tank.Liquid.ID : 0), p.Float("amount"));
-                if (p["locked"] != null && !Tanks.SetLocked(tank, p.Bool("locked")))
+                if (p["locked"] != null && tank._Lock == null)
                     throw new InvalidOperationException("That container has no lock.");
-                return Tank(Tanks.Describe(tank));
+                bool ok = true;
+                if (p["amount"] != null)
+                    ok &= p.Float("amount") <= 0f ? Tanks.Empty(tank) : Tanks.Fill(tank, p.Int("item", tank.Liquid != null ? tank.Liquid.ID : 0), p.Float("amount"));
+                if (p["locked"] != null)
+                    ok &= Tanks.SetLocked(tank, p.Bool("locked"));
+                var result = Tank(Tanks.Describe(tank));
+                result["ok"] = ok;
+                return result;
             }
             case "floodgate":
             {
                 var gate = FloodGates.Find(id) ?? throw Missing(id);
-                if (p["on"] != null)
-                    FloodGates.SetPowered(gate, p.Bool("on"));
-                bool accepted = p["open"] == null || FloodGates.SetOpen(gate, p.Bool("open"));
+                bool accepted = p["on"] == null || FloodGates.SetPowered(gate, p.Bool("on"));
+                accepted &= p["open"] == null || FloodGates.SetOpen(gate, p.Bool("open"));
                 var g = FloodGates.Describe(gate);
                 return new JObject { ["id"] = g.Id, ["open"] = g.Open, ["moving"] = g.Moving, ["powered"] = g.Powered, ["accepted"] = accepted };
             }
             case "shower":
             {
                 var shower = Showers.Find(id) ?? throw Missing(id);
-                Showers.SetOn(shower, p.Bool("on"));
+                bool ok = Showers.SetOn(shower, p.Bool("on"));
                 var s = Showers.Describe(shower);
-                return new JObject { ["id"] = s.Id, ["on"] = s.On, ["running"] = s.Running };
+                return new JObject { ["ok"] = ok, ["id"] = s.Id, ["on"] = s.On, ["running"] = s.Running };
             }
             case "sauna":
             {
                 var sauna = Saunas.Find(id) ?? throw Missing(id);
-                if (p["on"] != null)
-                    Saunas.SetOn(sauna, p.Bool("on"));
+                bool ok = p["on"] == null || Saunas.SetOn(sauna, p.Bool("on"));
                 if (p.Bool("water", false))
-                    Saunas.ThrowWater(sauna);
-                return Sauna(Saunas.Describe(sauna));
+                    ok &= Saunas.ThrowWater(sauna);
+                var result = Sauna(Saunas.Describe(sauna));
+                result["ok"] = ok;
+                return result;
             }
             case "light":
             {
                 var light = MultiStateLights.Find(id) ?? throw Missing(id);
-                if (p["state"] != null)
-                    MultiStateLights.SetState(light, p.Int("state", -1));
+                bool ok = p["state"] == null || MultiStateLights.SetState(light, p.Int("state", -1));
                 if (p["on"] != null)
-                    MultiStateLights.SetOn(light, p.Bool("on"));
+                    ok &= MultiStateLights.SetOn(light, p.Bool("on"));
                 var l = MultiStateLights.Describe(light);
-                return new JObject { ["id"] = l.Id, ["on"] = l.On, ["state"] = l.State, ["states"] = l.StateCount };
+                return new JObject { ["ok"] = ok, ["id"] = l.Id, ["on"] = l.On, ["state"] = l.State, ["states"] = l.StateCount };
             }
             default:
                 throw new ArgumentException("kind is " + Kinds + ".");

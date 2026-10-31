@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using ObenLoader;
 using UnityEngine;
@@ -32,6 +33,12 @@ public static class WorldSky
             return SkyApply.Read();
         }
     }
+
+    /// <summary>
+    /// True when the hooks are in place that keep the game's own sky values underneath the overrides, so the
+    /// sky goes back to the game's once they are cleared.
+    /// </summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     /// <summary>True while some mod holds an override.</summary>
     public static bool IsOverridden => !Overrides.IsEmpty;

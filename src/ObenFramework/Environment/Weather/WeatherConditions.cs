@@ -71,10 +71,13 @@ public static class WeatherConditions
     /// <summary>Lightning and thunder are on.</summary>
     public static bool IsThunderActive => IsAvailable && WeatherManager.instance.IsThunderActive();
 
-    /// <summary>Starts or stops lightning and thunder until the next weather change. False without a weather system.</summary>
+    /// <summary>
+    /// Starts or stops lightning and thunder until the next weather change. False without a weather system, or
+    /// while a save is written or loaded.
+    /// </summary>
     public static bool SetThunder(bool active)
     {
-        if (!IsAvailable)
+        if (!IsAvailable || ObenFramework.Saves.SaveGate.IsBusy)
             return false;
         var manager = WeatherManager.instance;
         if (manager.IsThunderActive() != active)

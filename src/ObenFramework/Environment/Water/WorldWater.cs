@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Env;
@@ -42,7 +44,7 @@ public sealed class WaterVolumeInfo
 /// <summary>
 /// Water: the player swimming and diving, their breath, the bodies of water in the scene (<c>Water</c>), and
 /// the scene's water supply that taps and sinks draw from. Changes to a body of water last until the level
-/// is loaded again.
+/// is loaded again. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class WorldWater
 {
@@ -51,6 +53,9 @@ public static class WorldWater
 
     /// <summary>The player went under (true) or came up (false). Not raised while a save loads.</summary>
     public static readonly WorldEvent<bool> UnderwaterChanged = new WorldEvent<bool>(nameof(UnderwaterChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="UnderwaterChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     public static bool IsPlayerSwimming => WaterController.instance != null && WaterController.instance.PlayerIsSwimming;
 
@@ -63,7 +68,7 @@ public static class WorldWater
     public static bool ResetBreath()
     {
         var controller = WaterController.instance;
-        if (controller == null)
+        if (controller == null || SaveGate.IsBusy)
             return false;
         controller.timeInWater = 0f;
         return true;
@@ -107,19 +112,25 @@ public static class WorldWater
         new WaterVolumeInfo(ObjectIds.IdOf(water), water.name, water.density, water.drag, water.drowndamage, water.setPlayerHygiene, water.maxDepth);
 
     /// <summary>Changes a body of water; parts left null stay as they are. Throws when there is none with that id.</summary>
-    public static void SetVolume(string id, float? density = null, float? drag = null, float? drownDamage = null, int? swimHygiene = null)
+    public static bool SetVolume(string id, float? density = null, float? drag = null, float? drownDamage = null, int? swimHygiene = null)
     {
         var water = Find(id);
         if (water == null)
             throw new ArgumentException($"No water '{id}'.", nameof(id));
-        if (density.HasValue)
-            water.density = NotNegative(density.Value, nameof(density));
-        if (drag.HasValue)
-            water.drag = NotNegative(drag.Value, nameof(drag));
-        if (drownDamage.HasValue)
-            water.drowndamage = NotNegative(drownDamage.Value, nameof(drownDamage));
+        float? newDensity = density.HasValue ? NotNegative(density.Value, nameof(density)) : (float?)null;
+        float? newDrag = drag.HasValue ? NotNegative(drag.Value, nameof(drag)) : (float?)null;
+        float? newDamage = drownDamage.HasValue ? NotNegative(drownDamage.Value, nameof(drownDamage)) : (float?)null;
+        if (SaveGate.IsBusy)
+            return false;
+        if (newDensity.HasValue)
+            water.density = newDensity.Value;
+        if (newDrag.HasValue)
+            water.drag = newDrag.Value;
+        if (newDamage.HasValue)
+            water.drowndamage = newDamage.Value;
         if (swimHygiene.HasValue)
             water.setPlayerHygiene = Math.Max(-1, swimHygiene.Value);
+        return true;
     }
 
     private static float NotNegative(float value, string name)

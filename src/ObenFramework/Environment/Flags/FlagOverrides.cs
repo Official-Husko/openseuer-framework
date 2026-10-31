@@ -9,7 +9,9 @@ namespace ObenFramework.Env;
 /// Keeps forced flags in the game's dictionary while remembering what the game had underneath. Values are
 /// written straight into <c>GlobalState.state</c> so the forcing itself does not look like a game write.
 /// The game's writes to a forced flag (see <see cref="FlagPatches"/>) update the remembered value; saving
-/// swaps the remembered values in and back out, so a force never reaches the save file.
+/// swaps the remembered values in and back out, so a force never reaches the save file. The game only
+/// collects <c>GlobalState</c> in its save step and writes the file at the end of <c>SaveGame</c>, so the
+/// values underneath stay in from the collecting until the save is done.
 /// </summary>
 internal static class FlagOverrides
 {
@@ -23,6 +25,7 @@ internal static class FlagOverrides
     private static readonly OwnedValues<bool> Forces = new OwnedValues<bool> { Released = Apply };
     private static readonly Dictionary<string, Underneath> Vanilla = new Dictionary<string, Underneath>();
     private static bool _suspended;
+    private static GlobalState _suspendedStore;
 
     public static List<OwnedValue<bool>> Entries => Forces.Entries;
 
@@ -82,14 +85,18 @@ internal static class FlagOverrides
             Raise(key, want, before, true, ChangeSource.Mod);
     }
 
-    /// <summary>The game wrote a forced flag: keep what it wrote as the value underneath and force again.</summary>
+    /// <summary>
+    /// The game wrote a forced flag: keep what it wrote as the value underneath and force again (during a save
+    /// only once the save is done, the file gets the game's value).
+    /// </summary>
     public static void GameWrote(GlobalState store, string key)
     {
-        if (_suspended || !Forces.TryGet(key, out bool want))
+        if (!Forces.TryGet(key, out bool want))
             return;
         var info = store.GetState(key);
         Vanilla[key] = new Underneath { Store = store, Existed = info != null, Active = info != null && info.active };
-        Write(store, key, want);
+        if (!_suspended)
+            Write(store, key, want);
     }
 
     /// <summary>Forces again after a level load: the new scene's state came from the save, without the forces.</summary>
@@ -99,7 +106,7 @@ internal static class FlagOverrides
             Apply(key);
     }
 
-    /// <summary>Before the game serialises the flags: show it the values underneath.</summary>
+    /// <summary>The game collects the flags for its save: show it the values underneath until the file is written.</summary>
     public static void SuspendForSave(GlobalState store)
     {
         if (_suspended || Forces.IsEmpty)
@@ -110,18 +117,25 @@ internal static class FlagOverrides
                 WriteUnderneath(store, key, under);
         }
         _suspended = true;
+        _suspendedStore = store;
     }
 
-    public static void ResumeAfterSave(GlobalState store)
+    /// <summary>The save is written (or failed): force the flags again.</summary>
+    public static void ResumeAfterSave()
     {
+        var store = _suspendedStore;
+        _suspendedStore = null;
         if (!_suspended)
             return;
         _suspended = false;
+        if (store == null)
+            return;
         foreach (string key in Forces.Keys())
         {
-            // A force whose value underneath was never read from this store is applied by ReapplyAll instead.
             if (Forces.TryGet(key, out bool want) && Vanilla.TryGetValue(key, out var under) && under.Store == store)
                 Write(store, key, want);
+            else if (store == GlobalState.instance)
+                Apply(key); // forced while the save ran
         }
     }
 
@@ -132,6 +146,7 @@ internal static class FlagOverrides
     public static void BeforeLoad()
     {
         _suspended = false;
+        _suspendedStore = null;
         var store = GlobalState.instance;
         if (store != null)
         {
@@ -148,6 +163,7 @@ internal static class FlagOverrides
     public static void RestoreAll()
     {
         _suspended = false;
+        _suspendedStore = null;
         var store = GlobalState.instance;
         var keys = Forces.Keys();
         Forces.Clear();

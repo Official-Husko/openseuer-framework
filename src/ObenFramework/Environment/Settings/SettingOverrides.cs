@@ -125,5 +125,7 @@ internal static class SettingOverrides
             SetControls.instance.SetSensitivity();
         else if (TrySensitivity(out int value))
             camera.mouseSensitivitySetting = CameraSensitivity(value);
+        else if (ControlsSave.instance != null && ControlsSave.instance.controlsSave != null)
+            camera.mouseSensitivitySetting = CameraSensitivity(ControlsSave.instance.controlsSave.mouseSensitivity);
     }
 }

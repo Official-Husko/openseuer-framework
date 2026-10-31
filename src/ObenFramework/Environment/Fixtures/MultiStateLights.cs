@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Env;
@@ -55,12 +57,16 @@ public sealed class MultiStateLightInfo
 
 /// <summary>
 /// Lights with several states (<c>LightTurnOffOnMultiState</c>): signs and fixtures that switch between
-/// colours or patterns. Plain fixtures are <see cref="Lights"/>.
+/// colours or patterns. Plain fixtures are <see cref="Lights"/>. Changes are refused (false) while a save is
+/// written or loaded.
 /// </summary>
 public static class MultiStateLights
 {
     /// <summary>A light was switched or changed state. Not raised while a save loads.</summary>
     public static readonly WorldEvent<LightStateChange> StateChanged = new WorldEvent<LightStateChange>(nameof(StateChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="StateChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     public static List<MultiStateLightInfo> All()
     {
@@ -77,24 +83,31 @@ public static class MultiStateLights
     public static MultiStateLightInfo Describe(LightTurnOffOnMultiState light) =>
         new MultiStateLightInfo(IdOf(light), light.name, light.on, light.currentState, light.lightStates != null ? light.lightStates.Count : 0);
 
-    public static void SetOn(LightTurnOffOnMultiState light, bool on)
+    public static bool SetOn(LightTurnOffOnMultiState light, bool on)
     {
         if (light == null)
             throw new ArgumentNullException(nameof(light));
         if (light.on == on)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             light.Toggle(on);
+        return light.on == on;
     }
 
     /// <summary>Picks the state shown (-1 for none). It shows once the light is on.</summary>
-    public static void SetState(LightTurnOffOnMultiState light, int state)
+    public static bool SetState(LightTurnOffOnMultiState light, int state)
     {
         if (light == null)
             throw new ArgumentNullException(nameof(light));
         int count = light.lightStates != null ? light.lightStates.Count : 0;
         if (state < -1 || state >= count)
             throw new ArgumentOutOfRangeException(nameof(state), $"-1 to {count - 1}.");
+        if (light.currentState == state)
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             if (light.on)
@@ -102,7 +115,9 @@ public static class MultiStateLights
             else
                 light.currentState = state;
         }
+        // An off light only gets the number (the game's SetState would light it), so its change is raised here.
         if (!light.on && StateChanged.HasSubscribers && WorldChanges.Active)
             StateChanged.Raise(new LightStateChange(light, false, state, ChangeSource.Mod));
+        return light.currentState == state;
     }
 }

@@ -24,6 +24,8 @@ internal static class EnvironmentModule
         ForgetScene();
     }
 
+    public static void Update() => TankWatch.Update();
+
     private static void OnWorldReady(string scene)
     {
         FlagOverrides.ReapplyAll();
@@ -48,6 +50,7 @@ internal static class EnvironmentModule
         ScreenBlur.ForgetScene();
         WorldSky.SceneChanging();
         WeatherZones.ForgetScene();
+        TankWatch.Reset();
     }
 
     private static void Unload()

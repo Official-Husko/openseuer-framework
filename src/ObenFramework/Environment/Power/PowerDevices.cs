@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -14,11 +16,15 @@ namespace ObenFramework.Env;
 /// Grids themselves are in <see cref="PowerGrids"/>; light fixtures in <see cref="Lights"/>. Stations that
 /// are always on and draw from no grid (flower pots, compost) are not listed. Ids work like the item
 /// module's: a GUID, an address, or <c>furniture:{id}:{n}</c> for placed furniture. Lists scan the scene.
+/// Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class PowerDevices
 {
     /// <summary>A device was switched, ran out of fuel, or a battery started or stopped. Not raised while a save loads.</summary>
     public static readonly WorldEvent<PowerDeviceChange> DeviceChanged = new WorldEvent<PowerDeviceChange>(nameof(DeviceChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="DeviceChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     /// <summary>Every power device in the loaded scenes.</summary>
     public static List<Component> All()
@@ -34,13 +40,13 @@ public static class PowerDevices
         return result;
     }
 
-    /// <summary>The device with this id, or null.</summary>
+    /// <summary>The device with this id, or null (also for the always-on stations <see cref="All"/> leaves out).</summary>
     public static Component Find(string id)
     {
         if (string.IsNullOrEmpty(id))
             return null;
         var station = ObjectIds.Find<CraftingBase>(id);
-        if (station != null && station._Power != null)
+        if (IsDevice(station))
             return station;
         var consumer = ObjectIds.Find<PowerGridListener>(id);
         if (consumer != null)
@@ -98,6 +104,10 @@ public static class PowerDevices
     {
         if (device == null)
             throw new ArgumentNullException(nameof(device));
+        if (KindOf(device) == null)
+            throw new ArgumentException($"{device.GetType().Name} is not a power device.", nameof(device));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             switch (device)

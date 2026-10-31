@@ -59,11 +59,14 @@ internal static class PowerCommands
         var grid = PowerGrids.Find(id) ?? throw new ArgumentException($"No power grid '{id}'.");
         if (p["enabled"] == null && p["capacity"] == null)
             throw new ArgumentException("Give enabled and/or capacity.");
+        bool ok = true;
         if (p["enabled"] != null)
-            PowerGrids.SetEnabled(grid, p.Bool("enabled"));
+            ok &= PowerGrids.SetEnabled(grid, p.Bool("enabled"));
         if (p["capacity"] != null)
-            PowerGrids.SetBaseCapacity(grid, p.Int("capacity", 0));
-        return Grid(PowerGrids.Describe(grid));
+            ok &= PowerGrids.SetBaseCapacity(grid, p.Int("capacity", 0));
+        var result = Grid(PowerGrids.Describe(grid));
+        result["ok"] = ok;
+        return result;
     }
 
     private static JObject Describe(PowerDeviceInfo d)

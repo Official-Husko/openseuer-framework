@@ -131,4 +131,21 @@ public class OwnedValuesTests
         Assert.True(_values.IsEmpty);
         Assert.Empty(released);
     }
+
+    [Fact]
+    public void ClearKeepsOwnersTrackedOnce()
+    {
+        var released = new List<string>();
+        _values.Released = released.Add;
+        var a = new Owner();
+        _values.Set(a, "a", "x", 1);
+        _values.Clear();
+        _values.Set(a, "a", "x", 2);
+        _values.Clear();
+        _values.Set(a, "a", "y", 3);
+        Assert.Single(a.Tracked);
+        a.Unload();
+        Assert.True(_values.IsEmpty);
+        Assert.Equal(new[] { "y" }, released);
+    }
 }

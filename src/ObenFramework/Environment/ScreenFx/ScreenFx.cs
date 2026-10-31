@@ -1,4 +1,6 @@
 using System;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenLoader;
 using UnityEngine;
 
@@ -8,10 +10,14 @@ namespace ObenFramework.Env;
 /// Full-screen effects: camera shake, fade to black, a coloured vignette and a blur. The lasting ones are
 /// held per mod: they stay while the mod wants them, the newest mod's values show when several hold one,
 /// and they go away when the mod clears them or unloads. Colours are given the usual way (sRGB, like a
-/// colour picker); the game renders in linear colour space and they are converted for it.
+/// colour picker); the game renders in linear colour space and they are converted for it. Shakes, fades and
+/// the death message are refused (false) while a save is written or loaded, when the game runs the screen.
 /// </summary>
 public static class ScreenFx
 {
+    /// <summary>True when the hooks are in place that keep the game's own menu blur under a mod's blur.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
+
     /// <summary>True while some mod holds the screen black.</summary>
     public static bool IsHeldBlack => ScreenFade.Any;
 
@@ -31,7 +37,7 @@ public static class ScreenFx
             throw new ArgumentOutOfRangeException(nameof(seconds), "Give a positive number of seconds.");
         if (!(amount >= 0f) || float.IsInfinity(amount))
             throw new ArgumentOutOfRangeException(nameof(amount), "Give an amount of 0 or more.");
-        return ScreenShake.Shake(seconds, amount);
+        return !SaveGate.IsBusy && ScreenShake.Shake(seconds, amount);
     }
 
     /// <summary>
@@ -43,15 +49,18 @@ public static class ScreenFx
     {
         RequireOwner(owner);
         RequireSpeed(speed);
-        return ScreenFade.ToBlack(owner, speed);
+        return !SaveGate.IsBusy && ScreenFade.ToBlack(owner, speed);
     }
 
-    /// <summary>Ends <paramref name="owner"/>'s hold; the screen fades back once no mod holds it. True when it had one.</summary>
+    /// <summary>
+    /// Ends <paramref name="owner"/>'s hold; the screen fades back once no mod holds it. True when it had one.
+    /// While a save is written or loaded the hold stays (false), so the game's own black screen isn't lifted.
+    /// </summary>
     public static bool FadeFromBlack(ObenMod owner, float speed = 0.1f)
     {
         RequireOwner(owner);
         RequireSpeed(speed);
-        return ScreenFade.FromBlack(owner, speed);
+        return !SaveGate.IsBusy && ScreenFade.FromBlack(owner, speed);
     }
 
     /// <summary>
@@ -97,13 +106,13 @@ public static class ScreenFx
         return ScreenBlur.Clear(owner, fadeSeconds);
     }
 
-    /// <summary>Sets the line the death screen shows under its title. Returns false outside a gameplay scene.</summary>
+    /// <summary>Sets the line the death screen shows under its title. Returns false outside a gameplay scene or during a save.</summary>
     public static bool SetDeathMessage(string text)
     {
         if (text == null)
             throw new ArgumentNullException(nameof(text));
         var message = DeathMessage.instance;
-        if (message == null)
+        if (message == null || SaveGate.IsBusy)
             return false;
         message.ChangeDeathMessage(text);
         return true;

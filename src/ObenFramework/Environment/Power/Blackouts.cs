@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using HarmonyLib;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -43,7 +44,8 @@ public static class Blackouts
 
     /// <summary>
     /// Arranges the wake-up of the blackout that is coming or running: fade speed, real seconds until the
-    /// player wakes, the pose, and whether it happens by itself. False outside a gameplay scene.
+    /// player wakes, the pose, and whether it happens by itself. It applies once the level the blackout carries
+    /// the player to has loaded, so it is allowed during that level change. False outside a gameplay scene.
     /// </summary>
     public static bool ScheduleWakeUp(float fadeOutSpeed, float wakeUpDelay, WakeUpPose pose, bool automatic)
     {
@@ -54,11 +56,14 @@ public static class Blackouts
         return true;
     }
 
-    /// <summary>Wakes the player from a blackout now. False outside a gameplay scene.</summary>
+    /// <summary>
+    /// Wakes the player from a blackout now, with the pose and delay the blackout chose for a wake-up by hand
+    /// (not those of <see cref="ScheduleWakeUp"/>). False outside a gameplay scene, or while a save is written or loaded.
+    /// </summary>
     public static bool WakeUp()
     {
         var controller = BlackoutController.instance;
-        if (controller == null || BlackCanvas.instance == null)
+        if (controller == null || BlackCanvas.instance == null || SaveGate.IsBusy)
             return false;
         controller.TriggerWakeUp();
         return true;

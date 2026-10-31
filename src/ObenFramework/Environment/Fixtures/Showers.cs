@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Env;
@@ -48,7 +50,10 @@ public sealed class ShowerInfo
     public bool Running { get; }
 }
 
-/// <summary>Showers: turn them on and off; standing under a running one washes the player. Saved with the game.</summary>
+/// <summary>
+/// Showers: turn them on and off; standing under a running one washes the player. Saved with the game. A running
+/// shower drains the tank it draws from, which <see cref="Tanks.TankChanged"/> reports.
+/// </summary>
 public static class Showers
 {
     private static readonly AccessTools.FieldRef<InteractableShower, bool> ShowerOn = AccessTools.FieldRefAccess<InteractableShower, bool>("showerOn");
@@ -56,6 +61,9 @@ public static class Showers
 
     /// <summary>A shower was turned on or off. Not raised while a save loads.</summary>
     public static readonly WorldEvent<ShowerChange> ShowerChanged = new WorldEvent<ShowerChange>(nameof(ShowerChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="ShowerChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     public static List<ShowerInfo> All()
     {
@@ -73,13 +81,15 @@ public static class Showers
 
     public static ShowerInfo Describe(InteractableShower shower) => new ShowerInfo(IdOf(shower), shower.name, ShowerOn(shower), WaterOn(shower));
 
-    /// <summary>Turns the shower on or off, with its sound.</summary>
-    public static void SetOn(InteractableShower shower, bool on)
+    /// <summary>Turns the shower on or off, with its sound. False while a save is written or loaded.</summary>
+    public static bool SetOn(InteractableShower shower, bool on)
     {
         if (shower == null)
             throw new ArgumentNullException(nameof(shower));
         if (IsOn(shower) == on)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             if (on)
@@ -87,5 +97,6 @@ public static class Showers
             else
                 shower.TurnOff(true);
         }
+        return IsOn(shower) == on;
     }
 }

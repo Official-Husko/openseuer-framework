@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Env;
@@ -45,6 +47,9 @@ public static class BlastSites
     /// <summary>A cone blew up. Raised once per cone; linked cones raise their own.</summary>
     public static readonly WorldEvent<InteractableDynamiteCone> Detonated = new WorldEvent<InteractableDynamiteCone>(nameof(Detonated));
 
+    /// <summary>True when the hook is in place, so <see cref="Detonated"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
+
     public static List<BlastSiteInfo> All()
     {
         var list = new List<BlastSiteInfo>();
@@ -60,13 +65,13 @@ public static class BlastSites
 
     /// <summary>
     /// Sets the cone off, like its fuse: only when it has dynamite and so do all cones linked to it, which go
-    /// off with it. Returns whether it blew up.
+    /// off with it. Returns whether it blew up; false while a save is written or loaded.
     /// </summary>
     public static bool Detonate(InteractableDynamiteCone cone)
     {
         if (cone == null)
             throw new ArgumentNullException(nameof(cone));
-        if (!cone.dynamitePlaced)
+        if (!cone.dynamitePlaced || SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
             cone.Detonate();

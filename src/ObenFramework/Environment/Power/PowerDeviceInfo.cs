@@ -29,10 +29,13 @@ public enum PowerDeviceChangeKind
     /// <summary>A fuelled device burnt its last fuel and stopped.</summary>
     FuelRanOut,
 
-    /// <summary>A battery started feeding its outputs (switched on with charge left).</summary>
+    /// <summary>
+    /// A battery started feeding its outputs: it found charge (when the level starts, or when its switch is
+    /// used). The game feeds the outputs whenever there is charge; the switch only decides whether it drains.
+    /// </summary>
     BatteryStarted,
 
-    /// <summary>A battery stopped feeding its outputs (switched off or empty).</summary>
+    /// <summary>A battery stopped feeding its outputs: it ran empty, or its charge was taken out.</summary>
     BatteryStopped,
 }
 

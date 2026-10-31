@@ -1,4 +1,5 @@
 using System;
+using ObenFramework.Patching;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -23,6 +24,9 @@ public static class GameSettings
 
     /// <summary>An option was changed and written to the player's options files (by the menu or a <c>Save*</c> call).</summary>
     public static readonly WorldEvent<SettingsArea> Changed = new WorldEvent<SettingsArea>(nameof(Changed));
+
+    /// <summary>True when the hooks are in place, so the overrides show and <see cref="Changed"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     /// <summary>The display options, or null before the game read them.</summary>
     public static DisplaySettings Display

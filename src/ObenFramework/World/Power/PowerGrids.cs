@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World.Addressing;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -93,6 +95,7 @@ public readonly struct PowerGridInfo
 /// that it switches off, most recently switched on first, when they use more than it offers. Which
 /// listener loses power depends on the order they were switched on, so the outcome is only reproducible
 /// with the same sequence of events. The devices on a grid are in <c>ObenFramework.Env.PowerDevices</c>.
+/// Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class PowerGrids
 {
@@ -102,6 +105,9 @@ public static class PowerGrids
     /// <see cref="Describe"/> when you need the numbers).
     /// </summary>
     public static readonly WorldEvent<PowerGridChange> GridChanged = new WorldEvent<PowerGridChange>(nameof(GridChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="GridChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>Every grid in the loaded scenes.</summary>
     public static List<PowerGrid> All(bool includeInactive = false) =>
@@ -128,14 +134,17 @@ public static class PowerGrids
     }
 
     /// <summary>Switches the grid's breaker the way a power meter or the main switch does (<c>Toggle</c>). The grid saves it.</summary>
-    public static void SetEnabled(PowerGrid grid, bool enabled)
+    public static bool SetEnabled(PowerGrid grid, bool enabled)
     {
         if (grid == null)
             throw new System.ArgumentNullException(nameof(grid));
         if (grid.GridEnabled == enabled)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             grid.Toggle(enabled);
+        return grid.GridEnabled == enabled;
     }
 
     /// <summary>
@@ -143,14 +152,17 @@ public static class PowerGrids
     /// grid's capacity from the electricity upgrade again whenever its utilities update, so a change there
     /// lasts until the next upgrade or level load.
     /// </summary>
-    public static void SetBaseCapacity(PowerGrid grid, int watts)
+    public static bool SetBaseCapacity(PowerGrid grid, int watts)
     {
         if (grid == null)
             throw new System.ArgumentNullException(nameof(grid));
         if (watts < 0)
             throw new System.ArgumentOutOfRangeException(nameof(watts), "Give 0 or more watts.");
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             grid.SetBaseBalance(watts);
+        return grid.BaseCapacity == watts;
     }
 
     public static PowerGridInfo Describe(PowerGrid grid) => new PowerGridInfo(

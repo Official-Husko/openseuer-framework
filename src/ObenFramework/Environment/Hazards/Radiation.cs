@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using HarmonyLib;
+using ObenFramework.Saves;
 using OS.Items;
 
 namespace ObenFramework.Env;
@@ -24,16 +25,20 @@ public static class Radiation
     /// <summary>The dose above which radiation starts to hurt (1000 by default).</summary>
     public static float DamageThreshold => PlayerStats.instance != null && PlayerStats.instance.radiation != null ? PlayerStats.instance.radiation.DoseDamageThreshold : 0f;
 
-    /// <summary>Sets the player's dose (0 or more).</summary>
-    public static void SetDose(float dose)
+    /// <summary>Sets the player's dose (0 or more). False without a player, or while a save is written or loaded.</summary>
+    public static bool SetDose(float dose)
     {
         if (float.IsNaN(dose) || float.IsInfinity(dose))
             throw new ArgumentException("Give a finite dose.", nameof(dose));
-        Stats.Dose = Math.Max(0f, dose);
+        var stats = PlayerStats.instance != null ? PlayerStats.instance.radiation : null;
+        if (stats == null || SaveGate.IsBusy)
+            return false;
+        stats.Dose = Math.Max(0f, dose);
+        return true;
     }
 
     /// <summary>Adds to (or with a negative amount takes from) the player's dose; it never goes below 0.</summary>
-    public static void AddDose(float amount) => SetDose(Dose + amount);
+    public static bool AddDose(float amount) => SetDose(Dose + amount);
 
     /// <summary>The background level of the scene: tiny normally, high while the wasteland effect is on.</summary>
     public static float Background => RadiationController.instance != null && SMVEffects.instance != null ? RadiationController.instance.GetBackgroundRadiation() : 0f;
@@ -43,7 +48,8 @@ public static class Radiation
 
     /// <summary>
     /// What the player's head receives right now: background, radiation sources in range, and the radiation
-    /// zones the player stands in. Measures on every call.
+    /// zones the player stands in. Zones made to never hurt stop adding once the dose reaches the damage
+    /// threshold, as in the game. Measures on every call.
     /// </summary>
     public static float RateHere
     {
@@ -54,9 +60,10 @@ public static class Radiation
             if (controller == null || player == null || player.playerHead == null || SMVEffects.instance == null)
                 return 0f;
             float rate = controller.MeasureRadiation(player.playerHead);
+            bool atThreshold = Dose >= DamageThreshold;
             foreach (var zone in RadiationController.allTriggers)
             {
-                if (zone != null && zone.enabled && zone.Enabled && PlayerInside(zone))
+                if (zone != null && zone.enabled && zone.Enabled && PlayerInside(zone) && !(zone.dontDamagePlayer && atThreshold))
                     rate += zone.radiation;
             }
             return rate;
@@ -89,16 +96,6 @@ public static class Radiation
             if (ammo == null || ammo.maxAmmo <= 0f)
                 return null;
             return ammo.ammo / ammo.maxAmmo;
-        }
-    }
-
-    private static PlayerStatsRadiation Stats
-    {
-        get
-        {
-            if (PlayerStats.instance == null || PlayerStats.instance.radiation == null)
-                throw new InvalidOperationException("There is no player here.");
-            return PlayerStats.instance.radiation;
         }
     }
 

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using ObenLoader;
 
@@ -48,6 +50,9 @@ public static class GlobalFlags
     /// <summary>True when the current scene has the global state (every gameplay scene).</summary>
     public static bool IsAvailable => GlobalState.instance != null;
 
+    /// <summary>True when the hooks are in place, so <see cref="FlagChanged"/> is raised and forces stay out of saves.</summary>
+    public static bool HooksAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
+
     /// <summary>True when the flag exists and is on. False when it is missing or there is no world.</summary>
     public static bool Get(string key)
     {
@@ -89,31 +94,39 @@ public static class GlobalFlags
 
     /// <summary>
     /// Turns a flag on or off for good, keeping its stored value, the way the game's scripts do. It is saved
-    /// with the game. A forced flag keeps showing the forced value; this changes what it falls back to.
+    /// with the game. A forced flag keeps showing the forced value; this changes what it falls back to. False
+    /// outside a gameplay scene, or while a save is written or loaded.
     /// </summary>
-    public static void Set(string key, bool active = true)
+    public static bool Set(string key, bool active = true)
     {
         RequireKey(key);
-        var store = Store;
+        var store = GlobalState.instance;
+        if (store == null || SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             var before = store.GetState(key);
             store.SetState(key, active, before != null ? before.data : null);
         }
+        return true;
     }
 
     /// <summary>Turns a flag on or off and replaces its stored value (any object the game's save can write).</summary>
-    public static void Set(string key, bool active, object data)
+    public static bool Set(string key, bool active, object data)
     {
         RequireKey(key);
-        var store = Store;
+        var store = GlobalState.instance;
+        if (store == null || SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             store.SetState(key, active, data);
+        return true;
     }
 
     /// <summary>
     /// Deletes a flag, so it reads as missing again. The game never does this itself; use it to undo a flag
-    /// your mod made up. Not allowed on a forced flag. True when there was one.
+    /// your mod made up. Not allowed on a forced flag. True when there was one; false while a save is written
+    /// or loaded.
     /// </summary>
     public static bool Remove(string key)
     {
@@ -121,6 +134,8 @@ public static class GlobalFlags
         if (FlagOverrides.IsForced(key))
             throw new InvalidOperationException($"Flag '{key}' is forced by {FlagOverrides.OwnerOf(key)}; release it first.");
         var store = Store;
+        if (SaveGate.IsBusy)
+            return false;
         bool wasActive = Get(key);
         if (!store.state.Remove(key))
             return false;
@@ -132,13 +147,17 @@ public static class GlobalFlags
     /// Makes the flag read <paramref name="active"/> until <paramref name="owner"/> releases it or unloads.
     /// The game can still write the flag meanwhile; those writes are kept and show again when the force ends.
     /// Forced values are never written into the save. When several mods force one flag, the newest wins.
+    /// False when the hooks that keep forces out of the save are off (a game update broke them).
     /// </summary>
-    public static void Force(ObenMod owner, string key, bool active)
+    public static bool Force(ObenMod owner, string key, bool active)
     {
         if (owner == null)
             throw new ArgumentNullException(nameof(owner));
         RequireKey(key);
+        if (!HooksAvailable)
+            return false;
         FlagOverrides.Force(owner, key, active);
+        return true;
     }
 
     /// <summary>Ends <paramref name="owner"/>'s force on the flag. True when it had one.</summary>

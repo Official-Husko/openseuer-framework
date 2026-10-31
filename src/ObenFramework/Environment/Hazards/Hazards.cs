@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -73,12 +75,16 @@ public readonly struct HazardEntry
 /// <summary>
 /// Radiation zones and sources, damage zones and radiation meters of the loaded scenes. List them, switch
 /// them on and off, and hear when the player walks into one. Zones switched by a mod are back to the
-/// scene's state after a level load; radiation sources save their switch with the game.
+/// scene's state after a level load; radiation sources save their switch with the game. Changes are refused
+/// (false) while a save is written or loaded.
 /// </summary>
 public static class Hazards
 {
     /// <summary>The player entered an enabled radiation or damage zone. A damage zone that only adds radiation counts once, as a damage zone.</summary>
     public static readonly WorldEvent<HazardEntry> Entered = new WorldEvent<HazardEntry>(nameof(Entered));
+
+    /// <summary>True when the hooks are in place, so <see cref="Entered"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     /// <summary>Every hazard of the loaded scenes. A scan.</summary>
     public static List<HazardInfo> All()
@@ -143,35 +149,39 @@ public static class Hazards
     /// Switches a hazard on or off. A damage zone that adds radiation switches its radiation part with it.
     /// Throws when there is no hazard with that id.
     /// </summary>
-    public static void SetEnabled(string id, bool enabled)
+    public static bool SetEnabled(string id, bool enabled)
     {
         var hazard = Find(id);
         if (hazard == null)
             throw new ArgumentException($"No hazard '{id}'.", nameof(id));
-        SetEnabled(hazard, enabled);
+        return SetEnabled(hazard, enabled);
     }
 
-    public static void SetEnabled(Component hazard, bool enabled)
+    /// <summary>
+    /// Switches a hazard on or off. A radiation zone switched off stops adding to the dose at once, also while
+    /// the player stands in it (the game's own switch only keeps new visitors out). True when it is that way.
+    /// </summary>
+    public static bool SetEnabled(Component hazard, bool enabled)
     {
+        if (hazard == null)
+            throw new ArgumentNullException(nameof(hazard));
+        if (KindOf(hazard) == null)
+            throw new ArgumentException("Not a hazard.", nameof(hazard));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             switch (hazard)
             {
                 case TriggerRadiation zone:
-                    zone.Enable(enabled);
-                    if (enabled)
-                        zone.enabled = true;
+                    SwitchRadiation(zone, enabled);
                     break;
                 case TriggerHurt zone:
                     zone.Enable(enabled);
                     if (zone.DamageType == DamageTypeNames.Radiation)
                     {
                         foreach (var part in zone.GetComponents<TriggerRadiation>())
-                        {
-                            part.Enable(enabled);
-                            if (enabled)
-                                part.enabled = true;
-                        }
+                            SwitchRadiation(part, enabled);
                     }
                     break;
                 case point_radiation source:
@@ -180,10 +190,29 @@ public static class Hazards
                 case point_radiation_detector meter:
                     meter.on = enabled;
                     break;
-                default:
-                    throw new ArgumentException("Not a hazard.", nameof(hazard));
             }
         }
+        return Describe(hazard).Enabled == enabled;
+    }
+
+    /// <summary>The kind of a hazard component, or null when it is not one.</summary>
+    public static HazardKind? KindOf(Component hazard)
+    {
+        switch (hazard)
+        {
+            case TriggerRadiation _: return HazardKind.RadiationZone;
+            case TriggerHurt _: return HazardKind.DamageZone;
+            case point_radiation _: return HazardKind.RadiationSource;
+            case point_radiation_detector _: return HazardKind.Detector;
+            default: return null;
+        }
+    }
+
+    // The zone's dose tick only checks the component's own switch, so both go together.
+    private static void SwitchRadiation(TriggerRadiation zone, bool enabled)
+    {
+        zone.Enable(enabled);
+        zone.enabled = enabled;
     }
 
     internal static void RaiseRadiationEntered(TriggerRadiation zone)

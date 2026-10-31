@@ -14,10 +14,10 @@ internal static class WeatherSurfaceCommands
     {
         if (!WeatherConditions.IsAvailable)
             throw new InvalidOperationException("There is no weather system here (main menu, loading or an interior).");
-        if (p["thunder"] != null)
-            WeatherConditions.SetThunder(p.Bool("thunder"));
+        bool ok = p["thunder"] == null || WeatherConditions.SetThunder(p.Bool("thunder"));
         return new JObject
         {
+            ["ok"] = ok,
             ["temperature"] = WeatherConditions.Temperature, ["rain"] = WeatherConditions.RainIntensity, ["snow"] = WeatherConditions.SnowIntensity,
             ["wind"] = WeatherConditions.WindSpeed, ["thunder"] = WeatherConditions.IsThunderActive,
         };
@@ -66,9 +66,9 @@ internal static class WeatherSurfaceCommands
     {
         string id = p.Str("id");
         int item = p.Int("item", 0);
-        bool placed = true;
+        bool placed;
         if (item <= 0)
-            Surfaces.Clear(id);
+            placed = Surfaces.Clear(id);
         else
             placed = Surfaces.SetCovering(id, item, p.Int("skin", 0));
         var s = Surfaces.Describe(Surfaces.Find(id));

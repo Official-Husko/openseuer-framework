@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World.Addressing;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -35,11 +37,15 @@ public readonly struct SwitchChange
 /// <summary>
 /// Wall switches, levers and buttons (the game's <c>Button</c>): the things that drive lights, doors and
 /// power through their outputs. A switch only holds its own state; what it switches is wired in the scene.
+/// Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Switches
 {
     /// <summary>A switch went in or came out, from the player, a script or a timer. Not raised while a save loads.</summary>
     public static readonly WorldEvent<SwitchChange> SwitchChanged = new WorldEvent<SwitchChange>(nameof(SwitchChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="SwitchChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     public static List<Button> All(bool includeInactive = false) =>
         new List<Button>(Object.FindObjectsByType<Button>(includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude, FindObjectsSortMode.None));
@@ -60,14 +66,17 @@ public static class Switches
 
     /// <summary>
     /// Presses or releases the switch through the game's <c>Press()</c> and <c>Unpress()</c>, which fire its
-    /// outputs and skip the player's key and item checks. A locked switch does not press.
+    /// outputs and skip the player's key and item checks. A locked switch does not press. True when it is that
+    /// way afterwards.
     /// </summary>
-    public static void Set(Button button, bool pressed)
+    public static bool Set(Button button, bool pressed)
     {
         if (button == null)
             throw new ArgumentNullException(nameof(button));
         if (button.PressedIn == pressed)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
 
         using (WorldChanges.EnterMod())
         {
@@ -76,5 +85,6 @@ public static class Switches
             else
                 button.Unpress();
         }
+        return button.PressedIn == pressed;
     }
 }

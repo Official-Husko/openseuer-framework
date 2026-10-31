@@ -200,7 +200,7 @@ Lights.SetPowered(light, false);    // TogglePower, what the power grid does
 Lights.LightChanged.Subscribe(this, c => ...);   // c.Light, c.Kind (TurnedOn, TurnedOff, PowerLost, PowerRestored), c.Source, c.IsLit
 ```
 
-`Lights` is for `LightTurnOffOn` fixtures. Multi-state fixtures (`LightTurnOffOnMultiState`) and the old `LightsON` switches are not covered. Lights that follow the time of day raise a burst of events at dusk and dawn.
+`Lights` is for `LightTurnOffOn` fixtures. Multi-state fixtures (`LightTurnOffOnMultiState`) are `MultiStateLights` in [environment.md](environment.md); the old `LightsON` switches are not covered. Lights that follow the time of day raise a burst of events at dusk and dawn.
 
 ```csharp
 Switches.IsPressed(button); Switches.IsLocked(button);
@@ -208,6 +208,8 @@ Switches.Set(button, true);     // Press() / Unpress(): fires its outputs, skips
 
 Switches.SwitchChanged.Subscribe(this, c => ...);   // c.Button, c.Pressed, c.Source
 ```
+
+`Lights.SetOn`, `Lights.SetPowered` and `Switches.Set` return whether the light or switch is that way afterwards (a locked switch doesn't press), and refuse (false) while a save is written or loaded. `Lights.IsAvailable` and `Switches.IsAvailable` are false when their hooks failed to go on.
 
 `Switches` wraps the game's `Button` (wall switches, levers, buttons). The event comes from `PressEffects` and `UnpressEffects`, which every path ends in, including timed releases. A switch only holds its own state; what it switches is wired in the scene, so a mirror should send the switch and let each side's scene react, or send the light and door events and apply those, not both.
 
@@ -340,7 +342,7 @@ PowerGrids.GridChanged.Subscribe(this, c => ...);         // c.Grid, c.Kind (Tog
 
 All numbers are watts as in the game's power meters. Which listeners lose power when a grid is overloaded depends on the order they were switched on, so two machines only agree if they see the same sequence of events. `GridChanged` covers `PowerGrid.Toggle` and `SetBaseBalance`; changes caused by devices being switched are not events, read `Describe` when you need the numbers.
 
-`PowerGrids.SetEnabled(grid, on)` switches a grid's breaker and `PowerGrids.SetBaseCapacity(grid, watts)` sets its own capacity (the tenement sets its main grid's capacity from the electricity upgrade again whenever its utilities update). The appliances, generators, consumers and batteries on a grid are in [environment.md](environment.md) (`PowerDevices`).
+`PowerGrids.SetEnabled(grid, on)` switches a grid's breaker and `PowerGrids.SetBaseCapacity(grid, watts)` sets its own capacity (both return whether it took, false while a save is written or loaded; `PowerGrids.IsAvailable` says whether `GridChanged` is raised) (the tenement sets its main grid's capacity from the electricity upgrade again whenever its utilities update). The appliances, generators, consumers and batteries on a grid are in [environment.md](environment.md) (`PowerDevices`).
 
 ## Dev bridge
 

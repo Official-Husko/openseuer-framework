@@ -50,9 +50,9 @@ internal static class HazardCommands
     {
         string id = p.Str("id");
         var hazard = Hazards.Find(id) ?? throw new ArgumentException($"No hazard '{id}'.");
-        Hazards.SetEnabled(hazard, p.Bool("enabled"));
+        bool ok = Hazards.SetEnabled(hazard, p.Bool("enabled"));
         var h = Hazards.Describe(hazard);
-        return new JObject { ["id"] = h.Id, ["kind"] = h.Kind.ToString(), ["enabled"] = h.Enabled };
+        return new JObject { ["ok"] = ok, ["id"] = h.Id, ["kind"] = h.Kind.ToString(), ["enabled"] = h.Enabled };
     }
 
     [BridgeCommand("blasts.list", "Dynamite cones (blast sites) of the loaded scenes.")]
@@ -84,10 +84,10 @@ internal static class HazardCommands
     {
         if (!Radiation.IsAvailable)
             throw new InvalidOperationException("There is no player here.");
-        if (p["dose"] != null)
-            Radiation.SetDose(p.Float("dose"));
+        bool ok = p["dose"] == null || Radiation.SetDose(p.Float("dose"));
         return new JObject
         {
+            ["ok"] = ok,
             ["dose"] = Radiation.Dose, ["damageThreshold"] = Radiation.DamageThreshold, ["rateHere"] = Radiation.RateHere,
             ["background"] = Radiation.Background, ["wasteland"] = Radiation.IsWasteland, ["dosimeter"] = Radiation.DosimeterEquipped,
             ["dosimeterOn"] = Radiation.DosimeterOn, ["dosimeterCharge"] = Radiation.DosimeterCharge,
@@ -116,8 +116,10 @@ internal static class HazardCommands
         string id = p.Str("id", null);
         if (id != null)
         {
-            WorldWater.SetVolume(id, p["density"]?.Value<float>(), p["drag"]?.Value<float>(), p["drownDamage"]?.Value<float>(), p["hygiene"]?.Value<int>());
-            return Volume(WorldWater.Describe(WorldWater.Find(id)));
+            bool ok = WorldWater.SetVolume(id, p["density"]?.Value<float>(), p["drag"]?.Value<float>(), p["drownDamage"]?.Value<float>(), p["hygiene"]?.Value<int>());
+            var volume = Volume(WorldWater.Describe(WorldWater.Find(id)));
+            volume["ok"] = ok;
+            return volume;
         }
         return WaterInfo(p);
     }

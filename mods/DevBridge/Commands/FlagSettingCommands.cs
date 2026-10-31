@@ -42,13 +42,14 @@ internal static class FlagSettingCommands
         RequireFlags();
         string key = p.Str("key");
         string mode = p.Str("mode", "set").ToLowerInvariant();
+        bool ok = true;
         switch (mode)
         {
             case "set":
-                GlobalFlags.Set(key, p.Bool("active", true));
+                ok = GlobalFlags.Set(key, p.Bool("active", true));
                 break;
             case "force":
-                GlobalFlags.Force(BridgeOwner.Of(p), key, p.Bool("active", true));
+                ok = GlobalFlags.Force(BridgeOwner.Of(p), key, p.Bool("active", true));
                 break;
             case "release":
                 if (!GlobalFlags.Release(BridgeOwner.Of(p), key))
@@ -61,7 +62,9 @@ internal static class FlagSettingCommands
             default:
                 throw new ArgumentException("mode is set, force, release or remove.");
         }
-        return Flag(key);
+        var result = Flag(key);
+        result["ok"] = ok;
+        return result;
     }
 
     [BridgeCommand("settings.get", "The player's options (display, graphics, controls, volume) and the overrides mods hold.")]

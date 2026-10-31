@@ -119,7 +119,7 @@ internal static class FixturePatches
     private static void SaunaSwitched(Sauna sauna, bool wasOn)
     {
         if (sauna.On != wasOn && Listening(Saunas.SaunaChanged.HasSubscribers))
-            Raise(() => Saunas.SaunaChanged.Raise(new SaunaChange(sauna, sauna.On, WorldChanges.Current)));
+            Raise(() => Saunas.SaunaChanged.Raise(new SaunaChange(sauna, sauna.On, sauna.temperature, sauna.löyly, WorldChanges.Current)));
     }
 
     // On/off in the low bit, the state (shifted past -1) above it.

@@ -2,54 +2,32 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using OS.Items;
 
 namespace ObenFramework.Env;
 
-/// <summary>A snapshot of one liquid container.</summary>
-public sealed class TankInfo
-{
-    internal TankInfo(string id, string name, int liquidItemId, float amount, float capacity, bool locked, bool isSupply)
-    {
-        Id = id;
-        Name = name;
-        LiquidItemId = liquidItemId;
-        Amount = amount;
-        Capacity = capacity;
-        Locked = locked;
-        IsSupply = isSupply;
-    }
-
-    public string Id { get; }
-
-    public string Name { get; }
-
-    /// <summary>The liquid's item id, or 0 when empty.</summary>
-    public int LiquidItemId { get; }
-
-    /// <summary>Litres in it.</summary>
-    public float Amount { get; }
-
-    /// <summary>Litres it holds; negative for taps and sinks fed from elsewhere, which never run dry by themselves.</summary>
-    public float Capacity { get; }
-
-    public bool Locked { get; }
-
-    /// <summary>It is the scene's water supply (see <see cref="WorldWater.Supply"/>).</summary>
-    public bool IsSupply { get; }
-
-    public bool IsEndless => Capacity < 0f;
-}
-
 /// <summary>
 /// Liquid containers (<c>LiquidStorage</c>): barrels, IBC tanks, sinks, hoses and the water supply.
-/// Contents and locks are saved with the game.
+/// Contents and locks are saved with the game. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Tanks
 {
     /// <summary>The item category of everything a container can hold (Clean Water is 10840, Diesel 15900).</summary>
     public const string LiquidCategory = "Liquid";
+
+    /// <summary>
+    /// A container's liquid or level changed: a pour from its window, a shower or filler, a mod. Steps that come
+    /// quickly one after another are reported together once the level settles (within half a second, or every
+    /// two seconds while it keeps moving); a change from <see cref="Fill"/> or <see cref="Empty"/> is reported at
+    /// once. Lock changes come through <see cref="Locks.Changed"/>. Not raised while a save loads.
+    /// </summary>
+    public static readonly WorldEvent<TankChange> TankChanged = new WorldEvent<TankChange>(nameof(TankChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="TankChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     public static List<TankInfo> All()
     {
@@ -71,17 +49,18 @@ public static class Tanks
     /// replacing what was in it. The amount is capped at the capacity. Throws for a container without a
     /// fixed capacity (taps, sinks) and for an item that is not a liquid.
     /// </summary>
-    public static void Fill(LiquidStorage tank, int itemId, float amount)
+    public static bool Fill(LiquidStorage tank, int itemId, float amount)
     {
         if (tank == null)
             throw new ArgumentNullException(nameof(tank));
-        if (tank.Capacity <= 0f)
-            throw new InvalidOperationException($"{tank.name} has no capacity of its own; fill what feeds it.");
+        RequireCapacity(tank);
         if (!(amount >= 0f) || float.IsInfinity(amount))
             throw new ArgumentOutOfRangeException(nameof(amount), "Give 0 or more litres.");
         var item = ItemLookup.ById(itemId) ?? throw new ArgumentException($"No item {itemId}.", nameof(itemId));
         if (!string.Equals(item.Category, LiquidCategory, StringComparison.Ordinal))
             throw new ArgumentException($"{item.Title} is not a liquid (category {item.Category}).", nameof(itemId));
+        if (SaveGate.IsBusy)
+            return false;
 
         float litres = ItemLiquidData.SetAndGetLiquidAmount(Math.Min(amount, tank.Capacity));
         using (WorldChanges.EnterMod())
@@ -91,15 +70,22 @@ public static class Tanks
             else
                 tank.SetLiquid(new ItemReference(item), litres, null, true);
         }
+        TankWatch.Flush(tank);
+        return litres <= 0f ? tank.IsEmpty() : LiquidOf(tank) == itemId;
     }
 
-    /// <summary>Empties a container, like pouring it out.</summary>
-    public static void Empty(LiquidStorage tank)
+    /// <summary>Empties a container, like pouring it out. Throws for taps and sinks fed from elsewhere.</summary>
+    public static bool Empty(LiquidStorage tank)
     {
         if (tank == null)
             throw new ArgumentNullException(nameof(tank));
+        RequireCapacity(tank);
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             tank.OnEmpty();
+        TankWatch.Flush(tank);
+        return tank.IsEmpty();
     }
 
     /// <summary>Locks or unlocks a container that has a lock. Returns false when it has none.</summary>
@@ -108,6 +94,10 @@ public static class Tanks
         if (tank == null)
             throw new ArgumentNullException(nameof(tank));
         if (tank._Lock == null)
+            return false;
+        if (tank._Lock.Locked == locked)
+            return true;
+        if (SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
         {
@@ -119,5 +109,11 @@ public static class Tanks
         return tank._Lock.Locked == locked;
     }
 
-    private static int LiquidOf(LiquidStorage tank) => tank.Liquid != null && !tank.IsEmpty() ? tank.Liquid.ID : 0;
+    internal static int LiquidOf(LiquidStorage tank) => tank.Liquid != null && !tank.IsEmpty() ? tank.Liquid.ID : 0;
+
+    private static void RequireCapacity(LiquidStorage tank)
+    {
+        if (tank.Capacity <= 0f)
+            throw new InvalidOperationException($"{tank.name} has no capacity of its own; fill or empty what feeds it.");
+    }
 }

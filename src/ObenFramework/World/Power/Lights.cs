@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using HarmonyLib;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World.Addressing;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -47,7 +49,7 @@ public readonly struct LightChange
 /// Light fixtures (<c>LightTurnOffOn</c>, the ceiling and wall lights that wall switches and the power
 /// grid drive). A fixture shines when its switch is on and it has power. Fixtures with several
 /// light states (<c>LightTurnOffOnMultiState</c>) are <c>ObenFramework.Env.MultiStateLights</c>; the old
-/// <c>LightsON</c> switches are not covered.
+/// <c>LightsON</c> switches are not covered. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Lights
 {
@@ -56,6 +58,9 @@ public static class Lights
     /// loads. Lights that follow the time of day raise a burst at dusk and dawn.
     /// </summary>
     public static readonly WorldEvent<LightChange> LightChanged = new WorldEvent<LightChange>(nameof(LightChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="LightChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     public static List<LightTurnOffOn> All(bool includeInactive = false) =>
         new List<LightTurnOffOn>(Object.FindObjectsByType<LightTurnOffOn>(includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude, FindObjectsSortMode.None));
@@ -83,12 +88,14 @@ public static class Lights
     /// Flips the fixture's switch the way a wall switch does (<c>turnLightOn</c> / <c>turnLightOff</c>). A
     /// fixture that is fading out (a timed or scripted switch-off) is faded back in, or it would go dark again.
     /// </summary>
-    public static void SetOn(LightTurnOffOn light, bool on)
+    public static bool SetOn(LightTurnOffOn light, bool on)
     {
         if (light == null)
             throw new ArgumentNullException(nameof(light));
         if (light.on == on)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
 
         using (WorldChanges.EnterMod())
         {
@@ -99,6 +106,7 @@ public static class Lights
             else
                 light.turnLightOff();
         }
+        return light.on == on;
     }
 
     private static readonly AccessTools.FieldRef<LightTurnOffOn, bool> FadeOut = AccessTools.FieldRefAccess<LightTurnOffOn, bool>("fadeOut");
@@ -106,14 +114,17 @@ public static class Lights
     private static bool FadingOut(LightTurnOffOn light) => FadeOut(light);
 
     /// <summary>Gives or takes the fixture's power the way the power grid does (<c>TogglePower</c>).</summary>
-    public static void SetPowered(LightTurnOffOn light, bool powered)
+    public static bool SetPowered(LightTurnOffOn light, bool powered)
     {
         if (light == null)
             throw new ArgumentNullException(nameof(light));
-        if (!light.noPower == powered)
-            return;
+        if (IsPowered(light) == powered)
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
 
         using (WorldChanges.EnterMod())
             light.TogglePower(powered);
+        return IsPowered(light) == powered;
     }
 }

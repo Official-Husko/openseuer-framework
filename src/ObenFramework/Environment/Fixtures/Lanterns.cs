@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -62,11 +64,17 @@ public sealed class LanternInfo
     public int SecondsLeft { get; }
 }
 
-/// <summary>Candle lanterns: a candle goes in, burns for a while on the game clock and goes out. Saved with the game.</summary>
+/// <summary>
+/// Candle lanterns: a candle goes in, burns for a while on the game clock and goes out. Saved with the game.
+/// Changes are refused (false) while a save is written or loaded.
+/// </summary>
 public static class Lanterns
 {
     /// <summary>A lantern was lit, blown out or burnt down. Not raised while a save loads.</summary>
     public static readonly WorldEvent<LanternChange> LanternChanged = new WorldEvent<LanternChange>(nameof(LanternChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="LanternChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     public static List<LanternInfo> All()
     {
@@ -88,25 +96,40 @@ public static class Lanterns
         return new LanternInfo(IdOf(lantern), lantern.name, lantern.transform.position, lit, lit ? lantern.candleTimer.remainingInSeconds : 0);
     }
 
-    /// <summary>Puts a candle in and lights it, without taking one from the player. Nothing happens when it is lit already.</summary>
-    public static void Light(Lantern lantern)
+    /// <summary>
+    /// Puts a candle in and lights it, without taking one from the player. True when it is lit afterwards (also
+    /// when it already was); false for a lantern that names no candle item.
+    /// </summary>
+    public static bool Light(Lantern lantern)
     {
         if (lantern == null)
             throw new ArgumentNullException(nameof(lantern));
         if (IsLit(lantern))
-            return;
+            return true;
+        // Without a fixed burn time the game reads it from the candle item.
+        if (SaveGate.IsBusy || (lantern.overrideCandleTime < 0 && (lantern.candleItem == null || lantern.candleItem.Item == null)))
+            return false;
         using (WorldChanges.EnterMod())
             lantern.CandleInserted();
+        return IsLit(lantern);
     }
 
-    /// <summary>Blows the candle out (the rest of it is lost, as when the player does it). Nothing happens when it is unlit.</summary>
-    public static void Extinguish(Lantern lantern)
+    /// <summary>
+    /// Blows the candle out (the rest of it is lost, as when the player does it). True when it is out afterwards.
+    /// Unlike the game's own blowing out, the candle's timer is stopped too, so it can't put out the next candle.
+    /// </summary>
+    public static bool Extinguish(Lantern lantern)
     {
         if (lantern == null)
             throw new ArgumentNullException(nameof(lantern));
         if (!IsLit(lantern))
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
+        var timer = lantern.candleTimer;
         using (WorldChanges.EnterMod())
             lantern.CandleExtinguished();
+        timer?.Destroy();
+        return !IsLit(lantern);
     }
 }

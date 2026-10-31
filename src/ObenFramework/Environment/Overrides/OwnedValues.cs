@@ -135,12 +135,12 @@ internal sealed class OwnedValues<T>
         return keys;
     }
 
-    /// <summary>Drops everything without calling <see cref="Released"/>. For a framework unload, which restores state itself.</summary>
-    public void Clear()
-    {
-        _entries.Clear();
-        _tracked.Clear();
-    }
+    /// <summary>
+    /// Drops every value without calling <see cref="Released"/>, for a caller that restores state itself (a
+    /// framework unload, a level change). Owners stay tracked: their unload hook is still registered, and a
+    /// second one would pile up with every clear.
+    /// </summary>
+    public void Clear() => _entries.Clear();
 
     private void Forget(ITracker owner)
     {

@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using OS.Items;
 
@@ -38,7 +40,8 @@ public readonly struct SurfaceInfo
 
 /// <summary>
 /// Walls, floors and ceilings that take wallpaper, paint or panels (<c>FurnitureSurfaceArea</c>), mostly
-/// in the player's apartments. Coverings are saved with the game.
+/// in the player's apartments. Coverings are saved with the game. Changes are refused (false) while a save
+/// is written or loaded.
 /// </summary>
 public static class Surfaces
 {
@@ -47,6 +50,9 @@ public static class Surfaces
 
     /// <summary>A surface got a new covering or was scraped bare. Not raised while a save loads.</summary>
     public static readonly WorldEvent<SurfaceInfo> SurfaceChanged = new WorldEvent<SurfaceInfo>(nameof(SurfaceChanged));
+
+    /// <summary>True when the hooks are in place, so <see cref="SurfaceChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Env");
 
     /// <summary>Every surface of the loaded scenes. A scan.</summary>
     public static List<SurfaceInfo> All()
@@ -90,21 +96,26 @@ public static class Surfaces
         if (data == null)
             throw new ArgumentException($"{item.Title} is not a wallpaper, paint or panel.", nameof(itemId));
         data.LoadVariants();
-        if (data.GetMaterial(skinIndex) == null || !surface.AllowedToPlace(item, skinIndex))
+        if (data.GetMaterial(skinIndex) == null || !surface.AllowedToPlace(item, skinIndex) || SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
             surface.SetWallpaper(data, skinIndex, itemId);
         return true;
     }
 
-    /// <summary>Scrapes a surface bare, without a scraper. Throws for an unknown surface.</summary>
-    public static void Clear(string id)
+    /// <summary>Scrapes a surface bare, without a scraper. True when it is bare afterwards. Throws for an unknown surface.</summary>
+    public static bool Clear(string id)
     {
         var surface = Find(id);
         if (surface == null)
             throw new ArgumentException($"No surface '{id}'.", nameof(id));
+        if (SavedItem(surface) <= 0)
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             surface.RemoveWallpaper();
+        return SavedItem(surface) <= 0;
     }
 
     internal static int ItemOf(FurnitureSurfaceArea surface) => SavedItem(surface);

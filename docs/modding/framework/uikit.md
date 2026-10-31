@@ -450,12 +450,16 @@ The list of fields is worked out by reflection once per settings class and cache
 ```csharp
 using ObenUIKit;
 
-Hud.Hint(this, "Press {key:Interact} to open the crate.", seconds: 8f);
+HudHint hint = Hud.Hint(this, "Press {key:Interact} to open the crate.", seconds: 8f);
+hint.Text = "Press {key:Interact} to open the other crate.";   // changes it in place, on screen too
 Hud.Hint(this, "Rain is coming.", title: "Weather");
+Hud.HideHints(this);                                            // every hint of this mod
 Hud.Subtitle("Somebody is following you.", seconds: 4f);
+Hud.GameSubtitle("...and it isn't the police.");               // the game's own line, where remarks show
 
 HudBar bar = Hud.Bar(this, "Stamina", () => Stamina.Fraction);
-bar.Color = Color.cyan;   // optional; the theme's slider colour otherwise
+bar.Color = Color.cyan;   // optional; null puts the theme's slider colour back
+bar.Label = "";           // an empty label leaves the line out
 bar.Remove();
 
 HudReadout readout = Hud.Readout(this, "Crates", () => $"Spawned {_spawned}\nOpened {_opened}");
@@ -463,12 +467,13 @@ readout.Title = "Crates (hard mode)";
 readout.Remove();
 ```
 
-- **Hints** go through the game's own `HintOverlay` side panel in levels, so they look and animate like its scene hints, and `{key:Action Name}` becomes the player's current key (`HintContent.ResolveKeys`). Our entry goes above the scene's own hints while it shows, and theirs come back after. The player's Hints key and setting still apply: with hints switched off nothing shows unless you pass `force: true`. So does the kit's "Show mod hints" setting (MODS, Settings, UI kit): while it is off, `Hud.Hint` drops the hint and returns it with `IsActive` false, again unless `force: true`. `Hud.ModHintsShown` reads it. Where the game has no hint panel (the main menu) the kit draws an equivalent box on the right edge from the theme, and unresolved `{key:...}` shows as the plain action name.
-- Hints show one at a time in the order they were added, each for `seconds` (0.5 to 120, default 6) once it is up. Asking again for a hint with the same owner, title and text extends the one already waiting instead of queueing a copy, so calling `Hud.Hint` from an event that fires often is safe. At most six wait; the oldest waiting one is dropped first. `HudHint.Hide()` removes one early.
-- **Subtitle** is one line near the bottom of the screen on a dark strip, in the game's font. A new line replaces the one showing; it fades during its last half second. It has no owner because it only lives for a few seconds.
-- **Bar** is a small labelled bar at the top left, track and fill in the theme's slider colours. The function returns 0 to 1 and is read five times a second (the bar glides between reads, with no allocations per frame); if it throws, the bar is logged and removed. Up to six bars; `Hud.Bar` returns null beyond that. Bars only show in a level.
+- **Hints** go through the game's own `HintOverlay` side panel in levels, so they look and animate like its scene hints, and `{key:Action Name}` becomes the player's current key (`HintContent.ResolveKeys`). Our entry goes above the scene's own hints while it shows, and theirs come back after. The player's Hints key and setting still apply: with hints switched off nothing shows unless you pass `force: true`. So does the kit's "Show mod hints" setting (MODS, Settings, UI kit): while it is off, `Hud.Hint` drops the hint and returns it with `IsActive` false, again unless `force: true`, and switching it off drops the hints already waiting or showing. `Hud.ModHintsShown` reads it. A hint that isn't forced still runs its time while the player has the game's hints off, so it runs out unseen. Where the game has no hint panel (the main menu) the kit draws an equivalent box on the right edge from the theme, and unresolved `{key:...}` shows as the plain action name.
+- Hints show one at a time in the order they were added, each for `seconds` (0.5 to 120, default 6) once it is up. Asking again for a hint with the same owner, title and text extends the one already waiting instead of queueing a copy (and keeps `force` if either asked for it), so calling `Hud.Hint` from an event that fires often is safe. At most six wait, three of them from one owner: an owner over its share loses its own oldest waiting hint, so one busy mod can't push the others out. `HudHint.Hide()` removes one early, `Hud.HideHints(owner)` all of an owner's, and `Hud.ShownHint` is the one on screen. Hints carry over a level change.
+- **Subtitle** is one line near the bottom of the screen on a dark strip, in the game's font (rich text). A new line replaces the one showing; it fades during its last half second. It has no owner because it only lives for a few seconds, and it works at the main menu too.
+- **GameSubtitle** adds a line to the game's own subtitles, where characters' remarks show: it types out (20 characters a second by default), then fades over its seconds. Lines stack and can't be taken back. It answers false outside levels.
+- **Bar** is a small labelled bar at the top left, track and fill in the theme's slider colours. The function returns 0 to 1 and is read five times a second (the bar glides between reads, with no allocations per frame); if it throws, the bar is logged and removed (one that throws on its first read comes back with `IsActive` false). Up to six bars; `Hud.Bar` returns null beyond that. Bars only show in a level and stay over level changes, since they follow their function.
 - **Readout** is a box of text at the top left, under the bars, in the hint panel's look: a grey title (left out when empty) over the text, which may have several lines. The function is read four times a second and the label is only written when the text changed; if it throws, the readout is logged and removed (one that throws on its first read comes back with `IsActive` false). The text shows as it is, so values with angle brackets are safe; it is cut at 2000 characters. Up to four readouts; `Hud.Readout` returns null beyond that. Readouts only show in a level. The Cheat Menu's developer menu shows its watches in one.
-- Nothing shows while a kit window or the pause menu is open, while a save loads, or while the game's own HUD is hidden (the hide-HUD key, inventory and other full menus). Hint and subtitle timers wait until it is back. The HUD pieces sit under the kit's windows.
+- Nothing shows while a modal kit window or the pause menu is open (docked, floating and display-only windows leave the HUD alone), while a save loads, or while the game's own HUD is hidden (the hide-HUD key, inventory and other full menus). Hint and subtitle timers wait until it is back. The HUD pieces sit under the kit's windows.
 
 The code is in `Hud/`: `HintQueue` (plain bookkeeping), `NativeHints` (the `HintOverlay` bridge), `HintPanel`, `SubtitleLine`, `BarStack`, `ReadoutStack`, with `HudRuntime` tying them to the kit's lifetime. The per-frame component is only enabled while something is showing.
 
@@ -491,11 +496,11 @@ Hud.Prompt(this, "Open the cheat menu", _openHotkey, new PromptOptions { Seconds
 
 - `Prompt(owner, text, action)` shows one of the game's actions by its key binding name (`"Interact"`, `"Jump"`, `"Inventory"`, see `docs/modding/framework/ui-state.md`), as the player has it bound, keyboard or pad. `Prompt(owner, text, KeyCode)` shows a fixed key, `Prompt(owner, text, hotkey)` a mod hotkey with its modifiers. `{key:Action}` in the text works as in hints.
 - `PromptOptions`: `When` (shown while it returns true, asked five times a second), `Near` and `Distance` (shown while the player is that close to the object; gone for good once the object is destroyed), `Seconds` (hidden for good after that long on screen; 0 keeps it), `OnPress` (runs when the key goes down while the prompt shows), `Capture` (default on: with `OnPress`, the key is kept from the game while the prompt shows, through `InputCapture`), `Once` (hide after the first press) and `Sound` (the chime, on by default).
-- One prompt shows at a time: the newest one whose conditions hold. The others wait and come up when it goes.
-- Prompts show only in a level, and step aside for kit windows, the pause menu, the game's menus and HUD hiding, dialogue, the console and loading. Their timers wait meanwhile, and coming back doesn't chime again.
+- One prompt shows at a time: the newest one whose conditions hold. The others wait and come up when it goes. Asking again from the same owner for the same text, key and `Near` object returns the prompt already there (with its first options), so `Hud.Prompt` can be called every frame. One owner can have 16 prompts; past that its oldest goes. A prompt for an action that has no key on the keyboard or the pad is logged as a likely misspelt action name.
+- Prompts show only in a level, and step aside for modal kit windows, the pause menu, the game's menus and HUD hiding, dialogue, the console, loading and a paused game. Their timers wait meanwhile, and coming back doesn't chime again.
 - The player can switch mod prompts off (MODS, Settings, UI kit, "Show mod key prompts"; `Hud.ModPromptsShown` reads it). They stay registered but out of sight, so their `OnPress` keys and the guide steps waiting on them do nothing until the switch is on again.
 - The game's tutorial prompt is the game's while one of its own tutorial steps is up (`TutorialGuide.Active`, a new game's opening and the building, cleaning, head lamp and reload hints). Prompts then show in the kit's own copy a little lower on the screen and move back when the game is done.
-- `HudPrompt` has `Text` (settable), `IsShowing`, `IsActive` and `Hide()`. `Hud.ShownPrompt` is the one on screen. Prompts go when their owner unloads.
+- `HudPrompt` has `Text` (settable), `IsShowing`, `IsActive` and `Hide()`. `Hud.ShownPrompt` is the one on screen, and `Hud.HidePrompts(owner)` takes all of an owner's away. Prompts go when their owner unloads; one tied to an object that was destroyed goes at once.
 
 ## Guides
 

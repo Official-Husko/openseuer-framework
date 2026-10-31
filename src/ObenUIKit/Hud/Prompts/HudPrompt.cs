@@ -64,6 +64,9 @@ public sealed class HudPrompt
     /// <summary>Its conditions held at the last check (asked a few times a second).</summary>
     internal bool Wanted { get; set; } = true;
 
+    /// <summary>Added through <c>Hud.Prompt</c>, so asking again returns it (a guide's own prompts aren't).</summary>
+    internal bool Reusable { get; set; }
+
     /// <summary>Seconds it has been on screen.</summary>
     internal float Shown { get; set; }
 

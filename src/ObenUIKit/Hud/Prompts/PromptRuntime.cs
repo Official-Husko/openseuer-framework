@@ -18,6 +18,9 @@ internal sealed partial class PromptRuntime : IDisposable
 {
     private const float CheckInterval = 0.2f;
 
+    /// <summary>Prompts one owner can have at once; past that its oldest goes.</summary>
+    public const int MaxPerOwner = 16;
+
     private readonly KitContext _kit;
     private readonly RectTransform _root;
     private readonly List<HudPrompt> _prompts = new List<HudPrompt>();
@@ -57,14 +60,52 @@ internal sealed partial class PromptRuntime : IDisposable
 
     public bool ShownNatively => _shown != null && _shownNative;
 
-    public HudPrompt Add(ITracker owner, string text, PromptKey key, PromptOptions options)
+    /// <param name="reuse">
+    /// Asked again (a mod calling every frame): the same owner, text, key and place gives the same prompt.
+    /// Guides keep their own prompts apart.
+    /// </param>
+    public HudPrompt Add(ITracker owner, string text, PromptKey key, PromptOptions options, bool reuse = false)
     {
+        HudPrompt oldest = null;
+        int count = 0;
+        foreach (var existing in _prompts)
+        {
+            if (existing.Owner != owner)
+                continue;
+            if (reuse && existing.Reusable && existing.Text == text && existing.Key.Same(key) && existing.Options.Near == options.Near)
+                return existing;
+            oldest ??= existing;
+            count++;
+        }
+        if (count >= MaxPerOwner)
+            Remove(oldest);
+        WarnUnbound(key, text);
+
         Own(owner);
-        var prompt = new HudPrompt(owner, text, key, options, ++_serial);
+        var prompt = new HudPrompt(owner, text, key, options, ++_serial) { Reusable = reuse };
         prompt.Wanted = Wanted(prompt);
         _prompts.Add(prompt);
         _tick.enabled = true;
         return prompt;
+    }
+
+    public void RemoveOwner(ITracker owner)
+    {
+        for (int i = _prompts.Count - 1; i >= 0; i--)
+        {
+            if (i < _prompts.Count && _prompts[i].Owner == owner)
+                Remove(_prompts[i]);
+        }
+    }
+
+    // A misspelt action has no key on the keyboard or the pad, and the prompt would show a blank key.
+    private void WarnUnbound(PromptKey key, string text)
+    {
+        var input = InputManager.instance;
+        if (key.Action == null || input == null || input.keyBindings == null)
+            return;
+        if (input.GetKeyCode(key.Action, ignoreController: true) == KeyCode.None && input.keyBindings.CheckKeyController(key.Action) == KeyCode.None)
+            _kit.Log.Warn($"The prompt '{text}' asks for the action '{key.Action}', which has no key; check the name (\"Interact\", \"Jump\", \"Inventory\"...)");
     }
 
     public void Remove(HudPrompt prompt)
@@ -112,7 +153,17 @@ internal sealed partial class PromptRuntime : IDisposable
         {
             _nextCheck = now + CheckInterval;
             for (int i = 0; i < _prompts.Count; i++)
-                _prompts[i].Wanted = Wanted(_prompts[i]);
+            {
+                var prompt = _prompts[i];
+                // The object it was tied to is gone (a level change): the prompt has nothing to point at any more.
+                if (prompt.Options.Near == null && !ReferenceEquals(prompt.Options.Near, null))
+                {
+                    Remove(prompt);
+                    i--;
+                    continue;
+                }
+                prompt.Wanted = Wanted(prompt);
+            }
         }
 
         Present(blocked || !Hud.ModPromptsShown ? null : Pick());
@@ -143,9 +194,10 @@ internal sealed partial class PromptRuntime : IDisposable
             Remove(prompt);
     }
 
-    // Nothing of ours shows over windows, menus, the pause menu, dialogue or loading, or with the HUD hidden.
+    // Nothing of ours shows over windows, menus, the pause menu, dialogue or loading, while the game is paused,
+    // or with the HUD hidden.
     private static bool Blocked() =>
-        HudGate.Blocked || HudGate.GameUiHidden || !WorldState.IsReady || UiState.IsDialogueActive || UiState.IsConsoleOpen;
+        HudGate.Blocked || HudGate.GameUiHidden || !WorldState.IsReady || UiState.IsDialogueActive || UiState.IsConsoleOpen || UiState.IsPaused;
 
     private HudPrompt Pick()
     {
@@ -170,7 +222,6 @@ internal sealed partial class PromptRuntime : IDisposable
         }
         else if (!ReferenceEquals(options.Near, null))
         {
-            // The object it was tied to is gone (a level change): the prompt has nothing to point at any more.
             return false;
         }
         if (options.When == null)

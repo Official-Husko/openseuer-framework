@@ -42,9 +42,6 @@ internal sealed class BarStack
     /// <summary>How far down the column reaches while it shows (0 while it doesn't), for what goes under it.</summary>
     public float Bottom => _stack != null && _stack.gameObject.activeSelf ? _stack.rect.height + 12f : 0f;
 
-    /// <summary>True while a bar is still gliding, so the tick has per-frame work to do.</summary>
-    public bool Gliding { get; private set; }
-
     public bool Add(HudBar bar, UiTheme theme)
     {
         if (_bars.Count >= MaxBars)
@@ -52,7 +49,12 @@ internal sealed class BarStack
         EnsureStack(theme);
         _bars.Add(bar);
         BuildBar(bar, theme);
-        Read(bar);
+        // A value that throws right away is logged and the bar comes back no longer active.
+        if (!Read(bar))
+        {
+            Remove(bar);
+            return true;
+        }
         bar.Shown = bar.Target;
         ApplyFill(bar);
         return true;
@@ -134,7 +136,6 @@ internal sealed class BarStack
 
     private void Glide(float delta)
     {
-        Gliding = false;
         float step = delta / GlideSeconds;
         for (int i = 0; i < _bars.Count; i++)
         {
@@ -143,7 +144,6 @@ internal sealed class BarStack
                 continue;
             bar.Shown = Mathf.MoveTowards(bar.Shown, bar.Target, step);
             ApplyFill(bar);
-            Gliding |= bar.Shown != bar.Target;
         }
     }
 
@@ -185,6 +185,7 @@ internal sealed class BarStack
 
         bar.Text = UiParts.Text(item, theme, bar.Label, theme.TextSize * 0.75f, theme.Text, TextAlignmentOptions.Left);
         bar.Text.textWrappingMode = TextWrappingModes.NoWrap;
+        bar.ShowLabel();
 
         var track = UiParts.Image(item, "Track", null, theme.SliderTrack);
         UiParts.Height(track, TrackHeight);

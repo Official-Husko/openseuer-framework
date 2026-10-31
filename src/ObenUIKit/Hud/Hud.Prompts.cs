@@ -14,6 +14,8 @@ public static partial class Hud
     /// controller. Tie it to a place or a condition with <paramref name="options"/>, and give it an
     /// <see cref="PromptOptions.OnPress"/> to act on the key. Only one prompt shows at a time: the newest
     /// one whose conditions hold. It goes away when <paramref name="owner"/> unloads or with <see cref="HudPrompt.Hide"/>.
+    /// Asking again for the same text and key (and place) returns the prompt already there, so calling this
+    /// every frame is fine. An action with no key at all is logged as a likely misspelling.
     /// </summary>
     public static HudPrompt Prompt(ITracker owner, string text, string action, PromptOptions options = null)
     {
@@ -44,6 +46,14 @@ public static partial class Hud
     /// <summary>The prompt on screen right now, or null.</summary>
     public static HudPrompt ShownPrompt => PromptRuntime.Current?.Shown;
 
+    /// <summary>Takes every prompt of <paramref name="owner"/> away, showing or waiting.</summary>
+    public static void HidePrompts(ITracker owner)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        PromptRuntime.Current?.RemoveOwner(owner);
+    }
+
     /// <summary>
     /// A new, empty guide: a walk-through of several prompts that each wait for their key or a condition.
     /// Add steps with <see cref="HudGuide.Step(string, string, Func{bool})"/> and call <see cref="HudGuide.Start"/>.
@@ -68,6 +78,6 @@ public static partial class Hud
         var copy = options != null ? options.Copy() : new PromptOptions();
         if (copy.Distance <= 0f)
             copy.Distance = 3f;
-        return runtime.Add(owner, text, key, copy);
+        return runtime.Add(owner, text, key, copy, reuse: true);
     }
 }

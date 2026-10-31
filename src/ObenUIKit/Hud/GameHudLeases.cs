@@ -1,6 +1,7 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using ObenFramework.Events;
 using ObenLoader;
 using ObenLoader.Runtime;
@@ -17,6 +18,9 @@ namespace ObenUIKit;
 internal sealed class GameHudLeases : IDisposable
 {
     private readonly List<GameObject> _hudTokens = new List<GameObject>();
+    // The game's no-UI screenshot hides the HUD under its caller's object and only shows it again when the HUD
+    // was visible before, so one taken while we hide it leaves that entry behind: we take it out after.
+    private readonly List<GameObject> _screenshots = new List<GameObject>();
     private int _crosshair;
 
     public static GameHudLeases Current { get; private set; }
@@ -56,14 +60,37 @@ internal sealed class GameHudLeases : IDisposable
                 return;
             var current = GameUIController.instance;
             if (current != null)
+            {
                 current.ShowGameUI(token);
+                if (_hudTokens.Count == 0)
+                    ReleaseScreenshots(current);
+            }
             UnityEngine.Object.Destroy(token);
         });
+    }
+
+    /// <summary>The game is about to take a screenshot without its UI, with <paramref name="caller"/> as its hide entry.</summary>
+    public void ScreenshotStarting(GameObject caller)
+    {
+        var ui = GameUIController.instance;
+        if (_hudTokens.Count > 0 && caller != null && ui != null && !ui.GameUIVisible())
+            _screenshots.Add(caller);
+    }
+
+    private void ReleaseScreenshots(GameUIController ui)
+    {
+        foreach (var caller in _screenshots)
+        {
+            if (caller != null)
+                ui.ShowGameUI(caller);
+        }
+        _screenshots.Clear();
     }
 
     // A new level brings a new HUD and crosshair that know nothing of ours.
     private void Reapply()
     {
+        _screenshots.Clear();
         var ui = GameUIController.instance;
         if (ui != null)
         {
@@ -95,10 +122,19 @@ internal sealed class GameHudLeases : IDisposable
             UnityEngine.Object.Destroy(token);
         }
         _hudTokens.Clear();
+        if (ui != null)
+            ReleaseScreenshots(ui);
         if (_crosshair > 0)
             SetCrosshair(true);
         _crosshair = 0;
         if (Current == this)
             Current = null;
     }
+}
+
+[HarmonyPatch(typeof(TakeScreenshot), nameof(TakeScreenshot.ScreenshotNoUI))]
+internal static class ScreenshotHidePatch
+{
+    [HarmonyPrefix]
+    private static void Before(GameObject gameObject) => GameHudLeases.Current?.ScreenshotStarting(gameObject);
 }

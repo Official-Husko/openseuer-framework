@@ -6,11 +6,13 @@ namespace ObenUIKit;
 /// <summary>
 /// Hints waiting to be shown, one at a time in the order they came. The first is the one showing.
 /// Asking again for a hint that is already queued from the same owner just gives it more time, so a
-/// mod that calls <c>Hud.Hint</c> every frame doesn't fill the queue. Pure bookkeeping, no Unity.
+/// mod that calls <c>Hud.Hint</c> every frame doesn't fill the queue. One owner keeps at most
+/// <see cref="MaxPerOwner"/> waiting, so a busy mod can't push the others' hints out. Pure bookkeeping, no Unity.
 /// </summary>
 internal sealed class HintQueue
 {
     public const int MaxQueued = 6;
+    public const int MaxPerOwner = 3;
 
     private readonly List<HudHint> _items = new List<HudHint>();
 
@@ -28,15 +30,43 @@ internal sealed class HintQueue
             {
                 if (hint.Remaining > queued.Remaining)
                     queued.Remaining = hint.Remaining;
+                queued.Force |= hint.Force;
                 return queued;
             }
         }
 
         _items.Add(hint);
-        // Over the limit, the oldest one still waiting makes room.
-        if (_items.Count > MaxQueued)
+        // Over an owner's share, that owner's oldest one still waiting makes room; over the whole limit,
+        // the oldest one still waiting.
+        int oldest = -1;
+        int count = 0;
+        for (int i = 1; i < _items.Count; i++)
+        {
+            if (_items[i].Owner != hint.Owner)
+                continue;
+            if (oldest < 0)
+                oldest = i;
+            count++;
+        }
+        if (count > MaxPerOwner)
+            Drop(oldest);
+        else if (_items.Count > MaxQueued)
             Drop(1);
         return hint;
+    }
+
+    /// <summary>Removes every hint that isn't forced (the player switched mod hints off). True when the one showing went.</summary>
+    public bool RemoveUnforced()
+    {
+        bool wasCurrent = false;
+        for (int i = _items.Count - 1; i >= 0; i--)
+        {
+            if (_items[i].Force)
+                continue;
+            Drop(i);
+            wasCurrent |= i == 0;
+        }
+        return wasCurrent;
     }
 
     /// <summary>Removes a hint. True when it was the one showing.</summary>

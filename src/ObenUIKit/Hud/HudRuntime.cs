@@ -6,6 +6,7 @@ using ObenLoader;
 using ObenLoader.Runtime;
 using ObenUIKit.Controls;
 using ObenUIKit.Runtime;
+using ObenUIKit.Theme;
 using UnityEngine;
 
 namespace ObenUIKit;
@@ -33,6 +34,9 @@ internal sealed class HudRuntime : IDisposable
     private bool _shownNative;
 
     public static HudRuntime Current { get; private set; }
+
+    /// <summary>The look the HUD pieces are drawn with.</summary>
+    public UiTheme Theme => _kit.Theme;
 
     public HudRuntime(KitContext kit)
     {
@@ -62,6 +66,28 @@ internal sealed class HudRuntime : IDisposable
     {
         _queue.Remove(hint);
         Refresh();
+    }
+
+    public HudHint ShownHint => _shown;
+
+    public void RemoveHints(ITracker owner)
+    {
+        _queue.RemoveOwner(owner);
+        Refresh();
+    }
+
+    /// <summary>The player switched mod hints off: only forced ones stay.</summary>
+    public void DropUnforcedHints()
+    {
+        _queue.RemoveUnforced();
+        Refresh();
+    }
+
+    /// <summary>A hint's text changed: draw it again if it is the one showing.</summary>
+    public void HintChanged(HudHint hint)
+    {
+        if (hint == _shown)
+            Present(hint, HudGate.Blocked);
     }
 
     public void ShowSubtitle(string text, float seconds)

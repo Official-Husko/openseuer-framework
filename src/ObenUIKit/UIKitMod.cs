@@ -48,7 +48,13 @@ public sealed class UIKitMod : ObenMod
 
         var config = LoadConfig<KitConfig>();
         Settings = config.Value;
-        config.Changed += value => Settings = value;
+        config.Changed += value =>
+        {
+            Settings = value;
+            // "Off drops them": hints already waiting or showing go too, except forced ones.
+            if (!value.ShowModHints)
+                HudRuntime.Current?.DropUnforcedHints();
+        };
         ModSettings.Register(this, config, "UI kit");
         ModActions.Register(this, "Read What's New", () =>
         {

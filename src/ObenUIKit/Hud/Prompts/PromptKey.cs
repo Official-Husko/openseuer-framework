@@ -35,6 +35,8 @@ internal sealed class PromptKey
 
     public bool IsNone => Action == null && Key == KeyCode.None && Hotkey == null;
 
+    public bool Same(PromptKey other) => other != null && Action == other.Action && Key == other.Key && Hotkey == other.Hotkey;
+
     /// <summary>The key right now: the binding of the action, the fixed key, or the hotkey's chord key.</summary>
     public KeyCode Current
     {

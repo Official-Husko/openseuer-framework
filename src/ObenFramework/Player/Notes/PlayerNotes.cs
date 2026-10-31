@@ -145,8 +145,9 @@ public static class PlayerNotes
 
     /// <summary>
     /// Opens the menu's notes page at a held note, book or book page, as reading one from the inventory
-    /// does. A book opens at the page it was left on. False without a player, while saving or loading, or
-    /// when the player doesn't hold it.
+    /// does. A book opens at the page it was left on. False without a player, while saving or loading, when
+    /// the player doesn't hold it, or when the game didn't open the page (another menu or a conversation was
+    /// up, where the game's own reading does nothing).
     /// </summary>
     public static bool Open(string id)
     {
@@ -159,7 +160,9 @@ public static class PlayerNotes
         if (page == null)
             return false;
         controller.ReadNote(page);
-        return true;
+        var ui = GameUIController.instance;
+        var pages = UIPageButtons.instance;
+        return ui != null && ui.IsMenuVisible && pages != null && pages.currentPage == MenuPageNames.Notes;
     }
 
     private static NoteInfo HeldPage(NoteController controller, string id)

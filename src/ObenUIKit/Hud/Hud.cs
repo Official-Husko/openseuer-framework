@@ -44,21 +44,48 @@ public static partial class Hud
         return Live.AddHint(owner, title, text, seconds, force);
     }
 
-    /// <summary>The player lets mod hints show (the UI kit's "Show mod hints" setting).</summary>
+    /// <summary>The hint on screen right now, or null.</summary>
+    public static HudHint ShownHint => HudRuntime.Current?.ShownHint;
+
+    /// <summary>Takes every hint of <paramref name="owner"/> away, showing or waiting.</summary>
+    public static void HideHints(ITracker owner)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        HudRuntime.Current?.RemoveHints(owner);
+    }
+
+    /// <summary>The player lets mod hints show (the UI kit's "Show mod hints" setting). Switched off, waiting hints that aren't forced go.</summary>
     public static bool ModHintsShown => UIKitMod.Settings.ShowModHints;
 
     /// <summary>The player lets mod key prompts show (the UI kit's "Show mod key prompts" setting).</summary>
     public static bool ModPromptsShown => UIKitMod.Settings.ShowModPrompts;
 
     /// <summary>
-    /// Shows one line of text at the bottom of the screen for <paramref name="seconds"/> and then fades
-    /// it. A new line replaces the one showing.
+    /// Shows one line of text (rich text) at the bottom of the screen for <paramref name="seconds"/> and
+    /// then fades it. A new line replaces the one showing. Works at the main menu too.
     /// </summary>
     public static void Subtitle(string text, float seconds = DefaultSubtitleSeconds)
     {
-        if (string.IsNullOrEmpty(text))
+        if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("A subtitle needs some text.", nameof(text));
         Live.ShowSubtitle(text, Seconds(seconds, DefaultSubtitleSeconds));
+    }
+
+    /// <summary>
+    /// Adds a line to the game's own subtitles, where the characters' remarks show: it types out at
+    /// <paramref name="charactersPerSecond"/>, then fades over <paramref name="fadeSeconds"/>. Lines stack
+    /// under each other and can't be taken back. False outside levels, where the game has no subtitles.
+    /// </summary>
+    public static bool GameSubtitle(string text, float fadeSeconds = DefaultSubtitleSeconds, float charactersPerSecond = 20f)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ArgumentException("A subtitle needs some text.", nameof(text));
+        var subtitles = Subtitles.instance;
+        if (subtitles == null)
+            return false;
+        subtitles.ShowLine(text, Seconds(fadeSeconds, DefaultSubtitleSeconds), charactersPerSecond > 0f ? charactersPerSecond : 20f);
+        return true;
     }
 
     /// <summary>

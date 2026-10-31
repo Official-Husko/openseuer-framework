@@ -24,26 +24,28 @@ public sealed class HudBar
 
     public bool IsActive { get; internal set; } = true;
 
+    /// <summary>The line over the bar; empty or null leaves the line out.</summary>
     public string Label
     {
         get => _label;
         set
         {
-            _label = value;
+            _label = value ?? "";
             if (Text != null)
-                Text.text = value;
+                ShowLabel();
         }
     }
 
-    /// <summary>The fill colour. Unset, the bar uses the theme's slider colour.</summary>
+    /// <summary>The fill colour. Null puts the theme's slider colour back.</summary>
     public Color? Color
     {
         get => _color;
         set
         {
             _color = value;
-            if (Fill != null && value.HasValue)
-                Fill.color = value.Value;
+            var theme = HudRuntime.Current?.Theme;
+            if (Fill != null && (value.HasValue || theme != null))
+                Fill.color = value ?? theme.SliderFill;
         }
     }
 
@@ -56,6 +58,12 @@ public sealed class HudBar
     // What is shown (lags behind Target while the bar glides) and what the value last read.
     internal float Shown;
     internal float Target;
+
+    internal void ShowLabel()
+    {
+        Text.text = _label;
+        Text.gameObject.SetActive(!string.IsNullOrEmpty(_label));
+    }
 
     internal GameObject Root;
     internal TMP_Text Text;

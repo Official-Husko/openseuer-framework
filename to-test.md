@@ -439,12 +439,17 @@ All of M24 below was checked on 2026-10-31 on a copy of a real save (Slot1), goi
 - [x] **Wait stations:** `waits.list`, `waits.use`. (Interior Mines Management: 13:29 to 18:30 and a Finished event with 18,033 s; a second use during the wait was refused.)
 - [x] **Saves:** during a save started from a script, a tarp, lock, keypad, elevator, door and teleport call each returned false and changed nothing.
 - [ ] **Train on train:** drive a minitrain fast (over its couplers' speed) into a standing wagon: one Crashed event naming the wagon, not two.
-- [ ] **Computer apps, Interior Bazaar Internet Cafe:**
-  - Register a test app from a script with `ComputerApps.Register`, then sit at a computer.
-  - The tile shows on the desktop, and clicking it opens the app window.
-  - Esc closes the window and the player stays seated.
-  - `ComputerApps.Open(id)` opens it standalone.
-- [ ] **Computers:** e-mails, recycle bin files, desktop picture swap and back on unload.
+- [x] **Computer apps (M29b)**, 2026-10-31 at the only usable computer in 0.5.13, the Bazaar Bank's laptop (Interior Bazaar Bank, a scan of all 124 levels found no other), screenshots:
+  - The old tiles were sized in pixels on a screen measured in metres (84 by 72 m on a 0.39 by 0.20 desktop), so nothing showed. Fixed: icons are copies of the screen's Recycle Bin icon in the desktop's icon grid; two apps showed top left in the game's style, before anyone sat down.
+  - A double click (two clicks) opened an app; one click didn't.
+  - The kit-window app opened over the screen; a faked Esc closed it and the player stayed seated.
+  - The on-screen app opened in a copy of the game's program window with its title, a taskbar entry and the screen's font: header, text, a live game time that ticked, a field, two buttons in a row, a long list clipped at the window's edge (951 units of list in an 803 view; scrolled to the end it showed line 12).
+  - With the field focused, a faked E didn't make the player get up; with nothing focused it did, and the window stayed on the screen for the next sitting.
+  - The taskbar entry minimised and restored the window; its close button closed it (one `Closed`, the taskbar entry gone); the title changed live; Redraw kept the typed text.
+  - Ending the script that registered them took both icons and the open window away. Reloading the level with a window open raised `Closed` once, and the new laptop had the icons.
+  - `computer.apps demo=true` added Demo Stocks and Demo Notes; `open=ObenUIKit.DemoNotes` opened it on the laptop in use.
+- [ ] **Computer apps by hand:** with a pad, the right stick and A reach the on-screen app's buttons, and B doesn't make the player get up while a kit window is open over the computer (needs a pad; the hold is in `ComputerGates`). Real typing in the Demo Notes field.
+- [x] **Computers:** (2026-10-31, the bank's laptop) `computers.list` gave its 4 e-mails with senders and 2 recycle bin files ("Upper Vault Safe" and its code); `SetWallpaper` showed a 16:9 picture under the icons and put the tunnel picture back when its owner ended (a 1 by 64 picture drew as a thin strip: the game keeps a picture's aspect); `Computers.Used` fired once for sitting down and once for getting up.
 - [x] **Guitar:** hold one, then `guitar.play song=[0,0.5,0.5,0.25]`. Strums sound, and nearby NPCs comment. (2026-10-30: a strum and the song gave 5 strum events. NPCs only comment during a long note held over 10 s, never on strums; a note held with `guitar.play hold=1` drew a comment from a mod NPC that could see the player once the hold stopped skipping the guitar's update. The long notes loop; the player's own key release ends a mod's note.)
 - [x] **TVs:** `tvs.list` / `tvs.set` where there's a TV. (2026-10-30, Interior Player Tenement: the old TV was unpowered and `tvs.set on=true` refused; powered from a script it switched on (static on screen) and off (dark), each with a `Television` event.)
 - [x] **Item model:** `items.model` shows a model on an item lying in the world and in the hands. (2026-10-30: a sausage on the floor showed a two-cube OBJ at its size while an apple kept its look; the guitar in hand showed it in first person and still strummed; `clear` gave both their own look back.)

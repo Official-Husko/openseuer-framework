@@ -62,6 +62,7 @@ UI that looks like the game's own: built from the game's uGUI elements, TMP font
 - [x] HUD prompts and guides, main menu buttons for any mod, UiState and input capture
 - [x] Mod menu: MODS in the main and pause menus, Mods page with mod and feature switches
 - [x] Settings, Errors and What's New pages
+- [ ] Later (owner's idea, 2026-10-31): reuse the compact rows of the game's Custom difficulty page (title on the left, `< value >` on the right, the description box beside the list) where they fit, like the Mods menu's pages and settings. The New Game screen's mod option rows (M28) copy those rows already, so that code is the starting point
 
 ## ObenSave
 

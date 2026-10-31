@@ -58,7 +58,8 @@ public sealed class MainMenuButton
         }
     }
 
-    /// <summary>It's on the menu right now.</summary>
+    /// <summary>It's on the menu right now. False away from the main menu, and for a button that is in the
+    /// "More…" list because the rows under the menu were full.</summary>
     public bool IsShown => Button != null;
 
     /// <summary>Takes the button off the menu.</summary>
@@ -67,9 +68,10 @@ public sealed class MainMenuButton
 
 /// <summary>
 /// Adds buttons to the game's main menu, made from the menu's own buttons (same font, colours, hover and
-/// click sounds). They go in rows of three under the game's 2x3 grid, and the keyboard and pad reach them:
-/// down from the bottom row goes into the mod rows and up comes back. A button goes away when its mod
-/// unloads. MODS itself takes the grid's unused "???" slot and isn't one of these.
+/// click sounds). They go in rows of three under the game's 2x3 grid, as many rows as fit on the screen,
+/// and the keyboard and pad reach them: down from the bottom row goes into the mod rows and up comes back.
+/// When there are more buttons than places, the last place becomes "More…", a window with the rest. A
+/// button goes away when its mod unloads. MODS itself takes the grid's unused "???" slot and isn't one of these.
 /// </summary>
 public static class MainMenuButtons
 {
@@ -122,18 +124,6 @@ public static class MainMenuButtons
     {
         if (Registered.Remove(button))
             MainMenuRow.Rebuild();
-    }
-
-    internal static int IndexOf(UnityEngine.UI.Button button)
-    {
-        if (button == null)
-            return -1;
-        for (int i = 0; i < Registered.Count; i++)
-        {
-            if (Registered[i].Button == button)
-                return i;
-        }
-        return -1;
     }
 
     internal static void Init(ObenMod kit)

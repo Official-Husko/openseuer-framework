@@ -17,12 +17,15 @@ namespace ObenUIKit.Menu;
 /// <summary>
 /// Puts the mod buttons on the main menu's sign: each is a copy of the game's Credits button (its look,
 /// hover and click sounds), stripped of its click action, its relays and its translation component, placed
-/// in rows under the game's grid at the grid's own column and row spacing. Rebuilt whenever the list
-/// changes or the main menu loads; all copies are removed when the kit unloads.
+/// in rows under the game's grid at the grid's own column and row spacing, as many rows as fit on screen
+/// (<see cref="MainMenuFit"/>). When there are more buttons than places, the last place is a "More…" button
+/// listing the rest (<see cref="MainMenuMore"/>). Rebuilt whenever the list changes or the main menu loads;
+/// all copies are removed when the kit unloads.
 /// </summary>
 internal static class MainMenuRow
 {
     private const string Prefix = "Mod button: ";
+    private const string MoreName = Prefix + "more";
 
     private static readonly List<GameObject> Copies = new List<GameObject>();
     private static ModLogger _log;
@@ -30,6 +33,9 @@ internal static class MainMenuRow
 
     /// <summary>The game's bottom row, left to right (???/MODS, Credits, Quit), for navigation.</summary>
     internal static readonly UnityEngine.UI.Button[] BottomRow = new UnityEngine.UI.Button[3];
+
+    /// <summary>The buttons on the menu in place order (see <see cref="MainMenuSlots"/>), "More…" last when there.</summary>
+    internal static readonly List<UnityEngine.UI.Button> Slots = new List<UnityEngine.UI.Button>();
 
     public static void Init(ObenMod kit)
     {
@@ -49,7 +55,10 @@ internal static class MainMenuRow
     {
         Detach();
         if (!WorldState.InMainMenu || MainMenuButtons.All.Count == 0)
+        {
+            MainMenuMore.Set(null);
             return;
+        }
         try
         {
             Attach();
@@ -57,6 +66,7 @@ internal static class MainMenuRow
         catch (Exception e)
         {
             Detach();
+            MainMenuMore.Set(null);
             _log?.Error("Adding the mod buttons to the main menu failed", e);
         }
     }
@@ -64,15 +74,17 @@ internal static class MainMenuRow
     /// <summary>Shows a button's new label or state on its copy.</summary>
     public static void Refresh(MainMenuButton button)
     {
-        var copy = button.Button;
-        if (copy == null)
-            return;
+        if (button.Button != null)
+            Show(button.Button, button.Label, button.Interactable);
+        else
+            MainMenuMore.Changed(button);
+    }
+
+    private static void Show(UnityEngine.UI.Button copy, string label, bool interactable)
+    {
         foreach (var text in copy.GetComponentsInChildren<TMP_Text>(true))
-            text.text = button.Label;
-        copy.interactable = button.Interactable;
-        var effect = copy.GetComponent<TextButtonColorEffectTMP>();
-        if (effect != null)
-            effect.interactable = button.Interactable;
+            text.text = label;
+        PauseMenuEntry.SetInteractable(copy.gameObject, interactable);
     }
 
     private static IEnumerator NextFrame()
@@ -108,21 +120,36 @@ internal static class MainMenuRow
             rowStep = ((RectTransform)template.transform).rect.height * 1.5f;
 
         var buttons = MainMenuButtons.All;
-        for (int i = 0; i < buttons.Count; i++)
+        int places = MainMenuFit.Rows((RectTransform)template.transform, parent, new Vector3(middle.x, bottom.y, middle.z), rowStep)
+            * MainMenuSlots.Columns;
+        int direct = buttons.Count <= places ? buttons.Count : places - 1;
+        for (int i = 0; i <= direct && i < buttons.Count; i++)
         {
             var (row, column) = MainMenuSlots.Place(i);
-            var copy = Copy(template, buttons[i]);
-            var place = new Vector3(bottom.x + column * columnStep, bottom.y - (row + 1) * rowStep, middle.z);
-            copy.transform.position = parent.TransformPoint(place);
-            buttons[i].Button = copy.GetComponent<UnityEngine.UI.Button>();
-            Refresh(buttons[i]);
+            var place = parent.TransformPoint(new Vector3(bottom.x + column * columnStep, bottom.y - (row + 1) * rowStep, middle.z));
+            if (i == direct)
+            {
+                var more = Copy(template, MoreName, MainMenuMore.Open);
+                more.transform.position = place;
+                Show(more, MainMenuMore.Label, true);
+                break;
+            }
+            var entry = buttons[i];
+            var copy = Copy(template, Prefix + entry.OwnerId + "/" + entry.Id, () => Press(entry));
+            copy.transform.position = place;
+            entry.Button = copy;
+            Show(copy, entry.Label, entry.Interactable);
         }
+        var rest = new List<MainMenuButton>();
+        for (int i = direct; i < buttons.Count; i++)
+            rest.Add(buttons[i]);
+        MainMenuMore.Set(rest);
     }
 
-    private static GameObject Copy(UnityEngine.UI.Button template, MainMenuButton entry)
+    private static UnityEngine.UI.Button Copy(UnityEngine.UI.Button template, string name, Action onClick)
     {
         var copy = UnityEngine.Object.Instantiate(template.gameObject, template.transform.parent, false);
-        copy.name = Prefix + entry.OwnerId + "/" + entry.Id;
+        copy.name = name;
         Strip(copy);
         // A layout group on the sign would otherwise move the copy into its own idea of a grid.
         if (copy.transform.parent.GetComponent<LayoutGroup>() != null)
@@ -134,10 +161,11 @@ internal static class MainMenuRow
         }
         var button = copy.GetComponent<UnityEngine.UI.Button>();
         button.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-        button.onClick.AddListener(() => Press(entry));
+        button.onClick.AddListener(() => onClick());
         copy.SetActive(true);
         Copies.Add(copy);
-        return copy;
+        Slots.Add(button);
+        return button;
     }
 
     // The copy must not run the Credits button's actions, fire its relays or be re-translated back to "Credits".
@@ -158,7 +186,7 @@ internal static class MainMenuRow
         }
     }
 
-    private static void Press(MainMenuButton entry)
+    internal static void Press(MainMenuButton entry)
     {
         if (!entry.Interactable)
             return;
@@ -178,6 +206,7 @@ internal static class MainMenuRow
             UnityEngine.Object.Destroy(copy);
         }
         Copies.Clear();
+        Slots.Clear();
         foreach (var button in MainMenuButtons.All)
             button.Button = null;
         _grid = null;

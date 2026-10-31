@@ -73,14 +73,17 @@ internal static class UiCommands
         return JToken.FromObject(Kit("KitDev", "Prompts"));
     }
 
-    [BridgeCommand("menu.buttons", "Mod buttons on the main menu, with where their copies sit; add or remove demo buttons.",
-        Params = new[] { "add?: label of a demo button to add", "remove?: true removes the demo buttons" })]
+    [BridgeCommand("menu.buttons", "Mod buttons on the main menu, with where their copies sit and which are in the More list; add, press or remove demo buttons.",
+        Params = new[] { "add?: label of a demo button to add", "press?: label of a button to click (or 'more')", "remove?: true removes the demo buttons" })]
     private static object MenuButtons(JObject p)
     {
         var result = new JObject();
         string add = p.Str("add", null);
         if (add != null)
             result["added"] = (string)Kit("KitDev", "AddMenuButton", add);
+        string press = p.Str("press", null);
+        if (press != null)
+            result["pressed"] = (string)Kit("KitDev", "PressMenuButton", press);
         if (p.Bool("remove", false))
             result["removed"] = (int)Kit("KitDev", "RemoveMenuButtons");
         result["buttons"] = JToken.FromObject(Kit("KitDev", "MenuButtons"));

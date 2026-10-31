@@ -82,7 +82,7 @@ public static class KitDev
         return hidden;
     }
 
-    /// <summary>Every mod button on the main menu, with where its copy sits on the sign.</summary>
+    /// <summary>Every mod button on the main menu, with where its copy sits on the sign, then "More…" when it's there.</summary>
     public static List<Dictionary<string, object>> MenuButtons()
     {
         var list = new List<Dictionary<string, object>>();
@@ -92,17 +92,49 @@ public static class KitDev
             {
                 ["owner"] = button.OwnerId, ["id"] = button.Id, ["label"] = button.Label, ["order"] = button.Order,
                 ["interactable"] = button.Interactable, ["shown"] = button.IsShown,
+                ["inMore"] = MainMenuMore.Contains(button),
             };
             if (button.Button != null)
-            {
-                var rect = (RectTransform)button.Button.transform;
-                entry["localPosition"] = rect.localPosition.ToString();
-                entry["visible"] = button.Button.gameObject.activeInHierarchy;
-                entry["insideParent"] = InsideParent(rect);
-            }
+                Where(entry, button.Button);
             list.Add(entry);
         }
+        if (MainMenuMore.Buttons.Count > 0 && MainMenuRow.Slots.Count > 0)
+        {
+            var more = new Dictionary<string, object> { ["owner"] = UIKitMod.Instance.Info.Id, ["id"] = "more", ["label"] = MainMenuMore.Label };
+            Where(more, MainMenuRow.Slots[MainMenuRow.Slots.Count - 1]);
+            list.Add(more);
+        }
         return list;
+    }
+
+    /// <summary>Clicks a mod button on the main menu by its label, or "More…"; buttons in the More list run as from its window.</summary>
+    public static string PressMenuButton(string label)
+    {
+        if (label == "more" || label == MainMenuMore.Label)
+        {
+            MainMenuMore.Open();
+            return MainMenuMore.Buttons.Count > 0 ? "opened More" : "no More button";
+        }
+        foreach (var button in MainMenuButtons.All)
+        {
+            if (button.Label != label)
+                continue;
+            if (button.Button != null)
+                button.Button.onClick.Invoke();
+            else
+                MainMenuRow.Press(button);
+            return button.Button != null ? "pressed on the menu" : "pressed from More";
+        }
+        return "no button " + label;
+    }
+
+    // Where a copy sits: its place on the sign and whether all of it is on screen through the menu camera.
+    private static void Where(Dictionary<string, object> entry, UnityEngine.UI.Button copy)
+    {
+        var rect = (RectTransform)copy.transform;
+        entry["localPosition"] = rect.localPosition.ToString();
+        entry["visible"] = copy.gameObject.activeInHierarchy;
+        entry["onScreen"] = Camera.main != null && MainMenuFit.OnScreen(Camera.main, rect);
     }
 
     /// <summary>Adds a demo button to the main menu that shows a toast.</summary>
@@ -127,14 +159,5 @@ public static class KitDev
             }
         }
         return removed;
-    }
-
-    // Whether the button's centre lies within its parent's rectangle (a hint that it shows on the sign).
-    private static bool InsideParent(RectTransform rect)
-    {
-        if (!(rect.parent is RectTransform parent))
-            return true;
-        Vector2 centre = parent.InverseTransformPoint(rect.position);
-        return parent.rect.Contains(centre);
     }
 }

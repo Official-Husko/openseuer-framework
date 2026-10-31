@@ -55,12 +55,12 @@ internal static class MainMenuNavPatches
 
     private static UnityEngine.UI.Button Target(UnityEngine.UI.Button current, int dx, int dy)
     {
-        var buttons = MainMenuButtons.All;
-        int count = buttons.Count;
+        var slots = MainMenuRow.Slots;
+        int count = slots.Count;
         if (current == null || count == 0)
             return null;
 
-        int index = MainMenuButtons.IndexOf(current);
+        int index = slots.IndexOf(current);
         if (index < 0)
         {
             // Only down from the game's bottom row leads into the mod rows.
@@ -68,12 +68,12 @@ internal static class MainMenuNavPatches
                 return null;
             int column = Array.IndexOf(MainMenuRow.BottomRow, current);
             int below = column >= 0 ? MainMenuSlots.FromGrid(column, count) : -1;
-            return below >= 0 ? buttons[below].Button : null;
+            return below >= 0 ? slots[below] : null;
         }
 
         int next = MainMenuSlots.Move(index, count, dx, dy);
         if (next == -2)
             return MainMenuRow.BottomRow[MainMenuSlots.GridColumnAbove(index)];
-        return next >= 0 ? buttons[next].Button : null;
+        return next >= 0 ? slots[next] : null;
     }
 }

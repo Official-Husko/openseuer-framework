@@ -332,7 +332,10 @@ join.Label = "Join (2)";
 
 - Each button is a copy of the menu's own Credits button: the sign's font, colours, hover and click sounds. The copy loses the original's click action, relays and translation component.
 - They go in rows of three under the game's 2x3 grid (New Game, Load Game, Options / MODS, Credits, Quit), in the grid's own columns and row spacing, sorted by `order` and then by when they were added.
-- The keyboard and pad reach them: down from the bottom row goes into the mod rows, up from the first mod row goes back to the button above, left and right move along a row. The game's own grid moves are untouched. This is done with postfixes on `MainMenuNavigationHelper.GetButtonAbove/Below/OnTheLeft/OnTheRight` that only answer for moves out of the bottom row and between mod buttons.
+- Only as many rows as fit on the screen are used: the menu is a sign in the scene, and the kit measures through the menu camera where each row would end (two rows, six buttons, at 16:9; the camera's height of view is the same at any aspect). The measurement is taken while the sign is in view and remembered for the other pages.
+- When there are more buttons than places, the last place becomes "More…", which opens a small window listing the rest as buttons that do what their menu buttons would (greyed out ones stay greyed). The window follows changes to the list while it's open and closes when everything fits again. `IsShown` is false for a button in that list.
+- `Interactable = false` greys a button out the way the pause menu greys its own (the game's disabled text colour) and ignores its clicks.
+- The keyboard and pad reach them: down from the bottom row goes into the mod rows, up from the first mod row goes back to the button above, left and right move along a row, and "More…" is part of that. The game's own grid moves are untouched. This is done with postfixes on `MainMenuNavigationHelper.GetButtonAbove/Below/OnTheLeft/OnTheRight` that only answer for moves out of the bottom row and between mod buttons. After a mod's window closes, the button that opened it is still the menu's highlighted one.
 - A button goes away when its mod unloads (or with `Remove()`); the rest close up. Ids are per mod; adding the same id again replaces the old button. `MainMenuButtons.All` and `Find(modId, id)` list them.
 - MODS itself stays in the grid's unused "???" slot and isn't one of these.
 
@@ -585,5 +588,4 @@ The computers themselves (which one the player uses, sitting down and getting up
 - A text field can't be typed into with a controller (there is no on-screen keyboard); the rest of a window works with one.
 - Keyboard navigation moves in one column, in build order; it doesn't know about left and right placement beyond `Row` and the footer.
 - Only one key prompt shows at a time. A prompt's `Capture` goes through `InputCapture`, so keys the game reads straight from Unity (F1, the toolbelt numbers) still reach the game.
-- Main menu buttons go under the sign's grid; with many rows they may run past the bottom of the sign (`oben call menu.buttons` reports whether each sits inside the menu's rectangle).
 - Only one tab row per `Tabs` call. A tab's page is part of the window's body and scrolls with it; a `Scroll` area inside it scrolls on its own, but the wheel doesn't pass on to the window once the inner area reaches its end.

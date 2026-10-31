@@ -70,7 +70,7 @@ States: `Locked` (needs another upgrade first, or its line is busy), `Available`
 
 An apartment's cleaning job is started by the story (a conversation starts a 3-day job for the shop, apartment 2). `Cleaning.StateOf(apartment, out int day)` tells whether it has not started, runs (until game day `day`), is done, or that there is no such apartment (`NoSuchApartment`). `Cleaning.Start(apartment, days)` starts one, once per apartment like the game; `Cleaning.Finish(apartment)` ends a running one now. `Cleaning.Changed` reports both, and the game's own finish.
 
-The game finishes a job a day late: it checks at midnight before its day counter has moved on, so a 1-day job ends at the second midnight (TODO.md, CleaningDayLate).
+The game finishes a job a day late: it checks at midnight before its day counter has moved on, so a 1-day job ends at the second midnight. ObenPatches' CleaningDayLate (on by default) fixes that.
 
 `Cleaning.TrashPiles()` lists the trash piles of the loaded scenes with the items they turn into (`Items`, and `Stacks` with quality, liquid and owner).
 

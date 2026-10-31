@@ -137,6 +137,12 @@ Fix: a prefix on `CandleExtinguished` destroys a timer that still has time left 
 
 Fix: a postfix replaces `lastCheck` with a copy when it is the clock's object. Tested on 0.5.13 in Interior Tenement Kolhola: `lastCheck` was no longer the clock's object; after renting Pod 2 for one night and letting midnight pass, at 13:00 every stay had counted down a night and the player's pod was no longer theirs, without leaving the level.
 
+### CleaningDayLate: an apartment's cleaning job ends a day late
+
+`TimeOfDayAzure` moves to a new day by calling `IncreaseDayCounter` (`TimeOfDayAzure.cs:485-489`), which raises `DayChanged` with the new day (`:531`) before `currentTimeAndDay.SetToCurrentTimeAndDay()` copies it into `currentTimeAndDay.currentDay`. `TenementController.OnCleaningTimerDayChanged` (`TenementController.cs:723-733`) compares that field, still yesterday, with the job's last day (`StartApartmentCleaningTimer` sets today plus the days, `:718`), so every job took a day longer: the story's 3-day cleaning of the shop took 4 (found 2026-10-31: a 1-day job ended at the second midnight).
+
+Fix: a transpiler makes the handler compare the day the event hands it. Tested on 0.5.13 with a 1-day job on apartment 3 and the handler called as at midnight (the new day, the clock's field unchanged): with the fix on the job was done at the first midnight, with it off it wasn't.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

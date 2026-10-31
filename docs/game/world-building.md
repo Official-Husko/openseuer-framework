@@ -437,7 +437,7 @@ rent, evict and cancel buttons are `ApartmentRentUI.OnRentButtonPressed/OnEvictB
 
 Cleaning: `StartApartmentCleaningTimer(apartment, days)` (Lua; the story calls `(2, 3)` for the shop) sets `cleaningTimerCompleteDay` once (only from -1);
 `OnCleaningTimerDayChanged` sets it to 0 when the day is reached. It runs from `DayChanged`, which `IncreaseDayCounter` raises before
-`currentTimeAndDay.currentDay` moves on, so a job ends a day late.
+`currentTimeAndDay.currentDay` moves on, so a job ends a day late (fixed by ObenPatches' CleaningDayLate).
 
 Hotels: `Hotel.CurrentTime` counts each room's stay down once a day after 12:00 (`today.currentDay > lastCheck.currentDay`), but then stores
 `lastCheck = today`, the clock's own `currentTimeAndDay` object, so it never sees another day until the level is loaded again (the saved `lastCheck` is a
@@ -663,4 +663,4 @@ Every one of these runs for each instance in the loaded scene unless noted:
 21. `FloodGateControl.TurnOff` stops the gate's coroutines but leaves `isBlinking` set; `TurnOn` then either snaps the gate to its target or, with `allowPressOnBlinking`, turns it round.
 22. `TenementController.RentApartment` sets `deposit` (and pays it unless silent); a silent rent still records it, and the timed eviction (`EvictResident(apartment)`, not silent) takes it back from the player.
 23. `Hotel.lastCheck` becomes the clock's own object after the first daily check (5.2), so hotel stays only count down once per visit to the level (fixed by ObenPatches' HotelDayOnce).
-24. `DayChanged` fires before `currentTimeAndDay.currentDay` moves on; code that compares that field inside a `DayChanged` handler sees yesterday (TODO.md, CleaningDayLate).
+24. `DayChanged` fires before `currentTimeAndDay.currentDay` moves on; code that compares that field inside a `DayChanged` handler sees yesterday (the cleaning job's case is fixed by ObenPatches' CleaningDayLate).

@@ -87,8 +87,8 @@ $OBEN call screenshot scale=0.5 format=jpg           # base64 jpg, decode and lo
 
 Older key-press checks still open from the first UI work:
 
-- [ ] MODS on the main menu opens the mod menu with mouse, keyboard and controller.
-- [ ] Esc over the pause menu's MODS page goes back one level, not out of the game.
+- [x] MODS on the main menu opens the mod menu with keyboard and controller. (2026-10-31: with the menu's selection on MODS, a faked Enter and a faked pad A each opened it through the game's own menu handler. A click by hand is still to try, but it is the button's own onClick.)
+- [x] Esc over the pause menu's MODS page goes back one level, not out of the game. (2026-10-31, faked Esc: the MODS page closed, the pause menu stayed open and paused.)
 - [ ] Keyboard navigation through every MODS page: Mods, Settings, Hotkeys, What's New, Errors.
 - [ ] The Cheat Menu opens on Insert.
 
@@ -150,11 +150,14 @@ New:
 - [x] **Guide:** `hud.guide` ran "Jump" (Space), "Open your map" (M opened the map; the next step waited until it closed), "Walk a few steps" (done past 3 m) and "That's the demo guide", then ended; `hud.guide stop=true` stopped a fresh one. (2026-10-31)
 - [x] **Input capture:** `input.capture action=Jump seconds=10` made `ui.state` show `jumpCaptured: true`, false again after 10 s. (2026-10-31)
 - [ ] **Input capture by hand:** hold Space during `input.capture action=Jump seconds=10`: no jump. (A faked key doesn't reach the game's jump: it reads `Input.GetKey`, which the JIT inlines, so a script patch on it never runs.)
-- [ ] **Main menu buttons:**
-  - `oben call menu.buttons add="Demo A"`, then `add="Demo B"`.
-  - Both sit under ???/MODS and Credits in the menu font. Check `insideParent` and a screenshot of the sign: are they clipped?
-  - Down from Credits moves to Demo B, and Up goes back.
-  - `menu.buttons remove=true` removes them.
+- [x] **Main menu buttons (M29), 2026-10-31 at 2560x1440, screenshots:**
+  - Co-op sat under MODS and `menu.buttons add="Demo A"` under Credits, in the menu font, on screen.
+  - With seven more, two rows fitted (six buttons); the third ran below the screen. Fixed: the rows are measured through the menu camera and the last place becomes "More…". With Co-op and Demo A to G the menu showed Co-op, A, B / C, D, More…; More opened a small window with E, F, G; "Demo F" there showed its toast; renaming G and greying E out showed in the open window; removing two closed it and all six sat on the menu.
+  - Navigation through the game's own calls: Credits ↓ Demo A ↓ Demo D → More ↑ Demo B ↑ Quit ← Credits; MODS ↓ Co-op (← stays) ↓ Demo C → Demo D → More (→ stays).
+  - Enter (faked) on the More window's Back closed it five times out of five without the menu clicking More again, and More kept the menu's highlight.
+  - `Interactable = false` didn't grey the button (only ignored clicks); fixed, it now greys like the pause menu's own.
+  - Seven buttons added while the camera was over Load Game came out the same once back on the sign.
+  - `menu.buttons remove=true` removed the demo buttons and left Co-op.
 - [ ] **What's New:** MODS → Settings → "UI kit" → "Read What's New" opens the page. "Show What's New at the next start" clears `LastSeenVersion`, and the popup shows on the next launch.
 - [ ] **Camera after a kit window:** sit on a chair (or lie in bed), open and close a kit window. The camera stays locked the way the game had it.
 - [x] **Mod menu (M06).** Passed 2026-10-29 after a fresh start: the script-driven parts by script (notes per item), the key presses, hover and wheel by hand.
@@ -191,10 +194,10 @@ New:
   - [x] **Live player preview:** (2026-10-29: first person with Body and Face framing, closing put both rigs and all eleven body renderers back off; third person in the tenement and outside, where the level switches the meshes' holder off, after a fix; dragging turns the player like a copy after a fix: right moves the face right, up moves it up. The idle animation by eye is still open.) In the tenement, demo, Model tab, "Show the player, live". The player shows from the front, breathing (idle animation), in their clothes, and their body is gone from the scene behind; Body and Face switch the framing; dragging circles them. In first person too (the body is switched on for the preview). Closing the window brings the body back as it was (gone again in first person, shown in third person), with no lamp light left off.
   - **Framing a copy:** an item or mod model with Face framing shows its top part.
 
-- [ ] **Co-op in the menus, pause menu buttons, mod version:**
-  - The main menu has Co-op under the grid; the pause menu has Co-op above MODS. Both open the Co-op window (status "Not in a co-op game.", the console commands). Keyboard and pad reach both buttons.
-  - The pause menu shows "ObenseuerExtended v0.1.0" just above "V. 0.5.13", same size and colour.
-  - Hot reload of ObenCoop: its buttons go and come back; the kit's reload keeps MODS and the version line.
+- [x] **Co-op in the menus, pause menu buttons, mod version** (2026-10-31, screenshots):
+  - The main menu has Co-op under the grid; the pause menu has Co-op above Mods. Both opened the Co-op window ("Not in a co-op game."). The pause menu's own keyboard moves went Difficulty → Co-op → Mods → Quit to Menu; the main menu's are above.
+  - The pause menu shows "ObenseuerExtended" and "v0.19.0 (241390d-dirty)" just above "V. 0.5.13", same size and colour.
+  - After several kit and framework hot reloads Co-op came back on both menus, with MODS and the version line.
 
 ## 3. Game Tweaks, developer menu, tracer, ObenPatches
 
@@ -589,7 +592,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 Small APIs added after the parity audit. Most are one eval each; run them in a level (`new_scene` is enough unless marked).
 
 - [ ] **Game keys:** `oben eval 'return ObenFramework.Ui.GameKeys.Key("Interact") + " " + ObenFramework.Ui.GameKeys.Label("Interact");'` gives `E E`. With `input.capture action=Jump seconds=10`, `GameKeys.Held("Jump")` stays false while Space is held.
-- [ ] **Console:** `oben eval 'return ObenFramework.Console.GameConsole.Open();'` opens the F1 console (screenshot); `Close()` shuts it a frame later and the player can move again.
+- [x] **Console (M29):** passed 2026-10-31 by script. `IsAvailable` true; `Open()` opened the F1 console at the main menu (screenshot) and in a level, where the game's key lock had one holder while open and none after `Close()`. `help` listed every mod command with its mod; `Execute("features")` returned what it printed. Names with a space, a quote or nothing were refused. Two `Close()` calls in one frame both answered true (the game closes a frame later); fixed, the second answers false.
 - [x] **Tooltip:** `Hud.ShowTooltip("Test tooltip", "Some <b>details</b> here")` showed the game's tooltip box at the crosshair; `HideTooltip()` removed it. (2026-10-31)
 - [ ] **Notes [save]:** with a note held, `PlayerNotes.Open(<id from player.notes>)` opens the menu's notes page at it; for a book, at the page it was left on.
 - [x] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires. (2026-10-31, Kolhola: `keypads.set refuse=true`.)

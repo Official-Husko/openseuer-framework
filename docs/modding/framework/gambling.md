@@ -56,7 +56,7 @@ CardGames.GaveUp.Subscribe(this, t => Log.Info($"gave up {t.Kind}, {t.Stake} los
 - `Started` fires when the cards are dealt, about a second after the stake was taken, also at a table that plays for free (stake 0).
 - The table pays back twice the stake for first place, 1.2 times for second, 0.8 times for third and nothing for fourth.
 - Getting up during a game gives it up: `GaveUp`, the stake is lost and nothing is paid.
-- `NetWinnings` is the framework's own count of payouts minus stakes since the player sat down, back to 0 when they get up. The table's own count adds the stake back instead of the payout (CardTableNetWinnings in TODO.md), so it can't be used.
+- `NetWinnings` is the framework's own count of payouts minus stakes since the player sat down, back to 0 when they get up. The table's own count adds the stake back instead of the payout unless ObenPatches' CardTableNetWinnings is on, so it isn't used.
 
 ## Contests
 

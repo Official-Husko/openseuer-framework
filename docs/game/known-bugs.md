@@ -149,6 +149,12 @@ Fix: a transpiler makes the handler compare the day the event hands it. Tested o
 
 Fix: a transpiler makes that test read `GamblingNeed`. Tested on 0.5.13 by calling the update with the other stats as they were: a gambling urge of 80 without smoking raised the floor from 0.168 to 0.682 with the fix on (the same as a smoking urge of 80) and left it at 0.168 with it off; with both urges the result was the same either way.
 
+### CardTableNetWinnings: card players never remark on how you did
+
+A card table keeps `netWinnings`, the player's winnings since sitting down: the stake comes off when a game starts (`CardGameTable.cs:312`), and `OnGameFinished` (`:366-380`) was meant to add the payout (`stake × 2, 1.2, 0.8 or 0` by place) but adds the stake back instead, so the count was 0 after every finished game. Getting up (`LeaveTable`, `:604-636`) only lets an NPC remark "Player Ends On Win" or "Loss" when the count isn't 0, so after a finished game it never did; only giving up mid-game left a count (read 2026-10-31).
+
+Fix: a prefix on `OnGameFinished` adds the payout minus the stake first, so after the game's own addition the count holds the payout. The factors are repeated from the game's local array. Tested on 0.5.13 at the casino table: China Hand for 25 OC, won (the game's own `FinishGame`): the count was +25, and getting up played "Generic/Card Games/Player Ends On Win".
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

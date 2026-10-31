@@ -602,6 +602,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [x] **HotelDayOnce:** in Kolhola, Pod 2 rented for one night, midnight passed and 13:00 set without leaving: every stay counted down a night and the pod was no longer the player's; `lastCheck` is not the clock's object. (2026-10-31)
 - [x] **CleaningDayLate:** a 1-day cleaning job on apartment 3, then the midnight handler as the clock calls it: done at the first midnight (with the fix off, not). (2026-10-31)
 - [x] **GamblingNeedMood:** `MentalHealthStatsUpdate` with a gambling urge of 80 and no smoking raises the mood's floor from 0.168 to 0.682 (the same as smoking 80); with the fix off it stays 0.168. (2026-10-31)
+- [x] **CardTableNetWinnings:** at the casino table, China Hand for 25 OC, won with the game's own `FinishGame`: the table's count is +25 and getting up (`LeaveTable`) plays "Player Ends On Win". (2026-10-31)
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

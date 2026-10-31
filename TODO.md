@@ -10,7 +10,7 @@ What's planned, roughly in order, with the notes each piece builds on. Tick thin
 - [x] ObenFramework: events (MainMenu, WorldReady, save/load), WorldState, F1 console commands, switchable features
 - [x] Error report file (errors.log) for bug reports
 - [x] Changelog from commit history (`oben changelog`)
-- [x] In-game What's New page and popup reading changelog.json (`build/changelog.sh` writes it; the popup needs a tagged release)
+- [x] In-game What's New page and popup reading changelog.json (`build/changelog.sh` writes it)
 - [x] Release packaging (`build/package.sh`, `build/release.sh`; dev mods marked `devOnly`)
 - [x] Unit tests (`dotnet test`) and `oben check` for hooks after game updates
 - [x] GPL-3.0 license
@@ -26,10 +26,10 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] Player: find the player, stats, safe teleport, damage and healing, died/damaged events
 - [x] Items: give, take, spawn, register new items and recipes at runtime
 - [x] Money: wallet in both currencies
-- [x] Saves: per-mod data in side files next to the save, object state capture/apply, save gate, slots and save now (need an in-game test with real saves)
+- [x] Saves: per-mod data in side files next to the save, object state capture/apply, save gate, slots and save now (writing on real saves is checked; the load, reset and hot reload round trip, save state and slots are still open in to-test.md area 13)
 - [x] Input: input lock, rebindable mod hotkeys with a Hotkeys page
 - [x] Notifications and HUD: toasts, hints in the game's hint panel, subtitles, bars
-- [ ] Settings: typed settings per mod with an in-game page
+- [x] Settings: typed settings per mod with an in-game page (`LoadConfig<T>`, the Settings page in MODS, `ModSettings.Register` and `Draw`)
 - [x] Clock and weather: time of day, minute/hour/day events, weather
 - [x] Dialogue and Lua: variables, Lua functions, conversations, started/ended events
 - [x] Quests: quest log, status changes, change events
@@ -48,7 +48,7 @@ Each module stays small and gets ported or written when the first mod needs it. 
 - [x] NPCs: queries, spawn events, control claims, schedules, mod phone numbers
 - [x] Player look capture/apply and survival hooks (thresholds, drain, eating and damage interception)
 - [x] Loader and core: mod id and game version checks, isolated framework parts and patch areas, log rate limits and log-once, load-aborted event, TimeControl, placeholders for items of removed mods
-- [ ] Coverage of the MIT framework: see PROGRESS.md (in-game test backlog in its Missing column)
+- [x] Coverage of the MIT framework: every module of PROGRESS.md at 100% since 1.0.0 (WebUi replaced by the native menus); the in-game checks still open are in to-test.md
 - [x] Scene looks on mod NPCs (M22): fixed. The giant head was the clothing kit's meshes, authored standing along Z, read in the body's Y-up space (each mesh is now brought into the body's space through a shared bone); looks also carried every clothing variant of the kit (now only the ones the scene shows). Blender-rig looks are retargeted onto slider bodies: the role table knows the rig, the rebuilt skeleton is stood in a T-pose for its avatar and the look is kept on the body's hips.
 
 ## ObenUIKit
@@ -90,10 +90,10 @@ Built from the reference co-op mod in `example-mp/` (NomadsReach/Obenseuer-Coop,
 - [ ] Shared clock and weather, sleep vote
 - [ ] Join ticket (send the host's world to a joining player)
 - [ ] Shared world: doors, items, containers, building, stations, shops, quests
-- [x] Steam transport as a second option (tested on a fake Steam; needs a real-Steam check)
+- [x] Steam transport as a second option (tested on a fake Steam, and on real Steam with one account as Spacewar and TOXIKK; two real accounts are still to check, to-test.md area 4)
 - [x] Lobbies: lists, join codes, invites, version checks
 - [x] Presence data layer (positions with interpolation)
-- [ ] Lobby page in ObenUIKit
+- [x] Lobby page in ObenUIKit: the co-op window in the main and pause menus (host, join by code, find games, players, join codes hidden in streamer mode)
 - [ ] Free roam (players in different levels), last
 - [x] Second game instance on one machine (`oben install --multi-instance`, `oben launch --instance 2`)
 
@@ -104,7 +104,7 @@ Built from the reference co-op mod in `example-mp/` (NomadsReach/Obenseuer-Coop,
 
 ## Game Tweaks
 
-- [x] Needs, stack size, spoilage, crafting and dishwasher speed, no minimum skill, renovation cost/money-only/time, day length, third-person camera; each its own switch, off by default (needs its in-game checks, see docs/modding/game-tweaks.md)
+- [x] Needs, stack size, spoilage, crafting and dishwasher speed, no minimum skill, renovation cost/money-only/time, day length, third-person camera; each its own switch, off by default (the table's checks passed 2026-10-29; third person by hand, in a save and in a first-person trigger are still open, to-test.md area 3)
 - [ ] Third-person camera, a complete rewrite: a camera of our own instead of the game's leftover mode (today the tweak only lifts the game's locks and points its dolly behind the head, see `CameraLocks`). A free orbit around the player, the body turning to where you walk instead of with the mouse, a shoulder offset, smooth collision and zoom, and interacting and aiming that still work from behind.
   - Idea for the same rewrite: better player animations. The body moves with what look like Unity's default animations; try a physics-based (active ragdoll or procedural) layer on top, or reuse a better set the game already has (NPC walk and idle clips, say). Co-op puppets would want the same.
 - [ ] Bug: in third person NPCs look at the camera, not at the player. The game's `CharacterHeadController` sets `eyes.lookTarget = ThirdPersonCameraCollision.instance.transform` (the camera) when the player comes near; while the camera is out, point them at the player's head instead (a patch there, or a target that follows the head bone).

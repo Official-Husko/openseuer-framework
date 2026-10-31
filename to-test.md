@@ -305,11 +305,21 @@ Already checked without a save: quest create, edit, counter, reveal, hand-in, ch
 - [x] **Interception:** with `story-intercept.cs`, a severity-40 crime goes on the record as 20 and the conversation start is logged; after `--reset` a crime counts in full (2026-10-30).
 - [x] **Clearing a mod's dialogue:** `dialogue.clear` removes nothing while a conversation is open (one warning in the log), and after it closes removes a branch, a response and two conversations (4) at once; Jens shows only his own choices again (2026-10-30).
 - [x] **Game variables and early removal:** `lua.set name=Day` and `name=DREAM_1` are refused, and a mod variable saves and loads. From a script, a mod's Lua function is removed by its own mod but not by another; `StopIntercepting` takes out a scope's conversation and crime interceptors at once (2026-10-30).
-- [ ] **Difficulty:** `difficulty.set factor=NeedsSpeed value=0.5` makes needs drain at half speed (`player.stats` over a minute).
-- [ ] **New Game screen:**
-  - At the main menu, run `newgame.testoptions` and `difficulty.presets add=harsh name=Harsh needs=1.5`.
-  - In New Game, "Harsh" is in the difficulty selector, and a "Mod options" button sits above Back. Screenshot where it lands, and check pad navigation.
-- [ ] **New game start:** start that game. `newgame.last` shows the options, `start.choices` lists the backstory picks, and `tutorial.state` steps through the opening tutorial with events for each prompt.
+- [x] **Difficulty factor** (2026-10-31, in a new game's Interior Start with the stats switched on, since they are off there until the opening is done): hunger +1.063 and thirst +2.5 in 40.6 s without a factor; at `difficulty.set factor=NeedsSpeed value=0.5`, +0.532 and +1.25 in the same time.
+- [x] **New Game screen** (2026-10-31, at the main menu with `newgame.testoptions`, a 0 to 1000 option and `difficulty.presets add=harsh name=Harsh needs=1.5`; screenshots):
+  - "Harsh" is in the difficulty selector after Custom, with needs at 1.5×.
+  - On Custom, the two general options sit at the top of the game's list and the two custom-rule options at its end. On Casual and Default the list shows the level's description with the general options under it.
+  - Clicking an arrow changed the choice; the page's own navigation (down, right) reached both rows and changed them, and down from the last row went to Next.
+  - Hovering a row showed its title and "From Dev Bridge." in the description box.
+  - The 0 to 1000 option, registered with the page open, appeared at once and moved 50 a press, stopping at 1000 before wrapping.
+  - "Show mod difficulty presets" off took Harsh out of the selector, on put it back.
+- [x] **New game start** (2026-10-31, as Dev Test with the intro skipped):
+  - `newgame.last` had the name, Harsh (preset `DevBridge.harsh`) and the five option values picked on the screen. In Interior Start the session was `NewGame` and every option read its stored value.
+  - Registering an option during the game logged the late warning; DevBridge reloading its stored options logged none.
+  - Five backstory picks through the game's cards each raised `Chosen` once, and `start.choices` listed them.
+  - The game's first autosave held `ObenFramework.newgame.json` with the options and the preset. Loaded from the main menu (where the screen was back to its defaults), the session was `SaveLoad`, the options read their stored values and `activePreset` was the preset.
+  - A pick left on the screen was dropped at the next load.
+- [ ] **Opening tutorial (M29c):** in a new game, `tutorial.state` steps through the opening tutorial with events for each prompt.
 
 ## 6. Economy and gambling (M23, M27)
 

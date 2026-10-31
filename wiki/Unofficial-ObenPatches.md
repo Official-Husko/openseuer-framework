@@ -20,6 +20,7 @@ On unless it says otherwise.
 | Error before the first save | The main menu logged an error until you had saved once. |
 | Screenshots | F11 and F12 never saved a screenshot. Now they go into the Screenshots folder next to the game. |
 | HUD after a screenshot | A screenshot without the HUD (F12), taken while the HUD was hidden, made the hide-HUD key need two presses to bring it back. |
+| Head lamp prompt | Taking off a hat with a head lamp before ever switching it on left the "Head Lamp" key prompt on screen. |
 | NPC sight chance (off by default) | NPC sight ignores its detection chance, so you're always spotted when in view. The fix makes the chance count; it changes how sneaking feels, so it's yours to turn on. |
 | Reflection probes (off by default) | A typo stops some reflections from updating while you stand in their area. Off until it has been checked in more places. |
 

@@ -113,6 +113,12 @@ The no-UI screenshot (F12) runs `ScreenshotNoUICO` (`TakeScreenshot.cs:22-35`): 
 
 Fix: when the HUD is already hidden, `ScreenshotNoUI` takes an ordinary screenshot instead (there is nothing to hide). Tested on 0.5.13: HUD hidden with the key's object, then F12: with the fix off the list held the object twice and one show left the HUD hidden; with it on, once, and one show brought it back.
 
+### HeadLampPrompt: the "Head Lamp" prompt stays after taking off the hat
+
+Putting on a hat with a head lamp (Hard Hat with Headlamp, 17730) calls the lamp's `Flashlight.onEquip`, which shows a "Head Lamp [B]" prompt until the lamp is first switched on (`Tutorial.ShowHeadLightTutorial`, `Tutorial.cs:462-471`); `onUnequip` hides it again (`Flashlight.cs:605-610`). But the head slot's `CharacterSlotController.UpdateItem` (`CharacterSlotController.cs:138-146`), which runs when the hat is taken off or swapped, from the inventory screen or `Inventory.Unequip`, destroys the lamp's object without calling `onUnequip`, so the prompt stayed on screen until a lamp was switched on somewhere (seen 2026-10-30).
+
+Fix: a prefix on `UpdateItem` for the head slot hides the head lamp prompt (clears `HeadLightTutorial` and the prompt, as `onUnequip` does, without touching other prompts' flags). A lamp put on again shows it again. Tested on 0.5.13 with the prompt's "done" flag cleared: hat on, prompt shown; hat off without switching the lamp on: with the fix off the prompt was still up, with it on it was gone.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

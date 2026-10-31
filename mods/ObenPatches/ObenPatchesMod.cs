@@ -29,6 +29,7 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new DateWeekdayShift());
         ModFeatures.Register(this, new ScreenshotFolder());
         ModFeatures.Register(this, new ScreenshotHiddenHud());
+        ModFeatures.Register(this, new HeadLampPrompt());
         BankInterest.State = ModSaves.Register<BankInterestState>(this, "bank-interest");
         ModFeatures.Register(this, new BankInterest());
     }

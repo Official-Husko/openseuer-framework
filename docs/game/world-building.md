@@ -424,9 +424,24 @@ Upgrades:
   scene scripts use `TenementUpgradeStart.Upgrade()`.
 - Timer: `UpdateProgesses` decrements `TimeSecondsLeft` per game second; at zero `OnUpgradeDone(progress)` `:346` -> `TenementUpgradeProgress.OnUpgradeDone()`
   (`:107`, marks `upgradeReady`, adds a "final payment" objective).
+- Screen: `UpgradeUI.OnPressed()` needs `contractorOpen`; it starts the upgrade, or with the work done pays the final bill (any contractor takes it, Real Money
+  checked against `GetPriceFinalRM()` unless `ignoreUpgradePricesAndItems`). With `completeUpgradesInstantly` (a debug switch) it calls
+  `CompleteUpgradeInstantly` and `FinishUpgrade` at once. A contractor's screen opens with `TenementContractor.ShowMenu()` (the contractors are assets).
 - Finish: player pays the final bill -> `TenementUpgradeProgress.FinishUpgrade(bool silentUpgrade=false)` (`TenementUpgradeProgress.cs:180`) ->
   `TenementApartment.Update(TenementUpgrade)` `:494` or `TenementGeneral.Update(TenementUpgrade)` `:351`. These set `current*`, null the progress, and call the
   `prefabs.Update*` methods that swap the prefab. Electricity also calls `TenementUtilities.UpdateApartmentPower`.
+
+Rent screen: `TenementResident.StartRent()` (`AddResident` + `ToggleGameMenu(... MenuPageNames.Tenement, ignoreDialogue: true)`) opens it from a
+conversation; `HideGameMenu` calls `RemoveResident`. The screen needs the Tenement Blueprint task item (`TenementPanelUI.requiredTaskItem`). Its
+rent, evict and cancel buttons are `ApartmentRentUI.OnRentButtonPressed/OnEvictButtonPressed/OnCancelEvictButtonPressed`.
+
+Cleaning: `StartApartmentCleaningTimer(apartment, days)` (Lua; the story calls `(2, 3)` for the shop) sets `cleaningTimerCompleteDay` once (only from -1);
+`OnCleaningTimerDayChanged` sets it to 0 when the day is reached. It runs from `DayChanged`, which `IncreaseDayCounter` raises before
+`currentTimeAndDay.currentDay` moves on, so a job ends a day late.
+
+Hotels: `Hotel.CurrentTime` counts each room's stay down once a day after 12:00 (`today.currentDay > lastCheck.currentDay`), but then stores
+`lastCheck = today`, the clock's own `currentTimeAndDay` object, so it never sees another day until the level is loaded again (the saved `lastCheck` is a
+copy). The desk rents through `Hotel.RentRoom(string "index_nights")` from its selection menu. Kolhola's pods and the Mines barrack hotel share their GUIDs.
 
 Utilities coupling: `TenementController.UpdateUtilities()` `:1198` -> `CheckElectricity()` `:1227` sets `powerMain.SetBaseBalance(0/8000/15000/100000/1000000)`,
 `unlimitedCapacity` and `unstableSupply` from `general.currentElectricity` and the `"TenementElectricity"` subscription. Water in the building is the
@@ -646,3 +661,6 @@ Every one of these runs for each instance in the loaded scene unless noted:
 19. `TriggerRadiation.Enable(false)` only keeps new visitors out (`OnTriggerEnter` checks `Enabled`); its dose tick checks the component's `enabled` alone, so a player already inside keeps taking dose. Switch the component off too.
 20. `Lantern.CandleExtinguished` drops `candleTimer` without `Destroy()`ing it, so the timer still runs out later and puts out the next candle (TODO.md, LanternStaleTimer).
 21. `FloodGateControl.TurnOff` stops the gate's coroutines but leaves `isBlinking` set; `TurnOn` then either snaps the gate to its target or, with `allowPressOnBlinking`, turns it round.
+22. `TenementController.RentApartment` sets `deposit` (and pays it unless silent); a silent rent still records it, and the timed eviction (`EvictResident(apartment)`, not silent) takes it back from the player.
+23. `Hotel.lastCheck` becomes the clock's own object after the first daily check (5.2), so hotel stays only count down once per visit to the level (TODO.md, HotelDayOnce).
+24. `DayChanged` fires before `currentTimeAndDay.currentDay` moves on; code that compares that field inside a `DayChanged` handler sees yesterday (TODO.md, CleaningDayLate).

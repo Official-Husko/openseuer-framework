@@ -347,7 +347,7 @@ Already checked in Open Sewer Bazaar:
 
 Already checked:
 - **Environment:** flags force and release; the FOV override (options file untouched); sky override, read-back and clear; the vignette; power device and grid on/off; heavy rain; radiation and water readings; the hazard list.
-- **Housing:** apartments; tenants; `tenants.check` AlreadyRenting; renovations list; the post box.
+- **Housing:** apartments; tenants; `tenants.check` AlreadyRenting; renovations list.
 
 - [x] **Flags [save]:** a forced flag never lands in the save. The first try found it in `Globals.tnmt`: the game only collects `GlobalState` in its save step and writes the file at the end of `SaveGame`, after our hook had forced it again. Fixed (the values underneath stay in until `SaveGame` returns); the next save held `obenext_perm` (set for good) and not the forced `obenext_test`, which was still forced afterwards. A framework hot reload removed the force (the flag didn't exist before, so it was gone). (2026-10-31)
 - [x] **Overrides and hot reload:** sky fog density 0.05 and a vignette and blur held; after a framework reload the density was the game's 0.0005 again, no vignette overlay was left and the blur was off. (2026-10-31)
@@ -368,16 +368,19 @@ Already checked:
 - [x] **IsAvailable:** all 18 environment, light, switch and grid classes true; `patches.check` found 495 patched methods, none broken. (2026-10-31)
 - [ ] Lights with several states: no level has one in 0.5.13; check one on furniture that has them when one turns up.
 
-Housing (M25b), still open:
+All of M25b below was checked on 2026-10-31 on copies of a real save (Slot1), going Player Tenement, Kolhola, Mines Barrack Hotel, Kolhola, O Market, Open Sewer Tenement.
 
-  | Feature | Command | Likely scenes |
-  | --- | --- | --- |
-  | Hotels [save] | `hotels.list`, `hotels.rent` | Interior Tenement Kolhola, Interior Mines Barrack Hotel |
-  | Parcel lockers | `lockers.list` (send a parcel first: `mail.send kind=Parcel`) | Interior Tenement O Market, Interior Bazaar J Kiosk, Interior Bazaar Mallment |
-
-- [ ] **Eviction:** on a tenant the game allows evicting (not Malone in 7, he has `disableEvictButton`): `housing.evict apartment=<n>`, then `cancel=true`.
-- [ ] **Renting [save]:** `tenants.rent` puts a tenant in a free apartment, and they move in after the hours given. The deposit isn't recorded when renting quietly.
-- [ ] **Renovation [save]:** starting one while talking to a contractor works.
+- [x] **Renovation [save]:** with Samuel Jonasson's screen open (`TenementContractor.ShowMenu`), apartment 4's Small-Walls-1 was refused without its materials (30 planks, 30 nails, 15 scrap metal, 4 duct tape, 2 tarps); with them it started, took 800 OC and the materials, `Started` (Mod). `PayFinal` refused while it ran; with the timer shortened the game raised `WorkDone` (Game); paid, it took 75 RM, `Finished` and `RenovationFinished` (Mod). Saved and loaded: installed (`currentWall` Makeshift). A press on the game's upgrade screen (`LocalPlayer`) was not tried.
+- [x] **Rent screen:** `tenants.screen` refused while the contractor's menu was open and without the Tenement Blueprint task item; with it the game's Tenement page opened for Pate Rantanen (26); a second call was refused while it showed. Its rent button for apartment 4 rented with `Rented` (`LocalPlayer`) and paid the 1507 OC 30 RM deposit to the player.
+- [x] **Eviction:** refused while Pate was moving in; `MovedIn` (Game) after the move; notice and cancel from a mod (`EvictionStarted`, `EvictionCancelled`, Mod; repeats refused); the screen's evict button `EvictionStarted` (`LocalPlayer`); `MovedOut` (Game) at the end took the deposit back.
+- [x] **Renting [save]:** a quiet `tenants.rent` of Pate into apartment 4 raised `Rented` (Mod) already showing no deposit (before the fix it showed one until the call returned), no money moved; saved and loaded, he lived there with deposit 0.
+- [x] **Tenant events:** with the Crazy Neighbor (107, the only tenant with events) moved in, `tenants.event kind=SpawnTrash` started one with source Mod; the others were on the game's cooldowns.
+- [x] **Cleaning:** an unknown apartment answers `NoSuchApartment`; apartment 2 started (`Running`, Mod), a second start refused, finished (`Done`, Mod), no start after. Apartment 3's 1-day job ended at the second midnight with `Done` (Game): the game ends cleaning jobs a day late (TODO.md, CleaningDayLate).
+- [x] **Hotels [save]:** Kolhola's pods (41 OC a night): the desk's own choice path (`Hotel.RentRoom("2_1")`) rented Pod 8 with `RoomChanged` (`LocalPlayer`); a second rent in that hotel refused and the free pods showed `bookable` false. The stay didn't run out at noon: the hotel's `lastCheck` is the clock's own object after its first check (TODO.md, HotelDayOnce); given a separate yesterday it ran out at once (`RoomChanged` false, Game). Pod 9 for 2 nights from a mod charged the 58 OC `Price` said (`RoomChanged`, Mod) and was still the player's with 2 nights after a level change and back. A bed in the Mines Barrack Hotel rented too (one room per hotel); its rooms and the hotel share Kolhola's ids.
+- [x] **Mailboxes:** the apartment's box: two letters taken quietly (no toast; one taken normally showed one), each with `Used` (Mod); the box used as the player reported `LocalPlayer`. Open Sewer Tenement's post box counted 1 with a letter and a mailable package in the inventory (2 before the fix), `Post` sent the letter and left the package, `Used` (Mod).
+- [x] **Parcel lockers:** O Market's 38-compartment locker: two parcels claimed into compartments 16 and 24 (`Claimed` 2, Mod), a second claim 0; one taken quietly (no toast), the other normally (one toast), an empty compartment refused, `Taken` with the parcel's title (Mod). The locker used as the player claimed and took with `LocalPlayer`.
+- [x] **Save refusal:** during a save `Cleaning.Start`, `Mailboxes.Post`, `Tenants.Rent` and `CheckRent` (Busy), `OpenRentScreen`, `TriggerEvent`, `StartEviction` and `Renovations.Start` all refused and nothing changed.
+- [x] **IsAvailable:** `Hotels`, `Renovations`, `Mailboxes`, `ParcelLockers` and `Tenement.HooksAvailable` true; `patches.check` found 509 patched methods, none broken. One NullReferenceException in the game's `InventoryNavigationHandler.HandleTenementMovementInput` when the test script first opened the contractor's Tenement page; it didn't repeat.
 
 ## 8. Transport, furniture, assets, computers (M24, M20, M21, M29b)
 

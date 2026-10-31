@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Transport;
@@ -38,6 +40,9 @@ public static class Ladders
     /// <summary>The player got on or off a ladder.</summary>
     public static readonly WorldEvent<LadderClimb> Climbed = new WorldEvent<LadderClimb>(nameof(Climbed));
 
+    /// <summary>True when the ladder hooks are in place, so <see cref="Climbed"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
+
     /// <summary>The player is on any ladder.</summary>
     public static bool PlayerClimbing => ClimbingAnyField();
 
@@ -51,14 +56,16 @@ public static class Ladders
     public static bool IsPlayerOn(InteractableLadder ladder) => ladder != null && ClimbingField(ladder);
 
     /// <summary>
-    /// Blocks or frees a ladder. A ladder the player is on can't be blocked (false). The game saves the flag
-    /// with the level, so it lasts.
+    /// Blocks or frees a ladder. A ladder the player is on can't be blocked (false), nor can any be changed while
+    /// a save is written or loaded. The game saves the flag with the level, so it lasts.
     /// </summary>
     public static bool SetBlocked(InteractableLadder ladder, bool blocked)
     {
         if (ladder == null)
             throw new ArgumentNullException(nameof(ladder));
-        if (blocked && IsPlayerOn(ladder))
+        if (ladder.blocked == blocked)
+            return true;
+        if ((blocked && IsPlayerOn(ladder)) || SaveGate.IsBusy)
             return false;
         ladder.blocked = blocked;
         return true;

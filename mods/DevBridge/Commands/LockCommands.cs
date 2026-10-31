@@ -61,14 +61,15 @@ internal static class LockCommands
     private static object LocksSet(JObject p)
     {
         var owner = Locks.Find(p.Str("id")) ?? throw new ArgumentException($"No lock '{p.Str("id")}'.");
+        bool ok = true;
         if (p["lockpickable"] != null)
-            Locks.SetLockpickable(owner, p.Bool("lockpickable"));
+            ok &= Locks.SetLockpickable(owner, p.Bool("lockpickable"));
         if (p["difficulty"] != null)
-            Locks.SetDifficulty(owner, p.Float("difficulty"));
+            ok &= Locks.SetDifficulty(owner, p.Float("difficulty"));
         if (p["locked"] != null)
-            Locks.SetLocked(owner, p.Bool("locked"));
+            ok &= Locks.SetLocked(owner, p.Bool("locked"));
         var info = Locks.Describe(owner);
-        return new JObject { ["locked"] = info.Locked, ["lockpickable"] = info.Lockpickable, ["difficulty"] = Math.Round(info.Difficulty, 2) };
+        return new JObject { ["ok"] = ok, ["locked"] = info.Locked, ["lockpickable"] = info.Lockpickable, ["difficulty"] = Math.Round(info.Difficulty, 2) };
     }
 
     [BridgeCommand("locks.givekey", "Gives the player the key of a lock.", Params = new[] { "id: lock id" })]
@@ -91,28 +92,32 @@ internal static class LockCommands
             list.Add(new JObject
             {
                 ["id"] = Keypads.IdOf(keypad), ["name"] = keypad.name, ["open"] = Keypads.IsOpen(keypad), ["power"] = Keypads.HasPower(keypad),
-                ["code"] = string.Join("", Keypads.CodeOf(keypad)),
+                ["rotary"] = Keypads.IsRotaryLock(keypad), ["code"] = Code(keypad),
             });
         }
         return new JObject { ["keypads"] = list };
     }
 
-    [BridgeCommand("keypads.set", "Opens or locks a keypad, or sets its code.", Params = new[] { "id: keypad id", "open?: true or false", "code?: digits, e.g. 4711" })]
+    [BridgeCommand("keypads.set", "Opens or locks a keypad, sets its code or plays its wrong-code reaction.",
+        Params = new[] { "id: keypad id", "open?: true or false", "code?: digits (4711), or numbers with commas for a rotary lock (17,3,22,5)", "refuse?: true plays the wrong-code reaction" })]
     private static object KeypadsSet(JObject p)
     {
         var keypad = Keypads.Find(p.Str("id")) ?? throw new ArgumentException($"No keypad '{p.Str("id")}'.");
+        bool ok = true;
         string code = p.Str("code", null);
         if (code != null)
         {
-            var digits = new int[code.Length];
-            for (int i = 0; i < code.Length; i++)
-                digits[i] = code[i] - '0';
-            Keypads.SetCode(keypad, digits);
+            var parts = code.Contains(",") ? code.Split(',') : Array.ConvertAll(code.ToCharArray(), c => c.ToString());
+            ok &= Keypads.SetCode(keypad, Array.ConvertAll(parts, part => int.Parse(part.Trim())));
         }
         if (p["open"] != null)
-            Keypads.SetOpen(keypad, p.Bool("open"));
-        return new JObject { ["open"] = Keypads.IsOpen(keypad), ["code"] = string.Join("", Keypads.CodeOf(keypad)) };
+            ok &= Keypads.SetOpen(keypad, p.Bool("open"));
+        if (p.Bool("refuse", false))
+            ok &= Keypads.Refuse(keypad);
+        return new JObject { ["ok"] = ok, ["open"] = Keypads.IsOpen(keypad), ["code"] = Code(keypad) };
     }
+
+    private static string Code(Keypad keypad) => string.Join(Keypads.IsRotaryLock(keypad) ? "," : "", Keypads.CodeOf(keypad));
 
     [BridgeCommand("doors.schedule", "Opening hours of door schedules (shops). With 'opens' and 'closes' sets the same hours every day; 'reset' restores the level's.",
         Params = new[] { "id?: schedule id, or a door id to find its schedule", "opens?: hour 0-23", "closes?: hour 1-24", "reset?: true restores the level's hours" })]

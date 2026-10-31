@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Transport;
@@ -68,7 +70,7 @@ public readonly struct ElevatorEvent
 /// <summary>
 /// Elevators: their floors and queue, calling them, power and disabled floors. The doors of the car and the
 /// floors are ordinary doors (see <c>Doors</c>). <see cref="Called"/> and <see cref="Arrived"/> come from the
-/// game's own methods, never from a per-frame hook.
+/// game's own methods, never from a per-frame hook. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Elevators
 {
@@ -78,8 +80,14 @@ public static class Elevators
     /// <summary>The elevator was sent for: a new floor joined its queue.</summary>
     public static readonly WorldEvent<ElevatorEvent> Called = new WorldEvent<ElevatorEvent>(nameof(Called));
 
-    /// <summary>The elevator stopped at a floor it was called to (raised by the game's floor-reached step).</summary>
+    /// <summary>
+    /// The elevator stopped at a floor it was called to. Raised by the game's floor-reached step, which also runs
+    /// (and opens the doors) when the car is called to the floor it stands at.
+    /// </summary>
     public static readonly WorldEvent<ElevatorEvent> Arrived = new WorldEvent<ElevatorEvent>(nameof(Arrived));
+
+    /// <summary>True when the elevator hooks are in place, so <see cref="Called"/> and <see cref="Arrived"/> are raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     /// <summary>The elevators of the loaded scenes. A scan.</summary>
     public static List<Elevator> All() => ObjectIds.Active<Elevator>();
@@ -104,8 +112,8 @@ public static class Elevators
 
     /// <summary>
     /// Calls the elevator to a floor through the game's <c>Call</c>, like a call button. Returns true when the
-    /// floor is queued or the car is already standing there; false when it has no power, the floor is disabled
-    /// or the queue is full.
+    /// floor is queued or the car is already standing there; false when it has no power, the floor is disabled,
+    /// the queue is full or a save is written or loaded.
     /// </summary>
     public static bool Call(Elevator elevator, int floor)
     {
@@ -113,31 +121,39 @@ public static class Elevators
             throw new ArgumentNullException(nameof(elevator));
         if (floor < 0 || floor >= elevator.Floors.Length)
             throw new ArgumentOutOfRangeException(nameof(floor), $"The elevator has floors 0 to {elevator.Floors.Length - 1}.");
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             elevator.Call(floor);
         return QueueField(elevator).Contains(floor) || (MovingField(elevator) == 0 && elevator.Position == floor);
     }
 
     /// <summary>Turns the elevator's power on or off (an unpowered elevator ignores calls).</summary>
-    public static void SetPowered(Elevator elevator, bool powered)
+    public static bool SetPowered(Elevator elevator, bool powered)
     {
         if (elevator == null)
             throw new ArgumentNullException(nameof(elevator));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             elevator.TogglePower(powered);
+        return elevator.powered == powered;
     }
 
     /// <summary>Lets a floor be called or not.</summary>
-    public static void SetFloorEnabled(Elevator elevator, int floor, bool enabled)
+    public static bool SetFloorEnabled(Elevator elevator, int floor, bool enabled)
     {
         if (elevator == null)
             throw new ArgumentNullException(nameof(elevator));
         if (floor < 0 || floor >= elevator.Floors.Length)
             throw new ArgumentOutOfRangeException(nameof(floor));
+        if (SaveGate.IsBusy)
+            return false;
         if (enabled)
             elevator.SetFloorEnabled(floor);
         else
             elevator.SetFloorDisabled(floor);
+        return elevator.Floors[floor] != null && elevator.Floors[floor].enabled == enabled;
     }
 }
 

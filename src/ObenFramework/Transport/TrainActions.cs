@@ -1,5 +1,6 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -8,31 +9,31 @@ namespace ObenFramework.Transport;
 /// <summary>
 /// Driving trains from code: engine, target speed, brakes, coupling and uncoupling. A minitrain cab is started
 /// and stopped through the cab, so its lights, sounds and fuel behave as when the player does it. Every call
-/// returns false (and changes nothing) when the vehicle can't do it right now.
+/// returns false (and changes nothing) when the vehicle can't do it right now, or while a save is written or loaded.
 /// </summary>
 public static class TrainActions
 {
-    /// <summary>Starts or stops the engine. An unfuelled minitrain starts but doesn't move.</summary>
+    /// <summary>
+    /// Starts or stops the engine. A minitrain's cab runs its start-up first, so its engine comes on a moment
+    /// later; an unfuelled minitrain starts but doesn't move.
+    /// </summary>
     public static bool SetEngine(TrackTrain train, bool on)
     {
         if (train == null)
             throw new ArgumentNullException(nameof(train));
+        if (SaveGate.IsBusy)
+            return false;
+        var cab = Trains.CabOf(train);
         using (WorldChanges.EnterMod())
         {
-            var cab = Trains.CabOf(train);
-            if (cab != null)
-            {
-                if (on)
-                    cab.StartMinitrain();
-                else
-                    cab.StopMinitrain();
-            }
-            else
-            {
+            if (cab == null)
                 train.Toggle(on);
-            }
+            else if (on)
+                cab.StartMinitrain();
+            else
+                cab.StopMinitrain();
         }
-        return train.active == on;
+        return cab != null ? cab.isOn == on : train.active == on;
     }
 
     /// <summary>
@@ -45,6 +46,8 @@ public static class TrainActions
             throw new ArgumentNullException(nameof(train));
         if (float.IsNaN(speed) || float.IsInfinity(speed))
             throw new ArgumentOutOfRangeException(nameof(speed));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             train.SetSpeed(speed);
         return true;
@@ -54,6 +57,8 @@ public static class TrainActions
     {
         if (train == null)
             throw new ArgumentNullException(nameof(train));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             train.ApplyBrakes(on);
         return train.braking == on;
@@ -71,7 +76,7 @@ public static class TrainActions
             throw new ArgumentNullException(nameof(other));
         var coupler = CouplerOf(train, end);
         var otherCoupler = CouplerOf(other, otherEnd);
-        if (!CanCouple(train, coupler, other, otherCoupler))
+        if (SaveGate.IsBusy || !CanCouple(train, coupler, other, otherCoupler))
             return false;
         using (WorldChanges.EnterMod())
             coupler.Couple(otherCoupler);
@@ -84,7 +89,7 @@ public static class TrainActions
         if (train == null)
             throw new ArgumentNullException(nameof(train));
         var coupler = CouplerOf(train, end);
-        if (coupler == null || coupler.coupledTo == null)
+        if (coupler == null || coupler.coupledTo == null || SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
             coupler.Release();

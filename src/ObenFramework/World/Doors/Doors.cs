@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using HarmonyLib;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World.Addressing;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -11,7 +13,8 @@ namespace ObenFramework.World;
 /// Doors: find them, read their state, change it and watch it change. Changes go through the game's own
 /// methods (<c>ForceOpen</c>, <c>Close</c>, <c>Lock</c>, <c>Unlock</c>), so relays, sounds and lock timers
 /// behave as in the game, and they run inside a <see cref="ChangeSource.Mod"/> scope so
-/// <see cref="DoorChanged"/> tells them apart from the player's and the game's own doing.
+/// <see cref="DoorChanged"/> tells them apart from the player's and the game's own doing. Changes are refused
+/// (false) while a save is written or loaded.
 /// </summary>
 public static class Doors
 {
@@ -25,6 +28,9 @@ public static class Doors
     /// key or lockpick is reported when the door next acts, since the game does that inside its lock object.
     /// </summary>
     public static readonly WorldEvent<DoorChange> DoorChanged = new WorldEvent<DoorChange>(nameof(DoorChanged));
+
+    /// <summary>True when the door hooks are in place, so <see cref="DoorChanged"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>Every door in the loaded scenes. A scan, so not for per-frame use.</summary>
     public static List<Door> All(bool includeInactive = false)
@@ -76,7 +82,7 @@ public static class Doors
         var state = StateOf(door);
         if (state.Phase == DoorPhase.Open || state.Phase == DoorPhase.Opening)
             return true;
-        if (respectLock && state.Locked)
+        if ((respectLock && state.Locked) || SaveGate.IsBusy)
             return false;
 
         using (WorldChanges.EnterMod())
@@ -96,6 +102,8 @@ public static class Doors
         var phase = StateOf(door).Phase;
         if (phase == DoorPhase.Closed || phase == DoorPhase.Closing)
             return true;
+        if (SaveGate.IsBusy)
+            return false;
 
         using (WorldChanges.EnterMod())
             door.Close();
@@ -104,12 +112,14 @@ public static class Doors
     }
 
     /// <summary>Locks or unlocks the door through <c>Lock()</c> and <c>Unlock()</c> (which fire the door's lock relays).</summary>
-    public static void SetLocked(Door door, bool locked)
+    public static bool SetLocked(Door door, bool locked)
     {
         if (door == null)
             throw new ArgumentNullException(nameof(door));
         if (door.Locked == locked)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
 
         using (WorldChanges.EnterMod())
         {
@@ -118,25 +128,28 @@ public static class Doors
             else
                 door.Unlock();
         }
+        return door.Locked == locked;
     }
 
     /// <summary>
     /// Brings a door to a state received from elsewhere: the lock first, then open or closed (with the
     /// same swing side as the source). A door that is only part way is left to finish its own swing.
+    /// False when part of it didn't take.
     /// </summary>
-    public static void Apply(Door door, DoorState state)
+    public static bool Apply(Door door, DoorState state)
     {
-        SetLocked(door, state.Locked);
+        if (!SetLocked(door, state.Locked))
+            return false;
         switch (state.Phase)
         {
             case DoorPhase.Open:
             case DoorPhase.Opening:
-                Open(door, state.Swing);
-                break;
+                return Open(door, state.Swing);
             case DoorPhase.Closed:
             case DoorPhase.Closing:
-                Close(door);
-                break;
+                return Close(door);
+            default:
+                return true;
         }
     }
 

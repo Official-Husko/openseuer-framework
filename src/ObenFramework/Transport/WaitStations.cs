@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 
@@ -81,6 +82,9 @@ public static class WaitStations
     private static readonly AccessTools.FieldRef<InteractableWait, bool> IgnoresField = AccessTools.FieldRefAccess<InteractableWait, bool>("ignorePlayerNeeds");
 
     public static readonly WorldEvent<WaitStationDone> Finished = new WorldEvent<WaitStationDone>(nameof(Finished));
+
+    /// <summary>True when the wait hook is in place, so <see cref="Finished"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     public static List<InteractableWait> All() => ObjectIds.Active<InteractableWait>();
 

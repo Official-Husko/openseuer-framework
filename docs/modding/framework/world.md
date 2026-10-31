@@ -80,10 +80,10 @@ Changing doors:
 |---|---|
 | `Doors.Open(door, swing = Default, respectLock = false)` | `ForceOpen()` or `ForceOpenOpposite()`: opens past the lock like a character. With `respectLock` a locked door stays shut. An open or opening door is left alone. Returns true if open or opening afterwards. |
 | `Doors.Close(door)` | `Close()`. |
-| `Doors.SetLocked(door, locked)` | `Lock()` / `Unlock()`, which fire the door's lock relays. |
-| `Doors.Apply(door, state)` | Lock first, then open (same swing side) or close, from a received `DoorState`. A door stopped part way is left to finish by itself. |
+| `Doors.SetLocked(door, locked)` | `Lock()` / `Unlock()`, which fire the door's lock relays. Returns whether the door is locked that way afterwards. |
+| `Doors.Apply(door, state)` | Lock first, then open (same swing side) or close, from a received `DoorState`. A door stopped part way is left to finish by itself. False when part of it didn't take. |
 
-These never use `Open()`/`UseDoor`, which check the local player's keys and need the player's position.
+These never use `Open()`/`UseDoor`, which check the local player's keys and need the player's position. Opening past the lock by default is on purpose: a character or a remote player opening a door does the same. Every change is refused (false) while a save is written or loaded, and `Doors.IsAvailable` is false when the door hooks failed to go on.
 
 ### DoorChanged
 
@@ -121,7 +121,7 @@ foreach (Component owner in Locks.All()) { ... }           // a scan of the ten 
 Component owner = Locks.Find(id);                           // id from Locks.IdOf(owner)
 LockInfo info = Locks.Describe(owner);                      // Kind, Locked, Lockpickable, Difficulty (0-2), KeyName, PlayerHasKey, RelockMinutes
 Locks.SetLocked(owner, false);                              // doors through Lock()/Unlock() so their relays fire
-Locks.SetLockpickable(owner, true);
+Locks.SetLockpickable(owner, true);                         // these return false while a save is written or loaded
 Locks.SetDifficulty(owner, 1.5f);
 TaskItem key = Locks.KeyOf(owner);                          // null when no key opens it
 Locks.SetKey(owner, someKey);                               // any key task item; part of the level design, not saved
@@ -129,7 +129,7 @@ Locks.GiveKey(owner);                                       // hands the player 
 Locks.StartLockpick(owner, ok => Log.Info("picked: " + ok));
 ```
 
-`StartLockpick` starts the game's lockpicking on a locked, pickable lock. The game cancels lockpicking when the player looks away from the lock, so start it while they face it (from an interaction). The callback gets false on failure or cancel.
+`StartLockpick` starts the game's lockpicking on a locked, pickable lock. The game cancels lockpicking when the player looks away from the lock, so start it while they face it (from an interaction). The callback gets false on failure or cancel. It returns false while the player is already picking a lock (the game's own toggle would end that attempt instead of starting another) and while another mod's attempt runs.
 
 Events: `Locks.Changed` (`LockChange`: `Owner`, `Locked`, `Source`) for every lock and unlock, whether by key, lockpick, timer, schedule, script or mod, and `Locks.Lockpicked` (`LockpickResult`: `Owner`, `Success`). A lock is a plain object inside its component, so the framework finds the component through an index built on first use per scene (rebuilt at most every two seconds when a new piece of furniture shows up).
 
@@ -140,12 +140,14 @@ Keypads and rotary combination locks have a code instead of a key:
 ```csharp
 foreach (Keypad keypad in Keypads.All()) { ... }
 int[] code = Keypads.CodeOf(keypad);
-Keypads.SetCode(keypad, new[] { 4, 7, 1, 1 });   // 1 to 4 digits; lasts until the level loads again
+Keypads.SetCode(keypad, new[] { 4, 7, 1, 1 });   // 1 to 4 entries; lasts until the level loads again
 Keypads.SetOpen(keypad, true);                   // success sound and relay, as if the right code was typed
+Keypads.Refuse(keypad);                          // its wrong-code reaction
 bool powered = Keypads.HasPower(keypad);
+bool dial = Keypads.IsRotaryLock(keypad);
 ```
 
-`Keypads.Changed` reports `Solved`, `WrongCode` and `Locked`.
+A keypad's code is digits 0 to 9; a rotary lock's dial has the numbers 1 to 32 (most of Kolhola's locks are rotary). The setters return false while a save is written or loaded. `Keypads.Changed` reports `Solved`, `WrongCode` and `Locked`, also when the player locks an open keypad by hand.
 
 ## Interactables
 
@@ -350,7 +352,7 @@ All numbers are watts as in the game's power meters. Which listeners lose power 
 | `locks.set` | `id` plus `locked`, `lockpickable`, `difficulty` |
 | `locks.givekey` | gives the player the key of lock `id` |
 | `locks.events` | `Locked`, `Unlocked`, `Lockpicked` and keypad events since recording started |
-| `keypads.list`, `keypads.set` | keypads with codes; `id` plus `open` and/or `code` |
+| `keypads.list`, `keypads.set` | keypads with codes and whether each is a rotary lock; `id` plus `open`, `code` (digits like `4711`, or a rotary lock's numbers with commas like `17,3,22,5`) and `refuse=true` (the wrong-code reaction) |
 | `doors.schedule` | opening hours of every schedule, or of `id` (a schedule or a scheduled door); `opens`+`closes` sets every day, `reset` restores |
 | `radios.list`, `radios.set` | radios; `id` plus `station`, `enabled` |
 | `tvs.list`, `tvs.set` | televisions; `id` plus `on` |

@@ -79,7 +79,7 @@ Commands run on Unity's main thread. Errors come back as `"ok": false` with a me
 | `containers.list`, `containers.get`, `floor.list` | see [framework/world.md](framework/world.md) | containers and their contents, items lying on the floor |
 | `locks.list`, `locks.set`, `locks.givekey`, `locks.events`, `keypads.list`, `keypads.set`, `doors.schedule` | see [framework/world.md](framework/world.md) | key locks, keypads, opening hours |
 | `radios.list`, `radios.set`, `tvs.list`, `tvs.set`, `guitar.play`, `media.events`, `computers.list` | see [framework/world.md](framework/world.md) | radios, televisions, the guitar, computers |
-| `levels.list`, `levels.use`, `levels.lock`, `travel.go`, `travel.scenes`, `travel.entrypoints`, `travel.teleport`, `travel.events` | see [framework/transport.md](framework/transport.md) | level exits, trips, entrypoints |
+| `levels.list`, `levels.use`, `levels.lock`, `travel.go`, `travel.scenes`, `travel.entrypoints`, `travel.entrypoint`, `travel.teleport`, `travel.events` | see [framework/transport.md](framework/transport.md) | level exits, trips, entrypoints |
 | `elevators.list`, `elevators.call`, `ladders.list`, `ladders.block`, `tarps.list`, `tarps.set` | see [framework/transport.md](framework/transport.md) | elevators, ladders, tarp doors |
 | `trains.list`, `trains.drive`, `trains.switch`, `trains.events`, `tickets.list`, `drones.list`, `drones.set`, `waits.list`, `waits.use` | see [framework/transport.md](framework/transport.md) | trains, ticket machines, drones, wait stations |
 | `furniture.custom`, `furniture.give`, `furniture.loot`, `furniture.blueprints`, `building.area` | see [framework/furniture.md](framework/furniture.md) | custom furniture, blueprints, building zones |

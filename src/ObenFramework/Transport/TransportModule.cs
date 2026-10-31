@@ -36,7 +36,6 @@ internal static class TransportModule
     private static void ForgetScene()
     {
         Trains.Reset();
-        Drones.Reset();
         TrainTickets.ForgetScene();
     }
 }

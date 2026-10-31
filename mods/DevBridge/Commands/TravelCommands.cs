@@ -89,6 +89,21 @@ internal static class TravelCommands
     private static object TravelEntrypoints(JObject p) =>
         new JObject { ["entrypoints"] = new JArray(Travel.Entrypoints()), ["usingMinitrain"] = Travel.UsingMinitrain };
 
+    [BridgeCommand("travel.entrypoint", "Adds an entrypoint owned by the bridge to a scene, at the player or a point, or removes one the bridge added.",
+        Params = new[] { "name: entrypoint name", "scene?: default the current level", "x?, y?, z?: default the player's position", "yaw?: facing, default the player's",
+            "remove?: true takes the bridge's entrypoint back" })]
+    private static object TravelEntrypoint(JObject p)
+    {
+        string name = p.Str("name");
+        string scene = p.Str("scene", ObenFramework.Game.WorldState.SceneName);
+        if (p.Bool("remove", false))
+            return new JObject { ["removed"] = Travel.RemoveEntrypoint(DevBridgeMod.Instance, scene, name) };
+        var at = p["x"] != null ? new Vector3(p.Float("x"), p.Float("y"), p.Float("z")) : PlayerRef.Position ?? throw new ArgumentException("Give x, y and z.");
+        float yaw = p["yaw"] != null ? p.Float("yaw") : PlayerRef.Yaw ?? 0f;
+        Travel.AddEntrypoint(DevBridgeMod.Instance, scene, name, at, yaw);
+        return new JObject { ["scene"] = scene, ["name"] = name, ["pos"] = ItemJson.Vec(at), ["yaw"] = Math.Round(yaw, 1), ["here"] = Travel.Entrypoints().Contains(name) };
+    }
+
     [BridgeCommand("travel.teleport", "Moves the player to an entrypoint of the current level.", Params = new[] { "name: entrypoint name" })]
     private static object TravelTeleport(JObject p) => new JObject { ["ok"] = Travel.TeleportTo(p.Str("name")) };
 
@@ -148,8 +163,8 @@ internal static class TravelCommands
     private static object TarpsSet(JObject p)
     {
         var tarp = TarpDoors.Find(p.Str("id")) ?? throw new ArgumentException($"No tarp door '{p.Str("id")}'.");
-        TarpDoors.SetOpen(tarp, p.Bool("open"));
-        return new JObject { ["open"] = TarpDoors.IsOpen(tarp) };
+        bool ok = TarpDoors.SetOpen(tarp, p.Bool("open"));
+        return new JObject { ["ok"] = ok, ["open"] = TarpDoors.IsOpen(tarp) };
     }
 
     private static JObject Trip(LevelTrip t) => new JObject

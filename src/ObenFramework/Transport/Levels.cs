@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using ObenFramework.Game;
 using ObenFramework.Items;
+using ObenFramework.Patching;
 using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
@@ -28,6 +29,9 @@ public static class Levels
 
     /// <summary>The trip announced by <see cref="Leaving"/> ended and the new level is ready (after GameEvents.WorldReady).</summary>
     public static readonly WorldEvent<LevelTrip> Arrived = new WorldEvent<LevelTrip>(nameof(Arrived));
+
+    /// <summary>True when the level change hooks are in place, so <see cref="Leaving"/> and <see cref="Arrived"/> are raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     /// <summary>Every scene in the game's build, in build order ("Main Menu" first).</summary>
     public static IReadOnlyList<string> Scenes
@@ -88,12 +92,16 @@ public static class Levels
         return reason == null;
     }
 
-    /// <summary>Locks or unlocks a door to another level. False for triggers, which have no lock.</summary>
+    /// <summary>Locks or unlocks a door to another level. False for triggers, which have no lock, and while a save is written or loaded.</summary>
     public static bool SetLocked(Changelevel exit, bool locked)
     {
         if (exit == null)
             throw new ArgumentNullException(nameof(exit));
         if (!(exit is DoorChangelevel door))
+            return false;
+        if (door._Lock.Locked == locked)
+            return true;
+        if (SaveGate.IsBusy)
             return false;
         using (WorldChanges.EnterMod())
         {
@@ -107,8 +115,10 @@ public static class Levels
 
     /// <summary>
     /// Uses an exit as if the player had: a door plays its animation and sound and the level changes after its
-    /// delay. A locked door stays shut unless <paramref name="ignoreLock"/>. Returns false when the trip can't
-    /// start (see <see cref="CanTravel"/>) or the target scene is missing.
+    /// delay. A locked door opens with the player's key as when they use it; without one it stays shut, unless
+    /// <paramref name="ignoreLock"/>. Returns whether the trip started: false when it can't start (see
+    /// <see cref="CanTravel"/>), the target scene is missing, or the door stays shut (also while a key that takes
+    /// a moment unlocks it; the door is unlocked then, so use it again).
     /// </summary>
     public static bool Use(Changelevel exit, bool ignoreLock = false)
     {
@@ -121,16 +131,20 @@ public static class Levels
         {
             if (exit is DoorChangelevel door)
             {
-                if (door._Lock.Locked && !ignoreLock)
+                if (!door._Lock.Locked || ignoreLock)
+                    door.OpenDoor();
+                else if (door._Lock.keyItem != null && door._Lock.PlayerHasKey())
+                    door.UseDoor();
+                else
                     return false;
-                door.OpenDoor();
             }
             else
             {
                 exit.ChangeLevel();
             }
         }
-        return true;
+        // A door with a delay holds the change for its animation; the rest start it at once.
+        return Changelevel.changeLevelDelayActive || SaveController.Loading;
     }
 
     /// <summary>
@@ -143,7 +157,7 @@ public static class Levels
             return false;
         using (WorldChanges.EnterMod())
             SaveController.ChangeLevel(scene, string.IsNullOrEmpty(entrypoint) ? "NONE" : entrypoint);
-        return true;
+        return SaveController.Loading;
     }
 
     // Called from the patch on SaveController.ChangeLevel, before the game saves and leaves.

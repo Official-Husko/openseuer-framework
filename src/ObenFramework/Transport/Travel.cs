@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Events;
 using ObenFramework.Game;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenLoader;
 using ObenLoader.Runtime;
 using UnityEngine;
@@ -19,6 +21,9 @@ namespace ObenFramework.Transport;
 public static class Travel
 {
     private static readonly List<Spot> Spots = new List<Spot>();
+
+    /// <summary>True when the entrypoint hook is in place, so mod entrypoints exist before an arriving player is moved.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     /// <summary>The names of the entrypoints of the current level, the game's and the mods'.</summary>
     public static List<string> Entrypoints()
@@ -39,6 +44,7 @@ public static class Travel
     /// Adds an entrypoint to a scene for as long as <paramref name="owner"/> is loaded: whenever the scene loads
     /// (and now, if it is the current one) the spot exists, so the player can be sent there with
     /// <c>Levels.ChangeTo(scene, name)</c> or <see cref="TeleportTo"/>. A name the scene already uses is refused.
+    /// Dispose the result or call <see cref="RemoveEntrypoint"/> to take it back sooner.
     /// </summary>
     public static IDisposable AddEntrypoint(ITracker owner, string scene, string name, Vector3 position, float yaw = 0f)
     {
@@ -51,22 +57,37 @@ public static class Travel
         if (Spots.Exists(s => s.Scene == scene && s.Name == name))
             throw new ArgumentException($"A mod already added the entrypoint '{name}' to {scene}.", nameof(name));
 
-        var spot = new Spot { Scene = scene, Name = name, Position = position, Yaw = yaw };
+        var spot = new Spot { Owner = owner, Scene = scene, Name = name, Position = position, Yaw = yaw };
         Spots.Add(spot);
         Apply(spot);
-        var registration = Disposable.Create(() =>
+        spot.Registration = Disposable.Create(() =>
         {
             Spots.Remove(spot);
             Withdraw(spot);
         });
-        owner.Track(registration);
-        return registration;
+        owner.Track(spot.Registration);
+        return spot.Registration;
+    }
+
+    /// <summary>
+    /// Takes back an entrypoint <paramref name="owner"/> added to <paramref name="scene"/>, like disposing what
+    /// <see cref="AddEntrypoint"/> returned. False when it added none by that name there; another mod's stay.
+    /// </summary>
+    public static bool RemoveEntrypoint(ITracker owner, string scene, string name)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+        var spot = Spots.Find(s => ReferenceEquals(s.Owner, owner) && s.Scene == scene && s.Name == name);
+        if (spot == null)
+            return false;
+        spot.Registration.Dispose();
+        return true;
     }
 
     /// <summary>Moves the player to an entrypoint of the current level the way arriving there does. False when there is none.</summary>
     public static bool TeleportTo(string name)
     {
-        if (string.IsNullOrEmpty(name) || !WorldState.IsReady || PlayerLocator.instance == null)
+        if (string.IsNullOrEmpty(name) || !WorldState.IsReady || SaveGate.IsBusy || PlayerLocator.instance == null)
             return false;
         var points = PlayerLevelEntrypoints.instance;
         var entry = points != null ? points.GetEntrypoint(name) : null;
@@ -140,6 +161,8 @@ public static class Travel
 
     private sealed class Spot
     {
+        public ITracker Owner;
+        public IDisposable Registration;
         public string Scene;
         public string Name;
         public Vector3 Position;

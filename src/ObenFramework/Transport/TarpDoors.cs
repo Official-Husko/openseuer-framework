@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Transport;
@@ -36,6 +38,9 @@ public static class TarpDoors
 
     public static readonly WorldEvent<TarpDoorChange> Changed = new WorldEvent<TarpDoorChange>(nameof(Changed));
 
+    /// <summary>True when the tarp door hook is in place, so <see cref="Changed"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
+
     public static List<TarpDoor> All() => ObjectIds.Active<TarpDoor>();
 
     public static TarpDoor Find(string id) => ObjectIds.Find<TarpDoor>(id);
@@ -44,15 +49,21 @@ public static class TarpDoors
 
     public static bool IsOpen(TarpDoor tarp) => tarp != null && OpenedField(tarp);
 
-    /// <summary>Opens or closes the tarp with its animation. Nothing happens when it already is that way.</summary>
-    public static void SetOpen(TarpDoor tarp, bool open)
+    /// <summary>
+    /// Opens or closes the tarp with its animation; nothing happens when it already is that way. False while a
+    /// save is written or loaded.
+    /// </summary>
+    public static bool SetOpen(TarpDoor tarp, bool open)
     {
         if (tarp == null)
             throw new ArgumentNullException(nameof(tarp));
         if (OpenedField(tarp) == open)
-            return;
+            return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
             tarp.Toggle(open);
+        return OpenedField(tarp) == open;
     }
 }
 

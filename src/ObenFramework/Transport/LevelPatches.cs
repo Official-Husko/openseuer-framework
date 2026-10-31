@@ -44,6 +44,9 @@ internal static class LevelWatch
         return exit != null ? Levels.IdOf(exit) : null;
     }
 
+    // The game refuses some uses (a missing scene, a wait) before it changes level; forget those.
+    public static void ExitDone() => _exit = null;
+
     public static void Reset()
     {
         _exit = null;
@@ -60,9 +63,13 @@ internal static class ExitChangeLevelPatch
         try { LevelWatch.ExitUsed(__instance); }
         catch (Exception e) { TransportModule.Log.Error("Level exit hook", e); }
     }
+
+    [HarmonyFinalizer]
+    private static void After() => LevelWatch.ExitDone();
 }
 
-[HarmonyPatch(typeof(DoorChangelevel), nameof(DoorChangelevel.UseDoor))]
+// OpenDoor rather than UseDoor: the player's use, a key that unlocked first and Levels.Use all end there.
+[HarmonyPatch(typeof(DoorChangelevel), nameof(DoorChangelevel.OpenDoor))]
 internal static class ExitDoorUsePatch
 {
     [HarmonyPrefix]

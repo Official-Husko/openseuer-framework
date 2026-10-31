@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
@@ -12,7 +14,7 @@ namespace ObenFramework.Transport;
 /// Trains: the rail vehicles of the level (locomotives, wagons and the player's minitrain), the minitrain's
 /// fuel, track segments, switches and wagon loaders. Driving them is in <see cref="TrainActions"/>.
 /// <see cref="Moved"/> reports departures, stops and crashes; departures and stops are checked a few times a
-/// second, and only while someone listens.
+/// second, and only while someone listens. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Trains
 {
@@ -27,6 +29,9 @@ public static class Trains
 
     /// <summary>A train departed, stopped or crashed.</summary>
     public static readonly WorldEvent<TrainEvent> Moved = new WorldEvent<TrainEvent>(nameof(Moved));
+
+    /// <summary>True when the crash hook is in place, so <see cref="Moved"/> reports crashes.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     /// <summary>Every rail vehicle the level's train controller knows.</summary>
     public static List<TrackTrain> All()
@@ -116,10 +121,10 @@ public static class Trains
 
     public static MinitrainSwitch FindSwitch(string id) => ObjectIds.Find<MinitrainSwitch>(id);
 
-    /// <summary>How many branches a switch has.</summary>
     /// <summary>The branch the switch is set to, or -1 without a switch.</summary>
     public static int Branch(MinitrainSwitch trackSwitch) => trackSwitch != null ? trackSwitch.currentBranchIndex : -1;
 
+    /// <summary>How many branches a switch has.</summary>
     public static int BranchCount(MinitrainSwitch trackSwitch)
     {
         var rotations = trackSwitch != null ? BranchRotations(trackSwitch) : null;
@@ -127,8 +132,9 @@ public static class Trains
     }
 
     /// <summary>
-    /// Throws a switch to a branch. Like the lever, it refuses while a train is on the switch's segment, unless
-    /// <paramref name="force"/>. Returns whether the switch is on that branch afterwards.
+    /// Throws a switch to a branch. Like the lever, it refuses (false) while a train is on the switch's segment,
+    /// unless <paramref name="force"/>. The lever swings over first, so the branch changes a moment later
+    /// (at once when forced).
     /// </summary>
     public static bool SetBranch(MinitrainSwitch trackSwitch, int branch, bool force = false)
     {
@@ -136,6 +142,8 @@ public static class Trains
             throw new ArgumentNullException(nameof(trackSwitch));
         if (branch < 0 || branch >= BranchCount(trackSwitch))
             throw new ArgumentOutOfRangeException(nameof(branch), $"The switch has {BranchCount(trackSwitch)} branches.");
+        if (SaveGate.IsBusy || (!force && Blocked(trackSwitch)))
+            return false;
         using (WorldChanges.EnterMod())
         {
             if (force)
@@ -143,7 +151,18 @@ public static class Trains
             else
                 trackSwitch.ChangeTrack(branch);
         }
-        return trackSwitch.currentBranchIndex == branch;
+        return true;
+    }
+
+    // The lever's own check: a train on the segment the switch sets.
+    private static bool Blocked(MinitrainSwitch trackSwitch)
+    {
+        var segment = trackSwitch.trackSegment;
+        if (segment == null)
+            return true;
+        if (!trackSwitch.isReversed)
+            return segment.occupied;
+        return segment.previousSegment != null && segment.previousSegment.occupied;
     }
 
     /// <summary>The wagon loaders (chutes that fill ore wagons). A scan.</summary>
@@ -154,13 +173,16 @@ public static class Trains
     public static MinitrainWagonLoader FindLoader(string id) => ObjectIds.Find<MinitrainWagonLoader>(id);
 
     /// <summary>Turns a loader on or off, and sets whether the player may take from it.</summary>
-    public static void SetLoader(MinitrainWagonLoader loader, bool on, bool? freeToTake = null)
+    public static bool SetLoader(MinitrainWagonLoader loader, bool on, bool? freeToTake = null)
     {
         if (loader == null)
             throw new ArgumentNullException(nameof(loader));
+        if (SaveGate.IsBusy)
+            return false;
         loader.Toggle(on);
         if (freeToTake.HasValue)
             loader.SetOwnerPermissions(freeToTake.Value);
+        return true;
     }
 
     // Departures and stops: a few checks a second while someone listens; nothing at all otherwise.
@@ -208,22 +230,47 @@ public static class Trains
         coupler != null && coupler.coupledTo != null && coupler.coupledTo.parent != null ? coupler.coupledTo.parent.GUID : null;
 }
 
+/// <summary>
+/// One collision runs the game's crash step on both vehicles, and a wagon hands it on to its locomotive: only the
+/// outermost call is reported, and each pair of vehicles once a frame. A crash shows as the vehicle's crash
+/// cooldown starting: the bounce back already moves it again by the time the step returns.
+/// </summary>
 [HarmonyPatch(typeof(TrackTrain), nameof(TrackTrain.Crash))]
 internal static class TrainCrashPatch
 {
+    private static readonly AccessTools.FieldRef<TrackTrain, Coroutine> Cooldown = AccessTools.FieldRefAccess<TrackTrain, Coroutine>("crashCooldown");
+    private static readonly HashSet<TrackTrain> Reported = new HashSet<TrackTrain>();
+    private static int _depth;
+    private static int _frame = -1;
+
+    // The speed it hit at; 0 when it can't crash now (standing, or still cooling down from the last one).
     [HarmonyPrefix]
-    private static void Before(TrackTrain __instance, out float __state) => __state = __instance.currentSpeed;
+    private static void Before(TrackTrain __instance, out float __state)
+    {
+        __state = Cooldown(__instance) == null ? __instance.currentSpeed : 0f;
+        _depth++;
+    }
 
     [HarmonyPostfix]
     private static void After(TrackTrain __instance, GameObject other, float __state)
     {
         try
         {
-            if (__state == 0f || __instance.currentSpeed != 0f || !Trains.Moved.HasSubscribers || !WorldChanges.Active)
+            if (_depth != 1 || __state == 0f || Cooldown(__instance) == null || !Trains.Moved.HasSubscribers || !WorldChanges.Active)
                 return;
+            if (Time.frameCount != _frame)
+            {
+                _frame = Time.frameCount;
+                Reported.Clear();
+            }
             var otherTrain = other != null ? other.GetComponentInParent<TrackTrain>() : null;
+            if (!Reported.Add(__instance) || (otherTrain != null && !Reported.Add(otherTrain)))
+                return;
             Trains.Moved.Raise(new TrainEvent(__instance, TrainEventKind.Crashed, __state, otherTrain != null ? otherTrain.GUID : null));
         }
         catch (Exception e) { TransportModule.Log.Error("Train crash hook", e); }
     }
+
+    [HarmonyFinalizer]
+    private static void Done() => _depth--;
 }

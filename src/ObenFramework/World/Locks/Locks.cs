@@ -1,7 +1,10 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using UnityEngine;
 
 namespace ObenFramework.World;
@@ -10,12 +13,19 @@ namespace ObenFramework.World;
 /// The game's key locks: on doors, doors to other levels, storages, stations, switches, padlocks and market
 /// stalls. Read and change them, set which key opens them, hand the player the key, start the lockpicking
 /// game, and hear when any lock is locked, unlocked or picked. Keypads, which have a code instead of a key,
-/// are in <see cref="Keypads"/>.
+/// are in <see cref="Keypads"/>. Changes are refused (false) while a save is written or loaded.
 /// </summary>
 public static class Locks
 {
     /// <summary>Highest lockpicking difficulty the game uses.</summary>
     public const float MaxDifficulty = 2f;
+
+    // The lockpicking the game is running, the player's own or one a mod started; null when none is.
+    private static readonly AccessTools.FieldRef<Coroutine> GamePicking =
+        AccessTools.StaticFieldRefAccess<Coroutine>(AccessTools.Field(typeof(PlayerLockpicking), "ActiveLockpicking"));
+
+    /// <summary>True when the lock hooks are in place, so <see cref="Changed"/> and <see cref="Lockpicked"/> are raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "World");
 
     /// <summary>
     /// A lock was locked or unlocked: by a key, a lockpick, a timer, a schedule, a script or a mod. Not raised
@@ -64,6 +74,8 @@ public static class Locks
         var target = Require(owner, out _);
         if (target.Locked == locked)
             return true;
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             switch (owner)
@@ -83,14 +95,25 @@ public static class Locks
     }
 
     /// <summary>Lets the player pick the lock or not. The game saves it with the object.</summary>
-    public static void SetLockpickable(Component owner, bool lockpickable) => Require(owner, out _).Lockpickable = lockpickable;
+    public static bool SetLockpickable(Component owner, bool lockpickable)
+    {
+        var target = Require(owner, out _);
+        if (SaveGate.IsBusy)
+            return false;
+        target.Lockpickable = lockpickable;
+        return true;
+    }
 
     /// <summary>Sets how hard the lock is to pick, 0 to <see cref="MaxDifficulty"/>.</summary>
-    public static void SetDifficulty(Component owner, float difficulty)
+    public static bool SetDifficulty(Component owner, float difficulty)
     {
         if (float.IsNaN(difficulty) || difficulty < 0f || difficulty > MaxDifficulty)
             throw new ArgumentOutOfRangeException(nameof(difficulty), "The difficulty must be 0 to 2.");
-        Require(owner, out _).Difficulty = difficulty;
+        var target = Require(owner, out _);
+        if (SaveGate.IsBusy)
+            return false;
+        target.Difficulty = difficulty;
+        return true;
     }
 
     /// <summary>The key item that opens the lock, or null.</summary>
@@ -100,7 +123,14 @@ public static class Locks
     /// Sets which key opens the lock (any key task item, a game key or one a mod made); null means no key does.
     /// The key is part of the level's design, not its save: set it again when the level loads.
     /// </summary>
-    public static void SetKey(Component owner, TaskItem key) => Require(owner, out _).keyItem = key;
+    public static bool SetKey(Component owner, TaskItem key)
+    {
+        var target = Require(owner, out _);
+        if (SaveGate.IsBusy)
+            return false;
+        target.keyItem = key;
+        return true;
+    }
 
     public static bool PlayerHasKey(Component owner)
     {
@@ -113,7 +143,7 @@ public static class Locks
     {
         var key = Require(owner, out _).keyItem;
         var tasks = TaskItemsManager.instance;
-        if (key == null || tasks == null || tasks.CheckIfPlayerHasTaskItem(key))
+        if (key == null || tasks == null || SaveGate.IsBusy || tasks.CheckIfPlayerHasTaskItem(key))
             return false;
         return tasks.AddTaskItem(key, 1, showNotification: notify);
     }
@@ -121,7 +151,8 @@ public static class Locks
     /// <summary>
     /// Starts the lockpicking game on a locked, pickable lock as if the player had tried to open it. The game
     /// cancels it when the player looks away, so call it while they face the lock (from an interaction).
-    /// <paramref name="done"/> gets true once the lock opened, false on failure or cancel. False when it can't start.
+    /// <paramref name="done"/> gets true once the lock opened, false on failure or cancel. False when it can't start,
+    /// also while the player is already picking a lock.
     /// </summary>
     public static bool StartLockpick(Component owner, Action<bool> done, float? difficulty = null)
     {
@@ -129,11 +160,20 @@ public static class Locks
             throw new ArgumentNullException(nameof(done));
         var target = Require(owner, out _);
         var picking = PlayerLockpicking.instance;
-        if (!target.Locked || !target.Lockpickable || picking == null || LockPicking.Busy)
+        // The game's toggle would stop a lockpicking already under way instead of starting this one.
+        if (!target.Locked || !target.Lockpickable || picking == null || LockPicking.Busy || SaveGate.IsBusy || GamePicking() != null)
             return false;
         LockPicking.Start(owner, target, done);
-        picking.ToggleLockpicking(LockPicking.Finished, difficulty ?? target.Difficulty, target);
-        return true;
+        try
+        {
+            picking.ToggleLockpicking(LockPicking.Finished, difficulty ?? target.Difficulty, target);
+        }
+        finally
+        {
+            if (GamePicking() == null)
+                LockPicking.Clear();
+        }
+        return LockPicking.Busy;
     }
 
     internal static Lock Require(Component owner, out LockKind kind)

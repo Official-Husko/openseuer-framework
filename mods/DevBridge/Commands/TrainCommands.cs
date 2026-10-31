@@ -72,14 +72,15 @@ internal static class TrainCommands
         var train = Trains.Find(p.Str("id"));
         if (train == null)
             throw new ArgumentException($"No train '{p.Str("id")}'.");
+        bool ok = true;
         if (p["engine"] != null)
-            TrainActions.SetEngine(train, p.Bool("engine"));
+            ok &= TrainActions.SetEngine(train, p.Bool("engine"));
         if (p["speed"] != null)
-            TrainActions.SetTargetSpeed(train, p.Float("speed"));
+            ok &= TrainActions.SetTargetSpeed(train, p.Float("speed"));
         if (p["brake"] != null)
-            TrainActions.Brake(train, p.Bool("brake"));
+            ok &= TrainActions.Brake(train, p.Bool("brake"));
         var info = Trains.Describe(train);
-        return new JObject { ["engine"] = info.EngineOn, ["target"] = Math.Round(info.TargetSpeed, 2), ["braking"] = info.Braking };
+        return new JObject { ["ok"] = ok, ["engine"] = info.EngineOn, ["target"] = Math.Round(info.TargetSpeed, 2), ["braking"] = info.Braking };
     }
 
     [BridgeCommand("trains.switch", "Throws a track switch to a branch.", Params = new[] { "id: switch id", "branch: index", "force?: even with a train on it" })]
@@ -136,33 +137,37 @@ internal static class TrainCommands
         {
             var nodes = new JArray();
             foreach (var node in Drones.Nodes())
-                nodes.Add(new JObject { ["id"] = Drones.IdOf(node), ["next"] = Drones.IdOf(node.NextNode), ["pos"] = ItemJson.Vec(node.transform.position) });
+            {
+                var info = Drones.DescribeNode(node);
+                nodes.Add(new JObject { ["id"] = info.Id, ["next"] = info.Next, ["links"] = new JArray(info.Links), ["range"] = Math.Round(info.Range, 2), ["pos"] = ItemJson.Vec(info.Position) });
+            }
             result["nodes"] = nodes;
         }
         return result;
     }
 
     [BridgeCommand("drones.set", "Switches a drone, sends it to a node or changes its speed.",
-        Params = new[] { "id: drone id", "active?: true or false", "target?: air node id", "speed?: max speed" })]
+        Params = new[] { "id: drone id", "active?: true or false", "target?: air node id", "start?: with target, switch it on and fly there", "speed?: max speed" })]
     private static object DronesSet(JObject p)
     {
         var drone = Drones.Find(p.Str("id"));
         if (drone == null)
             throw new ArgumentException($"No drone '{p.Str("id")}'.");
+        bool ok = true;
         string target = p.Str("target", null);
         if (target != null)
         {
             var node = Drones.FindNode(target);
             if (node == null)
                 throw new ArgumentException($"No air node '{target}'.");
-            Drones.SetTarget(drone, node);
+            ok &= Drones.SetTarget(drone, node, p.Bool("start", false));
         }
         if (p["speed"] != null)
-            Drones.SetMaxSpeed(drone, p.Float("speed"));
+            ok &= Drones.SetMaxSpeed(drone, p.Float("speed"));
         if (p["active"] != null)
-            Drones.SetActive(drone, p.Bool("active"));
+            ok &= Drones.SetActive(drone, p.Bool("active"));
         var info = Drones.Describe(drone);
-        return new JObject { ["active"] = info.Active, ["target"] = info.TargetNode, ["maxSpeed"] = Math.Round(info.MaxSpeed, 2) };
+        return new JObject { ["ok"] = ok, ["active"] = info.Active, ["target"] = info.TargetNode, ["maxSpeed"] = Math.Round(info.MaxSpeed, 2) };
     }
 
     [BridgeCommand("waits.list", "Wait stations (benches, desks, TVs, jobs) of the level and whether the player can use them now.")]

@@ -3,70 +3,24 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 using UnityEngine;
 
 namespace ObenFramework.Transport;
 
-/// <summary>A snapshot of one drone.</summary>
-public readonly struct DroneInfo
-{
-    public DroneInfo(Drone drone, string id, bool active, float maxSpeed, string target, string next)
-    {
-        Drone = drone;
-        Id = id;
-        Active = active;
-        MaxSpeed = maxSpeed;
-        TargetNode = target;
-        NextNode = next;
-    }
-
-    public Drone Drone { get; }
-    public string Id { get; }
-    public bool Active { get; }
-    public Vector3 Position => Drone != null ? Drone.transform.position : default;
-    public float MaxSpeed { get; }
-
-    /// <summary>The air node it flies to, or null.</summary>
-    public string TargetNode { get; }
-
-    /// <summary>The node after that, or null at the end of its route.</summary>
-    public string NextNode { get; }
-}
-
-/// <summary>A drone was switched on or off, or passed one of its route's air nodes.</summary>
-public readonly struct DroneEvent
-{
-    public DroneEvent(Drone drone, Air_Node node, bool active, bool routeEnd)
-    {
-        Drone = drone;
-        Node = node;
-        Active = active;
-        RouteEnd = routeEnd;
-    }
-
-    public Drone Drone { get; }
-
-    /// <summary>The node passed, or null for an on/off change.</summary>
-    public Air_Node Node { get; }
-
-    public bool Active { get; }
-
-    /// <summary>The node passed was the last of the route.</summary>
-    public bool RouteEnd { get; }
-
-    public string Id => Drones.IdOf(Drone);
-}
-
 /// <summary>
 /// Drones: the flying machines that follow chains of air nodes (deliveries, surveillance). Switch them on and
-/// off, send them to a node, change their speed, and hear them pass nodes.
+/// off, send them to a node, change their speed, and hear them pass nodes. Changes are refused (false) while a
+/// save is written or loaded.
 /// </summary>
 public static class Drones
 {
-    private static List<Drone> _known;
-
     public static readonly WorldEvent<DroneEvent> Changed = new WorldEvent<DroneEvent>(nameof(Changed));
+
+    /// <summary>True when the drone hooks are in place, so <see cref="Changed"/> is raised.</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Transport");
 
     public static List<Drone> All() => ObjectIds.Active<Drone>();
 
@@ -85,6 +39,16 @@ public static class Drones
 
     public static string IdOf(Air_Node node) => node == null ? null : !string.IsNullOrEmpty(node.GUID) ? node.GUID : ObjectIds.IdOf(node);
 
+    public static AirNodeInfo DescribeNode(Air_Node node)
+    {
+        if (node == null)
+            throw new ArgumentNullException(nameof(node));
+        var links = new List<string>();
+        foreach (var next in node.nextNodes)
+            links.Add(IdOf(next));
+        return new AirNodeInfo(node, IdOf(node), node.transform.position, node.range, node.maxSpeed, IdOf(node.NextNode), links);
+    }
+
     public static DroneInfo Describe(Drone drone)
     {
         if (drone == null)
@@ -94,10 +58,12 @@ public static class Drones
         return new DroneInfo(drone, IdOf(drone), drone.active, drone.maxSpeed, IdOf(target), IdOf(next));
     }
 
-    public static void SetActive(Drone drone, bool active)
+    public static bool SetActive(Drone drone, bool active)
     {
         if (drone == null)
             throw new ArgumentNullException(nameof(drone));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             if (active)
@@ -105,15 +71,18 @@ public static class Drones
             else
                 drone.TurnOff();
         }
+        return drone.active == active;
     }
 
     /// <summary>Sends the drone to an air node; it follows the route from there.</summary>
-    public static void SetTarget(Drone drone, Air_Node node, bool start = false)
+    public static bool SetTarget(Drone drone, Air_Node node, bool start = false)
     {
         if (drone == null)
             throw new ArgumentNullException(nameof(drone));
         if (node == null)
             throw new ArgumentNullException(nameof(node));
+        if (SaveGate.IsBusy)
+            return false;
         using (WorldChanges.EnterMod())
         {
             if (start)
@@ -121,31 +90,41 @@ public static class Drones
             else
                 drone.SetTarget(node);
         }
+        return drone.targetNode == node;
     }
 
-    public static void SetMaxSpeed(Drone drone, float speed)
+    public static bool SetMaxSpeed(Drone drone, float speed)
     {
         if (drone == null)
             throw new ArgumentNullException(nameof(drone));
         if (!(speed > 0f) || float.IsInfinity(speed))
             throw new ArgumentOutOfRangeException(nameof(speed), "The speed must be above 0.");
+        if (SaveGate.IsBusy)
+            return false;
         drone.SetMaxSpeed(speed);
+        return true;
     }
 
-    // The drone heading for a node that was just passed. Drones are few; the list is made once per scene.
-    internal static Drone HeadingFor(Air_Node node)
+    // The drone passing a node: only a flying drone heading for it and within its range calls Pass, so the
+    // nearest such drone is the one (a scan, but passes are seconds apart).
+    internal static Drone Passing(Air_Node node)
     {
-        if (_known == null)
-            _known = All();
-        foreach (var drone in _known)
+        Drone best = null;
+        float bestDistance = float.MaxValue;
+        var at = node.transform.position;
+        foreach (var drone in All())
         {
-            if (drone != null && drone.targetNode == node)
-                return drone;
+            if (drone == null || !drone.active || drone.targetNode != node)
+                continue;
+            float distance = Vector3.Distance(drone.transform.position, at);
+            if (distance <= node.range && distance < bestDistance)
+            {
+                best = drone;
+                bestDistance = distance;
+            }
         }
-        return null;
+        return best;
     }
-
-    internal static void Reset() => _known = null;
 }
 
 [HarmonyPatch(typeof(Drone))]
@@ -188,7 +167,7 @@ internal static class AirNodePatch
         {
             if (!Drones.Changed.HasSubscribers || !WorldChanges.Active)
                 return;
-            var drone = Drones.HeadingFor(__instance);
+            var drone = Drones.Passing(__instance);
             Drones.Changed.Raise(new DroneEvent(drone, __instance, drone != null && drone.active, __instance.NextNode == null));
         }
         catch (Exception e) { TransportModule.Log.Error("Air node hook", e); }

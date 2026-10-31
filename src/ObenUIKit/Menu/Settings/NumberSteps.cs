@@ -31,13 +31,16 @@ internal static class NumberSteps
             if (current < 0 && step > 0)
                 values.Add(-step);
         }
-        if (!values.Exists(v => Math.Abs(v - current) < 1e-9))
+        if (!values.Exists(v => Same(v, current)))
             values.Add(current);
         values.Sort();
 
-        index = values.FindIndex(v => Math.Abs(v - current) < 1e-9);
+        index = values.FindIndex(v => Same(v, current));
         return values.ToArray();
     }
+
+    // A float setting arrives widened (0.15f is 0.15000000596...), so the ladder's 0.15 has to count as the same value.
+    private static bool Same(double a, double b) => Math.Abs(a - b) <= 1e-6 * Math.Max(1.0, Math.Abs(b));
 
     public static string[] Labels(double[] values, bool whole)
     {

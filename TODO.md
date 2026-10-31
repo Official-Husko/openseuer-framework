@@ -169,7 +169,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [ ] Kit: handles from an earlier build (`ButtonHandle.Text`, `CycleHandle.Set`, `SliderHandle.Set`, `UiWindow.Title`) throw after a rebuild; `LabelHandle` guards, the rest should too
 - [ ] Kit: main menu mod buttons are copied active, so the copy's localization components run before they are stripped (check the label in game)
 - [ ] Kit: a guide waits forever when another mod hides its prompt
-- [ ] Kit: float settings miss the number ladder (`NumberSteps` compares the widened float with 1e-9, so 0.15f adds a second "0.15")
+- [x] Kit: float settings missed the number ladder (`NumberSteps` compared the widened float with 1e-9, so 0.15f added a second "0.15"); it now compares with a tolerance a float's precision fits in (unit tested)
 - [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Story upgrades are scaled since 2026-10-29. Remember each order's total at `AddUpgrade` and work progress out from that
 - [ ] Game Tweaks: switching scroll zoom on inside a first-person trigger lifts that trigger's lock (triggers already active aren't registered)
 - [ ] Tracer: failed calls skip the per-window line cap

@@ -178,6 +178,7 @@
     <!-- ObenUIKit: where mod buttons go on the main menu and how the keyboard moves between them. -->
     <Compile Include="../../src/ObenUIKit/Menu/MainMenu/MainMenuSlots.cs" Link="Linked/Kit/MainMenuSlots.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Settings/RangeFix.cs" Link="Linked/Kit/RangeFix.cs" />
+    <Compile Include="../../src/ObenUIKit/Menu/Settings/NumberSteps.cs" Link="Linked/Kit/NumberSteps.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Settings/FieldText.cs" Link="Linked/Kit/FieldText.cs" />
     <Compile Include="../../src/ObenUIKit/Menu/Errors/StackText.cs" Link="Linked/Kit/StackText.cs" />
     <Compile Include="../../src/ObenUIKit/Controls/KitText.cs" Link="Linked/Kit/KitText.cs" />

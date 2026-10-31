@@ -103,6 +103,14 @@ New:
 - [x] **Show mod hints / Show mod key prompts (UI kit settings):** passed 2026-10-29 from scripts.
   - With hints off, `Hud.Hint` returns `IsActive` False, while a forced hint is still active; on again, hints show.
   - With prompts off, `Hud.ShownPrompt` is null; on again, the prompt comes back.
+- [x] **HUD (M26), checked 2026-10-31 on a copy of Slot1 in Interior Player Tenement:**
+  - **Hints:** five hints from one owner and one from another: the fourth one waiting from the first owner was dropped (three each at most), the other owner's stayed. Changing the shown hint's `Text` redrew it in the game's hint panel. `HideHints(owner)` took that owner's two away and left the other's. Switching "Show mod hints" off through the settings page's own save dropped a waiting hint and the other mod's, kept a forced one on screen, and refused new ones until it was on again.
+  - **Subtitles:** a blank `Subtitle` refused; `GameSubtitle` typed out in the game's own subtitle line above the kit's strip.
+  - **Bars:** `Color = null` put the theme's fill back; a bar with an empty label drew no label line; one whose value threw on the first read was logged and came back inactive.
+  - **Prompts:** asking twice gave the same prompt; a misspelt action ("Interactt") logged its warning; 20 more from one owner kept the newest 16; a prompt tied to an object was removed as soon as the object was destroyed; prompts hid while `Time.timeScale` was 0.
+  - **Hiding the HUD:** the crosshair and the whole HUD (kit pieces with it) hid and came back when the script's scope ended. The game's no-UI screenshot taken while the HUD was hidden used to leave its own entry in the hide list (the HUD stayed hidden afterwards); with the fix the HUD came back.
+  - **Notes:** `PlayerNotes.Open` answered false over the open inventory (the page stayed there) and true with no menu up, on the notes page.
+  - `patches.check`: 510 patched methods, none broken.
 - [ ] **Setting switches by hand:** flip both switches on MODS, Settings, UI kit and watch a mod hint and a prompt.
 - [x] `oben call ui.state` in a level with nothing open: `inWorld: true`, `busy: false`, `windows: []`. Passed 2026-10-29, with `captureHooks`, `rawKeyHooks` and `pauseHooks` true.
 - [x] **Input and UI state (M05):** passed 2026-10-29 in the tenement.
@@ -137,17 +145,11 @@ New:
   - the display-only panel lets you walk, Esc opens the pause menu, and "Close the panel" closes it;
   - Fragile → Throw closes the window with a "Fragile window closed: Error" toast, and the error is logged;
   - with "Capture Jump" on, Space doesn't jump while the panel is open and does again after closing.
-- [ ] **HUD tab:**
-  - "Prompt over Interact" shows "Demo prompt" with the E key box under the crosshair; E gives a toast and removes it, otherwise it goes after 10 s;
-  - the crosshair and HUD toggles hide and restore those pieces.
-- [ ] **Prompt:** `oben call hud.prompt text="Open the crate" action=Interact seconds=15` shows in the game's tutorial panel, and the listing says `inGameTutorialPanel: true`. `hud.prompt hide=true` removes it.
-- [ ] **Guide:** `oben call hud.guide` runs its steps in order:
-  - "Jump" (Space);
-  - "Open your map" (M; it waits until the map is closed);
-  - "Walk a few steps";
-  - "That's the demo guide" for 3 s, then a toast.
-  - `hud.guide stop=true` stops it.
-- [ ] **Input capture:** `oben call input.capture action=Jump seconds=10` stops jumping for 10 s, and `ui.state` shows `jumpCaptured: true`.
+- [ ] **HUD tab by hand:** the demo window's buttons and toggles ("Prompt over Interact", hide the crosshair, hide the HUD). The calls behind them passed from scripts (below); the clicks are left.
+- [x] **Prompt:** `hud.prompt text="Open the crate" action=Interact seconds=15` showed over E in the game's tutorial panel (`inGameTutorialPanel: true`); E (faked through `Input.GetKeyDown`) gave the toast; `hud.prompt hide=true` removed it. (2026-10-31)
+- [x] **Guide:** `hud.guide` ran "Jump" (Space), "Open your map" (M opened the map; the next step waited until it closed), "Walk a few steps" (done past 3 m) and "That's the demo guide", then ended; `hud.guide stop=true` stopped a fresh one. (2026-10-31)
+- [x] **Input capture:** `input.capture action=Jump seconds=10` made `ui.state` show `jumpCaptured: true`, false again after 10 s. (2026-10-31)
+- [ ] **Input capture by hand:** hold Space during `input.capture action=Jump seconds=10`: no jump. (A faked key doesn't reach the game's jump: it reads `Input.GetKey`, which the JIT inlines, so a script patch on it never runs.)
 - [ ] **Main menu buttons:**
   - `oben call menu.buttons add="Demo A"`, then `add="Demo B"`.
   - Both sit under ???/MODS and Credits in the menu font. Check `insideParent` and a screenshot of the sign: are they clipped?
@@ -565,7 +567,7 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 
 - [ ] **Game keys:** `oben eval 'return ObenFramework.Ui.GameKeys.Key("Interact") + " " + ObenFramework.Ui.GameKeys.Label("Interact");'` gives `E E`. With `input.capture action=Jump seconds=10`, `GameKeys.Held("Jump")` stays false while Space is held.
 - [ ] **Console:** `oben eval 'return ObenFramework.Console.GameConsole.Open();'` opens the F1 console (screenshot); `Close()` shuts it a frame later and the player can move again.
-- [ ] **Tooltip:** `oben eval 'return ObenUIKit.Hud.ShowTooltip("Test", "Some <b>details</b>");'` shows the game's tooltip box (screenshot); `HideTooltip()` removes it.
+- [x] **Tooltip:** `Hud.ShowTooltip("Test tooltip", "Some <b>details</b> here")` showed the game's tooltip box at the crosshair; `HideTooltip()` removed it. (2026-10-31)
 - [ ] **Notes [save]:** with a note held, `PlayerNotes.Open(<id from player.notes>)` opens the menu's notes page at it; for a book, at the page it was left on.
 - [x] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires. (2026-10-31, Kolhola: `keypads.set refuse=true`.)
 - [ ] **Power devices:** `PowerDevices.Describe(<a stove>).FuelItemIds()` lists wood and other fuels; `BurnTimeFactor` is 1 for most.

@@ -556,7 +556,11 @@ Hotkeys.Register(this, "close", "Close the menu", KeyCode.Insert, Close, scope: 
 
 ## Computer apps
 
-Apps for the in-game computers. A registered app gets a tile on the desktop of every computer the player sits down at (a column at the right edge of the desktop picture, in the screen's own font); clicking the tile opens the app in a kit window over the screen. While an app window is open the computer ignores Esc and Interact, so closing the window doesn't make the player get up.
+Apps for the in-game computers (in 0.5.13 the only usable one is the laptop in the Bazaar Bank). A registered app gets an icon on the desktop of every computer: a copy of the screen's own Recycle Bin icon (its picture, title and hover look) in the desktop's icon grid, top left and downwards. Like the game's icons, it opens on a double click. Icons go onto every computer of a level once it's ready and whenever apps come or go, so they show before anyone sits down.
+
+There are two kinds of app.
+
+**In a kit window** over the screen, built like any kit window:
 
 ```csharp
 using ObenUIKit.Computer;
@@ -569,13 +573,39 @@ ComputerApps.Register(this, "MyMod.Stocks", "Stocks", ui =>
 }, icon: ModAssets.Sprite(this, "icons/stocks.png"));
 
 ComputerApps.Open("MyMod.Stocks");          // the same app as a standalone window, anywhere: a hotkey, an item, the main menu
-ComputerApps.Opened.Subscribe(this, id => ...);
-ComputerApps.Closed.Subscribe(this, id => ...);
 ```
 
-`Register(owner, id, title, build, icon = null, width, height)` lasts until the owner unloads or the result is disposed; up to 30 apps fit on a desktop. The window is an ordinary kit window owned by the app's mod (`width` and `height` as in `UiKit.Open`). `ComputerApps.IsOpen(id)`, `Close(id)` and `All` round it off.
+While a kit window is open over the computer, the computer ignores Esc and Interact, and its pad handling (A clicks under the cursor, B gets up) is held off, so closing the window doesn't make the player get up.
 
-The computers themselves (which one the player uses, sitting down and getting up, e-mails, recycle bin files, the desktop picture) are in the framework: `ObenFramework.World.Computers` (`Computers.Used`, `Current`, `Emails`, `Files`, `SetWallpaper(owner, computer, sprite)`, `DesktopOf`). Bridge: `computers.list` (`id` for one computer's e-mails and files) and `computer.apps` (`open` to open one).
+**On the computer's own screen**, in a window like the game's e-mail and text file windows: a copy of the game's program window with its title bar, minimise and close buttons, and an entry on the screen's taskbar (click it to minimise and bring the window back):
+
+```csharp
+ComputerApps.RegisterOnScreen(this, "MyMod.Notes", "Notes", ui =>
+{
+    ui.Header("Notes");
+    ui.Text("Written on the bank's laptop.");
+    ui.Live(() => "Game time " + GameClock.TimeText);
+    ui.Field(_note, v => _note = v, "Type something...");
+    ui.Row(r =>
+    {
+        r.Button("Save", Save);
+        r.Button("Redraw", ui.Rebuild);
+    });
+    ui.Button("Close", ui.Window.Close);
+}, icon: ModAssets.Sprite(this, "icons/notes.png"));
+```
+
+- `ComputerUi` draws top to bottom in the screen's own font and colours: dark text on the white window, buttons in the title bar's pale grey-blue with grey edges, white text fields. `Text(text, size = 30)`, `Header(text)`, `Live(() => text)` (read four times a second), `Button(label, onClick)` (plays the screen's click sound), `Field(text, onChange, placeholder, onEnd)`, `Image(sprite, height)`, `Space(height)` and `Row(r => ...)` for items side by side. A long list scrolls with the mouse wheel. `Rebuild()` clears the window and runs the draw again; `Content` is the current layout group, for drawing your own uGUI there.
+- Sizes are in the window's units: the whole screen is about 1800 by 1000 of them (0.2 mm each on the bank's laptop), the app's area about 835 by 800, body text 30.
+- `ui.Window` is the `ComputerWindow`: `Title` (changes the title bar), `Minimize()`, `Restore()`, `Close()`, `IsOpen`, `IsMinimized`, `Size`, `Font`, `Screen`, `Click()` (the screen's click sound) and a `Closed` event.
+- Typing in a text field doesn't reach the game: while a field has the keyboard, the computer's Interact and Esc don't make the player get up (an "e" stays an "e").
+- Each computer gets its own window. Windows stay as they are when the player gets up and sits down again, like the game's own, and close with their level (`LevelChanging`, or once a load has replaced the level).
+- `ComputerApps.Open(id)` opens an on-screen app on the computer in use, and answers false when there's none. The pad works as on the game's windows: the right stick moves the cursor and A clicks buttons. A pad can't type into a field.
+- The game hides its HUD while the player is at a computer, so a toast from an app's button only shows after getting up.
+
+Both kinds: `Register`/`RegisterOnScreen(owner, id, title, ..., icon = null)` last until the owner unloads or the result is disposed; an app without an icon gets the screen's text file icon. Up to 30 apps fit. `ComputerApps.All`, `Find(id)`, `IsOpen(id)` (a kit window, or a window on any computer), `Close(id)`, `ScreenWindows` (the on-screen windows of the level), `Opened` and `Closed` (by app id) round it off. `ComputerApp.OnScreen` tells the kinds apart.
+
+The computers themselves (which one the player uses, sitting down and getting up, e-mails, recycle bin files, the desktop picture) are in the framework: `ObenFramework.World.Computers` (`Computers.Used`, `Current`, `Emails`, `Files`, `SetWallpaper(owner, computer, sprite)`, `DesktopOf`, `ScreenOf`). The game's desktop picture keeps a picture's aspect ratio, so give `SetWallpaper` one shaped like the screen (16:9). Bridge: `computers.list` (`id` for one computer's e-mails and files) and `computer.apps` (`open`, `close`, and `demo=true` for a demo app of each kind).
 
 ## Known limitations
 

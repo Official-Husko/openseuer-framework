@@ -1,11 +1,10 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
-using HarmonyLib;
+using ObenFramework.Events;
 using ObenFramework.World;
 using ObenLoader;
 using ObenLoader.Runtime;
-using ObenUIKit.Controls;
 using ObenUIKit.Runtime;
 using TMPro;
 using UnityEngine;
@@ -15,161 +14,134 @@ using Object = UnityEngine.Object;
 namespace ObenUIKit.Computer;
 
 /// <summary>
-/// Puts the registered apps on the desktops of the in-game computers: a column of tiles at the right edge of
-/// the desktop picture, laid out when the player sits down at a computer. The tiles use the computer screen's
-/// own font, so they look like they belong to it.
+/// Puts the registered apps on the desktops of the in-game computers. Each app gets a copy of the screen's own
+/// Recycle Bin icon (its picture, title and hover look) in the desktop's icon grid, and like it opens on a double
+/// click. Icons are added to every computer of a level once it's ready, and again when apps come or go.
 /// </summary>
 internal static class ComputerDesk
 {
-    private const string TilePrefix = "Mod app ";
-    private const float TileWidth = 84f;
-    private const float TileHeight = 72f;
-    private const float Margin = 12f;
-    private const float ColumnPitch = 96f;
-    private const float RowPitch = 84f;
-    private const int Rows = 5;
+    private const string IconPrefix = "Mod app ";
 
-    private static readonly List<RectTransform> Desks = new List<RectTransform>();
+    private static readonly List<ComputerScreen> Screens = new List<ComputerScreen>();
+    private static bool _warned;
 
     public static void Init(ObenMod kit)
     {
+        Screens.Clear();
+        GameEvents.WorldReady.Subscribe(kit, () => Refresh());
         Computers.Used.Subscribe(kit, use =>
         {
             if (use.InUse)
-                Decorate(Computers.DesktopOf(use.Computer));
+                Decorate(Computers.ScreenOf(use.Computer));
         });
         kit.Track(Disposable.Create(() =>
         {
-            foreach (var desk in Desks)
-                Clear(desk, keep: null);
-            Desks.Clear();
+            foreach (var screen in Screens)
+                Clear(screen, keep: null);
+            Screens.Clear();
         }));
-        // A computer already in use when the kit (re)loads.
-        var current = Computers.Current;
-        if (current != null)
-            Decorate(Computers.DesktopOf(current));
+        Refresh();
     }
 
-    /// <summary>Lays the tiles out again on every decorated desktop (an app came or went).</summary>
+    /// <summary>Lays the icons out again on every computer of the level (an app came or went).</summary>
     public static void Refresh()
     {
-        Desks.RemoveAll(d => d == null);
-        foreach (var desk in Desks)
-            Layout(desk);
-        var current = Computers.Current;
-        if (current != null)
-            Decorate(Computers.DesktopOf(current));
+        Screens.RemoveAll(s => s == null);
+        foreach (var screen in Screens)
+            Layout(screen);
+        foreach (var computer in Computers.All())
+            Decorate(Computers.ScreenOf(computer));
     }
 
-    private static void Decorate(RectTransform desk)
+    private static void Decorate(ComputerScreen screen)
     {
-        if (desk == null)
+        if (screen == null)
             return;
-        if (!Desks.Contains(desk))
-            Desks.Add(desk);
-        Layout(desk);
+        if (!Screens.Contains(screen))
+            Screens.Add(screen);
+        Layout(screen);
     }
 
-    private static void Layout(RectTransform desk)
+    private static void Layout(ComputerScreen screen)
     {
+        var grid = ComputerScreenParts.Shortcuts(screen);
+        var template = ComputerScreenParts.DesktopIcon(screen);
+        if (grid == null || template == null)
+        {
+            if (!_warned)
+                KitRuntime.Current?.Kit.Log.Warn("A computer's desktop has no icon grid or Recycle Bin icon to copy; mod apps can't show on it.");
+            _warned = true;
+            return;
+        }
+
         var apps = ComputerApps.All;
         var keep = new HashSet<string>();
-        for (int i = 0; i < apps.Count; i++)
+        foreach (var app in apps)
         {
-            keep.Add(TilePrefix + apps[i].Id);
-            var tile = desk.Find(TilePrefix + apps[i].Id) as RectTransform;
-            if (tile == null)
-                tile = Tile(desk, apps[i]);
-            tile.anchorMin = tile.anchorMax = tile.pivot = new Vector2(1f, 1f);
-            tile.sizeDelta = new Vector2(TileWidth, TileHeight);
-            tile.anchoredPosition = new Vector2(-Margin - (i / Rows) * ColumnPitch, -Margin - (i % Rows) * RowPitch);
-            tile.SetAsLastSibling();
+            keep.Add(IconPrefix + app.Id);
+            var icon = grid.Find(IconPrefix + app.Id);
+            if (icon == null)
+                icon = Icon(screen, template, grid, app);
+            // The game's own shortcuts first, then the apps in the order they were registered.
+            icon.SetAsLastSibling();
         }
-        Clear(desk, keep);
+        Clear(screen, keep);
     }
 
-    // Removes tiles of apps that are gone (all of them without a keep set).
-    private static void Clear(RectTransform desk, HashSet<string> keep)
+    // Removes icons of apps that are gone (all of them without a keep set).
+    private static void Clear(ComputerScreen screen, HashSet<string> keep)
     {
-        if (desk == null)
+        var grid = screen != null ? ComputerScreenParts.Shortcuts(screen) : null;
+        if (grid == null)
             return;
-        for (int i = desk.childCount - 1; i >= 0; i--)
+        for (int i = grid.childCount - 1; i >= 0; i--)
         {
-            var child = desk.GetChild(i);
-            if (child.name.StartsWith(TilePrefix, StringComparison.Ordinal) && (keep == null || !keep.Contains(child.name)))
+            var child = grid.GetChild(i);
+            if (child.name.StartsWith(IconPrefix, StringComparison.Ordinal) && (keep == null || !keep.Contains(child.name)))
+            {
+                child.gameObject.SetActive(false);
                 Object.Destroy(child.gameObject);
+            }
         }
     }
 
-    private static RectTransform Tile(RectTransform desk, ComputerApp app)
+    private static Transform Icon(ComputerScreen screen, GameObject template, RectTransform grid, ComputerApp app)
     {
-        var theme = UiKit.Theme;
-        var background = UiParts.Image(desk, TilePrefix + app.Id, null, new Color(0f, 0f, 0f, 0.35f), raycast: true);
-        var rect = background.rectTransform;
-        var button = background.gameObject.AddComponent<UnityEngine.UI.Button>();
-        button.targetGraphic = background;
-        var colors = button.colors;
-        colors.highlightedColor = theme.RowHover;
-        colors.pressedColor = theme.TextPress;
-        button.colors = colors;
-        string id = app.Id;
-        button.onClick.AddListener(() => Guard(() => ComputerApps.Open(id)));
-
-        var font = FontOf(desk);
-        if (app.Icon != null)
+        var copy = Object.Instantiate(template, grid, false);
+        copy.name = IconPrefix + app.Id;
+        // The copy must not open the Recycle Bin: its handler goes, its click sound stays.
+        var program = copy.GetComponent<TaskbarProgram>();
+        var button = copy.GetComponent<UnityEngine.UI.Button>();
+        if (button != null)
         {
-            var icon = UiParts.Image(rect, "Icon", app.Icon, Color.white);
-            icon.preserveAspect = true;
-            var iconRect = icon.rectTransform;
-            iconRect.anchorMin = iconRect.anchorMax = iconRect.pivot = new Vector2(0.5f, 1f);
-            iconRect.sizeDelta = new Vector2(40f, 40f);
-            iconRect.anchoredPosition = new Vector2(0f, -4f);
-            Label(rect, app.Title, font, 11f, 0f, 0.38f);
+            ComputerScreenParts.Mute(button, program);
+            string id = app.Id;
+            button.onClick.AddListener(() => Clicked(screen, copy, id));
         }
-        else
+        if (program != null)
+            Object.Destroy(program);
+
+        foreach (var image in copy.GetComponentsInChildren<Image>(true))
         {
-            Label(rect, app.Title, font, 13f, 0f, 1f);
+            if (image.gameObject != copy)
+            {
+                image.sprite = app.Icon != null ? app.Icon : ComputerScreenParts.DefaultIcon(screen);
+                image.preserveAspect = true;
+                break;
+            }
         }
-        return rect;
+        foreach (var title in copy.GetComponentsInChildren<TextMeshProUGUI>(true))
+            title.text = app.Title;
+        copy.SetActive(true);
+        return copy.transform;
     }
 
-    private static void Label(RectTransform parent, string text, TMP_FontAsset font, float size, float bottom, float top)
+    private static void Clicked(ComputerScreen screen, GameObject icon, string id)
     {
-        var label = UiParts.Text(parent, UiKit.Theme, text, size, Color.white);
-        if (font != null)
-            label.font = font;
-        label.enableAutoSizing = true;
-        label.fontSizeMin = 6f;
-        label.fontSizeMax = size;
-        var rect = label.rectTransform;
-        rect.anchorMin = new Vector2(0f, bottom);
-        rect.anchorMax = new Vector2(1f, top);
-        rect.offsetMin = new Vector2(2f, 0f);
-        rect.offsetMax = new Vector2(-2f, 0f);
+        var clicks = DoubleClickController.instance;
+        if (clicks != null && !clicks.DoubleClick(icon))
+            return;
+        try { ComputerApps.OpenOn(screen, id); }
+        catch (Exception e) { KitRuntime.Current?.Kit.Log.Error($"The computer app '{id}' failed to open", e); }
     }
-
-    // The font the computer screen's own texts use, else the kit's.
-    private static TMP_FontAsset FontOf(RectTransform desk)
-    {
-        var canvas = desk.GetComponentInParent<Canvas>();
-        var text = canvas != null ? canvas.GetComponentInChildren<TextMeshProUGUI>(true) : null;
-        return text != null ? text.font : null;
-    }
-
-    private static void Guard(Action action)
-    {
-        try { action(); }
-        catch (Exception e) { KitRuntime.Current?.Kit.Log.Error("A computer app failed to open", e); }
-    }
-}
-
-/// <summary>
-/// While an app window is open over a computer, the computer must not take the Esc or Interact that closes the
-/// window, or the player would also get up. That includes the frame the window closed on.
-/// </summary>
-[HarmonyPatch(typeof(InteractableComputer), nameof(InteractableComputer.Controls))]
-internal static class ComputerControlsGate
-{
-    [HarmonyPrefix]
-    private static bool Before() => !UiKit.AnyWindowOpen && Time.frameCount > ComputerApps.ClosedFrame + 1;
 }

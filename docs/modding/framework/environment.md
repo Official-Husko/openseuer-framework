@@ -131,7 +131,7 @@ Liquids are items of the `Liquid` category (Clean Water 10840, Dirty Water 12980
 
 `TankChanged` sees the game's changes too: a pour from the tank's window (`Source` is `LocalPlayer`), a running shower draining the tank it draws from, fillers and the janitor. The game moves a level in small steps, so the steps are gathered and reported once the level settles (within half a second), or every two seconds while it keeps moving (a shower that runs); `Fill` and `Empty` report at once. Lock changes come through `Locks.Changed` ([world.md](world.md)).
 
-`Lanterns.Extinguish` also stops the candle's timer. The game's own blowing out leaves it running, and when it runs out it puts out whatever candle was lit since (TODO.md, LanternStaleTimer). Lit, Extinguished and BurntOut follow the candle's timer, so a candle put out early by that old timer reports Extinguished.
+`Lanterns.Extinguish` also stops the candle's timer. The game's own blowing out leaves it running, and when it runs out it puts out whatever candle was lit since; ObenPatches' LanternStaleTimer (on by default) stops it there too. Lit, Extinguished and BurntOut follow the candle's timer, so without that fix a candle put out early by the old timer reports Extinguished.
 
 A flood gate whose power is cut on the way stops where it is and no longer reports `Moving`; with power back the game either finishes at once or turns it round (`GateChanged` reports the turn). `SetOpen` refuses a gate without power. `ThrowWater` refuses a passive sauna and a throw while the last one settles (a second and a half); water only makes steam once the stove is over 60 degrees.
 

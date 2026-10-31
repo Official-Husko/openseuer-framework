@@ -125,6 +125,12 @@ The workbench's auto-eat (`PlayerAutoConsume.ConsumeNeeds`, run by `ShopBaseUI.C
 
 Fix: a prefix on `GetCandidate` skips an item whose slot's own stack is empty. Tested on 0.5.13 with the inventory open, two apples at hunger 75: with the fix off hunger went to 45 (three apples' worth) and `TakeItem` threw; with it on, 55 and no error.
 
+### LanternStaleTimer: a relit lantern goes out at the old candle's end
+
+Lighting a candle lantern starts a `TimeOfDayAzure.Timer` with the candle's burn time (`Lantern.CandleInserted`, `Lantern.cs:119-139`) whose callback is `CandleExtinguished`. Blowing it out (`Interact`, `:86-90`) calls `CandleExtinguished` (`:141-147`), which drops `candleTimer` without `Destroy()`ing it, so the timer stays on the clock. When it runs out it calls `CandleExtinguished` again: a candle lit in the meantime goes out at the old candle's end time, and an empty lantern plays the burn-out sound and fires its burnt-out relay (found 2026-10-31 in Interior Mines Potato Mine).
+
+Fix: a prefix on `CandleExtinguished` destroys a timer that still has time left (one that ran out is calling it itself and is taken off the clock right after). Tested on 0.5.13 in the Potato Mine with 120 s candles, blown out the game's way with 90 s left and relit at once: with the fix off the new candle went out after 6 real seconds with 30 s of it left; with it on it burned its full time (8 real seconds).
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

@@ -659,7 +659,7 @@ Every one of these runs for each instance in the loaded scene unless noted:
 17. `Interactable` is the base class for 56 types but `WorkableResourceSource` implements `IInteractable` alone, so patches or lookups on `Interactable` miss it.
 18. A savable's `OnSavingGame` usually only hands the object to `SaveController.SerializeData`, which adds it to a list; the file is serialised at the end of `SaveGame`. A value swapped in for the save has to stay until `SaveGame` returns, not just until `OnSavingGame` does.
 19. `TriggerRadiation.Enable(false)` only keeps new visitors out (`OnTriggerEnter` checks `Enabled`); its dose tick checks the component's `enabled` alone, so a player already inside keeps taking dose. Switch the component off too.
-20. `Lantern.CandleExtinguished` drops `candleTimer` without `Destroy()`ing it, so the timer still runs out later and puts out the next candle (TODO.md, LanternStaleTimer).
+20. `Lantern.CandleExtinguished` drops `candleTimer` without `Destroy()`ing it, so the timer still runs out later and puts out the next candle (fixed by ObenPatches' LanternStaleTimer).
 21. `FloodGateControl.TurnOff` stops the gate's coroutines but leaves `isBlinking` set; `TurnOn` then either snaps the gate to its target or, with `allowPressOnBlinking`, turns it round.
 22. `TenementController.RentApartment` sets `deposit` (and pays it unless silent); a silent rent still records it, and the timed eviction (`EvictResident(apartment)`, not silent) takes it back from the player.
 23. `Hotel.lastCheck` becomes the clock's own object after the first daily check (5.2), so hotel stays only count down once per visit to the level (TODO.md, HotelDayOnce).

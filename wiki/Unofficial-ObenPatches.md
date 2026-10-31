@@ -22,6 +22,7 @@ On unless it says otherwise.
 | HUD after a screenshot | A screenshot without the HUD (F12), taken while the HUD was hidden, made the hide-HUD key need two presses to bring it back. |
 | Head lamp prompt | Taking off a hat with a head lamp before ever switching it on left the "Head Lamp" key prompt on screen. |
 | Auto-eat while crafting | Eating automatically while crafting ate the last item of a stack twice and then failed, which could also break the Craft button. |
+| Lantern candles | Blowing out a candle lantern and lighting it again made the new candle go out when the old one would have ended. |
 | NPC sight chance (off by default) | NPC sight ignores its detection chance, so you're always spotted when in view. The fix makes the chance count; it changes how sneaking feels, so it's yours to turn on. |
 | Reflection probes (off by default) | A typo stops some reflections from updating while you stand in their area. Off until it has been checked in more places. |
 

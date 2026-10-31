@@ -597,6 +597,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [x] **ScreenshotFolder:** a faked F11 and F12 a few seconds apart save two pictures in `Screenshots/` next to the exe, the F12 one without the HUD. (2026-10-31; with the fix off: "Failed to store screen shot".)
 - [x] **ScreenshotHiddenHud:** HUD hidden the way the hide-HUD key does, then F12: one "show" brings the HUD back (with the fix off it took two). (2026-10-31)
 - [x] **HeadLampPrompt:** Hard Hat with Headlamp on (prompt shown), off without switching the lamp on: the prompt is gone (with the fix off it stayed). (2026-10-31, with the prompt's "done" flag cleared first.)
+- [x] **AutoConsumeLastItem:** with the inventory open, two apples at hunger 75 and `PlayerAutoConsume.ConsumeNeeds()`: hunger 55 and no error (with the fix off: 45, three apples' worth, and a `NullReferenceException` in `TakeItem`). (2026-10-31)
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

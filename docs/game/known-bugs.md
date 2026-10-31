@@ -119,6 +119,12 @@ Putting on a hat with a head lamp (Hard Hat with Headlamp, 17730) calls the lamp
 
 Fix: a prefix on `UpdateItem` for the head slot hides the head lamp prompt (clears `HeadLightTutorial` and the prompt, as `onUnequip` does, without touching other prompts' flags). A lamp put on again shows it again. Tested on 0.5.13 with the prompt's "done" flag cleared: hat on, prompt shown; hat off without switching the lamp on: with the fix off the prompt was still up, with it on it was gone.
 
+### AutoConsumeLastItem: auto-eat eats the last item twice and throws
+
+The workbench's auto-eat (`PlayerAutoConsume.ConsumeNeeds`, run by `ShopBaseUI.Craft` and every crafting second) eats up to five items per need while the need is still at or over its threshold (`ConsumeFor`, `PlayerAutoConsume.cs:121-135`), each time picking the best candidate from `Inventory.GetInventoryItemData`. When an item empties a stack, `Slot.UpdateSlot` (`Slot.cs:205-212`) only queues the slot's `ItemData` for destruction at the end of the frame, and that object keeps its own copy of the stack (amount 1), so `GetCandidate` (`:192-196`, which checks `IsInSlot`, the copy's amount) picked it again in the same frame: its food was applied a second time, then `SlotController.TakeItem` threw a `NullReferenceException` on the emptied stack, which also broke the Craft press (seen 2026-10-30 at a Work table).
+
+Fix: a prefix on `GetCandidate` skips an item whose slot's own stack is empty. Tested on 0.5.13 with the inventory open, two apples at hunger 75: with the fix off hunger went to 45 (three apples' worth) and `TakeItem` threw; with it on, 55 and no error.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

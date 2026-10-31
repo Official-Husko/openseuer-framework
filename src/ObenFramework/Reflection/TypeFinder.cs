@@ -6,11 +6,15 @@ namespace ObenFramework.Reflection;
 
 /// <summary>
 /// Finds types by full or short name across every loaded assembly. Game types win over
-/// same-named types elsewhere. Results are cached.
+/// same-named types elsewhere. Results are cached, and so are misses until another assembly loads.
 /// </summary>
 public static class TypeFinder
 {
     private static readonly Dictionary<string, Type> Cache = new Dictionary<string, Type>(StringComparer.Ordinal);
+
+    // Names nothing matched, with how many assemblies were loaded then: a watch on a type that's gone would
+    // otherwise search every assembly on each redraw.
+    private static readonly Dictionary<string, int> Misses = new Dictionary<string, int>(StringComparer.Ordinal);
 
     public static Type Find(string name)
     {
@@ -20,9 +24,20 @@ public static class TypeFinder
         if (Cache.TryGetValue(name, out var cached) && !ObenLoader.LoadedAssemblies.IsStale(cached.Assembly))
             return cached;
 
+        int loaded = AppDomain.CurrentDomain.GetAssemblies().Length;
+        if (Misses.TryGetValue(name, out int seen) && seen == loaded)
+            return null;
+
         var type = Type.GetType(name, false) ?? Search(name);
         if (type != null)
+        {
             Cache[name] = type;
+            Misses.Remove(name);
+        }
+        else
+        {
+            Misses[name] = loaded;
+        }
         return type;
     }
 

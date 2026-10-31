@@ -148,9 +148,16 @@ internal static class MainMenuRow
 
     private static UnityEngine.UI.Button Copy(UnityEngine.UI.Button template, string name, Action onClick)
     {
-        var copy = UnityEngine.Object.Instantiate(template.gameObject, template.transform.parent, false);
+        // Copied under an inactive holder, so none of the copy's parts wake up before Strip has taken the
+        // Credits button's relays and translations out; it wakes in its real place.
+        var holder = new GameObject("ObenUIKit copy");
+        holder.SetActive(false);
+        holder.transform.SetParent(template.transform.parent, false);
+        var copy = UnityEngine.Object.Instantiate(template.gameObject, holder.transform, false);
         copy.name = name;
         Strip(copy);
+        copy.transform.SetParent(template.transform.parent, false);
+        UnityEngine.Object.Destroy(holder);
         // A layout group on the sign would otherwise move the copy into its own idea of a grid.
         if (copy.transform.parent.GetComponent<LayoutGroup>() != null)
         {

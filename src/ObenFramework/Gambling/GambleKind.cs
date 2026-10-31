@@ -20,4 +20,7 @@ public enum GambleKind
 
     /// <summary>Bets at the rat fighting arena.</summary>
     RatFight,
+
+    /// <summary>Scratch card prizes (OC Pot and Spade of Aces).</summary>
+    Scratchcard,
 }

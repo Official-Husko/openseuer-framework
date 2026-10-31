@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Currency = Money.Currency;
 
@@ -11,7 +12,16 @@ internal static class CardTableFields
     public static readonly AccessTools.FieldRef<CardGameTable, Currency> Currency = AccessTools.FieldRefAccess<CardGameTable, Currency>("currency");
     public static readonly AccessTools.FieldRef<CardGameTable, bool> ItemBet = AccessTools.FieldRefAccess<CardGameTable, bool>("useItemAsBet");
     public static readonly AccessTools.FieldRef<CardGameTable, ItemReference> BetItem = AccessTools.FieldRefAccess<CardGameTable, ItemReference>("itemToBet");
-    public static readonly AccessTools.FieldRef<CardGameTable, int> NetWinnings = AccessTools.FieldRefAccess<CardGameTable, int>("netWinnings");
+
+    // The table's own netWinnings adds the stake back at the end of a game instead of the payout, so it is
+    // always 0 after a finished game; the framework keeps its own count per table.
+    private static readonly ConditionalWeakTable<CardGameTable, StrongBox<int>> Net = new ConditionalWeakTable<CardGameTable, StrongBox<int>>();
+
+    public static int NetOf(CardGameTable table) => Net.TryGetValue(table, out var box) ? box.Value : 0;
+
+    public static void AddNet(CardGameTable table, int amount) => Net.GetOrCreateValue(table).Value += amount;
+
+    public static void ResetNet(CardGameTable table) => Net.Remove(table);
 
     public static GambleKind KindOf(CardGame game) => game switch
     {

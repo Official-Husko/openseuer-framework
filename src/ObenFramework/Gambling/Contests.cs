@@ -20,10 +20,13 @@ public static class Contests
     private static readonly AccessTools.FieldRef<ContestController, ContestController.IContestParticipant> Participant =
         AccessTools.FieldRefAccess<ContestController, ContestController.IContestParticipant>("activeParticipant");
 
+    /// <summary>True when the contest hooks are in place, so the events fire and rat fight winnings can be scaled.</summary>
+    public static bool IsAvailable => Payouts.IsAvailable;
+
     /// <summary>A contest began (a drinking or sauna contest, or a rat fight round).</summary>
     public static readonly WorldEvent<ContestInfo> Started = new WorldEvent<ContestInfo>(nameof(Started));
 
-    /// <summary>A contest ended.</summary>
+    /// <summary>A contest ended, or a rat fight round was fought (with or without a bet of the player's).</summary>
     public static readonly WorldEvent<ContestResult> Finished = new WorldEvent<ContestResult>(nameof(Finished));
 
     /// <summary>The player bet on a rat.</summary>
@@ -69,8 +72,8 @@ public static class Contests
     }
 
     /// <summary>
-    /// How the last contest this session ended (a drinking or sauna contest, or a rat fight the player bet on),
-    /// or null before the first. The same result <see cref="Finished"/> raised.
+    /// How the last contest this session ended (a drinking or sauna contest, or a rat fight round), or null
+    /// before the first. The same result <see cref="Finished"/> raised.
     /// </summary>
     public static ContestResult? LastResult { get; private set; }
 

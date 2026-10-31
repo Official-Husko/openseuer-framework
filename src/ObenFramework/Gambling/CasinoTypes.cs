@@ -60,19 +60,26 @@ public readonly struct CasinoEvent
 /// <summary>A scratched card, raised by <see cref="Casino.Scratched"/>.</summary>
 public readonly struct ScratchcardResult
 {
-    internal ScratchcardResult(Item card, int prize, bool realMoney, int cost)
+    internal ScratchcardResult(Item card, int prize, bool realMoney, int cost, Item receipt)
     {
         Card = card;
         Prize = prize;
         RealMoney = realMoney;
         Cost = cost;
+        Receipt = receipt;
     }
 
     /// <summary>The card item scratched.</summary>
     public Item Card { get; }
 
-    /// <summary>The prize printed on the receipt, 0 for a losing card. A winning receipt is cashed in by talking to the seller.</summary>
+    /// <summary>
+    /// The prize drawn (after <see cref="Payouts"/>), in coins or, on a Real Money card, in Real Money; 0 for a
+    /// losing card. A winning receipt is cashed in by talking to the seller.
+    /// </summary>
     public int Prize { get; }
+
+    /// <summary>The receipt item the card leaves (it arrives in the inventory a frame later), or null.</summary>
+    public Item Receipt { get; }
 
     /// <summary>True when the prize is in Real Money.</summary>
     public bool RealMoney { get; }

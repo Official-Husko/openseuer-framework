@@ -11,8 +11,8 @@ namespace ObenFramework.Gambling;
 /// Scales what gambling pays out. Mods set multipliers per game (or for <see cref="GambleKind.All"/>); every
 /// mod's multipliers multiply together, so two mods that each double winnings make them four times, and when
 /// one goes away the other's stays. Applied where the game works out a win: slot machine and pajatso wins,
-/// card table payouts, rat fight winnings. Stakes, losses and the game's gambling statistics are not changed.
-/// Multipliers are not saved; set them in <c>OnLoad</c>.
+/// card table payouts, rat fight winnings and scratch card prizes. The game's gambling statistics count what
+/// was actually paid; stakes and losses are not changed. Multipliers are not saved; set them in <c>OnLoad</c>.
 /// </summary>
 public static class Payouts
 {
@@ -50,6 +50,9 @@ public static class Payouts
         Check(game);
         return Table.Remove(owner.Info.Id, (int)game, key);
     }
+
+    /// <summary>Takes every multiplier of this mod away, on all games. Returns how many there were.</summary>
+    public static int Clear(ObenMod owner) => owner == null ? 0 : Table.RemoveOwner(owner.Info.Id);
 
     /// <summary>What a game's wins are multiplied by right now: the <see cref="GambleKind.All"/> multipliers times the game's own, capped.</summary>
     public static float Multiplier(GambleKind game)

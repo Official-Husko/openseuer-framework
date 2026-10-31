@@ -43,6 +43,29 @@ public class PayoutMathTests
         Assert.Equal(2.5f, PayoutMath.ScaleTenths(2.5f, 1f));
     }
 
+    [Fact]
+    public void ScratchcardTopPrizeScales()
+    {
+        Assert.Equal(100000f, PayoutMath.ScaleTop(50000f, 2f));
+        Assert.Equal(25000f, PayoutMath.ScaleTop(50000f, 0.5f));
+        Assert.Equal(10000f, PayoutMath.ScaleTop(10000f, 1f));
+        Assert.Equal(0f, PayoutMath.ScaleTop(10000f, 0f));
+        Assert.Equal(0f, PayoutMath.ScaleTop(10000f, float.NaN));
+        Assert.Equal(0f, PayoutMath.ScaleTop(0f, 3f));
+        Assert.Equal(PayoutMath.MaxPayout, PayoutMath.ScaleTop(5e7f, 10f));
+    }
+
+    [Fact]
+    public void ScratchcardKindHasItsOwnChannel()
+    {
+        var table = new MultiplierTable(System.Enum.GetValues(typeof(GambleKind)).Length, 10f);
+        table.Set("a", (int)GambleKind.Scratchcard, null, 3f);
+        Assert.Equal(3f, table.Product((int)GambleKind.Scratchcard));
+        Assert.Equal(1f, table.Product((int)GambleKind.RatFight));
+        Assert.Equal(1, table.RemoveOwner("a"));
+        Assert.Equal(1f, table.Product((int)GambleKind.Scratchcard));
+    }
+
     [Theory]
     [InlineData(10, 1, 20)]
     [InlineData(10, 2, 12)]

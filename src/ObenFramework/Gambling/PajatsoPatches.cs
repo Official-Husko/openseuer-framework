@@ -2,18 +2,29 @@
 using System;
 using HarmonyLib;
 using ObenFramework.World;
+using UnityEngine;
 
 namespace ObenFramework.Gambling;
 
 /// <summary>
-/// The pajatso: <c>OnLaunchCoin</c> (one coin played), <c>CoinGateHit</c> (the coin went through a winning
+/// The pajatso: <c>AddMoneySlot</c> (coins paid in), <c>OnLaunchCoin</c> (one coin played), <c>CoinGateHit</c> (the coin went through a winning
 /// gate: the game drops that many coins from the gutter onto the win tray, or none when the gutter runs dry)
 /// and <c>OnCollectWins</c> (the tray goes to the wallet). The payout is scaled after the gate paid, so the
-/// physical coins in the gutter don't decide whether a scaled win can be paid.
+/// physical coins in the gutter don't decide whether a scaled win can be paid (the gutter drops the unscaled
+/// number of coins; the tray pays the scaled one).
 /// </summary>
 [HarmonyPatch]
 internal static class PajatsoPatches
 {
+    [HarmonyPatch(typeof(PajatsoGameplay), nameof(PajatsoGameplay.AddMoneySlot)), HarmonyPostfix]
+    private static void CoinsIn(PajatsoGameplay __instance, int money)
+    {
+        if (money <= 0 || !Casino.CoinsInserted.HasSubscribers)
+            return;
+        try { Casino.Raise(Casino.CoinsInserted, __instance, money); }
+        catch (Exception e) { WorldLog.Failed("Pajatso coin hook", e); }
+    }
+
     [HarmonyPatch(typeof(PajatsoGameplay), "OnLaunchCoin"), HarmonyPostfix]
     private static void Launched(PajatsoGameplay __instance)
     {
@@ -27,7 +38,8 @@ internal static class PajatsoPatches
     private static void BeforeGate(int ___coinsWon, out int __state) => __state = ___coinsWon;
 
     [HarmonyPatch(typeof(PajatsoGameplay), nameof(PajatsoGameplay.CoinGateHit)), HarmonyPostfix]
-    private static void AfterGate(PajatsoGameplay __instance, int amount, ref int ___coinsWon, Button ___CollectWinsButton, int __state)
+    private static void AfterGate(PajatsoGameplay __instance, int amount, ref int ___coinsWon, Button ___CollectWinsButton,
+        GameObject ___DisplayWinCoins, int __state)
     {
         // The gate paid only if the tray grew by the gate's amount.
         if (amount <= 0 || ___coinsWon - __state != amount)
@@ -40,9 +52,12 @@ internal static class PajatsoPatches
                 ___coinsWon = __state + paid;
                 if (___CollectWinsButton != null)
                     ___CollectWinsButton.useMessage = ___coinsWon > 0 ? $"Collect {___coinsWon} OC" : "Empty";
+                // The game lit the tray for the win; nothing landed on it.
+                if (___coinsWon <= 0 && ___DisplayWinCoins != null)
+                    ___DisplayWinCoins.SetActive(false);
             }
             if (paid > 0)
-                Casino.Raise(Casino.Won, __instance, paid);
+                Casino.RaiseWon(__instance, paid);
         }
         catch (Exception e)
         {

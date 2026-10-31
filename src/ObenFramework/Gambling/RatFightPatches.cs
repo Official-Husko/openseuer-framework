@@ -9,7 +9,8 @@ namespace ObenFramework.Gambling;
 /// <summary>
 /// The rat fighting arena: <c>PlaceOCBet</c>/<c>PlaceRMBet</c> (the stake leaves the wallet), <c>StartRound</c>,
 /// <c>EndRound</c> (a win on the right rat pays the stake times the number of rats into <c>winAmount</c>,
-/// scaled here by <see cref="Payouts"/>) and <c>CollectWinnings</c> (the winnings go to the wallet).
+/// scaled here by <see cref="Payouts"/>, statistics included) and <c>CollectWinnings</c> (the winnings go to
+/// the wallet). Every round fought raises <see cref="Contests.Finished"/>, with or without a bet.
 /// </summary>
 [HarmonyPatch]
 internal static class RatFightPatches
@@ -33,26 +34,58 @@ internal static class RatFightPatches
         catch (Exception e) { WorldLog.Failed("Rat fight start hook", e); }
     }
 
-    // 0 when the round isn't being fought, 1 for a lost bet, 2 for a bet on the winner.
-    [HarmonyPatch(typeof(RatFightArena), nameof(RatFightArena.EndRound)), HarmonyPrefix]
-    private static void BeforeEnd(RatFightArena __instance, int winningCombatant, out int __state)
+    internal struct Round
     {
-        __state = 0;
-        if (__instance.currentState != RatFightArena.State.Fighting)
-            return;
-        __state = __instance.playerBettingOn == winningCombatant && __instance.betAmount.IsNonZero() ? 2 : 1;
+        // 0 when the round isn't being fought, 1 for no bet or a lost one, 2 for a bet on the winner.
+        public int Outcome;
+        public bool Scaled;
+        public Money.money Win;
     }
 
-    [HarmonyPatch(typeof(RatFightArena), nameof(RatFightArena.EndRound)), HarmonyPostfix]
-    private static void AfterEnd(RatFightArena __instance, int winningCombatant, int __state)
+    // A won bet pays the stake times the number of rats, booked in the statistics before the method returns:
+    // the scaled win is worked out here and the booking scoped to it.
+    [HarmonyPatch(typeof(RatFightArena), nameof(RatFightArena.EndRound)), HarmonyPrefix]
+    private static void BeforeEnd(RatFightArena __instance, int winningCombatant, out Round __state)
     {
-        if (__state == 0)
+        __state = default;
+        if (__instance.currentState != RatFightArena.State.Fighting)
+            return;
+        bool won = __instance.playerBettingOn == winningCombatant && __instance.betAmount.IsNonZero();
+        __state.Outcome = won ? 2 : 1;
+        if (!won || __instance.combatants == null)
             return;
         try
         {
-            bool won = __state == 2;
-            if (won)
-                Scale(__instance);
+            float factor = Payouts.Multiplier(GambleKind.RatFight);
+            if (factor == 1f)
+                return;
+            var win = __instance.betAmount * __instance.combatants.Count;
+            __state.Win = new Money.money(PayoutMath.Scale(win.OC, factor), PayoutMath.ScaleTenths(win.RM, factor));
+            __state.Scaled = true;
+            PayoutScope.ArmStats(Booked(win), Booked(__state.Win));
+        }
+        catch (Exception e)
+        {
+            PayoutScope.Fail(e);
+        }
+    }
+
+    [HarmonyPatch(typeof(RatFightArena), nameof(RatFightArena.EndRound)), HarmonyPostfix]
+    private static void AfterEnd(RatFightArena __instance, int winningCombatant, Round __state)
+    {
+        PayoutScope.Disarm();
+        if (__state.Outcome == 0)
+            return;
+        try
+        {
+            bool won = __state.Outcome == 2;
+            if (won && __state.Scaled)
+            {
+                __instance.winAmount = __state.Win;
+                // Nothing to collect: back to taking bets, as after a lost round.
+                if (!__instance.winAmount.IsMoreThanZero())
+                    __instance.currentState = RatFightArena.State.Betting;
+            }
             var combatants = __instance.combatants;
             string winner = combatants != null && winningCombatant >= 0 && winningCombatant < combatants.Count && combatants[winningCombatant] != null
                 ? combatants[winningCombatant].name : null;
@@ -85,17 +118,8 @@ internal static class RatFightPatches
         }
     }
 
-    private static void Scale(RatFightArena arena)
-    {
-        float factor = Payouts.Multiplier(GambleKind.RatFight);
-        if (factor == 1f)
-            return;
-        var win = arena.winAmount;
-        arena.winAmount = new Money.money(PayoutMath.Scale(win.OC, factor), PayoutMath.ScaleTenths(win.RM, factor));
-        // Nothing to collect: back to taking bets, as after a lost round.
-        if (!arena.winAmount.IsMoreThanZero())
-            arena.currentState = RatFightArena.State.Betting;
-    }
+    // What the game books in the gambling statistics for a win: Real Money as ten coins, cut to whole units.
+    private static int Booked(Money.money win) => (int)win.RM * 10 + win.OC;
 
     private static void Bet(RatFightArena arena, int amount, Currency currency)
     {

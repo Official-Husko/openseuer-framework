@@ -34,6 +34,17 @@ internal static class PayoutMath
         return scaled >= MaxPayout ? MaxPayout : (float)scaled;
     }
 
+    /// <summary>A scratch card's top prize times a factor; the card's prize is a share of it, so it scales along.</summary>
+    public static float ScaleTop(float top, float factor)
+    {
+        if (top <= 0f || factor == 1f)
+            return top;
+        if (float.IsNaN(factor) || factor <= 0f)
+            return 0f;
+        double scaled = top * (double)factor;
+        return scaled >= MaxPayout ? MaxPayout : (float)scaled;
+    }
+
     /// <summary>What a card table pays back for a place (1 to 4), as the game works it out; -1 for a place it has no rate for.</summary>
     public static int CardPayout(int stake, int placement)
     {

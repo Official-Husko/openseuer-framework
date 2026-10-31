@@ -24,6 +24,9 @@ internal static class GamblingCommands
                 ["moneyIn"] = m.MoneyIn,
                 ["winnings"] = m.Winnings,
             }).ToArray()),
+            ["lastWin"] = Casino.LastWin is CasinoEvent last
+                ? new JObject { ["kind"] = last.Machine.Kind.ToString(), ["machine"] = last.Machine.Id, ["amount"] = last.Amount }
+                : null,
             ["won"] = stats.Won,
             ["lost"] = stats.Lost,
             ["addiction"] = stats.Addiction,
@@ -59,7 +62,7 @@ internal static class GamblingCommands
     };
 
     [BridgeCommand("gambling.payout", "The payout multipliers in force, or set the bridge's own for a game (1 removes it).",
-        Params = new[] { "game?: all, slotmachine, pajatso, chinahand, ristiseiska or ratfight", "multiplier?: 0 to 10", "clear?: true removes the bridge's multiplier for game, or all of them without game" })]
+        Params = new[] { "game?: all, slotmachine, pajatso, chinahand, ristiseiska, ratfight or scratchcard", "multiplier?: 0 to 10", "clear?: true removes the bridge's multiplier for game, or all of them without game" })]
     private static object Payout(JObject p)
     {
         string game = p.Str("game", null);

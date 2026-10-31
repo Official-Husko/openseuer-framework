@@ -14,13 +14,26 @@ namespace ObenFramework.Gambling;
 /// </summary>
 public static class Casino
 {
+    /// <summary>True when the casino hooks are in place, so the events fire and wins can be scaled.</summary>
+    public static bool IsAvailable => Payouts.IsAvailable;
+
+    /// <summary>Coins went into a machine at its coin slot: <see cref="CasinoEvent.Amount"/> is how many.</summary>
+    public static readonly WorldEvent<CasinoEvent> CoinsInserted = new WorldEvent<CasinoEvent>(nameof(CoinsInserted));
+
     /// <summary>A play started: <see cref="CasinoEvent.Amount"/> is the stake taken from the coins in the machine.</summary>
     public static readonly WorldEvent<CasinoEvent> Played = new WorldEvent<CasinoEvent>(nameof(Played));
 
-    /// <summary>A play won: <see cref="CasinoEvent.Amount"/> is the win, after <see cref="Payouts"/>.</summary>
+    /// <summary>
+    /// A play won: <see cref="CasinoEvent.Amount"/> is the win, after <see cref="Payouts"/>. A won coin toss on a
+    /// slot machine raises <see cref="Doubled"/> instead.
+    /// </summary>
     public static readonly WorldEvent<CasinoEvent> Won = new WorldEvent<CasinoEvent>(nameof(Won));
 
-    /// <summary>A slot machine's coin toss for double or nothing: <see cref="CasinoEvent.Before"/> went in, <see cref="CasinoEvent.Amount"/> came out.</summary>
+    /// <summary>
+    /// A slot machine's coin toss for double or nothing: <see cref="CasinoEvent.Before"/> went in,
+    /// <see cref="CasinoEvent.Amount"/> came out (twice as much, 0 for a lost toss, the same for a coin on its
+    /// edge, which keeps the coins but ends the doubling).
+    /// </summary>
     public static readonly WorldEvent<CasinoEvent> Doubled = new WorldEvent<CasinoEvent>(nameof(Doubled));
 
     /// <summary>The player took the machine's coins and winnings out: <see cref="CasinoEvent.Amount"/> went to the wallet.</summary>
@@ -28,6 +41,9 @@ public static class Casino
 
     /// <summary>A scratch card was scratched.</summary>
     public static readonly WorldEvent<ScratchcardResult> Scratched = new WorldEvent<ScratchcardResult>(nameof(Scratched));
+
+    /// <summary>The last win at a slot machine or the pajatso this session (what <see cref="Won"/> raised), or null before the first.</summary>
+    public static CasinoEvent? LastWin { get; private set; }
 
     /// <summary>Every slot machine and pajatso of the loaded scenes.</summary>
     public static List<CasinoMachineInfo> Machines()
@@ -52,6 +68,15 @@ public static class Casino
             return new GamblingStats(stats.gambling.OCWon, stats.gambling.OCLost,
                 addictions != null ? addictions.GamblingAddiction : 0f, addictions != null ? addictions.GamblingNeed : 0f);
         }
+    }
+
+    internal static void RaiseWon(Component machine, int amount)
+    {
+        if (machine == null)
+            return;
+        var e = new CasinoEvent(CasinoFields.Describe(machine), amount, 0);
+        LastWin = e;
+        Won.Raise(e);
     }
 
     internal static void Raise(WorldEvent<CasinoEvent> e, Component machine, int amount, int before = 0)

@@ -23,7 +23,7 @@ public sealed class CardTableInfo
         Stake = Playing ? CardTableFields.Stake(table) : 0;
         Currency = CardTableFields.Currency(table);
         BetItem = CardTableFields.BetItemOf(table);
-        NetWinnings = CardTableFields.NetWinnings(table);
+        NetWinnings = CardTableFields.NetOf(table);
     }
 
     public CardGameTable Table { get; }
@@ -48,7 +48,10 @@ public sealed class CardTableInfo
     /// <summary>The item this table plays for instead of money, or null.</summary>
     public Item BetItem { get; }
 
-    /// <summary>The player's payouts minus stakes at this table, as the table counts them.</summary>
+    /// <summary>
+    /// The player's payouts minus stakes at this table since they sat down (coins, Real Money or items, as the
+    /// table plays); back to 0 when they leave it.
+    /// </summary>
     public int NetWinnings { get; }
 }
 
@@ -86,11 +89,17 @@ public readonly struct CardGameResult
 /// </summary>
 public static class CardGames
 {
-    /// <summary>The player sat down to a game and the stake was taken.</summary>
+    /// <summary>True when the card table hooks are in place, so the events fire and payouts can be scaled.</summary>
+    public static bool IsAvailable => Payouts.IsAvailable;
+
+    /// <summary>A game started dealing, its stake taken (none at a table that plays for free).</summary>
     public static readonly WorldEvent<CardTableInfo> Started = new WorldEvent<CardTableInfo>(nameof(Started));
 
     /// <summary>A game ended and the table paid out.</summary>
     public static readonly WorldEvent<CardGameResult> Ended = new WorldEvent<CardGameResult>(nameof(Ended));
+
+    /// <summary>The player left the table during a game, giving it up: the stake is lost and nothing is paid.</summary>
+    public static readonly WorldEvent<CardTableInfo> GaveUp = new WorldEvent<CardTableInfo>(nameof(GaveUp));
 
     /// <summary>Every card table of the loaded scenes.</summary>
     public static List<CardTableInfo> Tables()

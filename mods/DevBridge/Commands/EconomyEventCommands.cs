@@ -38,12 +38,17 @@ internal static class EconomyEventCommands
     private static readonly EventRecorder GamblingRecorder = new EventRecorder(recorder =>
     {
         var owner = DevBridgeMod.Instance;
+        Casino.CoinsInserted.Subscribe(owner, e => recorder.Add("CoinsInserted", Machine(e)));
         Casino.Played.Subscribe(owner, e => recorder.Add("Played", Machine(e)));
         Casino.Won.Subscribe(owner, e => recorder.Add("Won", Machine(e)));
         Casino.Doubled.Subscribe(owner, e => recorder.Add("Doubled", Machine(e)));
         Casino.CashedOut.Subscribe(owner, e => recorder.Add("CashedOut", Machine(e)));
-        Casino.Scratched.Subscribe(owner, s => recorder.Add("Scratched", new JObject { ["card"] = s.Card.ID, ["prize"] = s.Prize, ["rm"] = s.RealMoney }));
-        CardGames.Started.Subscribe(owner, t => recorder.Add("CardGameStarted", new JObject { ["kind"] = t.Kind.ToString(), ["stake"] = t.Stake }));
+        Casino.Scratched.Subscribe(owner, s => recorder.Add("Scratched", new JObject
+        {
+            ["card"] = s.Card.ID, ["prize"] = s.Prize, ["rm"] = s.RealMoney, ["receipt"] = s.Receipt?.ID,
+        }));
+        CardGames.Started.Subscribe(owner, t => recorder.Add("CardGameStarted", new JObject { ["kind"] = t.Kind.ToString(), ["stake"] = t.Stake, ["playing"] = t.Playing }));
+        CardGames.GaveUp.Subscribe(owner, t => recorder.Add("CardGameGaveUp", new JObject { ["kind"] = t.Kind.ToString(), ["stake"] = t.Stake }));
         CardGames.Ended.Subscribe(owner, r => recorder.Add("CardGameEnded", new JObject
         {
             ["kind"] = r.Kind.ToString(), ["placement"] = r.Placement, ["stake"] = r.Stake, ["payout"] = r.Payout,
@@ -88,6 +93,7 @@ internal static class EconomyEventCommands
     private static JObject Machine(CasinoEvent e) => new JObject
     {
         ["kind"] = e.Machine.Kind.ToString(), ["machine"] = e.Machine.Id, ["amount"] = e.Amount, ["before"] = e.Before,
+        ["stake"] = e.Machine.Stake, ["moneyIn"] = e.Machine.MoneyIn, ["winnings"] = e.Machine.Winnings,
     };
 
     private static JObject Deal(ShopDeal d) => new JObject

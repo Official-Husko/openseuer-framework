@@ -21,6 +21,7 @@ public sealed partial class UiWindow : ITracker
     private readonly WindowOptions _options;
     private readonly List<Action> _refreshers = new List<Action>();
     private readonly WindowLayout.Parts _parts;
+    private string _title;
     private readonly UiNav _nav;
     private IDisposable _inputLease;
 
@@ -52,10 +53,16 @@ public sealed partial class UiWindow : ITracker
 
     internal KitContext Kit => _kit;
 
+    /// <summary>The window's title; setting it after the window closed does nothing.</summary>
     public string Title
     {
-        get => _parts.Title.text;
-        set => _parts.Title.text = value;
+        get => _parts?.Title != null ? _parts.Title.text : _title;
+        set
+        {
+            _title = value;
+            if (_parts?.Title != null)
+                _parts.Title.text = value;
+        }
     }
 
     internal UiWindow(KitContext kit, ITracker owner, string id, string title, Action<UiBuilder> build, WindowOptions options)
@@ -68,6 +75,7 @@ public sealed partial class UiWindow : ITracker
         _parts = WindowLayout.Build(kit.Root.Rect, kit.Theme, "Window " + id, options);
         _parts.Frame.gameObject.AddComponent<WindowWatch>().Window = this;
         _nav = new UiNav(kit, _parts.Scroll);
+        _title = title;
         _parts.Title.text = title;
         if (_parts.Drag != null)
             _parts.Drag.Init(_parts.Column, () => kit.Windows.Raise(this));

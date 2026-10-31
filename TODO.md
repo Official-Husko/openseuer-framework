@@ -166,7 +166,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [ ] Framework: a checkout line a modifier prices at 0 is reported with Oc 0, though MarketShop charges at least 1
 - [ ] Kit: every window adds a close entry to its owner's tracker and never takes it out (dialogs open one per question)
 - [ ] Kit: a list's hover and Enter target stay on the old index when the wheel scrolls under a resting pointer (store the row, not its index)
-- [ ] Kit: handles from an earlier build (`ButtonHandle.Text`, `CycleHandle.Set`, `SliderHandle.Set`, `UiWindow.Title`) throw after a rebuild; `LabelHandle` guards, the rest should too
+- [x] Kit: handles from an earlier build (`ButtonHandle.Text`, `CycleHandle.Set`, `SliderHandle.Set`, `UiWindow.Title`) threw after a rebuild; they guard like `LabelHandle` now and have `Alive` (checked in game on a closed window)
 - [ ] Kit: main menu mod buttons are copied active, so the copy's localization components run before they are stripped (check the label in game)
 - [ ] Kit: a guide waits forever when another mod hides its prompt
 - [x] Kit: float settings missed the number ladder (`NumberSteps` compared the widened float with 1e-9, so 0.15f added a second "0.15"); it now compares with a tolerance a float's precision fits in (unit tested)

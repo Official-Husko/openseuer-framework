@@ -40,7 +40,7 @@ public sealed class LabelHandle
 
     public string Text
     {
-        get => _text.text;
+        get => _text != null ? _text.text : "";
         set
         {
             if (_text != null && _text.text != value)
@@ -64,16 +64,27 @@ public sealed class ButtonHandle
     /// <summary>The button's rect.</summary>
     public RectTransform Rect => _button.Rect;
 
+    /// <summary>False once its window closed or rebuilt; setting anything on it then does nothing.</summary>
+    public bool Alive => _button != null && _text != null;
+
     public bool Enabled
     {
-        get => _button.Interactable;
-        set => _button.Interactable = value;
+        get => _button != null && _button.Interactable;
+        set
+        {
+            if (_button != null)
+                _button.Interactable = value;
+        }
     }
 
     public string Text
     {
-        get => _text.text;
-        set => _text.text = value;
+        get => _text != null ? _text.text : "";
+        set
+        {
+            if (_text != null)
+                _text.text = value;
+        }
     }
 }
 
@@ -100,10 +111,14 @@ public class CycleHandle
 
     public int Index { get; private set; }
 
+    /// <summary>False once its window closed or rebuilt; setting it then only changes <see cref="Index"/>.</summary>
+    public bool Alive => _value != null;
+
     public void Set(int index)
     {
         Index = _options.Length == 0 ? 0 : (index % _options.Length + _options.Length) % _options.Length;
-        _value.text = _options.Length == 0 ? "" : _options[Index];
+        if (_value != null)
+            _value.text = _options.Length == 0 ? "" : _options[Index];
     }
 
     /// <summary>Replaces the options (null is none) and shows <paramref name="index"/>, without calling the mod back.</summary>
@@ -153,14 +168,26 @@ public sealed class SliderHandle
         _slider = slider;
         _readout = readout;
         _format = format;
+        _last = slider.value;
+        slider.onValueChanged.AddListener(v => _last = v);
     }
 
-    public float Value => _slider.value;
+    private float _last;
+
+    /// <summary>The slider's value; after its window closed or rebuilt, the last one it had.</summary>
+    public float Value => _slider != null ? _slider.value : _last;
+
+    /// <summary>False once its window closed or rebuilt; setting it then does nothing.</summary>
+    public bool Alive => _slider != null;
 
     /// <summary>Moves the slider and its readout without calling the mod back.</summary>
     public void Set(float value)
     {
+        if (_slider == null)
+            return;
         _slider.SetValueWithoutNotify(value);
-        _readout.text = KitText.Number(_slider.value, _format);
+        _last = _slider.value;
+        if (_readout != null)
+            _readout.text = KitText.Number(_slider.value, _format);
     }
 }

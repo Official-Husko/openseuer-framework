@@ -147,7 +147,7 @@ window.Closed += () => Log.Info("closed: " + window.CloseReason);
 | `Area(height)` | an empty area for uGUI of your own; put your objects under the rect it returns | `RectTransform` |
 | `Space(height)` | empty space | |
 
-`Set` on a handle changes what's shown without calling your callback. Every handle has a `Rect` (the control's row or box) for uGUI of your own or layout changes. Callbacks are guarded: an exception is logged with the window's id and the window stays open (unless it was opened with `CloseOnError`).
+`Set` on a handle changes what's shown without calling your callback. Every handle has a `Rect` (the control's row or box) for uGUI of your own or layout changes. A handle outlives its control: after the window rebuilt or closed, `Alive` is false (labels, buttons, cycles and sliders), setting it does nothing and reading it gives the last value, so a late callback can't throw. Callbacks are guarded: an exception is logged with the window's id and the window stays open (unless it was opened with `CloseOnError`).
 
 ```csharp
 SliderHandle volume = null;

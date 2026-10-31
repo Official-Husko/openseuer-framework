@@ -143,6 +143,12 @@ Fix: a postfix replaces `lastCheck` with a copy when it is the clock's object. T
 
 Fix: a transpiler makes the handler compare the day the event hands it. Tested on 0.5.13 with a 1-day job on apartment 3 and the handler called as at midnight (the new day, the clock's field unchanged): with the fix on the job was done at the first midnight, with it off it wasn't.
 
+### GamblingNeedMood: the urge to gamble only counts for smokers
+
+`PlayerStatsMentalHealth.MentalHealthStatsUpdate` sums each craving's share through `generalStatusEffectCurve` into the floor the mood can't drop below. The gambling line (`PlayerStatsMentalHealth.cs:178-182`) is guarded by `if (addictions.SmokingNeed > 0f)`, copied from the smoking line above it, so a non-smoker's urge to gamble never counted (found 2026-10-31; the curve is 0 at an urge of 0, so a smoker without a gambling urge got nothing extra).
+
+Fix: a transpiler makes that test read `GamblingNeed`. Tested on 0.5.13 by calling the update with the other stats as they were: a gambling urge of 80 without smoking raised the floor from 0.168 to 0.682 with the fix on (the same as a smoking urge of 80) and left it at 0.168 with it off; with both urges the result was the same either way.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

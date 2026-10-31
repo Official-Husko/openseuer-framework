@@ -101,6 +101,12 @@ A scan of all 124 level files found 11 `DateRelay`s, none of them set to a weekd
 
 Fix: a postfix moves the answer back one day (Monday becomes Sunday). Tested on 0.5.13 in the Potato Mine with every replant logged: with the fix on, the three autofarms replanted at 07:00 on Monday the 16th and Wednesday the 25th and not on Tuesday the 24th; with it off, nothing on Monday the 23rd and all three on Tuesday the 24th. `new TimeAndDay { day = 16, month = 11, year = 2026 }.GetWeekday()` is Monday with the fix, Tuesday without.
 
+### ScreenshotFolder: F11 and F12 never save a screenshot
+
+`TakeScreenshot.getFilename` (`TakeScreenshot.cs:37-50`) creates `Application.dataPath + "/../Screenshots"`, the folder next to the exe, and looks for a free number there, but returns the relative name `Screenshots/<scene>_<date>_<n>.png`. `ScreenCapture.CaptureScreenshot` resolves a relative name inside `Obenseuer_Data` in a player build, where there is no Screenshots folder, so every shot ends in "Failed to store screen shot" while the game logs "Saved screenshot as: Screenshots/..." (seen 2026-10-29).
+
+Fix: a postfix on `getFilename` returns the full path of the folder the game created. Tested on 0.5.13: a faked F11 and F12 a few seconds apart wrote `Screenshots/Interior Player Tenement_10_31_2026_2.png` and `_3.png` next to the exe, the F11 one with the HUD and the F12 one without. Two shots within a few frames still get the same number (the game checks for the file before Unity has written the first one), as before.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

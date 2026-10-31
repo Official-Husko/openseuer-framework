@@ -18,6 +18,7 @@ On unless it says otherwise.
 | Ambient sounds | Random ambient sounds always played at the low end of their pitch range and never used their last clip. |
 | Lamps without a light | Three lamps (in Open Sewer Tenement, on the Pontikka Roof and in the Mallment) had the light script but no light, which logged an error every time you entered. |
 | Error before the first save | The main menu logged an error until you had saved once. |
+| Screenshots | F11 and F12 never saved a screenshot. Now they go into the Screenshots folder next to the game. |
 | NPC sight chance (off by default) | NPC sight ignores its detection chance, so you're always spotted when in view. The fix makes the chance count; it changes how sneaking feels, so it's yours to turn on. |
 | Reflection probes (off by default) | A typo stops some reflections from updating while you stand in their area. Off until it has been checked in more places. |
 

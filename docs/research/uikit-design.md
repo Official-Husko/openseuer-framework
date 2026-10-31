@@ -1,6 +1,6 @@
 # ObenUIKit: reference study and design
 
-Notes for building ObenUIKit (`src/ObenUIKit/`, TODO.md "ObenUIKit"). Input, menu and console basics are in `docs/game/ui-input-console.md`; this file does not repeat them, it only cites them as "UIC section N".
+Notes for building ObenUIKit (`src/ObenUIKit/`). Input, menu and console basics are in `docs/game/ui-input-console.md`; this file does not repeat them, it only cites them as "UIC section N".
 
 Path shorthand (all read-only):
 

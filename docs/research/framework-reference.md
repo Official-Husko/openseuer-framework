@@ -323,7 +323,7 @@ Beyond these there are about 100 other `Foo` areas with the same shape (`Doors`,
 
 ## 5. Recommendation per module
 
-Target mods (from `TODO.md`): **ObenFramework** (core APIs everything depends on), **ObenUIKit** (UI that looks like the game's own, mod menu), **ObenSave** (open compressed save format), the **co-op mod** (ObenCoop, transport interface with direct IP first, Steam second), and a **cheat menu**.
+Target mods (from the roadmap): **ObenFramework** (core APIs everything depends on), **ObenUIKit** (UI that looks like the game's own, mod menu), **ObenSave** (open compressed save format), the **co-op mod** (ObenCoop, transport interface with direct IP first, Steam second), and a **cheat menu**.
 
 Verdicts: **as-is** = port nearly as-is (namespace, logging, owner id; split if over 300 lines). **rework** = port with the changes listed. **skip** = leave it, or replace with ours.
 
@@ -473,7 +473,7 @@ Why this fits the codebase: the reference gets by with 0 to few dozen compile-ti
 
 `example-framework/LICENSE` is MIT, "Copyright (c) 2026 NomadsReach" (the co-op reference in `example-mp/LICENSE` has the same line). MIT requires that the copyright notice and permission text stay with "all copies or substantial portions". Source files in the reference carry no headers, so nothing is carried along automatically.
 
-Plan, matching the `TODO.md` line about a `THIRD-PARTY-NOTICES` file:
+Plan, matching the roadmap item about a `THIRD-PARTY-NOTICES` file:
 
 - `THIRD-PARTY-NOTICES.md` at the repo root. For each source: project name, URL (`https://github.com/NomadsReach/Obenseuer-Modding-Framework`), the copyright line, the full MIT text, and the list of our files or folders derived from it. Add the same entry for the co-op reference if we port from it.
 - Ship the file with every release that contains ported code: copy it into the mod folders via `build/Mod.targets` (`<None Include=... CopyToOutputDirectory=...>`), next to `mod.json`, so the notice travels with the DLL.

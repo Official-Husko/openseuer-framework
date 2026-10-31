@@ -360,7 +360,7 @@ The reference is about 46,800 lines in 176 files. It is a BepInEx plugin on top 
 5. **Replace subsystems one at a time**, each a self-contained commit tested with two copies:
    - **Sync on framework events:** doors, containers, floor items, building, crafting, shops, quests and the rest listen to the framework's events (stable ids, `ChangeSource` so nothing echoes) instead of their own hand-written patches.
    - **Cleanup:** split files over 300 lines, undo everything on unload (hot reload), and remove per-frame allocations and reflection.
-   - **Fix the reference's limits** (see ideas.md, co-op): thunder owned by the host, exhausted guests passing out, the clock after leaving, furniture without a known id, mod furniture, mod recipes.
+   - **Fix the reference's limits:** thunder owned by the host, exhausted guests passing out, the clock after leaving, furniture without a known id, mod furniture, mod recipes.
 6. **Our own additions on top:** the lobby page in ObenUIKit, direct-IP join codes and invites, presence smoothing, and so on.
 
 The old slice plan below is kept for its notes on order and risk; the reference already covers every slice in it.

@@ -13,13 +13,17 @@ namespace ObenUIKit.Menu;
 
 /// <summary>
 /// A line in the bottom-left corner of the title screen and the main menu (across from the game's own version)
-/// saying the mods are loaded and how the game check went, so it's clear the mod loader is there and working.
+/// saying which ObenseuerExtended it is, that the mods are loaded and how the game check went, so it's clear the
+/// mod loader is there and working.
 /// </summary>
 internal static class MenuStatusLine
 {
     private const float Size = 15f;
 
     private static TextMeshProUGUI _text;
+
+    // The version without the commit the pause menu's line adds ("1.0.0", not "1.0.0 (8ee6338)").
+    private static readonly string Release = PauseMenuVersion.Version.Split(' ')[0];
 
     public static void Init(ObenMod kit)
     {
@@ -74,7 +78,7 @@ internal static class MenuStatusLine
             else if (mod.State == ModState.Failed)
                 failed++;
         }
-        string line = $"ObenseuerExtended  ·  {loaded} mod{(loaded == 1 ? "" : "s")} loaded";
+        string line = $"ObenseuerExtended v{Release}  ·  {loaded} mod{(loaded == 1 ? "" : "s")} loaded";
         if (failed > 0)
             line += $", {failed} failed (see Errors in MODS)";
 

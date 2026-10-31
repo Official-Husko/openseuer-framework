@@ -12,6 +12,7 @@ decompiled/
 # Reference projects we read but don't ship (each has its own license)
 example-mp/
 example-framework/
+example-os/
 
 # Local overrides
 build/Local.props

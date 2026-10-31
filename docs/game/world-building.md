@@ -482,14 +482,16 @@ are the lookups. Rent payment should run on exactly one peer.
 - `PowerMeter : Interactable`: read-only display of a grid's `cumulativeBalance`; `TogglePowerGrid(bool)` `:124` is the main breaker call (`powerGrid.Toggle`). `PowerGrid.Toggle(bool)` `:430`, `SetBaseBalance(int)` `:440`.
 - `BatteryPowerSource : SavableScript` (`BatteryPowerSource.cs`, needs a `Storage`): power state derived from fuel items inside its storage (ammo-data or liquid-data metadata). `CheckItems()` `:111` decides
   `PowerON()` `:172` / `PowerOFF()`; `ToggleDrain(bool)` `:166` enables draining; `DeltaSeconds` drains the item metadata per game second. Output is only `Relay[] RelaysON/RelaysOFF`, there is no grid connection. On load it
-  catches up using `savedTimeAndDay`. A battery's real state is the metadata on the `ItemStack`s in its `Storage`, so syncing storage contents syncs the battery.
+  catches up using `savedTimeAndDay`. A battery's real state is the metadata on the `ItemStack`s in its `Storage`, so syncing storage contents syncs the battery. `PowerON` fires whenever
+  `CheckItems` finds charge, whatever the drain switch says: the outputs run on charge, the switch only drains it. `ToggleDrain` runs `CheckItems` before it stores the new switch.
 - `PowerGridsController` (`PowerGridsController.cs`, GUID "PowerGridsController"): saved snapshot list (`SavedGrid`: net balance, cumulative, last update) so unloaded levels can report numbers.
 
 ### 6.2 Blackout
 
 There is no power blackout system. `BlackoutController` / `BlackoutTrigger` / `BlackoutEvent` implement the player passing out:
 fade to black, optional teleport/scene change, sounds, steal money/items (`stolenOCPercent` ...), then a wake-up animation (`BlackoutController.SetScheduleWakeUp`, `WakeUpSequence`, `FinishWakeUp`; pending state saved
-so it survives the scene change). `BlackoutTrigger.StartBlackout()` is the entry point. That is player-state and local; relevant for co-op only to keep one player's blackout from freezing the other.
+so it survives the scene change). `BlackoutTrigger.StartBlackout()` is the entry point. `SetScheduleWakeUp` only fills `pending*` fields that apply after the next level load
+(`OnLevelFullyLoaded`); `TriggerWakeUp` uses the `manual*` fields that only `SetPendingFinish` sets. The casino has nine triggers; "Breakout" (no scene change, one second dark, nothing stolen) is the gentle one to test with. That is player-state and local; relevant for co-op only to keep one player's blackout from freezing the other.
 Power outages are simply grid over-capacity or `GridEnabled=false` (`PowerMeter.TogglePowerGrid`), plus `unstableSupply`, which only makes lights flicker (`PowerGrid.Flickering` -> `PowerLightFlicker`).
 
 ### 6.3 What to sync (power)
@@ -522,6 +524,9 @@ Placing or taking powered furniture re-subscribes listeners via `BuildingSystem.
   `LiquidStorage` instances with `Capacity < 0` and no external output use it as an infinite tap (`LiquidStorage.cs:252`). So tap water is not simulated; it is gated by the tenement water upgrade swapping prefabs.
 - Real liquid state lives in `LiquidStorage : Interactable` (`LiquidStorage.cs`): `SetLiquid(...)` `:676-706`, `AddLiquidFromItem(ref ItemStack)` `:648`, `FillItem(ref ItemStack)` `:776`, `EmptyTank()` `:546`, `ClearLiquid()` `:836`,
   `DeltaSeconds(int)` `:553` (evaporation/process ticks). Hook `FillItem`, `AddLiquidFromItem`, `SetLiquid`, `ClearLiquid` if tanks must be consistent.
+- `FillItem`/`AddLiquidFromItem` only set `fillingItem`/`unfillingItem`; the litres move in `LiquidStoragePanelUI.Update` (every 10 ms while the window is open) through the `LiquidAmount`
+  setter. A running `InteractableShower` takes 0.1 L per game second from its private `outputStorage` (the Bazaar's shower has its own 15 L barrel, `82815dd1-...`), and
+  `Logic_liquidFiller` and `StorageJanitorAction` write the setter too. `ClearLiquid` drops `Liquid` before it zeroes the level.
 
 ## 7. Transport
 
@@ -637,3 +642,7 @@ Every one of these runs for each instance in the loaded scene unless noted:
 15. `SaveController.GetObjectByGUID(string, Type)` scans the scene with reflection. The one-argument overload only works for objects registered during load.
 16. Level change = save + scene unload + load. Any mod-side id table keyed by Unity instance must be cleared on `SaveController.PlayerWillChangeLevel` / `OnMapChanging`, and co-op peers must handle the other player being in a different scene.
 17. `Interactable` is the base class for 56 types but `WorkableResourceSource` implements `IInteractable` alone, so patches or lookups on `Interactable` miss it.
+18. A savable's `OnSavingGame` usually only hands the object to `SaveController.SerializeData`, which adds it to a list; the file is serialised at the end of `SaveGame`. A value swapped in for the save has to stay until `SaveGame` returns, not just until `OnSavingGame` does.
+19. `TriggerRadiation.Enable(false)` only keeps new visitors out (`OnTriggerEnter` checks `Enabled`); its dose tick checks the component's `enabled` alone, so a player already inside keeps taking dose. Switch the component off too.
+20. `Lantern.CandleExtinguished` drops `candleTimer` without `Destroy()`ing it, so the timer still runs out later and puts out the next candle (TODO.md, LanternStaleTimer).
+21. `FloodGateControl.TurnOff` stops the gate's coroutines but leaves `isBlinking` set; `TurnOn` then either snaps the gate to its target or, with `allowPressOnBlinking`, turns it round.

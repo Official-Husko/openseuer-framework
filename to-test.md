@@ -349,28 +349,31 @@ Already checked:
 - **Environment:** flags force and release; the FOV override (options file untouched); sky override, read-back and clear; the vignette; power device and grid on/off; heavy rain; radiation and water readings; the hazard list.
 - **Housing:** apartments; tenants; `tenants.check` AlreadyRenting; renovations list; the post box.
 
-- [ ] **Flags [save]:** a forced flag never lands in the save. Force `obenext_test`, save, then check `Globals.tnmt`. It's also gone after a framework hot reload.
-- [ ] Sky and vignette overrides are reverted by a framework hot reload.
-- [ ] **Screen effects:** each one reverts with `effect=clear`.
-  - `screenfx effect=blur amount=0.6`: open and close the inventory and the pause menu, and the game's own blur comes back after clear.
-  - `effect=black`.
-  - `effect=shake seconds=1 amount=0.3`.
-- [ ] **Settings:** `settings.override brightness=` and `sensitivity=` behave like the FOV override.
-- [ ] **Hazards:** `hazards.set id='Open Sewer Bazaar|TriggerHurt||Stuff/_Slum/Slumshack4/Green Mushrooms (Low Potency)/Mushroom Hurt' enabled=false`. Walking into those mushrooms no longer hurts.
-- [ ] **Radiation and thunder:** `radiation.info dose=50`; `weather.conditions thunder=true`.
-- [ ] **Shower:** `fixtures.set kind=shower id=565cfbbf-0c3f-40f2-8263-07135236d0a1 on=true` (Bazaar).
-- [ ] **Tank:** `fixtures.set kind=tank id=3b40ecfe-505e-492e-95db-6e47a8e3e51b item=10840 amount=20`, an empty 200 L barrel in the Bazaar; 10840 is Clean Water.
-- [ ] **Other scenes:** list first, then act on an id from the list.
+- [x] **Flags [save]:** a forced flag never lands in the save. The first try found it in `Globals.tnmt`: the game only collects `GlobalState` in its save step and writes the file at the end of `SaveGame`, after our hook had forced it again. Fixed (the values underneath stay in until `SaveGame` returns); the next save held `obenext_perm` (set for good) and not the forced `obenext_test`, which was still forced afterwards. A framework hot reload removed the force (the flag didn't exist before, so it was gone). (2026-10-31)
+- [x] **Overrides and hot reload:** sky fog density 0.05 and a vignette and blur held; after a framework reload the density was the game's 0.0005 again, no vignette overlay was left and the blur was off. (2026-10-31)
+- [x] **Screen effects:** a held blur (Beautify blur on, intensity 2.4) stayed through the inventory and the pause menu; after `effect=clear` it was off (1) and the game's own blur came on and off with both again. `effect=black` took the fade canvas to 1 and clear back to 0. A 1 s shake of 0.3 moved the camera up to 0.92 m and it settled at 0. (2026-10-31)
+- [x] **Settings:** `brightness=150` set Beautify brightness 1.5 and `sensitivity=2500` the camera's 25 (from 1 and 9); clear put both back; the four options files kept their hashes. (2026-10-31)
+- [x] **Save refusal:** during a save in Interior Player Tenement, `GlobalFlags.Set`, `Tanks.Fill`, `Tanks.Empty`, `PowerDevices.SetOn`, `PowerGrids.SetEnabled`, `Lights.SetOn`, `Switches.Set`, `Radiation.SetDose`, `Surfaces.SetCovering`, `ScreenFx.Shake` and `ScreenFx.FadeToBlack` all returned false and nothing changed. (2026-10-31)
+- [x] **Hazards:** the Bazaar's fire barrel (`...Bazaar_Corner_Alley/Group#20/barrel_001_open_fire`) switched off did no damage with the player standing in it; switched on it took 16 health and raised one `Entered`. (The fire barrel instead of the mushrooms: the same `TriggerHurt`.) (2026-10-31)
+- [x] **Radiation zone:** standing in Open Sewer Mines' dumping tunnel zone (1453 mSv/h), the dose rose 24 in 4 s; switched off it rose 0 (the game's own switch would have kept dosing), switched on 24.6 again. `radiation.info dose=50` and back to 0 worked. (2026-10-31)
+- [x] **Thunder:** `weather.conditions thunder=true` and `false` in the Bazaar. (2026-10-31)
+- [x] **Shower and tank events:** the Bazaar shower draws from its own 15 L barrel `82815dd1-...`; on for 5 s it drained it in two `TankChanged` batches about two seconds apart (Game) and one after it went off, with on and off `ShowerChanged` (Mod). The empty 200 L barrel `3b40ecfe-...` filled with 20 L of Clean Water. In the apartment a fill, a swap to Diesel and an empty each reported at once with the right before and after; a pour in 139 small steps came as one change, as `LocalPlayer` while the tank's window was filling. Emptying a hose fed from elsewhere is refused. (2026-10-31)
+- [x] **Power devices and grids:** the Bazaar camp fire `3979b050-...` on and off with `SwitchedOn`/`SwitchedOff`; a grid in the apartment off and on with two `GridChanged`; a light and a switch through `Lights.SetOn` and `Switches.Set` and back, each true. (2026-10-31)
+- [x] **Saunas:** Kolhola's sauna `c1b9b6a2-...` on (event with 16 degrees) and off (24.7); a second throw within 1.5 s refused; at 80 degrees a throw gave 0.4 steam. (2026-10-31)
+- [x] **Flood gates:** Interior Tenement B's eight gates start unpowered. Gate 04 refused to open without power; with power it opened (`GateChanged` opening); a power cut on the way stopped it and `moving` went false; power back turned it round and closed it (`GateChanged` closing). (2026-10-31)
+- [x] **Lanterns:** the jack-o'-turnip in Interior Mines Potato Mine (`f55a8be1-...`, candle time set to 120): blown out with `Lanterns.Extinguish` and relit, it was still lit 10 s past the old candle's end. Blown out the game's way with 6 s left and relit, it went out 6 s later (the game bug, TODO.md LanternStaleTimer). Lit and Extinguished events with their sources. (2026-10-31)
+- [x] **Blast sites:** a linked pair in Open Sewer Mines (`22644e38-...`, `28e02a56-...`): `Detonate` refused with no dynamite and with dynamite in one only; with both it blew both, one `Detonated` each. (2026-10-31)
+- [x] **Blackouts:** the casino's "Breakout" trigger: `Started` raised, `IsRunning` true and then false, the screen back to clear. (2026-10-31)
+- [x] **Surfaces:** White Wallpaper (19470) on an apartment wall and scraped off, one `SurfaceChanged` each; scraping a bare wall answers true without an event. (2026-10-31)
+- [x] **IsAvailable:** all 18 environment, light, switch and grid classes true; `patches.check` found 495 patched methods, none broken. (2026-10-31)
+- [ ] Lights with several states: no level has one in 0.5.13; check one on furniture that has them when one turns up.
+
+Housing (M25b), still open:
 
   | Feature | Command | Likely scenes |
   | --- | --- | --- |
-  | Saunas | `fixtures.list kind=sauna` | Interior Bazaar Sauna, Interior Tenement A |
   | Hotels [save] | `hotels.list`, `hotels.rent` | Interior Tenement Kolhola, Interior Mines Barrack Hotel |
-  | Flood gates | `fixtures.list kind=floodgate` | Interior Tenement B, Open Sewer Mines, Open Sewer Tenement |
   | Parcel lockers | `lockers.list` (send a parcel first: `mail.send kind=Parcel`) | Interior Tenement O Market, Interior Bazaar J Kiosk, Interior Bazaar Mallment |
-  | Lanterns | `fixtures.list kind=lantern` | Interior Player Tenement |
-  | Blast sites | `blasts.list`, `blasts.detonate` | Open Sewer Mines |
-  | Blackouts | — | Interior Bazaar Casino, Interior Bazaar Mentti B |
 
 - [ ] **Eviction:** on a tenant the game allows evicting (not Malone in 7, he has `disableEvictButton`): `housing.evict apartment=<n>`, then `cancel=true`.
 - [ ] **Renting [save]:** `tenants.rent` puts a tenant in a free apartment, and they move in after the hours given. The deposit isn't recorded when renting quietly.

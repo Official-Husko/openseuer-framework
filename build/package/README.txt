@@ -63,6 +63,8 @@ If the game won't start, make the same zip from here:
     ./tool/linux-x64/oben report
     tool\win-x64\oben.exe report
 Add --cpu --gpu --ram (or --all, which also adds your newest save) to include your PC.
+Then open a bug report and drag that zip into it:
+    https://github.com/Official-Husko/openseuer-framework/issues/new/choose
 
 The logs themselves are in ObenLoader/logs (latest.log, and errors.log when something failed),
 with one file per mod in logs/mods.
@@ -73,6 +75,12 @@ To rule out a broken game install, check the game's files against the lists in g
     game-files\verify-game.bat "D:\Games\Obenseuer"
 It lists every file that is changed or missing. The files ObenseuerExtended adds or changes on
 purpose don't count. If something is listed, verify the game in your store or reinstall it.
+
+Links
+-----
+New releases:  https://github.com/Official-Husko/openseuer-framework/releases
+Wiki (help):   https://github.com/Official-Husko/openseuer-framework/wiki
+Bug reports:   https://github.com/Official-Husko/openseuer-framework/issues
 
 What's in here
 --------------

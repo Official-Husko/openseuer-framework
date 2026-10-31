@@ -172,7 +172,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [x] Kit: float settings missed the number ladder (`NumberSteps` compared the widened float with 1e-9, so 0.15f added a second "0.15"); it now compares with a tolerance a float's precision fits in (unit tested)
 - [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Story upgrades are scaled since 2026-10-29. Remember each order's total at `AddUpgrade` and work progress out from that
 - [ ] Game Tweaks: switching scroll zoom on inside a first-person trigger lifts that trigger's lock (triggers already active aren't registered)
-- [ ] Tracer: failed calls skip the per-window line cap
+- [x] Tracer: failed calls skipped the per-window line cap; they now have a cap of their own (as many again, unit tested)
 - [ ] Cheat Menu: watches call any property getter four times a second; a watch whose type is gone searches every assembly on each rebuild; stat sliders without a maximum stop at 100
 - [ ] Co-op, direct IP: idle connections with the public key hold the transport's slots for up to 5 s each (handshake timeout); limit unfinished handshakes per address
 - [ ] Co-op: lobby list results never expire (joining a stale one ends in a lookup timeout); a failed `Connect` leaves LiteNetLib running until the next Stop; restoring a session when Steam never started doesn't leave the Steam lobby

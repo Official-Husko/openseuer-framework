@@ -39,6 +39,7 @@ public sealed class TraceStats
     public double MaxMs { get; internal set; }
 
     internal int Shown;
+    internal int ShownErrors;
     internal long Hidden;
     internal double WindowStart;
 
@@ -101,7 +102,8 @@ public sealed class TraceBook
     /// <summary>
     /// Counts a finished call. Returns true when it should be kept in full (then format it and call
     /// <see cref="AddCall"/>); otherwise it is only counted and remembered, unformatted, as the newest call
-    /// left out, for the window's "more" record. A call that threw is always kept.
+    /// left out, for the window's "more" record. Calls that threw are kept past the window's lines, up to as many
+    /// again, so a method that throws every frame can't flood the trace either.
     /// </summary>
     public bool Admit(TraceStats stats, double ms, bool failed, double now,
         ParameterInfo[] parameters = null, object[] args = null, bool isVoid = true, object result = null)
@@ -116,9 +118,11 @@ public sealed class TraceBook
                 stats.Errors++;
             if (now - stats.WindowStart >= WindowSeconds)
                 CloseWindow(stats, now);
-            if (stats.Shown < LinesPerWindow || failed)
+            if (failed ? stats.ShownErrors < LinesPerWindow : stats.Shown < LinesPerWindow)
             {
                 stats.Shown++;
+                if (failed)
+                    stats.ShownErrors++;
                 return true;
             }
             stats.Hidden++;
@@ -210,6 +214,7 @@ public sealed class TraceBook
         }
         stats.Hidden = 0;
         stats.Shown = 0;
+        stats.ShownErrors = 0;
         stats.LastParameters = null;
         stats.LastArgs = null;
         stats.LastResult = null;

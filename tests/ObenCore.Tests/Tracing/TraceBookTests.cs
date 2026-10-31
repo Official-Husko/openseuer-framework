@@ -66,6 +66,23 @@ public class TraceBookTests
     }
 
     [Fact]
+    public void ErrorsPastTheLinesHaveACapOfTheirOwn()
+    {
+        var book = new TraceBook(capacity: 100, linesPerWindow: 2, windowSeconds: 10);
+        var stats = book.StatsFor("Npcs.Spawn", 0);
+        for (int i = 0; i < 3; i++)
+            Call(book, stats, 1);
+        for (int i = 0; i < 10; i++)
+            Call(book, stats, 1, failed: true);
+
+        // Two calls, then two of the errors; the other nine go into the window's "more" record.
+        Assert.Equal(4, book.Read(0, 100).Count);
+        Assert.Equal(10, stats.Errors);
+        book.Sweep(10.5);
+        Assert.Equal(9, book.Read(0, 100)[4].More);
+    }
+
+    [Fact]
     public void TheRingDropsTheOldest()
     {
         var book = new TraceBook(capacity: 16, linesPerWindow: 1000, windowSeconds: 10);

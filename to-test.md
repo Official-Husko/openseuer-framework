@@ -322,7 +322,11 @@ Already checked without a save: quest create, edit, counter, reveal, hand-in, ch
   - Five backstory picks through the game's cards each raised `Chosen` once, and `start.choices` listed them.
   - The game's first autosave held `ObenFramework.newgame.json` with the options and the preset. Loaded from the main menu (where the screen was back to its defaults), the session was `SaveLoad`, the options read their stored values and `activePreset` was the preset.
   - A pick left on the screen was dropped at the next load.
-- [ ] **Opening tutorial (M29c):** in a new game, `tutorial.state` steps through the opening tutorial with events for each prompt.
+- [x] **Opening tutorial (M29c):** passed 2026-10-31 in a new game as Dev Test (intro skipped), with the input faked from a script (`InputManager.GetKeyDown`/`GetKey`, the camera's `finalInputX`) and a recorder on `TutorialGuide.StepChanged`:
+  - Interior Start started the sequence about 3 s after the fade: LookAround, then (each after the faked input, with the game's 2 s pause as `None`) Move, Interact (looking at the TV), Menu; the level's own `TutorialInventory` gave Inventory, `TutorialMap` gave Map, which went straight on to Tasks; Tasks dropped the package. `tutorial.state` matched at every point.
+  - Head lamp shown and hidden, Building, then Tenement over it (it ranks first, as on screen); finishing building hid the tenement prompt too (Step Tenement, Active false: the game's own doing).
+  - A level change to Open Sewer Tenement (the opening room can't be saved) brought the tenement prompt back on screen, reported as None → Tenement; its key finished it. A reload prompt without batteries came and went after 2.5 s.
+- [ ] **Opening tutorial by hand:** real mouse look, WASD, E, Tab and the rest in a new game; the same changes as above (the script faked the inputs, not the devices).
 
 ## 6. Economy and gambling (M23, M27)
 

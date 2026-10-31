@@ -175,7 +175,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [x] Tracer: failed calls skipped the per-window line cap; they now have a cap of their own (as many again, unit tested)
 - [ ] Cheat Menu: watches call any property getter four times a second; a watch whose type is gone searches every assembly on each rebuild; stat sliders without a maximum stop at 100
 - [ ] Co-op, direct IP: idle connections with the public key hold the transport's slots for up to 5 s each (handshake timeout); limit unfinished handshakes per address
-- [ ] Co-op: lobby list results never expire (joining a stale one ends in a lookup timeout); a failed `Connect` leaves LiteNetLib running until the next Stop; restoring a session when Steam never started doesn't leave the Steam lobby
+- [ ] Co-op: lobby list results never expire (joining a stale one ends in a lookup timeout); restoring a session when Steam never started doesn't leave the Steam lobby. (A failed `Connect` left LiteNetLib running until the next Stop: fixed 2026-10-31, the session stops the transport, unit tested.)
 
 ## Expansion mods
 

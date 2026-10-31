@@ -108,6 +108,8 @@ public sealed partial class CoopSession
         }
         catch
         {
+            // The transport may have started its socket before the connect failed (an address that doesn't resolve).
+            _transport.Stop();
             State = SessionState.Offline;
             throw;
         }

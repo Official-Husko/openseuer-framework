@@ -8,7 +8,7 @@ Versions are `Major.Minor.Patch`, and every release gets its own:
 
 - **Before 1.0.0** (0.2.0 to 0.21.1, until 2026-10-31) every release was a GitHub pre-release from `build/experimental.sh`, every few commits or when a milestone was done. The major version stayed 0. A release with a new feature (any `feat` commit) or a breaking change (`type!:`, or a `BREAKING CHANGE` line in the body) bumps the minor version, 0.2.0 to 0.3.0; one with only fixes, performance, docs, build or other work bumps the patch version, 0.2.0 to 0.2.1. Commit types decide it, so keep them honest.
 - **1.0.0** is the first stable release (2026-10-31): every module in PROGRESS.md at 100%, made on the owner's word with `build/release.sh 1.0.0`.
-- **From 1.0.0 on** a breaking change bumps the major version, a feature the minor version, the rest the patch version. Stable releases come from `build/release.sh` when the owner asks; `build/experimental.sh` publishes test builds of the coming version in between, tagged `v1.1.0-pre.N+<commit>`.
+- **From 1.0.0 on** a breaking change bumps the major version, a feature the minor version, the rest the patch version. Every release is published only when the owner says so: stable ones from `build/release.sh`, and test builds of the coming version in between from `build/experimental.sh`, tagged `v1.1.0-pre.N+<commit>`. `experimental.sh` doesn't raise the mods' versions, so run `build/mod-versions.sh --apply` and commit that first; the test build then shows which mods changed, and the stable release doesn't raise them again.
 
 ### Each mod's own version
 

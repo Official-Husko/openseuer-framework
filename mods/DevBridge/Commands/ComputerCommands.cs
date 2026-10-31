@@ -46,14 +46,18 @@ internal static class ComputerCommands
         return new JObject { ["computers"] = list };
     }
 
-    [BridgeCommand("computer.apps", "Apps registered for the in-game computers (ObenUIKit), or opens one with 'open'.",
-        Params = new[] { "open?: app id to open in its window" })]
+    [BridgeCommand("computer.apps", "Apps registered for the in-game computers (ObenUIKit) and their windows on computer screens; opens one with 'open', adds or removes the kit's two demo apps with 'demo'.",
+        Params = new[] { "open?: app id to open (an on-screen app opens on the computer in use)", "close?: app id to close", "demo?: true adds the demo apps, false removes them" })]
     private static object Apps(JObject p)
     {
         var type = KitType();
         if (type == null)
             return new JObject { ["kit"] = false, ["apps"] = new JArray() };
 
+        if (p["demo"] != null)
+            type.Assembly.GetType("ObenUIKit.Dev.KitDemoComputer").GetMethod("Show").Invoke(null, new object[] { p.Bool("demo", true) });
+        if (p.Str("close", null) is string close)
+            type.GetMethod("Close", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { close });
         string open = p.Str("open", null);
         bool? opened = null;
         if (open != null)
@@ -69,10 +73,21 @@ internal static class ComputerCommands
             list.Add(new JObject
             {
                 ["id"] = appId, ["title"] = (string)appType.GetProperty("Title").GetValue(app),
+                ["onScreen"] = (bool)appType.GetProperty("OnScreen").GetValue(app),
                 ["icon"] = appType.GetProperty("Icon").GetValue(app) != null, ["open"] = (bool)isOpen.Invoke(null, new object[] { appId }),
             });
         }
-        return new JObject { ["kit"] = true, ["opened"] = opened, ["apps"] = list };
+        var windows = new JArray();
+        foreach (var window in (IEnumerable)type.GetProperty("ScreenWindows", BindingFlags.Public | BindingFlags.Static).GetValue(null))
+        {
+            var windowType = window.GetType();
+            windows.Add(new JObject
+            {
+                ["app"] = (string)windowType.GetProperty("AppId").GetValue(window), ["title"] = (string)windowType.GetProperty("Title").GetValue(window),
+                ["minimized"] = (bool)windowType.GetProperty("IsMinimized").GetValue(window), ["size"] = windowType.GetProperty("Size").GetValue(window).ToString(),
+            });
+        }
+        return new JObject { ["kit"] = true, ["opened"] = opened, ["apps"] = list, ["screenWindows"] = windows };
     }
 
     private static Type KitType()

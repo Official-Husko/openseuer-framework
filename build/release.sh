@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Prepares a stable release of ObenseuerExtended, 1.0.0 or later, only when the owner asks for one.
 #
-#   build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes]
+#   build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes] [--intro <file>]
 #
 # build/next-version.sh says which version the commits since the last release call for.
-# Checks that the tree is clean, runs the tests, sets <Version> in Directory.Build.props, commits
+# Checks that the tree is clean, runs the tests, sets <Version> in Directory.Build.props and the version of
+# every mod that changed in its mod.json (build/mod-versions.sh), commits
 # "chore(release): X.Y.Z", writes changelog.json with that version released (build/changelog.sh), builds
 # the package from that commit and tags vX.Y.Z. Nothing leaves the machine: pushing and the GitHub
 # release only happen with --publish (and a confirmation, unless --yes). Without it the script prints
@@ -12,6 +13,8 @@
 # If a step fails before the tag exists, the release commit is taken back.
 #
 # --dry-run changes nothing: it reports what it finds and prints the release notes, skipping the tests.
+# --intro <file> puts a few lines of markdown above the changelog lines in the notes (a major release says
+# what it is).
 set -euo pipefail
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
@@ -23,18 +26,25 @@ die() {
 }
 
 version=${1:-}
-[ -n "$version" ] && [[ $version != -* ]] || die "usage: build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes]"
+[ -n "$version" ] && [[ $version != -* ]] || die "usage: build/release.sh <X.Y.Z> [--dry-run] [--publish] [--yes] [--intro <file>]"
 shift
 dry_run=false
 publish=false
 assume_yes=false
-for arg in "$@"; do
-    case $arg in
+intro=
+while [ $# -gt 0 ]; do
+    case $1 in
         --dry-run) dry_run=true ;;
         --publish) publish=true ;;
         --yes) assume_yes=true ;;
-        *) die "unknown option $arg" ;;
+        --intro)
+            intro=${2:-}
+            [ -f "$intro" ] || die "--intro needs a file"
+            shift
+            ;;
+        *) die "unknown option $1" ;;
     esac
+    shift
 done
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "$version isn't a version (Major.Minor.Patch)"
 # Versions before 1.0.0 are pre-releases from build/experimental.sh (the versioning rule in docs/modding/releasing.md).
@@ -69,6 +79,10 @@ oben() { "$repo/tools/ObenTool/bin/Release/net10.0/oben" "$@"; }
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 {
+    if [ -n "$intro" ]; then
+        cat "$intro"
+        echo
+    fi
     oben changelog --release "$version" --notes
     echo
     echo "---"
@@ -79,6 +93,8 @@ trap 'rm -f "$notes"' EXIT
 echo "Releasing $version (last release: ${last:-none}) from ${branch:-a detached head}"
 echo "----- notes -----"
 cat "$notes"
+echo "----- mods ------"
+build/mod-versions.sh
 echo "-----------------"
 
 if $dry_run; then
@@ -110,8 +126,10 @@ trap 'rollback' ERR
 # The changelog hooks would write the file again after the commit, before the tag exists, so they sit
 # this one out; the release writes it itself.
 export OBEN_CHANGELOG_HOOKS=0
-sed -i "s|<Version>[^<]*</Version>|<Version>$version</Version>|" Directory.Build.props
-git add Directory.Build.props
+build/set-version.sh "$version"
+# Each mod that changed since its version last moved gets its own next version (build/mod-versions.sh).
+build/mod-versions.sh --apply
+git add Directory.Build.props src/*/mod.json mods/*/mod.json
 git commit -q -m "chore(release): $version" -m "Sets the version to $version."
 build/changelog.sh --release "$version" --quiet
 

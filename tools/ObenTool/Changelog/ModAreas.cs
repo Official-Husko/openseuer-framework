@@ -25,6 +25,8 @@ public static class ModAreas
         ["save"] = "ObenSave",
         ["cheats"] = "Cheat Menu",
         ["tweaks"] = "Game Tweaks",
+        // The pack as a whole: its version, its releases.
+        ["release"] = "ObenseuerExtended",
     };
 
     /// <summary>The display name for a commit scope, or null when the commit has none.</summary>

@@ -155,6 +155,12 @@ A card table keeps `netWinnings`, the player's winnings since sitting down: the 
 
 Fix: a prefix on `OnGameFinished` adds the payout minus the stake first, so after the game's own addition the count holds the payout. The factors are repeated from the game's local array. Tested on 0.5.13 at the casino table: China Hand for 25 OC, won (the game's own `FinishGame`): the count was +25, and getting up played "Generic/Card Games/Player Ends On Win".
 
+### RatBetOverwrite: a second rat fight bet replaces the first
+
+During the betting time the bookie keeps offering "(Place Bets)": the selector sets `playerBettingOn` to the chosen rat and opens the slider, whose limit is the maximum minus what is already staked (`RatFightArena.PlaceBets`, `RatFightArena.cs:197-221`). But `PlaceOCBet`/`PlaceRMBet` (`:224-239`) set the stake to the new amount and charge the wallet again, so bets of 30 and 20 on Green cost 50 and only 20 rode (measured 2026-10-31). Choosing a rat also moves the stake onto it before any bet, even when the slider is closed without betting.
+
+Fix: a second bet on the same rat adds to the stake; a bet on another rat gives the earlier stake back and starts over on the new one; and a prefix on `EndRound` puts the bet back on the rat its stake was placed on. Tested on 0.5.13 in the Ratfighting Arena: with the fix on, 30 and 20 on Green were a stake of 50 for 50 paid, 10 on Yellow refunded them (stake 10, paid 10), the selector moved to Blue without a bet, and Yellow's win paid 40. With it off: a stake of 20 for 50 paid, 60 paid in all, and the bet had moved to Blue and lost.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

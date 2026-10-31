@@ -27,6 +27,7 @@ On unless it says otherwise.
 | Cleaning jobs | An apartment's cleaning took a day longer than it should: the story's 3-day cleaning of the shop took 4. |
 | Gambling urge | The urge to gamble only weighed on the mood of players who also smoked. |
 | Card players' remarks | The other players at a card table never remarked on how you did when you got up after playing. |
+| Rat fight bets | A second bet in the same round replaced the first although both were paid, and picking a rat without betting moved your stake onto it. |
 | NPC sight chance (off by default) | NPC sight ignores its detection chance, so you're always spotted when in view. The fix makes the chance count; it changes how sneaking feels, so it's yours to turn on. |
 | Reflection probes (off by default) | A typo stops some reflections from updating while you stand in their area. Off until it has been checked in more places. |
 

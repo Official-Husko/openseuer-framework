@@ -603,6 +603,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [x] **CleaningDayLate:** a 1-day cleaning job on apartment 3, then the midnight handler as the clock calls it: done at the first midnight (with the fix off, not). (2026-10-31)
 - [x] **GamblingNeedMood:** `MentalHealthStatsUpdate` with a gambling urge of 80 and no smoking raises the mood's floor from 0.168 to 0.682 (the same as smoking 80); with the fix off it stays 0.168. (2026-10-31)
 - [x] **CardTableNetWinnings:** at the casino table, China Hand for 25 OC, won with the game's own `FinishGame`: the table's count is +25 and getting up (`LeaveTable`) plays "Player Ends On Win". (2026-10-31)
+- [x] **RatBetOverwrite:** in the Ratfighting Arena, 30 and 20 on Green are a stake of 50 for 50 paid; 10 on Yellow refunds them (stake 10, paid 10); the selector moved to Blue without a bet and Yellow's win pays 40 (with the fix off: stake 20 for 50 paid, 60 paid in all, and the bet moved to Blue and lost). (2026-10-31)
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

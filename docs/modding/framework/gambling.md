@@ -77,7 +77,7 @@ ContestResult? last = Contests.LastResult;      // how the last contest or rat f
 - The drinking and sauna contests pay through their dialogue, not the framework, so their winnings can't be scaled here.
 - Every rat fight round fought raises `Started` and `Finished`, with or without a bet of the player's; `PlayerWon` is true only when the player's rat won.
 - A won bet pays the stake times the number of rats (4 in the arena); `Finished` carries what waits to be collected.
-- The bookie keeps offering bets during the betting time, but a second bet in the same round replaces the first in the game: both are charged and only the last one counts (RatBetOverwrite in TODO.md). `BetPlaced` reports each.
+- The bookie keeps offering bets during the betting time, but a second bet in the same round replaces the first in the game: both are charged and only the last one counts. ObenPatches' RatBetOverwrite (on by default) makes bets on one rat add up and refunds the first stake for a bet on another rat. `BetPlaced` reports each.
 
 ## Payout multipliers
 

@@ -36,6 +36,7 @@ public sealed class ObenPatchesMod : ObenMod
         ModFeatures.Register(this, new CleaningDayLate());
         ModFeatures.Register(this, new GamblingNeedMood());
         ModFeatures.Register(this, new CardTableNetWinnings());
+        ModFeatures.Register(this, new RatBetOverwrite());
         BankInterest.State = ModSaves.Register<BankInterestState>(this, "bank-interest");
         ModFeatures.Register(this, new BankInterest());
     }

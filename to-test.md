@@ -271,6 +271,7 @@ Switch each tweak on with `oben call features.set mod=GameTweaks id=<id> enabled
 - [ ] **RenovationMaterialsOnce [save]:** build two tenement resource storages with 10 planks each, then order a renovation needing 10 planks. One storage keeps its 10, and the inventory isn't touched.
 - [ ] **Cheat Menu:** all its earlier checks (god mode, needs, heal, noclip, move speed through the framework, teleport spots, money, items, time, weather, crime).
   - Move speed survives a door and is back to normal after unloading the Cheat Menu.
+  - Developer menu (F8), the stat slider: a stat without an upper bound (overheating) reaches past 100 when it is already high, and a set above 100 sticks (fixed 2026-10-31, not tried in game).
 
 ## 4. Co-op [2 copies]
 
@@ -580,7 +581,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 
 - [x] A first real save with every mod on: ModSaves files appear under `<save>/mods/`, and nothing errors while saving or loading. (2026-10-29: 17 files in Slot1, Slot2, Autosave and Autosave2, no errors from our code over the saves and door changes.)
 - [ ] **Mod data round trip [save]:** the nine steps under "How to test it in the game" in `docs/modding/framework/saves.md` (save, door, main menu, load, cross-slot save, delete, hot reload, corrupt file). Also: a data class with a list field without an initializer has an empty list after a load, and setting `Value = null` throws. (`Peek` with the fill was checked on Slot2 on 2026-10-30: members missing from the bank ledger file came back empty, the saved values intact.)
-- [ ] **Save state:** `save.capture` and SaveState apply on a real object; `save.slots` lists characters and slots; "save now" works.
+- [ ] **Save state:** `save.capture` and SaveState apply on a real object; `save.slots` lists characters and slots. (`SaveSlots.SaveNow()` itself was used in the M25b tests: it writes the older autosave of the player's folder.)
 - [ ] **ObenSave (off by default):**
   - Switch it on, save, then load: the compressed container is written and read back.
   - `oben save` inspect, export, import and convert on that save.
@@ -617,12 +618,12 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 - [x] **Keypad:** `Keypads.Refuse` on a keypad from `keypads.list` plays its wrong-code reaction and `WrongCode` fires. (2026-10-31, Kolhola: `keypads.set refuse=true`.)
 - [ ] **Power devices:** `PowerDevices.Describe(<a stove>).FuelItemIds()` lists wood and other fuels; `BurnTimeFactor` is 1 for most.
 - [ ] **Sounds:** `GameSounds.PlayPickup("Bottle")`, `PlayLibrary("harvest")` and `PlayLibraryAt("scarySounds", <position>)` are heard; `SoundscapeIds()` lists the level's soundscapes and `SetSoundscape(id)` / `ResetSoundscape()` switch the ambience.
-- [ ] **Economy:** `Wallet.RmToOc(1)` gives 10; `Prices.OfSale(<trader>, <item>, out _)` is lower than `Prices.Of` for the same item (base sell price 0.9 against 1.2).
+- [ ] **Economy:** `Wallet.RmToOc(1)` gives 10; `Prices.OfSale(Shops.Find("<trader>"), <item>, out _)` is lower than `Prices.Of` for the same item (base sell price 0.9 against 1.2).
 - [ ] **Mail sent [save]:** send a quest delivery or pay an invoice by mail; `PlayerMail.Sent` fires with the receiver and item.
 - [ ] **Police [save]:** with something on the record, `Law.BribePrice` is a price; `Law.TryBribe()` either clears the record and takes the coins, or fails once and `CanBribe` turns false. `Law.Confiscate(<a container>)` moves the inventory into it and destroys stolen items.
 - [ ] **Contests:** during a rat fight, `Contests.Participants(Contests.Active()[0])` lists the rats; after a contest ends, `Contests.LastResult` is set.
 - [ ] **NPCs:** `Npcs.Meshes(<id>)` and, on a slider body (146), `Npcs.LookOf(<id>)` read without a claim; `NpcActions.StopActivity(<id>)` ends what an NPC is doing; `Characters.All()` shows `LastName` and `Relationship`; `Janitors.Objects()` lists the janitor objects of the scene.
-- [ ] **Missing items [save]:** see area 1 (`registry.missing`, `registry.removemissing` needs `mod` or `all=true`).
+- [x] **Missing items [save]:** passed in area 1 (the full check of 2026-10-30: `registry.missing`, and `registry.removemissing` refused without `mod` or `all=true`).
 - [ ] **Recipes:** a recipe from `RecipeBuilder.From(Recipes.ById(10016), id, "Test")` with one input and output shows at the template's station with the template's icon.
 - [ ] **Containers:** in the player's tenement, `Containers.IsPlayerOwned(<a placed chest>)` is true; in a rented apartment `IsTenantOwned` is true. `Containers.TakeFromSlot` takes from the right slot.
 - [ ] **Looks:** `PlayerLook.ApplyToPlayer(PlayerLook.Random())` gives a new random look (screenshot); `Random(male: false)` gives a female body.
@@ -634,7 +635,7 @@ Small APIs added after the parity audit. Most are one eval each; run them in a l
 Checked on Linux through Proton already: the Report page (screenshots), `report` and `report all` in the F1 console (34 ms on the main thread, the zip on a worker), `report folder` (Wine's file browser opens on ObenLoader/reports), `oben report --all --json`, the last crash and the save in both, no user name, Steam id or address left in any text file, system.json with Wine 11.0 and the Linux kernel. Still open:
 
 - [ ] **Windows:** a report on real Windows says Windows with no Wine line, `report folder` opens Explorer, and the user name in `C:\Users\<name>` is hidden everywhere.
-- [ ] **Report on GitHub:** once the templates are on GitHub, the button opens the bug form with the ObenseuerExtended version, game version, system and the ticked PC parts filled in.
+- [ ] **Report on GitHub:** the issue templates are on GitHub now; the button opens the bug form with the ObenseuerExtended version, game version, system and the ticked PC parts filled in.
 - [ ] **BepInEx:** with BepInEx 5 and a plugin or two in a test copy of the game, the summary lists them with GUID, version and hash, and the form's BepInEx field is filled.
 - [ ] **A real crash:** after the game crashes, the next report has its Crash_ folder (crash.dmp and Player.log) and the "Last crash" line.
 - [ ] **Too big:** with a big save and long logs, a zip over 25 MB says so on the page and in the console.

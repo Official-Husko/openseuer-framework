@@ -87,7 +87,7 @@ Built on: mod NPC routines, NpcActions, Relationships, PhoneNumbers, Tenants, Di
 
 The other half of the addiction systems: withdrawal effects, support meetings, the doctor, relapse events, and a mental health arc told through dialogue.
 
-Built on: Survival (StatThresholds, StatDrain), Conditions, Medical, DialogueAuthoring, QuestAuthoring.
+Built on: Survival (StatThresholds, StatDrain), PlayerConditions (with `PlayerConditions.Register`, which the Health Conditions submod in TODO.md adds; withdrawal could be one of its conditions), Medical, DialogueAuthoring, QuestAuthoring.
 
 ### Seasons and Holidays (M)
 
@@ -223,13 +223,13 @@ Being out in rain or snow without cover makes you wet:
 
 It shows as a status with its own HUD bar.
 
-Built on: Survival (StatDrain, StatThresholds), Conditions, Wardrobe, Saunas, Showers, Hud.Bar, WeatherConditions.
+Built on: Survival (StatDrain, StatThresholds), PlayerConditions (with `PlayerConditions.Register` from the Health Conditions submod in TODO.md, if wet is a condition), Wardrobe, Saunas, Showers, Hud.Bar, WeatherConditions.
 
 ### Thunderstorms (M)
 
 Lightning hits the power grid: lights flicker, a district blacks out until it's fixed, and generators earn their keep. Thunder shakes the camera slightly. In co-op the host owns the thunder roll, which fixes one of the reference mod's limits.
 
-Built on: WeatherConditions (thunder), PowerGrids and PowerDevices, Blackouts, Lights, ScreenFx shake, ModSounds.
+Built on: WeatherConditions (thunder), PowerGrids (`SetEnabled` cuts a district) and PowerDevices, Lights, ScreenFx shake, ModSounds. (The framework's `Blackouts` is the player passing out, not a power cut.)
 
 ### Fallout Storms (M)
 
@@ -296,9 +296,9 @@ The reference co-op mod ([NomadsReach/Obenseuer-Coop](https://github.com/NomadsR
 
 Smaller open items from the same list:
 
-- **Real Steam:** the Steam transport is only tested against a fake Steam, since this install's `steam_api64.dll` is replaced.
+- **Real Steam:** the Steam transport is tested against a fake Steam and on real Steam with one account (as Spacewar and TOXIKK); a game between two real accounts is still untested.
 - **No NAT help for direct play:** forward the UDP port, use a VPN, play on a LAN, or use Steam.
-- **No lobby page in ObenUIKit** (list, codes, invites); everything is console commands.
+- **Chat has no window:** the co-op window (host, join by code, find games, players) is done, but chat is still the console's `coop say`.
 - **No request/ack helper** and no timers for periodic state (announces, digests); slice 4 needs both.
 - **Blobs** aren't resumable and don't survive a hot reload.
 - **No host migration:** a Steam lobby whose owner leaves ends the session.

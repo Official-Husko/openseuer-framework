@@ -441,7 +441,7 @@ Cleaning: `StartApartmentCleaningTimer(apartment, days)` (Lua; the story calls `
 
 Hotels: `Hotel.CurrentTime` counts each room's stay down once a day after 12:00 (`today.currentDay > lastCheck.currentDay`), but then stores
 `lastCheck = today`, the clock's own `currentTimeAndDay` object, so it never sees another day until the level is loaded again (the saved `lastCheck` is a
-copy). The desk rents through `Hotel.RentRoom(string "index_nights")` from its selection menu. Kolhola's pods and the Mines barrack hotel share their GUIDs.
+copy; ObenPatches' HotelDayOnce keeps a copy). The desk rents through `Hotel.RentRoom(string "index_nights")` from its selection menu. Kolhola's pods and the Mines barrack hotel share their GUIDs.
 
 Utilities coupling: `TenementController.UpdateUtilities()` `:1198` -> `CheckElectricity()` `:1227` sets `powerMain.SetBaseBalance(0/8000/15000/100000/1000000)`,
 `unlimitedCapacity` and `unstableSupply` from `general.currentElectricity` and the `"TenementElectricity"` subscription. Water in the building is the
@@ -662,5 +662,5 @@ Every one of these runs for each instance in the loaded scene unless noted:
 20. `Lantern.CandleExtinguished` drops `candleTimer` without `Destroy()`ing it, so the timer still runs out later and puts out the next candle (fixed by ObenPatches' LanternStaleTimer).
 21. `FloodGateControl.TurnOff` stops the gate's coroutines but leaves `isBlinking` set; `TurnOn` then either snaps the gate to its target or, with `allowPressOnBlinking`, turns it round.
 22. `TenementController.RentApartment` sets `deposit` (and pays it unless silent); a silent rent still records it, and the timed eviction (`EvictResident(apartment)`, not silent) takes it back from the player.
-23. `Hotel.lastCheck` becomes the clock's own object after the first daily check (5.2), so hotel stays only count down once per visit to the level (TODO.md, HotelDayOnce).
+23. `Hotel.lastCheck` becomes the clock's own object after the first daily check (5.2), so hotel stays only count down once per visit to the level (fixed by ObenPatches' HotelDayOnce).
 24. `DayChanged` fires before `currentTimeAndDay.currentDay` moves on; code that compares that field inside a `DayChanged` handler sees yesterday (TODO.md, CleaningDayLate).

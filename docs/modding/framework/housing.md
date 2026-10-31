@@ -51,7 +51,7 @@ Hotels.RoomChanged.Subscribe(this, c => ...);       // rented (at the desk or by
 
 The player can hold one room per hotel; `Bookable` is false for every room of a hotel where they already have one. Hotels: the sleeping pods in Interior Tenement Kolhola and the Interior Mines Barrack Hotel. The two share their object ids (the barrack hotel is a copy of Kolhola's), so a room id is only unique within its level.
 
-Stays count down once a day after noon, but in 0.5.13 a hotel only sees one new day per visit to its level: after its first check it keeps comparing the clock with itself (TODO.md, HotelDayOnce). A stay therefore only runs out after the player has left the level and come back on a later day.
+Stays count down once a day after noon, but in 0.5.13 a hotel only sees one new day per visit to its level: after its first check it keeps comparing the clock with itself. ObenPatches' HotelDayOnce (on by default) fixes that; without it a stay only runs out after the player has left the level and come back on a later day.
 
 ## Renovations
 

@@ -599,6 +599,7 @@ Already checked: SceneLook list and reskin on Helena (Jens Brom's look), props c
 - [x] **HeadLampPrompt:** Hard Hat with Headlamp on (prompt shown), off without switching the lamp on: the prompt is gone (with the fix off it stayed). (2026-10-31, with the prompt's "done" flag cleared first.)
 - [x] **AutoConsumeLastItem:** with the inventory open, two apples at hunger 75 and `PlayerAutoConsume.ConsumeNeeds()`: hunger 55 and no error (with the fix off: 45, three apples' worth, and a `NullReferenceException` in `TakeItem`). (2026-10-31)
 - [x] **LanternStaleTimer:** in the Potato Mine, a 120 s candle blown out the game's way with 90 s left and relit burns its full time (with the fix off it went out with 30 s left). (2026-10-31)
+- [x] **HotelDayOnce:** in Kolhola, Pod 2 rented for one night, midnight passed and 13:00 set without leaving: every stay counted down a night and the pod was no longer the player's; `lastCheck` is not the clock's object. (2026-10-31)
 - [ ] **BankExchangeCoins:** still to write, see TODO.md. Changing RM into coins at a low-coin bank pays 0 until it's fixed.
 
 ## 15. Parity additions (2026-10-29)

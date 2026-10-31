@@ -131,6 +131,12 @@ Lighting a candle lantern starts a `TimeOfDayAzure.Timer` with the candle's burn
 
 Fix: a prefix on `CandleExtinguished` destroys a timer that still has time left (one that ran out is calling it itself and is taken off the clock right after). Tested on 0.5.13 in the Potato Mine with 120 s candles, blown out the game's way with 90 s left and relit at once: with the fix off the new candle went out after 6 real seconds with 30 s of it left; with it on it burned its full time (8 real seconds).
 
+### HotelDayOnce: hotel stays count down once per visit to the level
+
+`Hotel.CurrentTime` (`Hotel.cs:76-90`), on the clock's `CurrentTimeAndDay` event, counts every room's stay down once a day after 12:00 when `today.currentDay > lastCheck.currentDay`, then stores `lastCheck = today`. The clock passes its own `currentTimeAndDay` object (`TimeOfDayAzure.cs:493`), so from then on the two are the same object, the test never passes again and nothing counts until the level is loaded (the saved `lastCheck` is a copy). A player sleeping in a Kolhola pod for several nights never had the stay run out, other guests' bookings stood still and the daily price never changed (found 2026-10-31).
+
+Fix: a postfix replaces `lastCheck` with a copy when it is the clock's object. Tested on 0.5.13 in Interior Tenement Kolhola: `lastCheck` was no longer the clock's object; after renting Pod 2 for one night and letting midnight pass, at 13:00 every stay had counted down a night and the player's pod was no longer theirs, without leaving the level.
+
 ## Not fixed (yet)
 
 Bugs found and left alone, with the reason.

@@ -1,6 +1,8 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Housing;
@@ -9,20 +11,27 @@ namespace ObenFramework.Housing;
 /// The player's tenement: its apartments, who lives in them, evictions, rent and upgrade levels. The
 /// tenement's state is global (saved once, the same in every level), so this works outside the tenement
 /// too. Apartment 1 is the player's own. Renting and tenant events are in <see cref="Tenants"/>,
-/// renovations in <see cref="Renovations"/>.
+/// renovations in <see cref="Renovations"/>. Changes are refused (false) while the game saves or loads.
 /// </summary>
 public static class Tenement
 {
     /// <summary>A tenant rented, moved in, got or escaped an eviction notice, or left. Not raised while a save loads.</summary>
     public static readonly WorldEvent<TenantChange> TenantChanged = new WorldEvent<TenantChange>(nameof(TenantChanged));
 
-    /// <summary>The tenants paid their rent (the "Rent paid" moment, by default in the evening of pay day). The payload is the total.</summary>
+    /// <summary>
+    /// The tenants paid their rent (the "Rent paid" moment, by default in the evening of pay day). The payload is
+    /// the total. Rent is always paid by the game's clock, so unlike the other events it carries no source.
+    /// </summary>
     public static readonly WorldEvent<RentAmount> RentPaid = new WorldEvent<RentAmount>(nameof(RentPaid));
 
     /// <summary>A tenant did something in the building: made noise, left trash, broke things, complained.</summary>
     public static readonly WorldEvent<TenantEvent> EventStarted = new WorldEvent<TenantEvent>(nameof(EventStarted));
 
+    /// <summary>The tenement's state exists (any gameplay scene).</summary>
     public static bool IsAvailable => TenementController.instance != null && TenementController.instance.apartments != null;
+
+    /// <summary>The hooks behind the housing events are in place (false when a game update broke them).</summary>
+    public static bool HooksAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Housing");
 
     /// <summary>Every apartment, the player's included. Empty without a tenement.</summary>
     public static List<ApartmentInfo> Apartments()
@@ -49,12 +58,12 @@ public static class Tenement
     /// <summary>
     /// Serves the tenant an eviction notice: they leave after <paramref name="hours"/> game hours (18, like
     /// the game, by default). Refused (false) for the player's apartment, an empty one, a tenant who is still
-    /// moving in, one already under notice, and tenants the story keeps.
+    /// moving in, one already under notice, tenants the story keeps, and while the game saves.
     /// </summary>
     public static bool StartEviction(int number, float hours = HousingRules.DefaultEvictionHours)
     {
         var apartment = Find(number);
-        if (apartment == null || apartment.apartmentNumber == 1 || apartment.resident == null || apartment.resident.disableEvictButton
+        if (SaveGate.IsBusy || apartment == null || apartment.apartmentNumber == 1 || apartment.resident == null || apartment.resident.disableEvictButton
             || apartment.onlyFurniture || apartment.evictionStarted || apartment.moveStarted)
             return false;
 
@@ -77,11 +86,11 @@ public static class Tenement
         return apartment.evictionStarted;
     }
 
-    /// <summary>Withdraws an eviction notice. False when there was none.</summary>
+    /// <summary>Withdraws an eviction notice. False when there was none, or while the game saves.</summary>
     public static bool CancelEviction(int number)
     {
         var apartment = Find(number);
-        if (apartment == null || !apartment.evictionStarted)
+        if (SaveGate.IsBusy || apartment == null || !apartment.evictionStarted)
             return false;
         var controller = TenementController.instance;
         using (WorldChanges.EnterMod())

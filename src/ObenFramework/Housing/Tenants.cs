@@ -1,6 +1,9 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
+using HarmonyLib;
 using NPC;
+using ObenFramework.Saves;
+using ObenFramework.Ui;
 using ObenFramework.World;
 
 namespace ObenFramework.Housing;
@@ -35,14 +38,19 @@ public enum RentRefusal
 
     /// <summary>Renting needs the tenement's blueprint screen, which only exists in the tenement scenes, or the rent screen is open.</summary>
     NotHere,
+
+    /// <summary>The game is saving or loading.</summary>
+    Busy,
 }
 
 /// <summary>
-/// Tenants: who can rent, renting an apartment to an NPC directly (no rent screen), and starting one of
-/// a tenant's events. Changes are reported through <see cref="Tenement.TenantChanged"/>.
+/// Tenants: who can rent, renting an apartment to an NPC directly or through the game's rent screen, and
+/// starting one of a tenant's events. Changes are reported through <see cref="Tenement.TenantChanged"/>.
 /// </summary>
 public static class Tenants
 {
+    private static readonly AccessTools.FieldRef<GameUIController, bool> MenuDisabled = AccessTools.FieldRefAccess<GameUIController, bool>("gameMenuDisabled");
+
     /// <summary>The NPC's tenancy profile, or null when they are not a tenant.</summary>
     public static TenantInfo Profile(int npcId)
     {
@@ -60,6 +68,8 @@ public static class Tenants
     /// <summary>Whether the NPC could rent this apartment now, and if not, why.</summary>
     public static RentRefusal CheckRent(int npcId, int apartmentNumber)
     {
+        if (SaveGate.IsBusy)
+            return RentRefusal.Busy;
         var resident = ResidentOf(npcId);
         if (resident == null)
             return RentRefusal.NotATenant;
@@ -88,9 +98,9 @@ public static class Tenants
 
     /// <summary>
     /// Rents the apartment to the NPC, skipping the rent screen. They move in after <paramref name="moveInHours"/>
-    /// game hours. With <paramref name="announce"/> the game plays its own rent scene (a fade, the deposit paid
-    /// to the player, achievements); without it the rent is quiet and no deposit changes hands, now or when they
-    /// leave. Returns the reason when refused.
+    /// game hours (0 or less: at once). With <paramref name="announce"/> the game plays its own rent scene (a fade,
+    /// the deposit paid to the player, achievements); without it the rent is quiet and no deposit changes hands,
+    /// now or when they leave. Returns the reason when refused.
     /// </summary>
     public static RentRefusal Rent(int npcId, int apartmentNumber, float moveInHours = HousingRules.DefaultMoveInHours, bool announce = false)
     {
@@ -101,23 +111,60 @@ public static class Tenants
         var resident = ResidentOf(npcId);
         var apartment = Tenement.Find(apartmentNumber);
         float hours = moveInHours <= 0f ? 0f : HousingRules.ClampTimerHours(moveInHours);
-        using (WorldChanges.EnterMod())
-            TenementController.instance.RentApartment(resident, apartment, hours, !announce);
+        TenementPatches.QuietRent = !announce;
+        try
+        {
+            using (WorldChanges.EnterMod())
+                TenementController.instance.RentApartment(resident, apartment, hours, !announce);
+        }
+        finally
+        {
+            TenementPatches.QuietRent = false;
+        }
+        // The hook drops it before raising Rented; this covers a game update that broke the hook.
         if (!announce)
             apartment.deposit = new Money.money(0, 0f);
         return RentRefusal.None;
     }
 
     /// <summary>
+    /// Opens the game's rent screen for the NPC, where the player picks an apartment, like agreeing to rent in a
+    /// conversation. True when it opened. Refused in scenes without the tenement's blueprint screen, for an NPC
+    /// who is not a tenant or already rents, when the player lacks the tenement blueprint the screen needs,
+    /// while another game menu, a shop or the pause menu is open, and while the game saves.
+    /// </summary>
+    public static bool OpenRentScreen(int npcId)
+    {
+        var resident = ResidentOf(npcId);
+        var controller = TenementController.instance;
+        var ui = GameUIController.instance;
+        if (SaveGate.IsBusy || resident == null || !Tenement.IsAvailable || ui == null || controller.blueprintManager == null
+            || controller.tenementPanelUI == null || controller.residentOpen || controller.contractorOpen)
+            return false;
+        if (controller.ResidentRented(resident.resident.ID, true) || LivesInAnApartment(controller, resident) || TaskItemsManager.instance == null
+            || !controller.tenementPanelUI.PlayerHasRequiredItem())
+            return false;
+        // The game's toggle would turn an open menu to another page or close it instead.
+        if (ui.IsMenuVisible || MenuDisabled(ui) || UiState.IsPaused || UiState.IsShopOpen || UiState.InventoryDisabled)
+            return false;
+        using (WorldChanges.EnterMod())
+            resident.StartRent();
+        if (controller.currentResident == resident && ui.IsMenuVisible)
+            return true;
+        controller.RemoveResident();
+        return false;
+    }
+
+    /// <summary>
     /// Starts one of the tenant's events of this kind (noise, trash, complaints...) if it may run now. The
-    /// tenant has to live in the building. True when one started.
+    /// tenant has to live in the building. True when one started; false while the game saves.
     /// </summary>
     public static bool TriggerEvent(int npcId, TenantEventKind kind)
     {
         if (!Enum.IsDefined(typeof(TenantEventKind), kind) || kind == TenantEventKind.None)
             throw new ArgumentOutOfRangeException(nameof(kind));
         var resident = ResidentOf(npcId);
-        if (resident == null || resident.tenementEvents == null || TenementEventController.instance == null || !LivesHere(resident))
+        if (SaveGate.IsBusy || resident == null || resident.tenementEvents == null || TenementEventController.instance == null || !LivesHere(resident))
             return false;
         var type = (TenementEvent.EventType)(int)kind;
         foreach (var tenantEvent in resident.tenementEvents.tenementEvents)

@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ObenFramework.Items;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Housing;
@@ -10,7 +12,8 @@ namespace ObenFramework.Housing;
 /// <summary>A snapshot of one hotel room.</summary>
 public sealed class HotelRoomInfo
 {
-    internal HotelRoomInfo(string id, string hotelId, int index, string name, bool rentedByPlayer, int nightsLeft, bool free, RentAmount pricePerNight)
+    internal HotelRoomInfo(string id, string hotelId, int index, string name, bool rentedByPlayer, int nightsLeft, bool free, bool bookable,
+        RentAmount pricePerNight)
     {
         Id = id;
         HotelId = hotelId;
@@ -19,6 +22,7 @@ public sealed class HotelRoomInfo
         RentedByPlayer = rentedByPlayer;
         NightsLeft = nightsLeft;
         Free = free;
+        Bookable = bookable;
         PricePerNight = pricePerNight;
     }
 
@@ -38,6 +42,9 @@ public sealed class HotelRoomInfo
 
     /// <summary>Nobody has it booked.</summary>
     public bool Free { get; }
+
+    /// <summary>Free, and the player holds no other room in this hotel: <see cref="Hotels.Rent"/> takes it if the wallet allows.</summary>
+    public bool Bookable { get; }
 
     /// <summary>Today's price for one night, after the hotel's daily price factor.</summary>
     public RentAmount PricePerNight { get; }
@@ -61,14 +68,15 @@ public readonly struct HotelRoomChange
 
     public int Nights { get; }
 
+    /// <summary><see cref="ChangeSource.LocalPlayer"/> at the hotel desk, <see cref="ChangeSource.Mod"/> for <see cref="Hotels.Rent"/>, the game when a stay runs out.</summary>
     public ChangeSource Source { get; }
 
     public string Id => ObjectIds.IdOf(Room);
 }
 
 /// <summary>
-/// Hotels (the Bazaar inn and friends): rooms, prices and renting one for the player. The player can hold
-/// one room per hotel at a time. Rooms are saved with the game.
+/// Hotels (the Kolhola sleeping pods, the Mines barrack hotel): rooms, prices and renting one for the player.
+/// The player can hold one room per hotel at a time. Rooms are saved with the game.
 /// </summary>
 public static class Hotels
 {
@@ -76,6 +84,9 @@ public static class Hotels
 
     /// <summary>The player rented a room, or their stay ran out. Not raised while a save loads.</summary>
     public static readonly WorldEvent<HotelRoomChange> RoomChanged = new WorldEvent<HotelRoomChange>(nameof(RoomChanged));
+
+    /// <summary>The hooks behind <see cref="RoomChanged"/> are in place (false when a game update broke them).</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Housing");
 
     /// <summary>Every room of every hotel in the loaded scenes.</summary>
     public static List<HotelRoomInfo> Rooms()
@@ -97,7 +108,10 @@ public static class Hotels
 
     public static HotelRoomInfo Room(string roomId) => TryFind(roomId, out var hotel, out int index) ? Describe(hotel, ObjectIds.IdOf(hotel), index) : null;
 
-    /// <summary>What a stay of <paramref name="nights"/> costs today: what <see cref="Rent"/> would charge.</summary>
+    /// <summary>
+    /// What a stay of <paramref name="nights"/> costs today: what <see cref="Rent"/> charges. Given for a booked
+    /// room too; <see cref="HotelRoomInfo.Bookable"/> tells whether it can be rented.
+    /// </summary>
     public static RentAmount Price(string roomId, int nights)
     {
         HousingRules.RequireNights(nights);
@@ -109,14 +123,15 @@ public static class Hotels
 
     /// <summary>
     /// Rents the room for the player for 1 to 7 nights, paying from their wallet, like the hotel desk. False
-    /// when the room is booked, the player already has a room in that hotel, or can't pay.
+    /// when the room is booked, the player already has a room in that hotel, can't pay, or while the game saves.
     /// </summary>
     public static bool Rent(string roomId, int nights)
     {
         HousingRules.RequireNights(nights);
         if (!TryFind(roomId, out var hotel, out int index))
             throw new ArgumentException($"No hotel room '{roomId}'.", nameof(roomId));
-        if (hotel.PlayerHasRoom() || Money.instance == null)
+        // The hotel announces the stay after it took the money.
+        if (SaveGate.IsBusy || hotel.PlayerHasRoom() || Money.instance == null || Notifications.instance == null)
             return false;
         using (WorldChanges.EnterMod())
             return hotel.RentRoom(index, nights);
@@ -126,8 +141,9 @@ public static class Hotels
     {
         var room = hotel.rooms[index];
         var night = room.rentPrice * PriceFactor(hotel);
+        bool free = room.reservedDays == -1;
         return new HotelRoomInfo(ObjectIds.IdOf(room), hotelId, index, room.roomName, room.rentedForPlayer, Math.Max(0, room.reservedDays),
-            room.reservedDays == -1, new RentAmount(night.OC, night.RM));
+            free, free && !hotel.PlayerHasRoom(), new RentAmount(night.OC, night.RM));
     }
 
     private static bool TryFind(string roomId, out Hotel hotel, out int index)

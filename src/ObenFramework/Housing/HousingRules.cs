@@ -19,6 +19,9 @@ public enum CleaningState
     NotStarted,
     Running,
     Done,
+
+    /// <summary>There is no apartment with that number.</summary>
+    NoSuchApartment,
 }
 
 /// <summary>

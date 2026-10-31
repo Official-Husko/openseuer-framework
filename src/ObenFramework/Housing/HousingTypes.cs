@@ -134,10 +134,16 @@ public readonly struct TenantChange
 public readonly struct TenantEvent
 {
     public TenantEvent(string id, TenantEventKind kind, int npcId)
+        : this(id, kind, npcId, ChangeSource.Game)
+    {
+    }
+
+    public TenantEvent(string id, TenantEventKind kind, int npcId, ChangeSource source)
     {
         Id = id;
         Kind = kind;
         NpcId = npcId;
+        Source = source;
     }
 
     /// <summary>The event's id in the tenant's event list.</summary>
@@ -146,4 +152,7 @@ public readonly struct TenantEvent
     public TenantEventKind Kind { get; }
 
     public int NpcId { get; }
+
+    /// <summary><see cref="ChangeSource.Mod"/> for <see cref="Tenants.TriggerEvent"/>, otherwise the game.</summary>
+    public ChangeSource Source { get; }
 }

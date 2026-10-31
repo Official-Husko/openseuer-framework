@@ -12,9 +12,17 @@ internal static class TenementPatches
     private static bool _inRentCheck;
     private static bool _rentDue;
 
+    /// <summary>Set by <see cref="Tenants.Rent"/> for a quiet rent, whose deposit is dropped before anyone hears of it.</summary>
+    internal static bool QuietRent;
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TenementController), nameof(TenementController.RentApartment), new[] { typeof(TenementResident), typeof(TenementApartment), typeof(float), typeof(bool) })]
-    private static void Rented(TenementApartment apartment) => RaiseTenant(apartment, TenantChangeKind.Rented);
+    private static void Rented(TenementApartment apartment)
+    {
+        if (QuietRent && apartment != null)
+            apartment.deposit = new Money.money(0, 0f);
+        RaiseTenant(apartment, TenantChangeKind.Rented);
+    }
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TenementController), nameof(TenementController.MoveResident))]
@@ -56,6 +64,37 @@ internal static class TenementPatches
     {
         if (__state && apartment != null && !apartment.evictionStarted)
             RaiseTenant(apartment, TenantChangeKind.EvictionCancelled);
+    }
+
+    // The rent screen's buttons are the player's; a mod's own scope still wins.
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnRentButtonPressed))]
+    private static void RentPressing() => WorldChanges.Adjust(ChangeSource.LocalPlayer, 1);
+
+    [HarmonyFinalizer]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnRentButtonPressed))]
+    private static Exception RentPressed(Exception __exception) => PlayerDone(__exception);
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnEvictButtonPressed))]
+    private static void EvictPressing() => WorldChanges.Adjust(ChangeSource.LocalPlayer, 1);
+
+    [HarmonyFinalizer]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnEvictButtonPressed))]
+    private static Exception EvictPressed(Exception __exception) => PlayerDone(__exception);
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnCancelEvictButtonPressed))]
+    private static void CancelPressing() => WorldChanges.Adjust(ChangeSource.LocalPlayer, 1);
+
+    [HarmonyFinalizer]
+    [HarmonyPatch(typeof(ApartmentRentUI), nameof(ApartmentRentUI.OnCancelEvictButtonPressed))]
+    private static Exception CancelPressed(Exception __exception) => PlayerDone(__exception);
+
+    private static Exception PlayerDone(Exception exception)
+    {
+        WorldChanges.Adjust(ChangeSource.LocalPlayer, -1);
+        return exception;
     }
 
     // UpdateRentPayment runs every game second; only the difficulty's "is rent due" answer inside it tells a payment happened.
@@ -103,7 +142,7 @@ internal static class TenementPatches
         {
             int type = (int)__instance.type;
             var kind = Enum.IsDefined(typeof(TenantEventKind), type) ? (TenantEventKind)type : TenantEventKind.None;
-            Tenement.EventStarted.Raise(new TenantEvent(__instance.id, kind, targetNPC));
+            Tenement.EventStarted.Raise(new TenantEvent(__instance.id, kind, targetNPC, WorldChanges.Current));
         }
         catch (Exception e)
         {

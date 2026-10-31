@@ -74,6 +74,24 @@ internal static class HousingCommands
         return result;
     }
 
+    [BridgeCommand("tenants.screen", "Open the game's rent screen for an NPC, as if they agreed to rent in a conversation.", Params = new[] { "npc: NPC id" })]
+    private static object TenantsScreen(JObject p)
+    {
+        RequireTenement();
+        return new JObject { ["opened"] = Tenants.OpenRentScreen(p.Int("npc", -1)) };
+    }
+
+    [BridgeCommand("cleaning.set", "Start or finish an apartment's cleaning job.",
+        Params = new[] { "apartment: number", "days?: start one that ends this many days from now", "finish?: true finishes the running one" })]
+    private static object CleaningSet(JObject p)
+    {
+        RequireTenement();
+        int number = p.Int("apartment", -1);
+        bool done = p.Bool("finish", false) ? Cleaning.Finish(number) : Cleaning.Start(number, p.Int("days", 1));
+        var state = Cleaning.StateOf(number, out int day);
+        return new JObject { ["accepted"] = done, ["state"] = state.ToString(), ["day"] = day };
+    }
+
     [BridgeCommand("tenants.event", "Start one of a tenant's events.",
         Params = new[] { "npc: NPC id", "kind: SpawnTrash, PlayMusic, MakeNoise, BreakApartment, Die, SpawnCrazyTeddies or Complain" })]
     private static object TenantsEvent(JObject p)

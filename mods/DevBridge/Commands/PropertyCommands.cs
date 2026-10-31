@@ -15,8 +15,8 @@ internal static class PropertyCommands
         foreach (var r in Hotels.Rooms())
             list.Add(new JObject
             {
-                ["id"] = r.Id, ["hotel"] = r.HotelId, ["index"] = r.Index, ["name"] = r.Name, ["free"] = r.Free, ["rentedByPlayer"] = r.RentedByPlayer,
-                ["nightsLeft"] = r.NightsLeft, ["pricePerNight"] = HousingCommands.Amount(r.PricePerNight),
+                ["id"] = r.Id, ["hotel"] = r.HotelId, ["index"] = r.Index, ["name"] = r.Name, ["free"] = r.Free, ["bookable"] = r.Bookable,
+                ["rentedByPlayer"] = r.RentedByPlayer, ["nightsLeft"] = r.NightsLeft, ["pricePerNight"] = HousingCommands.Amount(r.PricePerNight),
             });
         return new JObject { ["rooms"] = list };
     }
@@ -51,6 +51,18 @@ internal static class PropertyCommands
         return new JObject { ["contractorOpen"] = Renovations.ContractorOpen, ["renovations"] = list };
     }
 
+    [BridgeCommand("renovations.start", "Order a renovation from the contractor the player is talking to.", Params = new[] { "id: renovation id" })]
+    private static object RenovationsStart(JObject p) => Renovation(p.Str("id"), Renovations.Start(p.Str("id")));
+
+    [BridgeCommand("renovations.pay", "Pay a finished renovation's final bill at the open contractor.", Params = new[] { "id: renovation id" })]
+    private static object RenovationsPay(JObject p) => Renovation(p.Str("id"), Renovations.PayFinal(p.Str("id")));
+
+    private static JObject Renovation(string id, bool accepted)
+    {
+        var info = Renovations.Get(id) ?? throw new ArgumentException($"No renovation '{id}'.");
+        return new JObject { ["accepted"] = accepted, ["state"] = info.State.ToString(), ["progress"] = Math.Round(Renovations.Progress(id), 3) };
+    }
+
     [BridgeCommand("mailboxes.list", "Mailboxes and post boxes of the loaded scenes.")]
     private static object MailboxesList(JObject p)
     {
@@ -58,6 +70,26 @@ internal static class PropertyCommands
         foreach (var m in Mailboxes.All())
             list.Add(new JObject { ["id"] = m.Id, ["name"] = m.Name, ["mode"] = m.Mode.ToString(), ["count"] = m.Count });
         return new JObject { ["mailboxes"] = list };
+    }
+
+    [BridgeCommand("mailboxes.use", "Take the waiting letters from the player's box, or post the player's letters in a post box.",
+        Params = new[] { "id: mailbox id", "quiet?: take without the game's toasts" })]
+    private static object MailboxesUse(JObject p)
+    {
+        var box = Mailboxes.Find(p.Str("id")) ?? throw new ArgumentException($"No mailbox '{p.Str("id")}'.");
+        int moved = box.mode == Mailbox.Mode.Send ? Mailboxes.Post(box) : Mailboxes.TakeMail(box, !p.Bool("quiet", false));
+        return new JObject { ["moved"] = moved, ["left"] = Mailboxes.Describe(box).Count };
+    }
+
+    [BridgeCommand("lockers.use", "Claim the waiting parcels into a locker, or take one out.",
+        Params = new[] { "id: locker id", "take?: compartment to take a parcel from", "quiet?: take without the game's toast" })]
+    private static object LockersUse(JObject p)
+    {
+        var locker = ParcelLockers.Find(p.Str("id")) ?? throw new ArgumentException($"No parcel locker '{p.Str("id")}'.");
+        int index = p.Int("take", -1);
+        if (index >= 0)
+            return new JObject { ["taken"] = ParcelLockers.TakeParcel(locker, index, !p.Bool("quiet", false)) };
+        return new JObject { ["claimed"] = ParcelLockers.Open(locker) };
     }
 
     [BridgeCommand("lockers.list", "Parcel lockers and what is in their compartments.")]

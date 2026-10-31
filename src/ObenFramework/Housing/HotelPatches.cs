@@ -19,6 +19,21 @@ internal static class HotelRentPatch
     }
 }
 
+/// <summary>The hotel desk's room choice: the player renting, unless a mod's scope says otherwise.</summary>
+[HarmonyPatch(typeof(Hotel), nameof(Hotel.RentRoom), new[] { typeof(string) })]
+internal static class HotelDeskPatch
+{
+    [HarmonyPrefix]
+    private static void Before() => WorldChanges.Adjust(ChangeSource.LocalPlayer, 1);
+
+    [HarmonyFinalizer]
+    private static Exception After(Exception __exception)
+    {
+        WorldChanges.Adjust(ChangeSource.LocalPlayer, -1);
+        return __exception;
+    }
+}
+
 /// <summary>Raises <see cref="Hotels.RoomChanged"/> when the daily count ends the player's stay (both overloads of <c>CountDays</c>).</summary>
 [HarmonyPatch]
 internal static class HotelStayPatch

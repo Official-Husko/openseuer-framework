@@ -1,70 +1,30 @@
 // Adapted from the Obenseuer Modding Framework by NomadsReach (MIT), see THIRD-PARTY-NOTICES.md.
 using System;
 using System.Collections.Generic;
-using HarmonyLib;
+using ObenFramework.Patching;
+using ObenFramework.Saves;
 using ObenFramework.World;
 
 namespace ObenFramework.Housing;
 
-public enum RenovationState
-{
-    /// <summary>Needs another upgrade first, or another upgrade of its line is under way.</summary>
-    Locked,
-
-    /// <summary>Can be ordered from a contractor.</summary>
-    Available,
-
-    InProgress,
-
-    /// <summary>The work is done and waits for the final bill.</summary>
-    AwaitingFinalPayment,
-
-    Installed,
-}
-
-/// <summary>A snapshot of one renovation (an upgrade of the building or of one apartment).</summary>
-public sealed class RenovationInfo
-{
-    internal RenovationInfo(string id, string name, int apartment, int startCostOc, int finalCostRm, int hours, RenovationState state)
-    {
-        Id = id;
-        Name = name;
-        Apartment = apartment;
-        StartCostOc = startCostOc;
-        FinalCostRm = finalCostRm;
-        Hours = hours;
-        State = state;
-    }
-
-    /// <summary><c>{apartment}/{upgrade id}</c>; apartment 0 is the building.</summary>
-    public string Id { get; }
-
-    public string Name { get; }
-
-    /// <summary>The apartment it is for, 0 for the building.</summary>
-    public int Apartment { get; }
-
-    /// <summary>Open Sewer Coin paid when the work starts.</summary>
-    public int StartCostOc { get; }
-
-    /// <summary>Real Money paid on the final bill.</summary>
-    public int FinalCostRm { get; }
-
-    /// <summary>Game hours the work takes.</summary>
-    public int Hours { get; }
-
-    public RenovationState State { get; }
-}
-
 /// <summary>
 /// Tenement renovations: every upgrade line of the building and of each apartment, where each upgrade
-/// stands, and starting one. Starting goes through the contractor the player is talking to, like the
-/// upgrade screen, so it pays the same and takes the same materials.
+/// stands, starting one and paying its final bill. Both go through the contractor the player is talking to,
+/// like the upgrade screen, so they pay the same and take the same materials. Refused while the game saves.
 /// </summary>
 public static class Renovations
 {
     /// <summary>A renovation was finished (its final bill paid, or finished by a script). Silent finishes are not raised.</summary>
     public static readonly WorldEvent<RenovationInfo> Finished = new WorldEvent<RenovationInfo>(nameof(Finished));
+
+    /// <summary>
+    /// A renovation started, its work was done, or it was finished (then also <see cref="Finished"/>). Upgrades the
+    /// story sets up silently are not raised.
+    /// </summary>
+    public static readonly WorldEvent<RenovationChange> Changed = new WorldEvent<RenovationChange>(nameof(Changed));
+
+    /// <summary>The hooks behind the events are in place (false when a game update broke them).</summary>
+    public static bool IsAvailable => PatchAreas.IsAvailable(PatchAreas.Framework, "Housing");
 
     public static List<RenovationInfo> All()
     {
@@ -95,7 +55,7 @@ public static class Renovations
         }
     }
 
-    /// <summary>True while the player talks to a contractor, the only time <see cref="Start"/> works.</summary>
+    /// <summary>True while the player talks to a contractor, the only time <see cref="Start"/> and <see cref="PayFinal"/> work.</summary>
     public static bool ContractorOpen
     {
         get
@@ -108,11 +68,12 @@ public static class Renovations
     /// <summary>
     /// Orders a renovation from the open contractor, paying and taking materials like the upgrade screen.
     /// False when no contractor is open, the renovation is not available, the contractor does not do it,
-    /// or the player can't pay.
+    /// the player can't pay, or while the game saves. With the game's instant upgrades on (a debug switch) it is
+    /// installed at once, final bill included, like the screen does.
     /// </summary>
     public static bool Start(string id)
     {
-        var entry = RenovationCatalog.Find(id);
+        var entry = SaveGate.IsBusy ? null : RenovationCatalog.Find(id);
         var controller = TenementController.instance;
         if (entry == null || !ContractorOpen || entry.Info.State != RenovationState.Available)
             return false;
@@ -125,44 +86,65 @@ public static class Renovations
 
         TenementUpgradeProgress progress;
         using (WorldChanges.EnterMod())
+        {
             progress = entry.Apartment == null ? controller.general.StartUpdate(entry.Upgrade) : entry.Apartment.StartUpdate(entry.Upgrade);
+            if (progress != null && controller.completeUpgradesInstantly)
+            {
+                controller.CompleteUpgradeInstantly(progress);
+                progress.FinishUpgrade();
+            }
+        }
         if (progress == null)
             return false;
-        controller.RemoveSupersededMarkedUpgrades(entry.Info.Apartment, entry.Upgrade, entry.Line);
-        if (controller.upgradePanel != null)
-            controller.upgradePanel.CloseUpgradePanel();
-        if (controller.blueprintManager != null)
-            controller.blueprintManager.UpdateAll();
+        Refresh(controller, entry);
         return true;
     }
 
-    internal static RenovationInfo Describe(TenementUpgradeProgress progress)
+    /// <summary>
+    /// Pays a finished renovation's final bill (Real Money) at the open contractor, which installs it, like the
+    /// upgrade screen. False when no contractor is open, the work isn't done, the player can't pay, or while the
+    /// game saves.
+    /// </summary>
+    public static bool PayFinal(string id)
+    {
+        var entry = SaveGate.IsBusy ? null : RenovationCatalog.Find(id);
+        var controller = TenementController.instance;
+        if (entry == null || !ContractorOpen || entry.Info.State != RenovationState.AwaitingFinalPayment || Money.instance == null)
+            return false;
+        var progress = RenovationCatalog.ProgressOf(entry);
+        if (progress == null || (!controller.ignoreUpgradePricesAndItems && !Money.instance.CheckMoney(entry.Upgrade.GetPriceFinalRM(), Money.Currency.RM)))
+            return false;
+        using (WorldChanges.EnterMod())
+            progress.FinishUpgrade();
+        Refresh(controller, entry);
+        return true;
+    }
+
+    // What the upgrade screen tidies after a press. The work already went through, so a failure here only logs.
+    private static void Refresh(TenementController controller, RenovationEntry entry)
+    {
+        try
+        {
+            controller.RemoveSupersededMarkedUpgrades(entry.Info.Apartment, entry.Upgrade, entry.Line);
+            if (controller.upgradePanel != null)
+                controller.upgradePanel.CloseUpgradePanel();
+            if (controller.blueprintManager != null)
+                controller.blueprintManager.UpdateAll();
+        }
+        catch (Exception e)
+        {
+            WorldLog.Failed("Renovation screen refresh", e);
+        }
+    }
+
+    internal static RenovationInfo Describe(TenementUpgradeProgress progress, RenovationState state)
     {
         int number = progress.apartmentUpgrade ? progress.apartmentNumber : 0;
         var upgrade = progress.upgrade;
         return new RenovationInfo(HousingRules.RenovationId(number, upgrade.Id), upgrade.GetName(number), number, upgrade.GetPriceStartOC(),
-            upgrade.GetPriceFinalRM(), upgrade.GetRequiredTimeHours(), RenovationState.Installed);
+            upgrade.GetPriceFinalRM(), upgrade.GetRequiredTimeHours(), state);
     }
 
     private static bool CanPay(RenovationEntry entry, TenementContractor contractor) =>
         Money.instance != null && Money.instance.CheckMoney(entry.Upgrade.GetPriceStartOC()) && entry.Upgrade.CanUpgrade(entry.Apartment, true, contractor);
-}
-
-[HarmonyPatch(typeof(TenementUpgradeProgress), nameof(TenementUpgradeProgress.FinishUpgrade))]
-internal static class RenovationFinishPatch
-{
-    [HarmonyPostfix]
-    private static void After(TenementUpgradeProgress __instance, bool silentUpgrade)
-    {
-        if (silentUpgrade || __instance == null || __instance.upgrade == null || !Renovations.Finished.HasSubscribers || !WorldChanges.Active)
-            return;
-        try
-        {
-            Renovations.Finished.Raise(Renovations.Describe(__instance));
-        }
-        catch (Exception e)
-        {
-            WorldLog.Failed("Renovation hook", e);
-        }
-    }
 }

@@ -1,11 +1,11 @@
 {
   "id": "DevBridge",
   "name": "Dev Bridge",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Local control socket for testing tools: read state, change values, run console commands, take screenshots.",
-  "dependencies": { "ObenFramework": "0.1.0" },
+  "dependencies": { "ObenFramework": "1.0.0" },
   "hotReload": true,
   "devOnly": true
 }

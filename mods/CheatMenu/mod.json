@@ -1,10 +1,10 @@
 {
   "id": "CheatMenu",
   "name": "Cheat Menu",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Press Insert for cheats: god mode, needs, noclip, speed, teleport spots, money, items, time, weather and crime. An optional developer menu (F8) sets quests and flags and watches live values.",
-  "dependencies": { "ObenFramework": "0.1.0", "ObenUIKit": "0.1.0" },
+  "dependencies": { "ObenFramework": "1.0.0", "ObenUIKit": "1.0.0" },
   "hotReload": true
 }

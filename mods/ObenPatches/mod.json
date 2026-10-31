@@ -1,7 +1,7 @@
 {
   "id": "ObenPatches",
   "name": "Unofficial ObenPatches",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Fixes for bugs in the game. Every fix can be switched on or off on its own.",

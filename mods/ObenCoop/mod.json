@@ -1,7 +1,7 @@
 {
   "id": "ObenCoop",
   "name": "ObenCoop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "gameVersion": "0.5.13",
   "author": "pawbeans",
   "description": "Co-op for Obenseuer. For now: host or join over the network or Steam, lobby lists, join codes and invites, a player list, chat, and where everyone is. The shared world comes later.",

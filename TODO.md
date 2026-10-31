@@ -173,7 +173,7 @@ Smaller problems found in the code review of the third round (2026-10-29), left 
 - [ ] Game Tweaks, RenovationTime: the progress bar and the hours use the scaled `GetRequiredTimeHours`, but orders placed before the factor changed keep their own time (the bar is wrong, even negative), and Instant still shows hours. Story upgrades are scaled since 2026-10-29. Remember each order's total at `AddUpgrade` and work progress out from that
 - [ ] Game Tweaks: switching scroll zoom on inside a first-person trigger lifts that trigger's lock (triggers already active aren't registered)
 - [x] Tracer: failed calls skipped the per-window line cap; they now have a cap of their own (as many again, unit tested)
-- [ ] Cheat Menu: watches call any property getter four times a second; a watch whose type is gone searches every assembly on each rebuild; stat sliders without a maximum stop at 100
+- [ ] Cheat Menu: watches call any property getter four times a second. (Fixed 2026-10-31: a watch whose type is gone searched every assembly on each rebuild, 160 ms each time, now once until another assembly loads; stat sliders without a bound stopped at 100, now they reach past the current value.)
 - [ ] Co-op, direct IP: idle connections with the public key hold the transport's slots for up to 5 s each (handshake timeout); limit unfinished handshakes per address
 - [ ] Co-op: lobby list results never expire (joining a stale one ends in a lookup timeout); restoring a session when Steam never started doesn't leave the Steam lobby. (A failed `Connect` left LiteNetLib running until the next Stop: fixed 2026-10-31, the session stops the transport, unit tested.)
 

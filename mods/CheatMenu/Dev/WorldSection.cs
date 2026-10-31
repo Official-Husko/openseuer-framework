@@ -63,8 +63,10 @@ internal static class WorldSection
             ui.Window.Rebuild();
         });
         ui.Live(() => stat.TryGet(out float value) ? $"{stat.Description} Now {value:0.##}." : "Not available here.", muted: true);
-        float min = stat.Min ?? -100f;
-        float max = stat.Max ?? System.Math.Max(100f, min + 100f);
+        // A stat without a bound (overheat, the duck need) gets room past its current value, at least 100.
+        float room = UnityEngine.Mathf.Max(100f, UnityEngine.Mathf.Ceil(UnityEngine.Mathf.Abs(_statValue) * 2f / 100f) * 100f);
+        float min = stat.Min ?? -room;
+        float max = stat.Max ?? UnityEngine.Mathf.Max(room, min + 100f);
         ui.Slider("Value", min, max, UnityEngine.Mathf.Clamp(_statValue, min, max), v => _statValue = v, "0.#");
         ui.Button("Set the stat", () => DevActions.Change(ctx, ui, $"{stat.Name} to {_statValue:0.#}", () => stat.Set(_statValue)));
     }
